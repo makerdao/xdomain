@@ -49,6 +49,7 @@ describe("WormholeBridge", () => {
       DEFAULT_RPC_URLS[getDefaultDstDomain(srcDomain)]
     );
   }
+
   it("should auto-fill default RPC URLs and dstDomain (kovan-optimism)", () => {
     const srcDomain: DomainId = "KOVAN-SLAVE-OPTIMISM-1";
     testDefaults(srcDomain);
@@ -123,7 +124,7 @@ describe("WormholeBridge", () => {
     await testGetAttestations(srcDomain);
   });
 
-  it("should return amount mintable (rinkeby-arbitrum)", async () => {
+  it.only("should return amount mintable (rinkeby-arbitrum)", async () => {
     const bridge = new WormholeBridge({
       srcDomain: "RINKEBY-SLAVE-ARBITRUM-1",
     });

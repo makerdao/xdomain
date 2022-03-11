@@ -19,6 +19,7 @@ import {
   getSdk,
   WormholeGUID,
   getDefaultDstDomain,
+  multicall,
 } from ".";
 
 const bytes32 = ethers.utils.formatBytes32String;
@@ -146,17 +147,54 @@ export class WormholeBridge {
     const l1Signer = Wallet.createRandom().connect(this.dstDomainProvider);
     const sdk = getSdk(this.dstDomain, l1Signer);
     const join = sdk.WormholeJoin!;
+    const vat = sdk.Vat!;
+
     const guidHash = getGuidHash(wormholeGUID);
 
     const canMintWithoutOracle = false;
 
-    // todo: batch all calls in multicall for faster response
-    const { pending: pendingInJoin, blessed } = await join.wormholes(guidHash);
+    const [
+      { vatLive },
+      { blessed, pending: pendingInJoin },
+      { line },
+      { debt },
+      { feeAddress },
+    ] = await multicall(sdk.Multicall!.address, l1Signer, [
+      {
+        target: vat,
+        method: "live",
+        outputTypes: ["uint256 vatLive"],
+      },
+      {
+        target: join,
+        method: "wormholes",
+        params: [guidHash],
+        outputTypes: ["bool blessed", "uint248 pending"],
+      },
+      {
+        target: join,
+        method: "line",
+        params: [bytes32(this.srcDomain)],
+        outputTypes: ["uint256 line"],
+      },
+      {
+        target: join,
+        method: "debt",
+        params: [bytes32(this.srcDomain)],
+        outputTypes: ["int256 debt"],
+      },
+      {
+        target: join,
+        method: "fees",
+        params: [bytes32(this.srcDomain)],
+        outputTypes: ["address feeAddress"],
+      },
+    ]);
+
     const pending = blessed
       ? pendingInJoin
       : ethers.BigNumber.from(wormholeGUID.amount);
 
-    const vatLive: ethers.BigNumber = await sdk.Vat!.live();
     if (vatLive.isZero()) {
       return {
         pending,
@@ -166,12 +204,9 @@ export class WormholeBridge {
       };
     }
 
-    const line = await join.line(bytes32(this.srcDomain));
-    const debt = await join.debt(bytes32(this.srcDomain));
     const margin = line.sub(debt);
     const mintable = margin.gte(pending) ? pending : margin;
 
-    const feeAddress = await join.fees(bytes32(this.srcDomain));
     const feeContract = new Contract(
       feeAddress,
       new Interface([GET_FEE_METHOD_FRAGMENT]),

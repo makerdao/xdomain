@@ -9,6 +9,7 @@ import {
   WormholeJoin,
   WormholeOutboundGateway,
   Vat,
+  Multicall,
 } from ".dethcrypto/eth-sdk-client/esm/types";
 import { Signer } from "ethers";
 
@@ -17,6 +18,7 @@ export interface WormholeSdk {
   WormholeJoin?: WormholeJoin;
   WormholeOutboundGateway?: WormholeOutboundGateway;
   Vat?: Vat;
+  Multicall?: Multicall;
 }
 
 export type DomainId = keyof typeof DEFAULT_RPC_URLS;
@@ -60,6 +62,7 @@ export function getSdk(domain: DomainId, signer: Signer): WormholeSdk {
     WormholeJoin: undefined,
     WormholeOutboundGateway: undefined,
     Vat: undefined,
+    Multicall: undefined,
     ...sdk,
   };
 
