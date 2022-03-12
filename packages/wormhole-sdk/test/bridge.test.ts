@@ -104,7 +104,7 @@ describe("WormholeBridge", () => {
         break;
       } catch (e) {
         if (++attempts < 10) {
-          await sleep(10000);
+          await sleep(20000);
         } else {
           throw e;
         }
