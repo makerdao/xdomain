@@ -147,7 +147,6 @@ export class WormholeBridge {
     const l1Signer = Wallet.createRandom().connect(this.dstDomainProvider);
     const sdk = getSdk(this.dstDomain, l1Signer);
     const join = sdk.WormholeJoin!;
-    const vat = sdk.Vat!;
 
     const guidHash = getGuidHash(wormholeGUID);
 
@@ -159,9 +158,9 @@ export class WormholeBridge {
       { line },
       { debt },
       { feeAddress },
-    ] = await multicall(sdk.Multicall!.address, l1Signer, [
+    ] = await multicall(sdk.Multicall!, [
       {
-        target: vat,
+        target: sdk.Vat!,
         method: "live",
         outputTypes: ["uint256 vatLive"],
       },

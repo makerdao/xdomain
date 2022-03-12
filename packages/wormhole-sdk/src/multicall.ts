@@ -1,9 +1,8 @@
-import { Contract, Signer } from "ethers";
-import { defaultAbiCoder, Interface } from "ethers/lib/utils";
+import { Contract } from "ethers";
+import { defaultAbiCoder } from "ethers/lib/utils";
 
 export async function multicall(
-  multicallAddress: string,
-  signer: Signer,
+  multicall: Contract,
   calls: {
     target: Contract;
     method: string;
@@ -11,15 +10,6 @@ export async function multicall(
     outputTypes?: string[];
   }[]
 ): Promise<any[]> {
-  const mc = new Contract(
-    multicallAddress,
-    new Interface([
-      // adding the `view` decorator to be able to issue an eth_call
-      "function aggregate((address target,bytes callData)[]) public view returns (uint256 blockNumber, bytes[] returnData)",
-    ]),
-    signer
-  );
-
   const aggregateCalls = calls.map(({ target, method, params }) => {
     return {
       target: target.address,
@@ -27,7 +17,7 @@ export async function multicall(
     };
   });
 
-  const res = await mc.aggregate(aggregateCalls);
+  const res = await multicall.callStatic.aggregate(aggregateCalls);
   const decoded = res.returnData.map(
     (bytes: string, index: number) =>
       (calls[index].outputTypes &&
