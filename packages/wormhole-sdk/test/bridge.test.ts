@@ -124,7 +124,7 @@ describe("WormholeBridge", () => {
     await testGetAttestations(srcDomain);
   });
 
-  it.only("should return amount mintable (rinkeby-arbitrum)", async () => {
+  it("should return amount mintable (rinkeby-arbitrum)", async () => {
     const bridge = new WormholeBridge({
       srcDomain: "RINKEBY-SLAVE-ARBITRUM-1",
     });
