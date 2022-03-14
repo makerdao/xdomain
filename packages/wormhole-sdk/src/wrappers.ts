@@ -1,34 +1,13 @@
 import { Provider } from '@ethersproject/abstract-provider'
 import { BigNumberish, Overrides, Signer } from 'ethers'
 
-import { DomainId, WormholeBridge, WormholeGUID } from '.'
-
-export type DomainDescription = DomainId | 'arbitrum-testnet' | 'optimism-testnet' //| 'arbitrum' | 'optimism'
+import { DomainDescription, DomainId, getLikelyDomainId, WormholeBridge, WormholeGUID } from '.'
 
 export interface DomainContext {
   srcDomain: DomainDescription
   destDomain?: DomainId
   srcDomainProvider?: Provider
   destDomainProvider?: Provider
-}
-
-function getLikelyDomainId(description: DomainDescription): DomainId {
-  switch (description) {
-    case 'RINKEBY-SLAVE-ARBITRUM-1':
-    case 'arbitrum-testnet':
-      return 'RINKEBY-SLAVE-ARBITRUM-1'
-    case 'KOVAN-SLAVE-OPTIMISM-1':
-    case 'optimism-testnet':
-      return 'KOVAN-SLAVE-OPTIMISM-1'
-    // case 'ETHEREUM-SLAVE-OPTIMISM-1':
-    // case 'optimism':
-    //   return 'ETHEREUM-SLAVE-OPTIMISM-1'
-    // case 'ETHEREUM-SLAVE-ARBITRUM-1':
-    // case 'arbitrum':
-    //   return 'ETHEREUM-SLAVE-ARBITRUM-1'
-    default:
-      throw new Error(`Invalid domain description "${description}"`)
-  }
 }
 
 export function getWormholeBridge(opts: DomainContext): WormholeBridge {

@@ -28,6 +28,8 @@ export const DEFAULT_RPC_URLS = {
 }
 export type DomainId = keyof typeof DEFAULT_RPC_URLS
 
+export type DomainDescription = DomainId | 'arbitrum-testnet' | 'optimism-testnet' //| 'arbitrum' | 'optimism'
+
 export function getDefaultDstDomain(srcDomain: DomainId): DomainId {
   if (srcDomain.includes('KOVAN')) {
     return 'KOVAN-MASTER-1'
@@ -36,6 +38,25 @@ export function getDefaultDstDomain(srcDomain: DomainId): DomainId {
     return 'RINKEBY-MASTER-1'
   }
   throw new Error(`No default destination domain for source domain "${srcDomain}"`)
+}
+
+export function getLikelyDomainId(description: DomainDescription): DomainId {
+  switch (description) {
+    case 'RINKEBY-SLAVE-ARBITRUM-1':
+    case 'arbitrum-testnet':
+      return 'RINKEBY-SLAVE-ARBITRUM-1'
+    case 'KOVAN-SLAVE-OPTIMISM-1':
+    case 'optimism-testnet':
+      return 'KOVAN-SLAVE-OPTIMISM-1'
+    // case 'ETHEREUM-SLAVE-OPTIMISM-1':
+    // case 'optimism':
+    //   return 'ETHEREUM-SLAVE-OPTIMISM-1'
+    // case 'ETHEREUM-SLAVE-ARBITRUM-1':
+    // case 'arbitrum':
+    //   return 'ETHEREUM-SLAVE-ARBITRUM-1'
+    default:
+      throw new Error(`Invalid domain description "${description}"`)
+  }
 }
 
 export function getSdk(domain: DomainId, signer: Signer): WormholeSdk {
