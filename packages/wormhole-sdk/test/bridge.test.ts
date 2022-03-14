@@ -1,11 +1,15 @@
 import 'dotenv/config'
 
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { assert, expect } from 'chai'
+import { assert, expect, use } from 'chai'
+
 import { ethers, Wallet } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
 
 import { DEFAULT_RPC_URLS, DomainId, getDefaultDstDomain, WormholeBridge, WormholeGUID } from '../src'
+
+import { solidity } from 'ethereum-waffle'
+use(solidity) // add support for expect() on ethers' BigNumber
 
 const WAD = parseEther('1.0')
 
@@ -92,31 +96,35 @@ describe('WormholeBridge', () => {
     return { bridge, wormholeGUID, signatures }
   }
 
-  it('should produce attestations (kovan-optimism)', async () => {
+  it.skip('should produce attestations (kovan-optimism)', async () => {
     const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
     await testGetAttestations(srcDomain)
   })
 
-  it('should produce attestations (rinkeby-arbitrum)', async () => {
+  it.skip('should produce attestations (rinkeby-arbitrum)', async () => {
     const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
     await testGetAttestations(srcDomain)
   })
 
+  async function testGetAmountMintable(srcDomain: DomainId) {
+    const { bridge, wormholeGUID } = await testGetAttestations(srcDomain)
+
+    const { pending, mintable, fees, canMintWithoutOracle } = await bridge.getAmountMintable(wormholeGUID!)
+
+    expect(pending).to.eq(mintable)
+    expect(pending).to.eq(wormholeGUID?.amount)
+    expect(fees).to.eq(0)
+    expect(canMintWithoutOracle).to.be.false
+  }
+
+  it.only('should return amount mintable (kovan-optimism)', async () => {
+    const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
+    await testGetAmountMintable(srcDomain)
+  })
+
   it('should return amount mintable (rinkeby-arbitrum)', async () => {
-    const bridge = new WormholeBridge({
-      srcDomain: 'RINKEBY-SLAVE-ARBITRUM-1',
-    })
-    const wormholeGUID = {
-      sourceDomain: '0x52494e4b4542592d534c4156452d415242495452554d2d310000000000000000',
-      targetDomain: '0x52494e4b4542592d4d41535445522d3100000000000000000000000000000000',
-      receiver: '0x000000000000000000000000c87675d77eadcf1ea2198dc6ab935f40d76fd3e2',
-      operator: '0x0000000000000000000000000000000000000000000000000000000000000000',
-      amount: '0x0000000000000000000000000000000000000000000000000000000000000001',
-      nonce: '0x000000000000000000000000000000000000000000000000000000000000000d',
-      timestamp: '0x00000000000000000000000000000000000000000000000000000000622a2958',
-    }
-    const { pending, mintable, fees, canMintWithoutOracle } = await bridge.getAmountMintable(wormholeGUID)
-    console.log({ pending, mintable, fees, canMintWithoutOracle })
+    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
+    await testGetAmountMintable(srcDomain)
   })
 
   async function testMintWithOracles(srcDomain: DomainId) {

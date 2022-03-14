@@ -3,6 +3,7 @@
     "composite": true,
     "declaration": true,
     "incremental": true,
+    "esModuleInterop": true,
     "module": "commonjs",
     "moduleResolution": "node",
     "outDir": "./dist",
