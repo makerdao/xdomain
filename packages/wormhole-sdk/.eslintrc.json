@@ -10,6 +10,8 @@
     "sourceType": "module"
   },
   "rules": {
+    "@typescript-eslint/no-unnecessary-condition": "off",
+    "@typescript-eslint/restrict-plus-operands": "off",
     "unused-imports/no-unused-imports-ts": "error",
     "@typescript-eslint/no-unused-vars": ["error", { "varsIgnorePattern": "^_" }],
     "simple-import-sort/imports": "error",

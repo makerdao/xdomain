@@ -8,12 +8,15 @@
   "license": "AGPL-3.0",
   "main": "dist/index.js",
   "scripts": {
+    "postinstall": "eth-sdk",
     "format": "prettier --check \"./**/*.ts\"",
     "format:fix": "prettier --write \"./**/*.ts\"",
     "lint": "eslint --ext .ts src test",
     "lint:fix": "yarn lint --fix",
     "test": "mocha -r ts-node/register test/**/*.test.ts",
-    "typecheck": "tsc --noEmit --incremental false --composite false"
+    "test:fix": "yarn lint:fix && yarn format:fix && yarn test && yarn typecheck",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p ./tsconfig.build.json"
   },
   "types": "dist/index.d.ts",
   "dependencies": {
