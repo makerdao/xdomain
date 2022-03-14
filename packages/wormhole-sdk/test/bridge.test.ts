@@ -88,7 +88,7 @@ describe('WormholeBridge', () => {
     await testInitWormhole({ srcDomain })
   })
 
-  it('should initiate withdrawal (wrapper)', async () => {
+  it.skip('should initiate withdrawal (wrapper)', async () => {
     const srcDomain: DomainDescription = 'arbitrum-testnet'
     await testInitWormhole({ srcDomain, useWrapper: true })
   })
