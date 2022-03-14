@@ -1,13 +1,13 @@
-import { keccak256 } from "ethers/lib/utils";
+import { keccak256 } from 'ethers/lib/utils'
 
 export interface WormholeGUID {
-  sourceDomain: string;
-  targetDomain: string;
-  receiver: string;
-  operator: string;
-  amount: string;
-  nonce: string;
-  timestamp: string;
+  sourceDomain: string
+  targetDomain: string
+  receiver: string
+  operator: string
+  amount: string
+  nonce: string
+  timestamp: string
 }
 
 export function decodeWormholeData(wormholeData: string): WormholeGUID {
@@ -19,15 +19,15 @@ export function decodeWormholeData(wormholeData: string): WormholeGUID {
     amount: wormholeData[4],
     nonce: wormholeData[5],
     timestamp: wormholeData[6],
-  };
-  return wormholeGUID;
+  }
+  return wormholeGUID
 }
 
 export function getGuidHash(wormholeGUID: WormholeGUID): string {
   const wormholeData =
-    "0x" +
+    '0x' +
     Object.values(wormholeGUID)
       .map((hex) => hex.slice(2))
-      .join("");
-  return keccak256(wormholeData);
+      .join('')
+  return keccak256(wormholeData)
 }

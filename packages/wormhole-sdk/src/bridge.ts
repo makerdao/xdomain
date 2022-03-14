@@ -1,68 +1,51 @@
-import { Provider } from "@ethersproject/abstract-provider";
-import {
-  BigNumber,
-  BigNumberish,
-  Contract,
-  ethers,
-  Overrides,
-  Signer,
-  Wallet,
-} from "ethers";
-import { Interface } from "ethers/lib/utils";
-import axios from "axios";
+import { Provider } from '@ethersproject/abstract-provider'
+import axios from 'axios'
+import { BigNumber, BigNumberish, Contract, ethers, Overrides, Signer, Wallet } from 'ethers'
+import { Interface } from 'ethers/lib/utils'
 
 import {
   decodeWormholeData,
   DEFAULT_RPC_URLS,
   DomainId,
+  getDefaultDstDomain,
   getGuidHash,
   getSdk,
-  WormholeGUID,
-  getDefaultDstDomain,
   multicall,
-} from ".";
+  WormholeGUID,
+} from '.'
 
-const bytes32 = ethers.utils.formatBytes32String;
-const ORACLE_API_URL = "http://52.42.179.195:8080";
+const bytes32 = ethers.utils.formatBytes32String
+const ORACLE_API_URL = 'http://52.42.179.195:8080'
 const GET_FEE_METHOD_FRAGMENT =
-  "function getFee((bytes32,bytes32,bytes32,bytes32,uint128,uint80,uint48),uint256,int256,uint256,uint256) view returns (uint256)";
+  'function getFee((bytes32,bytes32,bytes32,bytes32,uint128,uint80,uint48),uint256,int256,uint256,uint256) view returns (uint256)'
 
 interface OracleData {
-  data: { event: string; hash: string };
+  data: { event: string; hash: string }
   signatures: {
     ethereum: {
-      signature: string;
-    };
-  };
+      signature: string
+    }
+  }
 }
 
 export interface WormholeBridgeOpts {
-  srcDomain: DomainId;
-  dstDomain?: DomainId;
-  srcDomainProvider?: Provider;
-  dstDomainProvider?: Provider;
+  srcDomain: DomainId
+  dstDomain?: DomainId
+  srcDomainProvider?: Provider
+  dstDomainProvider?: Provider
 }
 
 export class WormholeBridge {
-  srcDomain: DomainId;
-  dstDomain: DomainId;
-  srcDomainProvider: Provider;
-  dstDomainProvider: Provider;
+  srcDomain: DomainId
+  dstDomain: DomainId
+  srcDomainProvider: Provider
+  dstDomainProvider: Provider
 
-  constructor({
-    srcDomain,
-    dstDomain,
-    srcDomainProvider,
-    dstDomainProvider,
-  }: WormholeBridgeOpts) {
-    this.srcDomain = srcDomain;
-    this.dstDomain = dstDomain || getDefaultDstDomain(srcDomain);
-    this.srcDomainProvider =
-      srcDomainProvider ||
-      new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[this.srcDomain]);
-    this.dstDomainProvider =
-      dstDomainProvider ||
-      new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[this.dstDomain]);
+  constructor({ srcDomain, dstDomain, srcDomainProvider, dstDomainProvider }: WormholeBridgeOpts) {
+    this.srcDomain = srcDomain
+    this.dstDomain = dstDomain || getDefaultDstDomain(srcDomain)
+    this.srcDomainProvider = srcDomainProvider || new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[this.srcDomain])
+    this.dstDomainProvider = dstDomainProvider || new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[this.dstDomain])
   }
 
   public async initWormhole(
@@ -70,129 +53,112 @@ export class WormholeBridge {
     receiverAddress: string,
     amount: BigNumberish,
     operatorAddress?: string,
-    overrides?: Overrides
+    overrides?: Overrides,
   ): Promise<ethers.ContractTransaction> {
-    const dstDomainBytes32 = bytes32(this.dstDomain);
-    const sender_ = sender.connect(sender.provider || this.srcDomainProvider);
+    const dstDomainBytes32 = bytes32(this.dstDomain)
+    const sender_ = sender.connect(sender.provider || this.srcDomainProvider)
 
-    const sdk = getSdk(this.srcDomain, sender_);
-    const l2Bridge = sdk.WormholeOutboundGateway!;
+    const sdk = getSdk(this.srcDomain, sender_)
+    const l2Bridge = sdk.WormholeOutboundGateway!
 
     if (operatorAddress) {
-      return l2Bridge["initiateWormhole(bytes32,address,uint128,address)"](
+      return l2Bridge['initiateWormhole(bytes32,address,uint128,address)'](
         dstDomainBytes32,
         receiverAddress,
         amount,
         operatorAddress,
-        { ...overrides }
-      );
+        { ...overrides },
+      )
     }
 
-    return l2Bridge["initiateWormhole(bytes32,address,uint128)"](
-      dstDomainBytes32,
-      receiverAddress,
-      amount,
-      { ...overrides }
-    );
+    return l2Bridge['initiateWormhole(bytes32,address,uint128)'](dstDomainBytes32, receiverAddress, amount, {
+      ...overrides,
+    })
   }
 
   public async getAttestations(txHash: string): Promise<{
-    signatures: string;
-    threshold: number;
-    wormholeGUID?: WormholeGUID;
+    signatures: string
+    threshold: number
+    wormholeGUID?: WormholeGUID
   }> {
-    const sdk = getSdk(
-      this.dstDomain,
-      Wallet.createRandom().connect(this.dstDomainProvider)
-    );
-    const l2Bridge = sdk.WormholeOracleAuth!;
-    const threshold = (await l2Bridge.threshold()).toNumber();
+    const sdk = getSdk(this.dstDomain, Wallet.createRandom().connect(this.dstDomainProvider))
+    const l2Bridge = sdk.WormholeOracleAuth!
+    const threshold = (await l2Bridge.threshold()).toNumber()
 
     const response = await axios.get(ORACLE_API_URL, {
       params: {
-        type: "wormhole",
+        type: 'wormhole',
         index: txHash,
       },
-    });
+    })
 
-    const results = response.data || [];
+    const results = response.data || []
 
-    const signatures =
-      "0x" +
-      results
-        .map((oracle: OracleData) => oracle.signatures.ethereum.signature)
-        .join("");
+    const signatures = '0x' + results.map((oracle: OracleData) => oracle.signatures.ethereum.signature).join('')
 
-    let wormholeGUID = undefined;
+    let wormholeGUID = undefined
     if (results.length > 0) {
-      const wormholeData = results[0].data.event
-        .match(/.{64}/g)
-        .map((hex: string) => `0x${hex}`);
-      wormholeGUID = decodeWormholeData(wormholeData);
+      const wormholeData = results[0].data.event.match(/.{64}/g).map((hex: string) => `0x${hex}`)
+      wormholeGUID = decodeWormholeData(wormholeData)
     }
 
     return {
       signatures,
       threshold,
       wormholeGUID,
-    };
+    }
   }
 
   public async getAmountMintable(wormholeGUID: WormholeGUID): Promise<{
-    pending: BigNumber;
-    mintable: BigNumber;
-    fees: BigNumber;
-    canMintWithoutOracle: boolean;
+    pending: BigNumber
+    mintable: BigNumber
+    fees: BigNumber
+    canMintWithoutOracle: boolean
   }> {
-    const l1Signer = Wallet.createRandom().connect(this.dstDomainProvider);
-    const sdk = getSdk(this.dstDomain, l1Signer);
-    const join = sdk.WormholeJoin!;
+    const l1Signer = Wallet.createRandom().connect(this.dstDomainProvider)
+    const sdk = getSdk(this.dstDomain, l1Signer)
+    const join = sdk.WormholeJoin!
 
-    const guidHash = getGuidHash(wormholeGUID);
+    const guidHash = getGuidHash(wormholeGUID)
 
-    const canMintWithoutOracle = false;
+    const canMintWithoutOracle = false
 
-    const [
-      { vatLive },
-      { blessed, pending: pendingInJoin },
-      { line },
-      { debt },
-      { feeAddress },
-    ] = await multicall(sdk.Multicall!, [
-      {
-        target: sdk.Vat!,
-        method: "live",
-        outputTypes: ["uint256 vatLive"],
-      },
-      {
-        target: join,
-        method: "wormholes",
-        params: [guidHash],
-        outputTypes: ["bool blessed", "uint248 pending"],
-      },
-      {
-        target: join,
-        method: "line",
-        params: [bytes32(this.srcDomain)],
-        outputTypes: ["uint256 line"],
-      },
-      {
-        target: join,
-        method: "debt",
-        params: [bytes32(this.srcDomain)],
-        outputTypes: ["int256 debt"],
-      },
-      {
-        target: join,
-        method: "fees",
-        params: [bytes32(this.srcDomain)],
-        outputTypes: ["address feeAddress"],
-      },
-    ]);
+    const [{ vatLive }, { blessed, pending: pendingInJoin }, { line }, { debt }, { feeAddress }] = await multicall(
+      sdk.Multicall!,
+      [
+        {
+          target: sdk.Vat!,
+          method: 'live',
+          outputTypes: ['uint256 vatLive'],
+        },
+        {
+          target: join,
+          method: 'wormholes',
+          params: [guidHash],
+          outputTypes: ['bool blessed', 'uint248 pending'],
+        },
+        {
+          target: join,
+          method: 'line',
+          params: [bytes32(this.srcDomain)],
+          outputTypes: ['uint256 line'],
+        },
+        {
+          target: join,
+          method: 'debt',
+          params: [bytes32(this.srcDomain)],
+          outputTypes: ['int256 debt'],
+        },
+        {
+          target: join,
+          method: 'fees',
+          params: [bytes32(this.srcDomain)],
+          outputTypes: ['address feeAddress'],
+        },
+      ],
+    )
 
-    const pending = blessed
-      ? pendingInJoin
-      : ethers.BigNumber.from(wormholeGUID.amount);
+    const pending = blessed ? pendingInJoin : ethers.BigNumber.from(wormholeGUID.amount)
 
     if (vatLive.isZero()) {
       return {
@@ -200,26 +166,16 @@ export class WormholeBridge {
         mintable: BigNumber.from(0),
         fees: BigNumber.from(0),
         canMintWithoutOracle,
-      };
+      }
     }
 
-    const margin = line.sub(debt);
-    const mintable = margin.gte(pending) ? pending : margin;
+    const margin = line.sub(debt)
+    const mintable = margin.gte(pending) ? pending : margin
 
-    const feeContract = new Contract(
-      feeAddress,
-      new Interface([GET_FEE_METHOD_FRAGMENT]),
-      l1Signer
-    );
-    const fees = await feeContract.getFee(
-      Object.values(wormholeGUID),
-      line,
-      debt,
-      pending,
-      mintable
-    );
+    const feeContract = new Contract(feeAddress, new Interface([GET_FEE_METHOD_FRAGMENT]), l1Signer)
+    const fees = await feeContract.getFee(Object.values(wormholeGUID), line, debt, pending, mintable)
 
-    return { pending, mintable, fees, canMintWithoutOracle };
+    return { pending, mintable, fees, canMintWithoutOracle }
   }
 
   public async mintWithOracles(
@@ -228,18 +184,12 @@ export class WormholeBridge {
     signatures: string,
     maxFeePercentage?: BigNumberish,
     operatorFee?: BigNumberish,
-    overrides?: Overrides
+    overrides?: Overrides,
   ): Promise<ethers.ContractTransaction> {
-    const sender_ = sender.connect(sender.provider || this.dstDomainProvider);
-    const sdk = getSdk(this.dstDomain, sender_);
-    const oracleAuth = sdk.WormholeOracleAuth!;
-    return oracleAuth.requestMint(
-      wormholeGUID,
-      signatures,
-      maxFeePercentage || 0,
-      operatorFee || 0,
-      { ...overrides }
-    );
+    const sender_ = sender.connect(sender.provider || this.dstDomainProvider)
+    const sdk = getSdk(this.dstDomain, sender_)
+    const oracleAuth = sdk.WormholeOracleAuth!
+    return oracleAuth.requestMint(wormholeGUID, signatures, maxFeePercentage || 0, operatorFee || 0, { ...overrides })
   }
 
   //   public async mintWithoutOracles(
