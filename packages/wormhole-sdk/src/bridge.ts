@@ -1,6 +1,6 @@
 import { Provider } from '@ethersproject/abstract-provider'
 import axios from 'axios'
-import { BigNumber, BigNumberish, Contract, ethers, Overrides, Signer, Wallet } from 'ethers'
+import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrides, Signer, Wallet } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 
 import {
@@ -54,7 +54,7 @@ export class WormholeBridge {
     amount: BigNumberish,
     operatorAddress?: string,
     overrides?: Overrides,
-  ): Promise<ethers.ContractTransaction> {
+  ): Promise<ContractTransaction> {
     const dstDomainBytes32 = bytes32(this.dstDomain)
     const sender_ = sender.connect(sender.provider || this.srcDomainProvider)
 
@@ -185,7 +185,7 @@ export class WormholeBridge {
     maxFeePercentage?: BigNumberish,
     operatorFee?: BigNumberish,
     overrides?: Overrides,
-  ): Promise<ethers.ContractTransaction> {
+  ): Promise<ContractTransaction> {
     const sender_ = sender.connect(sender.provider || this.dstDomainProvider)
     const sdk = getSdk(this.dstDomain, sender_)
     const oracleAuth = sdk.WormholeOracleAuth!
