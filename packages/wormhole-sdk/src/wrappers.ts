@@ -1,7 +1,7 @@
-import { DomainId, WormholeBridge } from '.'
 import { Provider } from '@ethersproject/abstract-provider'
-import { Signer, BigNumberish, Overrides } from 'ethers'
-import { WormholeGUID } from './guid'
+import { BigNumberish, Overrides, Signer } from 'ethers'
+
+import { DomainId, WormholeBridge, WormholeGUID } from '.'
 
 export type DomainDescription = DomainId | 'arbitrum-testnet' | 'optimism-testnet' //| 'arbitrum' | 'optimism'
 

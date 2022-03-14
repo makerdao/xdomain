@@ -2,13 +2,11 @@ import 'dotenv/config'
 
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { assert, expect, use } from 'chai'
-
+import { solidity } from 'ethereum-waffle'
 import { ethers, Wallet } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
 
 import { DEFAULT_RPC_URLS, DomainId, getDefaultDstDomain, WormholeBridge, WormholeGUID } from '../src'
-
-import { solidity } from 'ethereum-waffle'
 use(solidity) // add support for expect() on ethers' BigNumber
 
 const WAD = parseEther('1.0')
@@ -117,7 +115,7 @@ describe('WormholeBridge', () => {
     expect(canMintWithoutOracle).to.be.false
   }
 
-  it.only('should return amount mintable (kovan-optimism)', async () => {
+  it('should return amount mintable (kovan-optimism)', async () => {
     const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
     await testGetAmountMintable(srcDomain)
   })
