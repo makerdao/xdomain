@@ -7,17 +7,17 @@ import { ContractTransaction, ethers, Wallet } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
 
 import {
-  getAmountMintable,
   DEFAULT_RPC_URLS,
-  DomainId,
-  getDefaultDstDomain,
-  WormholeBridge,
-  WormholeGUID,
   DomainDescription,
+  DomainId,
+  getAmountMintable,
+  getAttestations,
+  getDefaultDstDomain,
   getLikelyDomainId,
   initWormhole,
-  getAttestations,
   mintWithOracles,
+  WormholeBridge,
+  WormholeGUID,
 } from '../src'
 
 use(solidity) // add support for expect() on ethers' BigNumber
