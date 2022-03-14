@@ -8,6 +8,8 @@
   "license": "AGPL-3.0",
   "main": "dist/index.js",
   "scripts": {
+    "format": "prettier --check \"./**/*.ts\"",
+    "format:fix": "prettier --write \"./**/*.ts\"",
     "test": "mocha -r ts-node/register test/**/*.test.ts",
     "typecheck": "tsc --noEmit --incremental false --composite false"
   },
@@ -24,6 +26,7 @@
     "chai": "^4.3.6",
     "dotenv": "^16.0.0",
     "mocha": "^9.2.1",
+    "prettier": "^2.5.1",
     "ts-node": "^10.5.0",
     "typescript": "^4.5.5"
   }
