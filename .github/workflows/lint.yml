@@ -1,0 +1,29 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  lint:
+    name: Run Linters
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 12.x
+          cache: yarn
+
+      - run: yarn --no-progress --non-interactive --frozen-lockfile
+
+      - run: yarn build
+      - run: yarn typecheck
+      - run: yarn lint
+      - run: yarn format
