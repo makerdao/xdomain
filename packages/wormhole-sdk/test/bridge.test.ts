@@ -1,8 +1,8 @@
 import 'dotenv/config'
 
+import { waffleChai } from '@ethereum-waffle/chai'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { assert, expect, use } from 'chai'
-import { solidity } from 'ethereum-waffle'
 import { ContractTransaction, ethers, Wallet } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
 
@@ -20,7 +20,7 @@ import {
   WormholeGUID,
 } from '../src'
 
-use(solidity) // add support for expect() on ethers' BigNumber
+use(waffleChai) // add support for expect() on ethers' BigNumber
 
 const WAD = parseEther('1.0')
 

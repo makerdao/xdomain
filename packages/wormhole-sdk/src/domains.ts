@@ -1,4 +1,5 @@
 import { Signer } from 'ethers'
+import { Dictionary } from 'ts-essentials'
 
 import { getArbitrumTestnetSdk, getKovanSdk, getOptimismKovanSdk, getRinkebySdk } from '.dethcrypto/eth-sdk-client'
 import {
@@ -17,18 +18,40 @@ export interface WormholeSdk {
   Multicall?: Multicall
 }
 
-export const DEFAULT_RPC_URLS = {
-  //   "ETHEREUM-SLAVE-OPTIMISM-1": "https://optimism.io/",
-  //   "ETHEREUM-SLAVE-ARBITRUM-1": "https://arb1.arbitrum.io/rpc",
-  //   "ETHEREUM-MASTER-1": "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+export const DOMAINS = [
+  'RINKEBY-SLAVE-ARBITRUM-1',
+  'RINKEBY-MASTER-1',
+  'KOVAN-SLAVE-OPTIMISM-1',
+  'KOVAN-MASTER-1',
+  // 'ETHEREUM-SLAVE-OPTIMISM-1',
+  // 'ETHEREUM-SLAVE-ARBITRUM-1',
+  // 'ETHEREUM-MASTER-1',
+] as const
+
+export type DomainId = typeof DOMAINS[number]
+
+export const DEFAULT_RPC_URLS: Dictionary<string, DomainId> = {
   'RINKEBY-SLAVE-ARBITRUM-1': 'https://rinkeby.arbitrum.io/rpc',
   'RINKEBY-MASTER-1': 'https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
   'KOVAN-SLAVE-OPTIMISM-1': 'https://kovan.optimism.io/',
   'KOVAN-MASTER-1': 'https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+  //   "ETHEREUM-SLAVE-OPTIMISM-1": "https://optimism.io/",
+  //   "ETHEREUM-SLAVE-ARBITRUM-1": "https://arb1.arbitrum.io/rpc",
+  //   "ETHEREUM-MASTER-1": "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
 }
-export type DomainId = keyof typeof DEFAULT_RPC_URLS
 
-export type DomainDescription = DomainId | 'arbitrum-testnet' | 'optimism-testnet' //| 'arbitrum' | 'optimism'
+export type DomainDescription = DomainId | 'arbitrum-testnet' | 'optimism-testnet' // | 'arbitrum' | 'optimism'
+
+const descriptionsToDomainIds: Dictionary<DomainId, DomainDescription> = {
+  'arbitrum-testnet': 'RINKEBY-SLAVE-ARBITRUM-1',
+  'optimism-testnet': 'KOVAN-SLAVE-OPTIMISM-1',
+
+  ...(Object.assign({}, ...DOMAINS.map((d) => ({ [d]: d }))) as Dictionary<DomainId, DomainId>),
+}
+
+export function getLikelyDomainId(description: DomainDescription): DomainId {
+  return descriptionsToDomainIds[description]
+}
 
 export function getDefaultDstDomain(srcDomain: DomainId): DomainId {
   if (srcDomain.includes('KOVAN')) {
@@ -40,27 +63,8 @@ export function getDefaultDstDomain(srcDomain: DomainId): DomainId {
   throw new Error(`No default destination domain for source domain "${srcDomain}"`)
 }
 
-export function getLikelyDomainId(description: DomainDescription): DomainId {
-  switch (description) {
-    case 'RINKEBY-SLAVE-ARBITRUM-1':
-    case 'arbitrum-testnet':
-      return 'RINKEBY-SLAVE-ARBITRUM-1'
-    case 'KOVAN-SLAVE-OPTIMISM-1':
-    case 'optimism-testnet':
-      return 'KOVAN-SLAVE-OPTIMISM-1'
-    // case 'ETHEREUM-SLAVE-OPTIMISM-1':
-    // case 'optimism':
-    //   return 'ETHEREUM-SLAVE-OPTIMISM-1'
-    // case 'ETHEREUM-SLAVE-ARBITRUM-1':
-    // case 'arbitrum':
-    //   return 'ETHEREUM-SLAVE-ARBITRUM-1'
-    default:
-      throw new Error(`Invalid domain description "${description}"`)
-  }
-}
-
 export function getSdk(domain: DomainId, signer: Signer): WormholeSdk {
-  const sdkProviders = {
+  const sdkProviders: Dictionary<Function, DomainId> = {
     'RINKEBY-MASTER-1': getRinkebySdk,
     'RINKEBY-SLAVE-ARBITRUM-1': getArbitrumTestnetSdk,
     'KOVAN-MASTER-1': getKovanSdk,
