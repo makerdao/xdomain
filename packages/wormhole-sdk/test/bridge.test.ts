@@ -1,11 +1,26 @@
 import 'dotenv/config'
 
+import { waffleChai } from '@ethereum-waffle/chai'
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { assert, expect } from 'chai'
-import { ethers, Wallet } from 'ethers'
+import { assert, expect, use } from 'chai'
+import { ContractTransaction, ethers, Wallet } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
 
-import { DEFAULT_RPC_URLS, DomainId, getDefaultDstDomain, WormholeBridge, WormholeGUID } from '../src'
+import {
+  DEFAULT_RPC_URLS,
+  DomainDescription,
+  DomainId,
+  getAmountMintable,
+  getAttestations,
+  getDefaultDstDomain,
+  getLikelyDomainId,
+  initWormhole,
+  mintWithOracles,
+  WormholeBridge,
+  WormholeGUID,
+} from '../src'
+
+use(waffleChai) // add support for expect() on ethers' BigNumber
 
 const WAD = parseEther('1.0')
 
@@ -13,7 +28,8 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function getTestWallets(srcDomain: DomainId) {
+function getTestWallets(srcDomainDescr: DomainDescription) {
+  const srcDomain = getLikelyDomainId(srcDomainDescr)
   const pkeyEnvVar = srcDomain.includes('KOVAN') ? 'KOVAN_OPTIMISM_USER_PRIV_KEY' : 'RINKEBY_ARBITRUM_USER_PRIV_KEY'
   const pkey = process.env[pkeyEnvVar]!
   const dstDomain = getDefaultDstDomain(srcDomain)
@@ -46,26 +62,45 @@ describe('WormholeBridge', () => {
     testDefaults(srcDomain)
   })
 
-  async function testInitWormhole(srcDomain: DomainId) {
+  async function testInitWormhole({ srcDomain, useWrapper }: { srcDomain: DomainDescription; useWrapper?: boolean }) {
     const { l2User } = getTestWallets(srcDomain)
-    const bridge = new WormholeBridge({ srcDomain })
-    const tx = await bridge.initWormhole(l2User, l2User.address, 1)
+
+    let tx: ContractTransaction
+    let bridge: WormholeBridge | undefined
+    if (useWrapper) {
+      tx = await initWormhole({ srcDomain, sender: l2User, receiverAddress: l2User.address, amount: 1 })
+    } else {
+      bridge = new WormholeBridge({ srcDomain: srcDomain as DomainId })
+      tx = await bridge.initWormhole(l2User, l2User.address, 1)
+    }
+
     await tx.wait()
     return { txHash: tx.hash, bridge }
   }
 
   it.skip('should initiate withdrawal (kovan-optimism)', async () => {
     const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
-    await testInitWormhole(srcDomain)
+    await testInitWormhole({ srcDomain })
   })
 
   it.skip('should initiate withdrawal (rinkeby-arbitrum)', async () => {
     const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    await testInitWormhole(srcDomain)
+    await testInitWormhole({ srcDomain })
   })
 
-  async function testGetAttestations(srcDomain: DomainId) {
-    const { bridge, txHash } = await testInitWormhole(srcDomain)
+  it.skip('should initiate withdrawal (wrapper)', async () => {
+    const srcDomain: DomainDescription = 'arbitrum-testnet'
+    await testInitWormhole({ srcDomain, useWrapper: true })
+  })
+
+  async function testGetAttestations({
+    srcDomain,
+    useWrapper,
+  }: {
+    srcDomain: DomainDescription
+    useWrapper?: boolean
+  }) {
+    const { bridge, txHash } = await testInitWormhole({ srcDomain, useWrapper })
 
     let attempts = 0
     let threshold: number
@@ -73,7 +108,11 @@ describe('WormholeBridge', () => {
     let wormholeGUID: WormholeGUID | undefined
     while (true) {
       console.log(`Requesting attestation for ${txHash} (attempts: ${attempts})`)
-      ;({ threshold, signatures, wormholeGUID } = await bridge.getAttestations(txHash))
+      if (useWrapper) {
+        ;({ threshold, signatures, wormholeGUID } = await getAttestations({ txHash, srcDomain }))
+      } else {
+        ;({ threshold, signatures, wormholeGUID } = await bridge!.getAttestations(txHash))
+      }
       expect(threshold).to.be.greaterThan(0)
 
       try {
@@ -92,51 +131,108 @@ describe('WormholeBridge', () => {
     return { bridge, wormholeGUID, signatures }
   }
 
-  it('should produce attestations (kovan-optimism)', async () => {
+  it.skip('should produce attestations (kovan-optimism)', async () => {
     const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
-    await testGetAttestations(srcDomain)
+    await testGetAttestations({ srcDomain })
   })
 
-  it('should produce attestations (rinkeby-arbitrum)', async () => {
+  it.skip('should produce attestations (rinkeby-arbitrum)', async () => {
     const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    await testGetAttestations(srcDomain)
+    await testGetAttestations({ srcDomain })
+  })
+
+  it.skip('should produce attestations (wrapper)', async () => {
+    const srcDomain: DomainDescription = 'arbitrum-testnet'
+    await testGetAttestations({ srcDomain, useWrapper: true })
+  })
+
+  async function testGetAmountMintable({
+    srcDomain,
+    useWrapper,
+  }: {
+    srcDomain: DomainDescription
+    useWrapper?: boolean
+  }) {
+    const { bridge, wormholeGUID } = await testGetAttestations({ srcDomain, useWrapper })
+
+    let res: Awaited<ReturnType<typeof getAmountMintable>>
+    if (useWrapper) {
+      res = await getAmountMintable({ srcDomain, wormholeGUID: wormholeGUID! })
+    } else {
+      res = await bridge!.getAmountMintable(wormholeGUID!)
+    }
+    const { pending, mintable, fees, canMintWithoutOracle } = res
+
+    expect(pending).to.eq(mintable)
+    expect(pending).to.eq(wormholeGUID?.amount)
+    expect(fees).to.eq(0)
+    expect(canMintWithoutOracle).to.be.false
+  }
+
+  it('should return amount mintable (kovan-optimism)', async () => {
+    const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
+    await testGetAmountMintable({ srcDomain })
   })
 
   it('should return amount mintable (rinkeby-arbitrum)', async () => {
-    const bridge = new WormholeBridge({
-      srcDomain: 'RINKEBY-SLAVE-ARBITRUM-1',
-    })
-    const wormholeGUID = {
-      sourceDomain: '0x52494e4b4542592d534c4156452d415242495452554d2d310000000000000000',
-      targetDomain: '0x52494e4b4542592d4d41535445522d3100000000000000000000000000000000',
-      receiver: '0x000000000000000000000000c87675d77eadcf1ea2198dc6ab935f40d76fd3e2',
-      operator: '0x0000000000000000000000000000000000000000000000000000000000000000',
-      amount: '0x0000000000000000000000000000000000000000000000000000000000000001',
-      nonce: '0x000000000000000000000000000000000000000000000000000000000000000d',
-      timestamp: '0x00000000000000000000000000000000000000000000000000000000622a2958',
-    }
-    const { pending, mintable, fees, canMintWithoutOracle } = await bridge.getAmountMintable(wormholeGUID)
-    console.log({ pending, mintable, fees, canMintWithoutOracle })
+    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
+    await testGetAmountMintable({ srcDomain })
   })
 
-  async function testMintWithOracles(srcDomain: DomainId) {
-    const { l1User } = getTestWallets(srcDomain)
-    const { bridge, wormholeGUID, signatures } = await testGetAttestations(srcDomain)
+  it('should return amount mintable (wrapper)', async () => {
+    const srcDomain: DomainDescription = 'optimism-testnet'
+    await testGetAmountMintable({ srcDomain, useWrapper: true })
+  })
 
-    const { mintable, fees } = await bridge.getAmountMintable(wormholeGUID!)
+  async function testMintWithOracles({
+    srcDomain,
+    useWrapper,
+  }: {
+    srcDomain: DomainDescription
+    useWrapper?: boolean
+  }) {
+    const { l1User } = getTestWallets(srcDomain)
+
+    const { bridge, wormholeGUID, signatures } = await testGetAttestations({ srcDomain, useWrapper })
+
+    let res: Awaited<ReturnType<typeof getAmountMintable>>
+    if (useWrapper) {
+      res = await getAmountMintable({ srcDomain, wormholeGUID: wormholeGUID! })
+    } else {
+      res = await bridge!.getAmountMintable(wormholeGUID!)
+    }
+    const { mintable, fees } = res
+
     const maxFeePercentage = fees.mul(WAD).div(mintable)
-    const tx = await bridge.mintWithOracles(l1User, wormholeGUID!, signatures, maxFeePercentage)
+
+    let tx: ContractTransaction
+    if (useWrapper) {
+      tx = await mintWithOracles({
+        srcDomain,
+        sender: l1User,
+        wormholeGUID: wormholeGUID!,
+        signatures,
+        maxFeePercentage,
+      })
+    } else {
+      tx = await bridge!.mintWithOracles(l1User, wormholeGUID!, signatures, maxFeePercentage)
+    }
 
     await tx.wait()
   }
 
   it('should mint with oracles (kovan-optimism)', async () => {
     const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
-    await testMintWithOracles(srcDomain)
+    await testMintWithOracles({ srcDomain })
   })
 
   it('should mint with oracles (rinkeby-arbitrum)', async () => {
     const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    await testMintWithOracles(srcDomain)
+    await testMintWithOracles({ srcDomain })
+  })
+
+  it('should mint with oracles (wrapper)', async () => {
+    const srcDomain: DomainDescription = 'arbitrum-testnet'
+    await testMintWithOracles({ srcDomain, useWrapper: true })
   })
 })

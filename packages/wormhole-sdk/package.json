@@ -16,18 +16,21 @@
     "test": "mocha -r ts-node/register test/**/*.test.ts",
     "test:fix": "yarn lint:fix && yarn format:fix && yarn test && yarn typecheck",
     "typecheck": "tsc --noEmit",
-    "build": "tsc -p ./tsconfig.build.json"
+    "build": "rm -rf ./dist && tsc -p ./tsconfig.build.json"
   },
   "types": "dist/index.d.ts",
   "dependencies": {
     "@dethcrypto/eth-sdk": "^0.3.0",
     "@dethcrypto/eth-sdk-client": "^0.1.6",
     "axios": "^0.26.0",
-    "ethers": "^5.5.4"
+    "ethers": "^5.5.4",
+    "ts-essentials": "^9.1.2"
   },
   "devDependencies": {
+    "@ethereum-waffle/chai": "^4.0.0-alpha.0",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^9.1.0",
+    "@types/sinon-chai": "^3.2.8",
     "@typescript-eslint/eslint-plugin": "^5.14.0",
     "@typescript-eslint/parser": "^5.14.0",
     "chai": "^4.3.6",
