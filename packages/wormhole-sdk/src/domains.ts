@@ -1,8 +1,9 @@
-import { Signer } from 'ethers'
+import { Signer, providers } from 'ethers'
 import { Dictionary } from 'ts-essentials'
 
 import { getArbitrumTestnetSdk, getKovanSdk, getOptimismKovanSdk, getRinkebySdk } from '.dethcrypto/eth-sdk-client'
 import {
+  Faucet,
   Multicall,
   Vat,
   WormholeJoin,
@@ -16,6 +17,7 @@ export interface WormholeSdk {
   WormholeOutboundGateway?: WormholeOutboundGateway
   Vat?: Vat
   Multicall?: Multicall
+  Faucet?: Faucet
 }
 
 export const DOMAINS = [
@@ -49,21 +51,22 @@ const descriptionsToDomainIds: Dictionary<DomainId, DomainDescription> = {
   ...(Object.assign({}, ...DOMAINS.map((d) => ({ [d]: d }))) as Dictionary<DomainId, DomainId>),
 }
 
-export function getLikelyDomainId(description: DomainDescription): DomainId {
-  return descriptionsToDomainIds[description]
+export function getLikelyDomainId(srcDomain: DomainDescription): DomainId {
+  return descriptionsToDomainIds[srcDomain]
 }
 
-export function getDefaultDstDomain(srcDomain: DomainId): DomainId {
-  if (srcDomain.includes('KOVAN')) {
+export function getDefaultDstDomain(srcDomain: DomainDescription): DomainId {
+  const domainId = getLikelyDomainId(srcDomain)
+  if (domainId.includes('KOVAN')) {
     return 'KOVAN-MASTER-1'
   }
-  if (srcDomain.includes('RINKEBY')) {
+  if (domainId.includes('RINKEBY')) {
     return 'RINKEBY-MASTER-1'
   }
   throw new Error(`No default destination domain for source domain "${srcDomain}"`)
 }
 
-export function getSdk(domain: DomainId, signer: Signer): WormholeSdk {
+export function getSdk(domain: DomainDescription, signer: Signer): WormholeSdk {
   const sdkProviders: Dictionary<Function, DomainId> = {
     'RINKEBY-MASTER-1': getRinkebySdk,
     'RINKEBY-SLAVE-ARBITRUM-1': getArbitrumTestnetSdk,
@@ -71,7 +74,9 @@ export function getSdk(domain: DomainId, signer: Signer): WormholeSdk {
     'KOVAN-SLAVE-OPTIMISM-1': getOptimismKovanSdk,
   }
 
-  const sdk = (sdkProviders[domain](signer) as any)[domain]
+  const domainId = getLikelyDomainId(domain)
+  if (!signer.provider) signer = signer.connect(new providers.JsonRpcProvider(DEFAULT_RPC_URLS[domainId]))
+  const sdk = (sdkProviders[domainId](signer) as any)[domainId]
 
   const res = {
     WormholeOracleAuth: undefined,
@@ -79,6 +84,7 @@ export function getSdk(domain: DomainId, signer: Signer): WormholeSdk {
     WormholeOutboundGateway: undefined,
     Vat: undefined,
     Multicall: undefined,
+    Faucet: undefined,
     ...sdk,
   }
 

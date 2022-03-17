@@ -56,7 +56,7 @@ export class WormholeBridge {
     overrides?: Overrides,
   ): Promise<ContractTransaction> {
     const dstDomainBytes32 = bytes32(this.dstDomain)
-    const sender_ = sender.connect(sender.provider || this.srcDomainProvider)
+    const sender_ = sender.provider ? sender : sender.connect(this.srcDomainProvider)
 
     const sdk = getSdk(this.srcDomain, sender_)
     const l2Bridge = sdk.WormholeOutboundGateway!
@@ -186,7 +186,7 @@ export class WormholeBridge {
     operatorFee?: BigNumberish,
     overrides?: Overrides,
   ): Promise<ContractTransaction> {
-    const sender_ = sender.connect(sender.provider || this.dstDomainProvider)
+    const sender_ = sender.provider ? sender : sender.connect(this.dstDomainProvider)
     const sdk = getSdk(this.dstDomain, sender_)
     const oracleAuth = sdk.WormholeOracleAuth!
     return oracleAuth.requestMint(wormholeGUID, signatures, maxFeePercentage || 0, operatorFee || 0, { ...overrides })
