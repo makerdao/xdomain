@@ -1,4 +1,4 @@
-import { Signer, providers } from 'ethers'
+import { providers, Signer } from 'ethers'
 import { Dictionary } from 'ts-essentials'
 
 import { getArbitrumTestnetSdk, getKovanSdk, getOptimismKovanSdk, getRinkebySdk } from '.dethcrypto/eth-sdk-client'

@@ -13,7 +13,6 @@ import {
   mintWithOracles,
   WormholeGUID,
 } from '../src/index'
-
 import { fundTestWallet } from '../test/faucet'
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
