@@ -16,6 +16,7 @@ import {
   getLikelyDomainId,
   initWormhole,
   mintWithOracles,
+  mintWithoutOracles,
   WormholeBridge,
   WormholeGUID,
 } from '../src'
@@ -78,7 +79,6 @@ describe('WormholeBridge', () => {
       bridge = new WormholeBridge({ srcDomain: srcDomain as DomainId })
       tx = await bridge.initWormhole(l2User, l2User.address, 1)
     }
-
     await tx.wait()
     return { txHash: tx.hash, bridge }
   }
@@ -239,5 +239,39 @@ describe('WormholeBridge', () => {
   it('should mint with oracles (wrapper)', async () => {
     const srcDomain: DomainDescription = 'arbitrum-testnet'
     await testMintWithOracles({ srcDomain, useWrapper: true })
+  })
+
+  async function testMintWithoutOracles({
+    srcDomain,
+    useWrapper,
+  }: {
+    srcDomain: DomainDescription
+    useWrapper?: boolean
+  }) {
+    const { l1User } = await getTestWallets(srcDomain)
+    const { bridge, txHash } = await testInitWormhole({ srcDomain, useWrapper })
+
+    let tx: ContractTransaction
+    if (useWrapper) {
+      tx = await mintWithoutOracles({
+        srcDomain,
+        sender: l1User,
+        txHash,
+      })
+    } else {
+      tx = await bridge!.mintWithoutOracles(l1User, txHash)
+    }
+
+    await tx.wait()
+  }
+
+  it('should mint without oracles (rinkeby-arbitrum)', async () => {
+    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
+    await testMintWithoutOracles({ srcDomain })
+  })
+
+  it('should mint without oracles (wrapper)', async () => {
+    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
+    await testMintWithoutOracles({ srcDomain, useWrapper: true })
   })
 })

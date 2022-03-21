@@ -65,3 +65,15 @@ export function mintWithOracles(
     opts.overrides,
   )
 }
+
+export interface MintWithoutOracleOpts {
+  sender: Signer
+  txHash: string
+  overrides?: Overrides
+}
+
+export function mintWithoutOracles(
+  opts: MintWithoutOracleOpts & DomainContext,
+): ReturnType<WormholeBridge['mintWithOracles']> {
+  return getWormholeBridge(opts).mintWithoutOracles(opts.sender, opts.txHash, opts.overrides)
+}

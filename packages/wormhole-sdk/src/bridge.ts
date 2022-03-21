@@ -11,6 +11,7 @@ import {
   getGuidHash,
   getSdk,
   multicall,
+  relayArbitrumMessage,
   WormholeGUID,
 } from '.'
 
@@ -41,11 +42,17 @@ export class WormholeBridge {
   srcDomainProvider: Provider
   dstDomainProvider: Provider
 
+  settings: {
+    useFakeArbitrumOutbox: boolean
+  }
+
   constructor({ srcDomain, dstDomain, srcDomainProvider, dstDomainProvider }: WormholeBridgeOpts) {
     this.srcDomain = srcDomain
     this.dstDomain = dstDomain || getDefaultDstDomain(srcDomain)
     this.srcDomainProvider = srcDomainProvider || new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[this.srcDomain])
     this.dstDomainProvider = dstDomainProvider || new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[this.dstDomain])
+
+    this.settings = { useFakeArbitrumOutbox: true }
   }
 
   public async initWormhole(
@@ -192,12 +199,19 @@ export class WormholeBridge {
     return oracleAuth.requestMint(wormholeGUID, signatures, maxFeePercentage || 0, operatorFee || 0, { ...overrides })
   }
 
-  //   public async mintWithoutOracles(
-  //     sender: Signer,
-  //     wormholeGUID: WormholeGUID,
-  //     overrides?: Overrides
-  //   ): Promise<ethers.ContractTransaction> {
-  //     const sender_ = sender.connect(sender.provider || this.dstDomainProvider);
-  //     const sdk = getSdk(this.dstDomain, sender_);
-  //   }
+  public async mintWithoutOracles(sender: Signer, txHash: string, overrides?: Overrides): Promise<ContractTransaction> {
+    const sender_ = sender.provider ? sender : sender.connect(this.dstDomainProvider)
+
+    if (this.srcDomain === 'RINKEBY-SLAVE-ARBITRUM-1') {
+      return await relayArbitrumMessage(
+        txHash,
+        sender_,
+        this.srcDomainProvider,
+        this.settings.useFakeArbitrumOutbox,
+        overrides,
+      )
+    }
+
+    throw new Error(`mintWithoutOracles not yet supported for source domain ${this.srcDomain}`)
+  }
 }

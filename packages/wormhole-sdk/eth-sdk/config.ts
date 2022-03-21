@@ -22,6 +22,7 @@ export default defineConfig({
         WormholeJoin: '0x2Cd1b8fe049a5a52Bd48e9c7aA651b2C013545A6',
         Vat: '0x66b3D63621FDD5967603A824114Da95cc3A35107',
         Multicall: '0x86d3b107386756208154a5c9100a0d4557280747',
+        FakeOutbox: '0x1a8fe93d3c07cc860fee5c1fe4dacbe1fade62f9',
       },
     },
     arbitrumTestnet: {
