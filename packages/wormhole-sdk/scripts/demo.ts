@@ -99,7 +99,14 @@ async function main() {
   console.log(`Minting tx submitted: ${DST_DOMAIN_ETHERSCAN}${mintTx.hash}`)
 
   await mintTx.wait()
-  console.log(`Minting tx confirmed.`)
+  console.log(`Minting tx confirmed.\n`)
+
+  const { mintable: mintableAfter, pending: pendingAfter } = await getAmountMintable({
+    srcDomain,
+    wormholeGUID: wormholeGUID!,
+  })
+  console.log(`Pending: ${formatEther(mintableAfter)} DAI.`)
+  console.log(`Mintable: ${formatEther(pendingAfter)} DAI.`)
 }
 
 main().catch(console.error)
