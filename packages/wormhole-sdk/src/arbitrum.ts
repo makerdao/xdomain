@@ -15,6 +15,7 @@ export async function relayArbitrumMessage(
 ): Promise<ContractTransaction> {
   const receipt = await l2Provider.getTransactionReceipt(txHash)
   const l2Network = await getL2Network(l2Provider)
+  const dstDomainSdk = getRinkebySdk(sender)['RINKEBY-MASTER-1']
 
   if (useFakeOutbox) {
     assert(l2Network.chainID === 421611, `FakeOutbox not supported for chainId ${l2Network.chainID}`)
@@ -24,8 +25,9 @@ export async function relayArbitrumMessage(
     const txToL1Event = receipt.logs.find(({ topics }) => topics[0] === iface.getEventTopic('TxToL1'))!
     const { to, data } = iface.parseLog(txToL1Event).args
 
-    const fakeOutbox = getRinkebySdk(sender)['RINKEBY-MASTER-1'].FakeOutbox!.connect(sender)
-    return await fakeOutbox.executeTransaction(0, [], 0, txToL1Event.address, to, 0, 0, 0, 0, data, { ...overrides })
+    return await dstDomainSdk.FakeOutbox!.executeTransaction(0, [], 0, txToL1Event.address, to, 0, 0, 0, 0, data, {
+      ...overrides,
+    })
   }
 
   const l2Receipt = new L2TransactionReceipt(receipt)
@@ -38,10 +40,9 @@ export async function relayArbitrumMessage(
     throw new Error(`L2ToL1 message already executed!`)
   }
 
-  const outbox = getRinkebySdk(sender)['RINKEBY-MASTER-1'].Outbox!.connect(sender)
   // note that the following line is equivalent to calling l2ToL1Msg.execute(proofInfo),
   // except it allows us to pass the `overrides` object
-  return await outbox.executeTransaction(
+  return await dstDomainSdk.Outbox!.executeTransaction(
     l2ToL1Msg.batchNumber,
     proofInfo.proof,
     proofInfo.path,
