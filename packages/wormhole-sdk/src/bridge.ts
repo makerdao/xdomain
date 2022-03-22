@@ -34,25 +34,27 @@ export interface WormholeBridgeOpts {
   dstDomain?: DomainId
   srcDomainProvider?: Provider
   dstDomainProvider?: Provider
+  settings?: BridgeSettings
 }
+
+export type BridgeSettings = Partial<{
+  useFakeArbitrumOutbox: boolean
+}>
 
 export class WormholeBridge {
   srcDomain: DomainId
   dstDomain: DomainId
   srcDomainProvider: Provider
   dstDomainProvider: Provider
+  settings: BridgeSettings
 
-  settings: {
-    useFakeArbitrumOutbox: boolean
-  }
-
-  constructor({ srcDomain, dstDomain, srcDomainProvider, dstDomainProvider }: WormholeBridgeOpts) {
+  constructor({ srcDomain, dstDomain, srcDomainProvider, dstDomainProvider, settings }: WormholeBridgeOpts) {
     this.srcDomain = srcDomain
     this.dstDomain = dstDomain || getDefaultDstDomain(srcDomain)
     this.srcDomainProvider = srcDomainProvider || new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[this.srcDomain])
     this.dstDomainProvider = dstDomainProvider || new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[this.dstDomain])
 
-    this.settings = { useFakeArbitrumOutbox: true }
+    this.settings = { useFakeArbitrumOutbox: false, ...settings }
   }
 
   public async initWormhole(
