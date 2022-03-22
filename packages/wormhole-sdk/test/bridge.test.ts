@@ -7,6 +7,7 @@ import { ContractTransaction, ethers, Wallet } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
 
 import {
+  BridgeSettings,
   DEFAULT_RPC_URLS,
   DomainDescription,
   DomainId,
@@ -17,7 +18,6 @@ import {
   initWormhole,
   mintWithOracles,
   mintWithoutOracles,
-  BridgeSettings,
   WormholeBridge,
   WormholeGUID,
 } from '../src'

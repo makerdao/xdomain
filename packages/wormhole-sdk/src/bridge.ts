@@ -29,6 +29,10 @@ interface OracleData {
   }
 }
 
+export type BridgeSettings = Partial<{
+  useFakeArbitrumOutbox: boolean
+}>
+
 export interface WormholeBridgeOpts {
   srcDomain: DomainId
   dstDomain?: DomainId
@@ -36,10 +40,6 @@ export interface WormholeBridgeOpts {
   dstDomainProvider?: Provider
   settings?: BridgeSettings
 }
-
-export type BridgeSettings = Partial<{
-  useFakeArbitrumOutbox: boolean
-}>
 
 export class WormholeBridge {
   srcDomain: DomainId

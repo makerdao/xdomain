@@ -1,7 +1,7 @@
 import { Provider } from '@ethersproject/abstract-provider'
 import { BigNumberish, Overrides, Signer } from 'ethers'
 
-import { DomainDescription, DomainId, getLikelyDomainId, WormholeBridge, WormholeGUID, BridgeSettings } from '.'
+import { BridgeSettings, DomainDescription, DomainId, getLikelyDomainId, WormholeBridge, WormholeGUID } from '.'
 
 export interface DomainContext {
   srcDomain: DomainDescription
