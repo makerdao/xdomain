@@ -23,6 +23,7 @@ export default defineConfig({
         Vat: '0x66b3D63621FDD5967603A824114Da95cc3A35107',
         Multicall: '0x86d3b107386756208154a5c9100a0d4557280747',
         FakeOutbox: '0x1a8fe93d3c07cc860fee5c1fe4dacbe1fade62f9',
+        Outbox: '0x2360A33905dc1c72b12d975d975F42BaBdcef9F3',
       },
     },
     arbitrumTestnet: {

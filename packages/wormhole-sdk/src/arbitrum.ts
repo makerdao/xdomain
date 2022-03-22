@@ -37,5 +37,21 @@ export async function relayArbitrumMessage(
   if (await l2ToL1Msg.hasExecuted(proofInfo!)) {
     throw new Error(`L2ToL1 message already executed!`)
   }
-  return await l2ToL1Msg.execute(proofInfo)
+
+  const outbox = getRinkebySdk(sender)['RINKEBY-MASTER-1'].Outbox!.connect(sender)
+  // note that the following line is equivalent to calling l2ToL1Msg.execute(proofInfo),
+  // except it allows us to pass the `overrides` object
+  return await outbox.executeTransaction(
+    l2ToL1Msg.batchNumber,
+    proofInfo.proof,
+    proofInfo.path,
+    proofInfo.l2Sender,
+    proofInfo.l1Dest,
+    proofInfo.l2Block,
+    proofInfo.l1Block,
+    proofInfo.timestamp,
+    proofInfo.amount,
+    proofInfo.calldataForL1,
+    { ...overrides },
+  )
 }
