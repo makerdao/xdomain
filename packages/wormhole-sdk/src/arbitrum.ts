@@ -10,7 +10,7 @@ export async function relayArbitrumMessage(
   txHash: string,
   sender: Signer,
   l2Provider: Provider,
-  useFakeOutbox: boolean = false,
+  useFakeOutbox: boolean,
   overrides?: Overrides,
 ): Promise<ContractTransaction> {
   const receipt = await l2Provider.getTransactionReceipt(txHash)

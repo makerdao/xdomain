@@ -29,9 +29,11 @@ interface OracleData {
   }
 }
 
-export type BridgeSettings = Partial<{
+interface AllBridgeSettings {
   useFakeArbitrumOutbox: boolean
-}>
+}
+
+export type BridgeSettings = Partial<AllBridgeSettings>
 
 export interface WormholeBridgeOpts {
   srcDomain: DomainId
@@ -46,7 +48,7 @@ export class WormholeBridge {
   dstDomain: DomainId
   srcDomainProvider: Provider
   dstDomainProvider: Provider
-  settings: BridgeSettings
+  settings: AllBridgeSettings
 
   constructor({ srcDomain, dstDomain, srcDomainProvider, dstDomainProvider, settings }: WormholeBridgeOpts) {
     this.srcDomain = srcDomain
