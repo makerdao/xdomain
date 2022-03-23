@@ -1,22 +1,28 @@
-#!/usr/bin/env yarn ts-node
-
 import 'dotenv/config'
 
-import { ethers, Wallet } from 'ethers'
+import { ethers, Wallet, BigNumberish } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 
-import { getAmountMintable, getAttestations, getDefaultDstDomain, initWormhole, mintWithOracles } from '../src/index'
+import {
+  getAmountMintable,
+  getAttestations,
+  getDefaultDstDomain,
+  initWormhole,
+  mintWithOracles,
+  DomainDescription,
+} from '../src/index'
 import { fundTestWallet } from '../test/faucet'
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 
-const SRC_DOMAIN_ETHERSCAN = 'https://testnet.arbiscan.io/tx/'
-const DST_DOMAIN_ETHERSCAN = 'https://rinkeby.etherscan.io/tx/'
 const WAD = parseEther('1.0')
-const srcDomain = 'arbitrum-testnet'
-const amount = parseEther('0.1')
 
-async function main() {
+export async function demo(
+  srcDomain: DomainDescription,
+  srcDomainEtherscan: string,
+  dstDomainEtherscan: string,
+  amount: BigNumberish = parseEther('0.01'),
+) {
   const dstDomain = getDefaultDstDomain(srcDomain)
   if (!process.env.DEMO_USER_PRIV_KEY) throw new Error('Please add DEMO_USER_PRIV_KEY to .env')
   const sender = new Wallet(process.env.DEMO_USER_PRIV_KEY!)
@@ -31,9 +37,10 @@ async function main() {
   // ********  initWormhole ******************/
   // *****************************************/
 
+  ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
   console.log(`Withdrawing ${formatEther(amount)} DAI on ${srcDomain} ...`)
   const initTx = await initWormhole({ srcDomain, sender, receiverAddress: sender.address, amount })
-  console.log(`Withdrawal tx submitted: ${SRC_DOMAIN_ETHERSCAN}${initTx.hash}`)
+  console.log(`Withdrawal tx submitted: ${srcDomainEtherscan}${initTx.hash}`)
   await initTx.wait()
   console.log(`Withdrawal tx confirmed.\n`)
 
@@ -71,10 +78,8 @@ async function main() {
     signatures,
     maxFeePercentage,
   })
-  console.log(`Minting tx submitted: ${DST_DOMAIN_ETHERSCAN}${mintTx.hash}`)
+  console.log(`Minting tx submitted: ${dstDomainEtherscan}${mintTx.hash}`)
 
   await mintTx.wait()
   console.log(`Minting tx confirmed.`)
 }
-
-main().catch(console.error)
