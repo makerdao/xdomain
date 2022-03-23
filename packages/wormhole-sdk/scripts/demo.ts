@@ -5,28 +5,16 @@ import 'dotenv/config'
 import { ethers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 
-import {
-  getAmountMintable,
-  getAttestations,
-  getDefaultDstDomain,
-  initWormhole,
-  mintWithOracles,
-  WormholeGUID,
-} from '../src/index'
+import { getAmountMintable, getAttestations, getDefaultDstDomain, initWormhole, mintWithOracles } from '../src/index'
 import { fundTestWallet } from '../test/faucet'
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 
 const SRC_DOMAIN_ETHERSCAN = 'https://testnet.arbiscan.io/tx/'
 const DST_DOMAIN_ETHERSCAN = 'https://rinkeby.etherscan.io/tx/'
-const SLEEP_MS = 1000
 const WAD = parseEther('1.0')
 const srcDomain = 'arbitrum-testnet'
 const amount = parseEther('0.1')
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
 
 async function main() {
   const dstDomain = getDefaultDstDomain(srcDomain)
@@ -53,27 +41,14 @@ async function main() {
   // ***********  getAttestations ******************/
   // ***********************************************/
 
-  let threshold: number
-  let signatures: string
-  let wormholeGUID: WormholeGUID | undefined
-  let numSigs = 0
-  let prevNumSigs: number | undefined
   console.log(`Requesting attestation for ${initTx.hash} ...`)
-  while (true) {
-    ;({ threshold, signatures, wormholeGUID } = await getAttestations({ txHash: initTx.hash, srcDomain }))
 
-    numSigs = (signatures.length - 2) / 130
-    if (prevNumSigs === undefined || prevNumSigs! < numSigs) {
-      console.log(`Signatures received: ${numSigs} (required: ${threshold}).`)
-    }
-    prevNumSigs = numSigs
-
-    if (numSigs >= threshold) {
-      break
-    }
-
-    await sleep(SLEEP_MS)
-  }
+  const { signatures, wormholeGUID } = await getAttestations({
+    txHash: initTx.hash,
+    srcDomain,
+    newSignatureReceivedCallback: (numSigs: number, threshold: number) =>
+      console.log(`Signatures received: ${numSigs} (required: ${threshold}).`),
+  })
 
   console.log(`Signatures: ${signatures}`)
   console.log(`WormholeGUID: ${JSON.stringify(wormholeGUID)}\n`)

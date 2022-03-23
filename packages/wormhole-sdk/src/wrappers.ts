@@ -33,10 +33,16 @@ export function initWormhole(opts: InitWormholeOpts & DomainContext): ReturnType
   )
 }
 
+export interface GetAttestationsOpts {
+  txHash: string
+  newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void
+  pollingIntervalMs?: number
+}
+
 export function getAttestations(
-  opts: { txHash: string } & DomainContext,
+  opts: GetAttestationsOpts & DomainContext,
 ): ReturnType<WormholeBridge['getAttestations']> {
-  return getWormholeBridge(opts).getAttestations(opts.txHash)
+  return getWormholeBridge(opts).getAttestations(opts.txHash, opts.newSignatureReceivedCallback, opts.pollingIntervalMs)
 }
 
 export function getAmountMintable(

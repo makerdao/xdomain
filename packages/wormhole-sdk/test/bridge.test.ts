@@ -2,7 +2,7 @@ import 'dotenv/config'
 
 import { waffleChai } from '@ethereum-waffle/chai'
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { assert, expect, use } from 'chai'
+import { expect, use } from 'chai'
 import { ContractTransaction, ethers, Wallet } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
 
@@ -28,10 +28,6 @@ ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 
 const WAD = parseEther('1.0')
 const amount = 1
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
 
 async function getTestWallets(srcDomainDescr: DomainDescription) {
   const srcDomain = getLikelyDomainId(srcDomainDescr)
@@ -116,31 +112,19 @@ describe('WormholeBridge', () => {
   }) {
     const { bridge, txHash } = await testInitWormhole({ srcDomain, useWrapper })
 
-    let attempts = 0
-    let threshold: number
     let signatures: string
     let wormholeGUID: WormholeGUID | undefined
-    while (true) {
-      console.log(`Requesting attestation for ${txHash} (attempts: ${attempts})`)
-      if (useWrapper) {
-        ;({ threshold, signatures, wormholeGUID } = await getAttestations({ txHash, srcDomain }))
-      } else {
-        ;({ threshold, signatures, wormholeGUID } = await bridge!.getAttestations(txHash))
-      }
-      expect(threshold).to.be.greaterThan(0)
 
-      try {
-        expect(wormholeGUID).to.not.be.undefined
-        assert(signatures.length >= 2 + threshold * 130, 'not enough signatures')
-        break
-      } catch (e) {
-        if (++attempts < 10) {
-          await sleep(20000)
-        } else {
-          throw e
-        }
-      }
+    const newSignatureReceivedCallback = (numSigs: number, threshold: number) =>
+      console.log(`Signatures received: ${numSigs} (required: ${threshold}).`)
+
+    console.log(`Requesting attestation for ${txHash}`)
+    if (useWrapper) {
+      ;({ signatures, wormholeGUID } = await getAttestations({ txHash, srcDomain, newSignatureReceivedCallback }))
+    } else {
+      ;({ signatures, wormholeGUID } = await bridge!.getAttestations(txHash, newSignatureReceivedCallback))
     }
+    expect(wormholeGUID).to.not.be.undefined
 
     return { bridge, wormholeGUID, signatures }
   }
