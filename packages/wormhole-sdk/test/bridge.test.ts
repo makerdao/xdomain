@@ -19,16 +19,19 @@ import {
   WormholeBridge,
   WormholeGUID,
 } from '../src'
+import { fundTestWallet } from './faucet'
 
 use(waffleChai) // add support for expect() on ethers' BigNumber
+ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 
 const WAD = parseEther('1.0')
+const amount = 1
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function getTestWallets(srcDomainDescr: DomainDescription) {
+async function getTestWallets(srcDomainDescr: DomainDescription) {
   const srcDomain = getLikelyDomainId(srcDomainDescr)
   const pkeyEnvVar = srcDomain.includes('KOVAN') ? 'KOVAN_OPTIMISM_USER_PRIV_KEY' : 'RINKEBY_ARBITRUM_USER_PRIV_KEY'
   const pkey = process.env[pkeyEnvVar]!
@@ -37,6 +40,8 @@ function getTestWallets(srcDomainDescr: DomainDescription) {
   const l2Provider = new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[srcDomain])
   const l1User = new Wallet(pkey, l1Provider)
   const l2User = new Wallet(pkey, l2Provider)
+
+  await fundTestWallet(l1User, l2User, srcDomain, dstDomain, amount)
 
   return { l1User, l2User }
 }
@@ -63,12 +68,12 @@ describe('WormholeBridge', () => {
   })
 
   async function testInitWormhole({ srcDomain, useWrapper }: { srcDomain: DomainDescription; useWrapper?: boolean }) {
-    const { l2User } = getTestWallets(srcDomain)
+    const { l2User } = await getTestWallets(srcDomain)
 
     let tx: ContractTransaction
     let bridge: WormholeBridge | undefined
     if (useWrapper) {
-      tx = await initWormhole({ srcDomain, sender: l2User, receiverAddress: l2User.address, amount: 1 })
+      tx = await initWormhole({ srcDomain, sender: l2User, receiverAddress: l2User.address, amount })
     } else {
       bridge = new WormholeBridge({ srcDomain: srcDomain as DomainId })
       tx = await bridge.initWormhole(l2User, l2User.address, 1)
@@ -191,7 +196,7 @@ describe('WormholeBridge', () => {
     srcDomain: DomainDescription
     useWrapper?: boolean
   }) {
-    const { l1User } = getTestWallets(srcDomain)
+    const { l1User } = await getTestWallets(srcDomain)
 
     const { bridge, wormholeGUID, signatures } = await testGetAttestations({ srcDomain, useWrapper })
 

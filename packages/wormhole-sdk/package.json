@@ -11,12 +11,13 @@
     "postinstall": "eth-sdk",
     "format": "prettier --check \"./**/*.ts\"",
     "format:fix": "prettier --write \"./**/*.ts\"",
-    "lint": "eslint --ext .ts src test",
+    "lint": "eslint --ext .ts src test scripts",
     "lint:fix": "yarn lint --fix",
     "test": "mocha -r ts-node/register test/**/*.test.ts",
     "test:fix": "yarn lint:fix && yarn format:fix && yarn test && yarn typecheck",
     "typecheck": "tsc --noEmit",
-    "build": "rm -rf ./dist && tsc -p ./tsconfig.build.json"
+    "build": "rm -rf ./dist && tsc -p ./tsconfig.build.json",
+    "demo": "yarn ts-node ./scripts/demo.ts"
   },
   "types": "dist/index.d.ts",
   "dependencies": {
@@ -43,7 +44,7 @@
     "eslint-plugin-unused-imports": "^2.0.0",
     "mocha": "^9.2.1",
     "prettier": "^2.5.1",
-    "ts-node": "^10.5.0",
+    "ts-node": "^10.7.0",
     "typescript": "^4.5.5"
   }
 }

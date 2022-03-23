@@ -13,6 +13,7 @@ export default defineConfig({
     optimismKovan: {
       'KOVAN-SLAVE-OPTIMISM-1': {
         WormholeOutboundGateway: '0x45440Ae4988965A4cD94651E715fC9A04e62Fb41', // L2DAIWormholeBridge
+        Faucet: '0xDB66c86899967A3D9E4D77D7d2Bb703747aAEeA7', // L2Dai Faucet
       },
     },
     rinkeby: {
@@ -26,6 +27,7 @@ export default defineConfig({
     arbitrumTestnet: {
       'RINKEBY-SLAVE-ARBITRUM-1': {
         WormholeOutboundGateway: '0xEbA80E9d7C6C2F575a642a43199e32F47Bbd1306', // L2DaiWormholeGateway
+        Faucet: '0xc72cfA99ef0aec40334A2df3E70eB1028402cceE', // L2Dai Faucet
       },
     },
   },
