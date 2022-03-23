@@ -155,7 +155,7 @@ describe('WormholeBridge', () => {
 
   it('should throw when attestations timeout (kovan-optimism)', async () => {
     const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
-    expect(testGetAttestations({ srcDomain, timeoutMs: 1 })).to.be.rejectedWith(
+    await expect(testGetAttestations({ srcDomain, timeoutMs: 1 })).to.be.rejectedWith(
       'Did not receive required number of signatures',
     )
   })

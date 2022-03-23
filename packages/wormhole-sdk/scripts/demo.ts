@@ -1,15 +1,15 @@
 import 'dotenv/config'
 
-import { ethers, Wallet, BigNumberish } from 'ethers'
+import { BigNumberish, ethers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 
 import {
+  DomainDescription,
   getAmountMintable,
   getAttestations,
   getDefaultDstDomain,
   initWormhole,
   mintWithOracles,
-  DomainDescription,
 } from '../src/index'
 import { fundTestWallet } from '../test/faucet'
 
