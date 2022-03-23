@@ -7,6 +7,7 @@ import { ContractTransaction, ethers, Wallet } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
 
 import {
+  BridgeSettings,
   DEFAULT_RPC_URLS,
   DomainDescription,
   DomainId,
@@ -16,6 +17,7 @@ import {
   getLikelyDomainId,
   initWormhole,
   mintWithOracles,
+  mintWithoutOracles,
   WormholeBridge,
   WormholeGUID,
 } from '../src'
@@ -67,18 +69,25 @@ describe('WormholeBridge', () => {
     testDefaults(srcDomain)
   })
 
-  async function testInitWormhole({ srcDomain, useWrapper }: { srcDomain: DomainDescription; useWrapper?: boolean }) {
+  async function testInitWormhole({
+    srcDomain,
+    settings,
+    useWrapper,
+  }: {
+    srcDomain: DomainDescription
+    settings?: BridgeSettings
+    useWrapper?: boolean
+  }) {
     const { l2User } = await getTestWallets(srcDomain)
 
     let tx: ContractTransaction
     let bridge: WormholeBridge | undefined
     if (useWrapper) {
-      tx = await initWormhole({ srcDomain, sender: l2User, receiverAddress: l2User.address, amount })
+      tx = await initWormhole({ srcDomain, settings, sender: l2User, receiverAddress: l2User.address, amount })
     } else {
-      bridge = new WormholeBridge({ srcDomain: srcDomain as DomainId })
+      bridge = new WormholeBridge({ srcDomain: srcDomain as DomainId, settings })
       tx = await bridge.initWormhole(l2User, l2User.address, 1)
     }
-
     await tx.wait()
     return { txHash: tx.hash, bridge }
   }
@@ -239,5 +248,42 @@ describe('WormholeBridge', () => {
   it('should mint with oracles (wrapper)', async () => {
     const srcDomain: DomainDescription = 'arbitrum-testnet'
     await testMintWithOracles({ srcDomain, useWrapper: true })
+  })
+
+  async function testMintWithoutOracles({
+    srcDomain,
+    settings,
+    useWrapper,
+  }: {
+    srcDomain: DomainDescription
+    settings: BridgeSettings
+    useWrapper?: boolean
+  }) {
+    const { l1User } = await getTestWallets(srcDomain)
+    const { bridge, txHash } = await testInitWormhole({ srcDomain, settings, useWrapper })
+
+    let tx: ContractTransaction
+    if (useWrapper) {
+      tx = await mintWithoutOracles({
+        srcDomain,
+        settings,
+        sender: l1User,
+        txHash,
+      })
+    } else {
+      tx = await bridge!.mintWithoutOracles(l1User, txHash)
+    }
+
+    await tx.wait()
+  }
+
+  it('should mint without oracles (rinkeby-arbitrum)', async () => {
+    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
+    await testMintWithoutOracles({ srcDomain, settings: { useFakeArbitrumOutbox: true } })
+  })
+
+  it('should mint without oracles (wrapper)', async () => {
+    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
+    await testMintWithoutOracles({ srcDomain, settings: { useFakeArbitrumOutbox: true }, useWrapper: true })
   })
 })

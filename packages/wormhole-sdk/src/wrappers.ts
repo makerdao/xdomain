@@ -1,13 +1,14 @@
 import { Provider } from '@ethersproject/abstract-provider'
 import { BigNumberish, Overrides, Signer } from 'ethers'
 
-import { DomainDescription, DomainId, getLikelyDomainId, WormholeBridge, WormholeGUID } from '.'
+import { BridgeSettings, DomainDescription, DomainId, getLikelyDomainId, WormholeBridge, WormholeGUID } from '.'
 
 export interface DomainContext {
   srcDomain: DomainDescription
   destDomain?: DomainId
   srcDomainProvider?: Provider
   destDomainProvider?: Provider
+  settings?: BridgeSettings
 }
 
 export function getWormholeBridge(opts: DomainContext): WormholeBridge {
@@ -64,4 +65,16 @@ export function mintWithOracles(
     opts.operatorFee,
     opts.overrides,
   )
+}
+
+export interface MintWithoutOracleOpts {
+  sender: Signer
+  txHash: string
+  overrides?: Overrides
+}
+
+export function mintWithoutOracles(
+  opts: MintWithoutOracleOpts & DomainContext,
+): ReturnType<WormholeBridge['mintWithOracles']> {
+  return getWormholeBridge(opts).mintWithoutOracles(opts.sender, opts.txHash, opts.overrides)
 }

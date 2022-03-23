@@ -1,3 +1,4 @@
+export * from './arbitrum'
 export * from './bridge'
 export * from './domains'
 export * from './guid'
