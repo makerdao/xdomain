@@ -51,11 +51,13 @@ export async function waitForAttestations(
   threshold: number,
   isValidAttestation: WormholeOracleAuth['isValid'],
   pollingIntervalMs: number,
+  timeoutMs?: number,
   newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void,
 ): Promise<{
   signatures: string
   wormholeGUID?: WormholeGUID
 }> {
+  let timeSlept = 0
   let signatures: string
   let wormholeGUID: WormholeGUID | undefined
   let prevNumSigs: number | undefined
@@ -81,7 +83,14 @@ export async function waitForAttestations(
     }
 
     prevNumSigs = numSigs
+
+    if (timeoutMs !== undefined && timeSlept >= timeoutMs) {
+      throw new Error(
+        `Did not receive required number of signatures within ${timeoutMs}ms. Received: ${numSigs}. Threshold: ${threshold}`,
+      )
+    }
     await sleep(pollingIntervalMs)
+    timeSlept += pollingIntervalMs
   }
 
   return {

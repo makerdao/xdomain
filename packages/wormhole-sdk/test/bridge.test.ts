@@ -3,6 +3,7 @@ import 'dotenv/config'
 import { waffleChai } from '@ethereum-waffle/chai'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { expect, use } from 'chai'
+import chaiAsPromised from 'chai-as-promised'
 import { ContractTransaction, ethers, Wallet } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
 
@@ -23,7 +24,8 @@ import {
 } from '../src'
 import { fundTestWallet } from './faucet'
 
-use(waffleChai) // add support for expect() on ethers' BigNumber
+use(chaiAsPromised).use(waffleChai) // add support for expect() on ethers' BigNumber
+
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 
 const WAD = parseEther('1.0')
@@ -106,9 +108,11 @@ describe('WormholeBridge', () => {
   async function testGetAttestations({
     srcDomain,
     useWrapper,
+    timeoutMs = 300000,
   }: {
     srcDomain: DomainDescription
     useWrapper?: boolean
+    timeoutMs?: number
   }) {
     const { bridge, txHash } = await testInitWormhole({ srcDomain, useWrapper })
 
@@ -118,11 +122,16 @@ describe('WormholeBridge', () => {
     const newSignatureReceivedCallback = (numSigs: number, threshold: number) =>
       console.log(`Signatures received: ${numSigs} (required: ${threshold}).`)
 
-    console.log(`Requesting attestation for ${txHash}`)
+    console.log(`Requesting attestation for ${txHash} (timeout: ${timeoutMs}ms)`)
     if (useWrapper) {
-      ;({ signatures, wormholeGUID } = await getAttestations({ txHash, srcDomain, newSignatureReceivedCallback }))
+      ;({ signatures, wormholeGUID } = await getAttestations({
+        txHash,
+        srcDomain,
+        timeoutMs,
+        newSignatureReceivedCallback,
+      }))
     } else {
-      ;({ signatures, wormholeGUID } = await bridge!.getAttestations(txHash, newSignatureReceivedCallback))
+      ;({ signatures, wormholeGUID } = await bridge!.getAttestations(txHash, newSignatureReceivedCallback, timeoutMs))
     }
     expect(wormholeGUID).to.not.be.undefined
 
@@ -142,6 +151,13 @@ describe('WormholeBridge', () => {
   it.skip('should produce attestations (wrapper)', async () => {
     const srcDomain: DomainDescription = 'arbitrum-testnet'
     await testGetAttestations({ srcDomain, useWrapper: true })
+  })
+
+  it('should throw when attestations timeout (kovan-optimism)', async () => {
+    const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
+    expect(testGetAttestations({ srcDomain, timeoutMs: 1 })).to.be.rejectedWith(
+      'Did not receive required number of signatures',
+    )
   })
 
   async function testGetAmountMintable({

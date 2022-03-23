@@ -79,6 +79,7 @@ export class WormholeBridge {
   public async getAttestations(
     txHash: string,
     newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void,
+    timeoutMs?: number,
     pollingIntervalMs: number = 2000,
   ): Promise<{
     signatures: string
@@ -93,6 +94,7 @@ export class WormholeBridge {
       threshold,
       oracleAuth.isValid,
       pollingIntervalMs,
+      timeoutMs,
       newSignatureReceivedCallback,
     )
   }
