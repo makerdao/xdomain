@@ -9,6 +9,7 @@ import { parseEther } from 'ethers/lib/utils'
 
 import {
   BridgeSettings,
+  canMintWithoutOracle,
   DEFAULT_RPC_URLS,
   DomainDescription,
   DomainId,
@@ -175,12 +176,11 @@ describe('WormholeBridge', () => {
     } else {
       res = await bridge!.getAmountMintable(wormholeGUID!)
     }
-    const { pending, mintable, fees, canMintWithoutOracle } = res
+    const { pending, mintable, fees } = res
 
     expect(pending).to.eq(mintable)
     expect(pending).to.eq(wormholeGUID?.amount)
     expect(fees).to.eq(0)
-    expect(canMintWithoutOracle).to.be.false
   }
 
   it('should return amount mintable (kovan-optimism)', async () => {
@@ -262,28 +262,48 @@ describe('WormholeBridge', () => {
     const { l1User } = await getTestWallets(srcDomain)
     const { bridge, txHash } = await testInitWormhole({ srcDomain, settings, useWrapper })
 
-    let tx: ContractTransaction
+    let canMint: boolean
     if (useWrapper) {
-      tx = await mintWithoutOracles({
-        srcDomain,
-        settings,
-        sender: l1User,
-        txHash,
-      })
+      canMint = await canMintWithoutOracle({ srcDomain, settings, txHash })
     } else {
-      tx = await bridge!.mintWithoutOracles(l1User, txHash)
+      canMint = await bridge!.canMintWithoutOracle(txHash)
     }
+    expect(canMint).to.be.eq(settings.useFakeArbitrumOutbox || false)
 
-    await tx.wait()
+    if (canMint) {
+      let tx: ContractTransaction
+      if (useWrapper) {
+        tx = await mintWithoutOracles({
+          srcDomain,
+          settings,
+          sender: l1User,
+          txHash,
+        })
+      } else {
+        tx = await bridge!.mintWithoutOracles(l1User, txHash)
+      }
+
+      await tx.wait()
+    }
   }
 
-  it('should mint without oracles (rinkeby-arbitrum)', async () => {
+  it('should mint without oracles (fake outbox, rinkeby-arbitrum)', async () => {
     const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
     await testMintWithoutOracles({ srcDomain, settings: { useFakeArbitrumOutbox: true } })
   })
 
-  it('should mint without oracles (wrapper)', async () => {
+  it('should mint without oracles (fake outbox, wrapper)', async () => {
     const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
     await testMintWithoutOracles({ srcDomain, settings: { useFakeArbitrumOutbox: true }, useWrapper: true })
+  })
+
+  it('should not allow minting without oracles before end of security period (real outbox, rinkeby-arbitrum)', async () => {
+    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
+    await testMintWithoutOracles({ srcDomain, settings: { useFakeArbitrumOutbox: false } })
+  })
+
+  it('should not allow minting without oracles before end of security period (real outbox, wrapper)', async () => {
+    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
+    await testMintWithoutOracles({ srcDomain, settings: { useFakeArbitrumOutbox: false }, useWrapper: true })
   })
 })

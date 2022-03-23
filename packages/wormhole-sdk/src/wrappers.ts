@@ -79,6 +79,12 @@ export function mintWithOracles(
   )
 }
 
+export function canMintWithoutOracle(
+  opts: { txHash: string } & DomainContext,
+): ReturnType<WormholeBridge['canMintWithoutOracle']> {
+  return getWormholeBridge(opts).canMintWithoutOracle(opts.txHash)
+}
+
 export interface MintWithoutOracleOpts {
   sender: Signer
   txHash: string
