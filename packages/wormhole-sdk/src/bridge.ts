@@ -3,11 +3,13 @@ import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrid
 import { Interface } from 'ethers/lib/utils'
 
 import {
+  ArbitrumDstDomainId,
   DEFAULT_RPC_URLS,
   DomainId,
   getDefaultDstDomain,
   getGuidHash,
   getSdk,
+  isArbitrumMessageInOutbox,
   multicall,
   relayArbitrumMessage,
   waitForAttestations,
@@ -103,15 +105,12 @@ export class WormholeBridge {
     pending: BigNumber
     mintable: BigNumber
     fees: BigNumber
-    canMintWithoutOracle: boolean
   }> {
     const l1Signer = Wallet.createRandom().connect(this.dstDomainProvider)
     const sdk = getSdk(this.dstDomain, l1Signer)
     const join = sdk.WormholeJoin!
 
     const guidHash = getGuidHash(wormholeGUID)
-
-    const canMintWithoutOracle = false
 
     const [{ vatLive }, { blessed, pending: pendingInJoin }, { line }, { debt }, { feeAddress }] = await multicall(
       sdk.Multicall!,
@@ -155,7 +154,6 @@ export class WormholeBridge {
         pending,
         mintable: BigNumber.from(0),
         fees: BigNumber.from(0),
-        canMintWithoutOracle,
       }
     }
 
@@ -165,7 +163,7 @@ export class WormholeBridge {
     const feeContract = new Contract(feeAddress, new Interface([GET_FEE_METHOD_FRAGMENT]), l1Signer)
     const fees = await feeContract.getFee(Object.values(wormholeGUID), line, debt, pending, mintable)
 
-    return { pending, mintable, fees, canMintWithoutOracle }
+    return { pending, mintable, fees }
   }
 
   public async mintWithOracles(
@@ -182,6 +180,19 @@ export class WormholeBridge {
     return oracleAuth.requestMint(wormholeGUID, signatures, maxFeePercentage || 0, operatorFee || 0, { ...overrides })
   }
 
+  public async canMintWithoutOracle(txHash: string): Promise<boolean> {
+    if (this.srcDomain === 'RINKEBY-SLAVE-ARBITRUM-1') {
+      if (this.settings.useFakeArbitrumOutbox) return true
+      return await isArbitrumMessageInOutbox(
+        txHash,
+        this.dstDomain as ArbitrumDstDomainId,
+        this.srcDomainProvider,
+        this.dstDomainProvider,
+      )
+    }
+    return false
+  }
+
   public async mintWithoutOracles(sender: Signer, txHash: string, overrides?: Overrides): Promise<ContractTransaction> {
     const sender_ = sender.provider ? sender : sender.connect(this.dstDomainProvider)
 
@@ -189,6 +200,7 @@ export class WormholeBridge {
       return await relayArbitrumMessage(
         txHash,
         sender_,
+        this.dstDomain as ArbitrumDstDomainId,
         this.srcDomainProvider,
         this.settings.useFakeArbitrumOutbox,
         overrides,
