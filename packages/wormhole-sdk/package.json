@@ -17,7 +17,8 @@
     "test:fix": "yarn lint:fix && yarn format:fix && yarn test && yarn typecheck",
     "typecheck": "tsc --noEmit",
     "build": "rm -rf ./dist && tsc -p ./tsconfig.build.json",
-    "demo": "yarn ts-node ./scripts/demo.ts"
+    "demo:arbitrum": "yarn ts-node ./scripts/demo.arbitrum.ts | grep -v \"Duplicate definition of File\"",
+    "demo:optimism": "yarn ts-node ./scripts/demo.optimism.ts | grep -v \"Duplicate definition of File\""
   },
   "types": "dist/index.d.ts",
   "dependencies": {
@@ -31,11 +32,13 @@
     "@arbitrum/sdk": "^1.0.0",
     "@ethereum-waffle/chai": "^4.0.0-alpha.0",
     "@types/chai": "^4.3.0",
+    "@types/chai-as-promised": "^7.1.5",
     "@types/mocha": "^9.1.0",
     "@types/sinon-chai": "^3.2.8",
     "@typescript-eslint/eslint-plugin": "^5.14.0",
     "@typescript-eslint/parser": "^5.14.0",
     "chai": "^4.3.6",
+    "chai-as-promised": "^7.1.1",
     "dotenv": "^16.0.0",
     "eslint": "^8.11.0",
     "eslint-config-typestrict": "^1.0.2",

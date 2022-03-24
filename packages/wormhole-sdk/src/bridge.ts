@@ -1,10 +1,8 @@
 import { Provider } from '@ethersproject/abstract-provider'
-import axios from 'axios'
 import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrides, Signer, Wallet } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 
 import {
-  decodeWormholeData,
   DEFAULT_RPC_URLS,
   DomainId,
   getDefaultDstDomain,
@@ -12,22 +10,13 @@ import {
   getSdk,
   multicall,
   relayArbitrumMessage,
+  waitForAttestations,
   WormholeGUID,
 } from '.'
 
 const bytes32 = ethers.utils.formatBytes32String
-const ORACLE_API_URL = 'http://52.42.179.195:8080'
 const GET_FEE_METHOD_FRAGMENT =
   'function getFee((bytes32,bytes32,bytes32,bytes32,uint128,uint80,uint48),uint256,int256,uint256,uint256) view returns (uint256)'
-
-interface OracleData {
-  data: { event: string; hash: string }
-  signatures: {
-    ethereum: {
-      signature: string
-    }
-  }
-}
 
 interface AllBridgeSettings {
   useFakeArbitrumOutbox: boolean
@@ -87,37 +76,27 @@ export class WormholeBridge {
     })
   }
 
-  public async getAttestations(txHash: string): Promise<{
+  public async getAttestations(
+    txHash: string,
+    newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void,
+    timeoutMs?: number,
+    pollingIntervalMs: number = 2000,
+  ): Promise<{
     signatures: string
-    threshold: number
     wormholeGUID?: WormholeGUID
   }> {
     const sdk = getSdk(this.dstDomain, Wallet.createRandom().connect(this.dstDomainProvider))
-    const l2Bridge = sdk.WormholeOracleAuth!
-    const threshold = (await l2Bridge.threshold()).toNumber()
+    const oracleAuth = sdk.WormholeOracleAuth!
+    const threshold = (await oracleAuth.threshold()).toNumber()
 
-    const response = await axios.get(ORACLE_API_URL, {
-      params: {
-        type: 'wormhole',
-        index: txHash,
-      },
-    })
-
-    const results = response.data || []
-
-    const signatures = '0x' + results.map((oracle: OracleData) => oracle.signatures.ethereum.signature).join('')
-
-    let wormholeGUID = undefined
-    if (results.length > 0) {
-      const wormholeData = results[0].data.event.match(/.{64}/g).map((hex: string) => `0x${hex}`)
-      wormholeGUID = decodeWormholeData(wormholeData)
-    }
-
-    return {
-      signatures,
+    return await waitForAttestations(
+      txHash,
       threshold,
-      wormholeGUID,
-    }
+      oracleAuth.isValid,
+      pollingIntervalMs,
+      timeoutMs,
+      newSignatureReceivedCallback,
+    )
   }
 
   public async getAmountMintable(wormholeGUID: WormholeGUID): Promise<{
