@@ -5,14 +5,17 @@ import { Interface } from 'ethers/lib/utils'
 import {
   ArbitrumDstDomainId,
   DEFAULT_RPC_URLS,
+  DomainDescription,
   DomainId,
   getDefaultDstDomain,
   getGuidHash,
+  getLikelyDomainId,
   getSdk,
   isArbitrumMessageInOutbox,
   multicall,
   relayArbitrumMessage,
   waitForAttestations,
+  waitForRelay,
   WormholeGUID,
 } from '.'
 
@@ -27,7 +30,7 @@ interface AllBridgeSettings {
 export type BridgeSettings = Partial<AllBridgeSettings>
 
 export interface WormholeBridgeOpts {
-  srcDomain: DomainId
+  srcDomain: DomainDescription
   dstDomain?: DomainId
   srcDomainProvider?: Provider
   dstDomainProvider?: Provider
@@ -42,7 +45,7 @@ export class WormholeBridge {
   settings: AllBridgeSettings
 
   constructor({ srcDomain, dstDomain, srcDomainProvider, dstDomainProvider, settings }: WormholeBridgeOpts) {
-    this.srcDomain = srcDomain
+    this.srcDomain = getLikelyDomainId(srcDomain)
     this.dstDomain = dstDomain || getDefaultDstDomain(srcDomain)
     this.srcDomainProvider = srcDomainProvider || new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[this.srcDomain])
     this.dstDomainProvider = dstDomainProvider || new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[this.dstDomain])
@@ -76,6 +79,16 @@ export class WormholeBridge {
     return l2Bridge['initiateWormhole(bytes32,address,uint128)'](dstDomainBytes32, receiverAddress, amount, {
       ...overrides,
     })
+  }
+
+  public async initRelayedWormhole(
+    sender: Signer,
+    receiverAddress: string,
+    amount: BigNumberish,
+    overrides?: Overrides,
+  ): Promise<ContractTransaction> {
+    const dstDomainSdk = getSdk(this.dstDomain, Wallet.createRandom().connect(this.dstDomainProvider))
+    return await this.initWormhole(sender, receiverAddress, amount, dstDomainSdk.Relay!.address, overrides)
   }
 
   public async getAttestations(
@@ -180,6 +193,22 @@ export class WormholeBridge {
     const sdk = getSdk(this.dstDomain, sender_)
     const oracleAuth = sdk.WormholeOracleAuth!
     return oracleAuth.requestMint(wormholeGUID, signatures, maxFeePercentage || 0, operatorFee || 0, { ...overrides })
+  }
+
+  public async relayMintWithOracles(
+    receiver: Signer,
+    wormholeGUID: WormholeGUID,
+    signatures: string,
+    maxFeePercentage?: BigNumberish,
+    isHighPriority?: boolean,
+    expiry?: BigNumberish,
+  ): Promise<string> {
+    const l1Signer = Wallet.createRandom().connect(this.dstDomainProvider)
+    const sdk = getSdk(this.dstDomain, l1Signer)
+    if (!sdk.Relay) {
+      throw new Error(`relayMintWithOracles not yet supported on destination domain ${this.dstDomain}`)
+    }
+    return await waitForRelay(sdk.Relay, receiver, wormholeGUID, signatures, maxFeePercentage, isHighPriority, expiry)
   }
 
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {

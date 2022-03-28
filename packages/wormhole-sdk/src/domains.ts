@@ -2,7 +2,15 @@ import { providers, Signer } from 'ethers'
 import { Dictionary } from 'ts-essentials'
 
 import { getArbitrumTestnetSdk, getKovanSdk, getOptimismKovanSdk, getRinkebySdk } from './sdk'
-import { Faucet, Multicall, Vat, WormholeJoin, WormholeOracleAuth, WormholeOutboundGateway } from './sdk/esm/types'
+import {
+  Faucet,
+  Multicall,
+  Relay,
+  Vat,
+  WormholeJoin,
+  WormholeOracleAuth,
+  WormholeOutboundGateway,
+} from './sdk/esm/types'
 
 export interface WormholeSdk {
   WormholeOracleAuth?: WormholeOracleAuth
@@ -11,6 +19,7 @@ export interface WormholeSdk {
   Vat?: Vat
   Multicall?: Multicall
   Faucet?: Faucet
+  Relay?: Relay
 }
 
 export const DOMAINS = [
@@ -78,6 +87,7 @@ export function getSdk(domain: DomainDescription, signer: Signer): WormholeSdk {
     Vat: undefined,
     Multicall: undefined,
     Faucet: undefined,
+    Relay: undefined,
     ...sdk,
   }
 

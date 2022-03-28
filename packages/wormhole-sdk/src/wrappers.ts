@@ -33,6 +33,12 @@ export function initWormhole(opts: InitWormholeOpts & DomainContext): ReturnType
   )
 }
 
+export function initRelayedWormhole(
+  opts: Omit<InitWormholeOpts, 'operatorAddress'> & DomainContext,
+): ReturnType<WormholeBridge['initWormhole']> {
+  return getWormholeBridge(opts).initRelayedWormhole(opts.sender, opts.receiverAddress, opts.amount, opts.overrides)
+}
+
 export interface GetAttestationsOpts {
   txHash: string
   newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void
@@ -59,7 +65,7 @@ export function getAmountMintable(
   return getWormholeBridge(opts).getAmountMintable(opts.wormholeGUID)
 }
 
-export interface MintWithOracleOpts {
+export interface MintWithOraclesOpts {
   sender: Signer
   wormholeGUID: WormholeGUID
   signatures: string
@@ -69,7 +75,7 @@ export interface MintWithOracleOpts {
 }
 
 export function mintWithOracles(
-  opts: MintWithOracleOpts & DomainContext,
+  opts: MintWithOraclesOpts & DomainContext,
 ): ReturnType<WormholeBridge['mintWithOracles']> {
   return getWormholeBridge(opts).mintWithOracles(
     opts.sender,
@@ -78,6 +84,28 @@ export function mintWithOracles(
     opts.maxFeePercentage,
     opts.operatorFee,
     opts.overrides,
+  )
+}
+
+export interface RelayMintWithOraclesOpts {
+  receiver: Signer
+  wormholeGUID: WormholeGUID
+  signatures: string
+  maxFeePercentage?: BigNumberish
+  isHighPriority?: boolean
+  expiry?: BigNumberish
+}
+
+export function relayMintWithOracles(
+  opts: RelayMintWithOraclesOpts & DomainContext,
+): ReturnType<WormholeBridge['relayMintWithOracles']> {
+  return getWormholeBridge(opts).relayMintWithOracles(
+    opts.receiver,
+    opts.wormholeGUID,
+    opts.signatures,
+    opts.maxFeePercentage,
+    opts.isHighPriority,
+    opts.expiry,
   )
 }
 

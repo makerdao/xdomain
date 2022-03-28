@@ -19,9 +19,11 @@ import {
   getDefaultDstDomain,
   getLikelyDomainId,
   getWormholeBridge,
+  initRelayedWormhole,
   initWormhole,
   mintWithOracles,
   mintWithoutOracles,
+  relayMintWithOracles,
   WormholeBridge,
   WormholeGUID,
 } from '../src'
@@ -32,7 +34,7 @@ use(chaiAsPromised).use(waffleChai) // add support for expect() on ethers' BigNu
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 
 const WAD = parseEther('1.0')
-const amount = 1
+const amount = 3
 
 async function getTestWallets(srcDomainDescr: DomainDescription) {
   const srcDomain = getLikelyDomainId(srcDomainDescr)
@@ -72,22 +74,32 @@ describe('WormholeBridge', () => {
 
   async function testInitWormhole({
     srcDomain,
-    settings,
+    useRelay,
     useWrapper,
+    settings,
   }: {
     srcDomain: DomainDescription
-    settings?: BridgeSettings
+    useRelay?: boolean
     useWrapper?: boolean
+    settings?: BridgeSettings
   }) {
     const { l2User } = await getTestWallets(srcDomain)
 
     let tx: ContractTransaction
     let bridge: WormholeBridge | undefined
     if (useWrapper) {
-      tx = await initWormhole({ srcDomain, settings, sender: l2User, receiverAddress: l2User.address, amount })
+      if (useRelay) {
+        tx = await initRelayedWormhole({ srcDomain, settings, sender: l2User, receiverAddress: l2User.address, amount })
+      } else {
+        tx = await initWormhole({ srcDomain, settings, sender: l2User, receiverAddress: l2User.address, amount })
+      }
     } else {
-      bridge = getWormholeBridge({ srcDomain, settings })
-      tx = await bridge.initWormhole(l2User, l2User.address, 1)
+      bridge = new WormholeBridge({ srcDomain, settings })
+      if (useRelay) {
+        tx = await bridge.initRelayedWormhole(l2User, l2User.address, amount)
+      } else {
+        tx = await bridge.initWormhole(l2User, l2User.address, amount)
+      }
     }
     await tx.wait()
     return { txHash: tx.hash, bridge }
@@ -110,12 +122,14 @@ describe('WormholeBridge', () => {
 
   async function testGetAttestations({
     srcDomain,
+    useRelay,
     useWrapper,
     timeoutMs = 900000,
     txHash,
     wormholeGUID,
   }: {
     srcDomain: DomainDescription
+    useRelay?: boolean
     useWrapper?: boolean
     timeoutMs?: number
     txHash?: string
@@ -125,7 +139,7 @@ describe('WormholeBridge', () => {
     if (txHash) {
       bridge = getWormholeBridge({ srcDomain })
     } else {
-      ;({ bridge, txHash } = await testInitWormhole({ srcDomain, useWrapper }))
+      ;({ bridge, txHash } = await testInitWormhole({ srcDomain, useRelay, useWrapper }))
     }
 
     let signatures: string
@@ -214,12 +228,14 @@ describe('WormholeBridge', () => {
 
   async function testGetAmountMintable({
     srcDomain,
+    useRelay,
     useWrapper,
   }: {
     srcDomain: DomainDescription
+    useRelay?: boolean
     useWrapper?: boolean
   }) {
-    const { bridge, wormholeGUID } = await testGetAttestations({ srcDomain, useWrapper })
+    const { bridge, wormholeGUID } = await testGetAttestations({ srcDomain, useRelay, useWrapper })
 
     let res: Awaited<ReturnType<typeof getAmountMintable>>
     if (useWrapper) {
@@ -251,14 +267,16 @@ describe('WormholeBridge', () => {
 
   async function testMintWithOracles({
     srcDomain,
+    useRelay,
     useWrapper,
   }: {
     srcDomain: DomainDescription
+    useRelay?: boolean
     useWrapper?: boolean
   }) {
     const { l1User } = await getTestWallets(srcDomain)
 
-    const { bridge, wormholeGUID, signatures } = await testGetAttestations({ srcDomain, useWrapper })
+    const { bridge, wormholeGUID, signatures } = await testGetAttestations({ srcDomain, useRelay, useWrapper })
 
     let res: Awaited<ReturnType<typeof getAmountMintable>>
     if (useWrapper) {
@@ -269,6 +287,25 @@ describe('WormholeBridge', () => {
     const { mintable, fees } = res
 
     const maxFeePercentage = fees.mul(WAD).div(mintable)
+
+    if (useRelay) {
+      let txHash
+      if (useWrapper) {
+        txHash = await relayMintWithOracles({
+          srcDomain,
+          receiver: l1User,
+          wormholeGUID: wormholeGUID!,
+          signatures,
+          maxFeePercentage,
+        })
+      } else {
+        txHash = await bridge!.relayMintWithOracles(l1User, wormholeGUID!, signatures, maxFeePercentage)
+      }
+      expect(txHash)
+        .to.have.lengthOf(66)
+        .and.satisfy((h: string) => h.startsWith('0x'))
+      return
+    }
 
     let tx: ContractTransaction
     if (useWrapper) {
@@ -282,7 +319,6 @@ describe('WormholeBridge', () => {
     } else {
       tx = await bridge!.mintWithOracles(l1User, wormholeGUID!, signatures, maxFeePercentage)
     }
-
     await tx.wait()
   }
 
@@ -299,6 +335,16 @@ describe('WormholeBridge', () => {
   it('should mint with oracles (wrapper)', async () => {
     const srcDomain: DomainDescription = 'arbitrum-testnet'
     await testMintWithOracles({ srcDomain, useWrapper: true })
+  })
+
+  it('should relay a mint with oracles (rinkeby-arbitrum)', async () => {
+    const srcDomain: DomainDescription = 'arbitrum-testnet'
+    await testMintWithOracles({ srcDomain, useRelay: true })
+  })
+
+  it('should relay a mint with oracles (wrapper-arbitrum)', async () => {
+    const srcDomain: DomainDescription = 'arbitrum-testnet'
+    await testMintWithOracles({ srcDomain, useRelay: true, useWrapper: true })
   })
 
   async function testMintWithoutOracles({

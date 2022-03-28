@@ -24,6 +24,7 @@ export default defineConfig({
         Multicall: '0x86d3b107386756208154a5c9100a0d4557280747',
         FakeOutbox: '0x1a8fe93d3c07cc860fee5c1fe4dacbe1fade62f9',
         Outbox: '0x2360A33905dc1c72b12d975d975F42BaBdcef9F3',
+        Relay: '0x1908fcC97a16F9ED9C70d26c023A4fAd040e95A9',
       },
     },
     arbitrumTestnet: {
