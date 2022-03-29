@@ -17,6 +17,7 @@ import {
   getAttestations,
   getDefaultDstDomain,
   getLikelyDomainId,
+  getWormholeBridge,
   initWormhole,
   mintWithOracles,
   mintWithoutOracles,
@@ -84,7 +85,7 @@ describe('WormholeBridge', () => {
     if (useWrapper) {
       tx = await initWormhole({ srcDomain, settings, sender: l2User, receiverAddress: l2User.address, amount })
     } else {
-      bridge = new WormholeBridge({ srcDomain: srcDomain as DomainId, settings })
+      bridge = getWormholeBridge({ srcDomain, settings })
       tx = await bridge.initWormhole(l2User, l2User.address, 1)
     }
     await tx.wait()
@@ -110,33 +111,50 @@ describe('WormholeBridge', () => {
     srcDomain,
     useWrapper,
     timeoutMs = 300000,
+    txHash,
+    wormholeGUID,
   }: {
     srcDomain: DomainDescription
     useWrapper?: boolean
     timeoutMs?: number
+    txHash?: string
+    wormholeGUID?: WormholeGUID
   }) {
-    const { bridge, txHash } = await testInitWormhole({ srcDomain, useWrapper })
+    let bridge
+    if (txHash) {
+      bridge = getWormholeBridge({ srcDomain })
+    } else {
+      ;({ bridge, txHash } = await testInitWormhole({ srcDomain, useWrapper }))
+    }
 
     let signatures: string
-    let wormholeGUID: WormholeGUID | undefined
+    let guid: WormholeGUID | undefined
 
     const newSignatureReceivedCallback = (numSigs: number, threshold: number) =>
       console.log(`Signatures received: ${numSigs} (required: ${threshold}).`)
 
     console.log(`Requesting attestation for ${txHash} (timeout: ${timeoutMs}ms)`)
     if (useWrapper) {
-      ;({ signatures, wormholeGUID } = await getAttestations({
+      ;({ signatures, wormholeGUID: guid } = await getAttestations({
         txHash,
         srcDomain,
         timeoutMs,
         newSignatureReceivedCallback,
+        wormholeGUID,
       }))
     } else {
-      ;({ signatures, wormholeGUID } = await bridge!.getAttestations(txHash, newSignatureReceivedCallback, timeoutMs))
+      ;({ signatures, wormholeGUID: guid } = await bridge!.getAttestations(
+        txHash,
+        newSignatureReceivedCallback,
+        timeoutMs,
+        undefined,
+        wormholeGUID,
+      ))
     }
-    expect(wormholeGUID).to.not.be.undefined
+    expect(guid).to.not.be.undefined
+    expect(signatures).to.have.length.gt(2)
 
-    return { bridge, wormholeGUID, signatures }
+    return { bridge, wormholeGUID: guid, signatures }
   }
 
   it.skip('should produce attestations (kovan-optimism)', async () => {
@@ -152,6 +170,38 @@ describe('WormholeBridge', () => {
   it.skip('should produce attestations (wrapper)', async () => {
     const srcDomain: DomainDescription = 'arbitrum-testnet'
     await testGetAttestations({ srcDomain, useWrapper: true })
+  })
+
+  it('should produce attestations for a tx initiating multiple withdrawals (rinkeby-arbitrum, wrapper)', async () => {
+    // this L2 tx initiates two wormholes
+    const txHash = '0x21f3f5b78da6cc88e85377cfbaeb80a52da87b67c9d2bfb73a4a357afb7a82b0'
+    const srcDomain: DomainDescription = 'arbitrum-testnet'
+
+    // check that we can get attestation for the first wormhole
+    const wormholeGUID1 = {
+      sourceDomain: '0x52494e4b4542592d534c4156452d415242495452554d2d310000000000000000',
+      targetDomain: '0x52494e4b4542592d4d41535445522d3100000000000000000000000000000000',
+      receiver: '0x0000000000000000000000007c3a312068bacab339998367a7053e454ba0d4d8',
+      operator: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      amount: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      nonce: '0x000000000000000000000000000000000000000000000000000000000000014f',
+      timestamp: '0x000000000000000000000000000000000000000000000000000000006242e2c6',
+    }
+    const { wormholeGUID: guid } = await testGetAttestations({ srcDomain, txHash, wormholeGUID: wormholeGUID1 })
+    expect(guid).to.deep.equal(wormholeGUID1)
+
+    // check that we can get attestation for the second wormhole
+    const wormholeGUID2 = {
+      sourceDomain: '0x52494e4b4542592d534c4156452d415242495452554d2d310000000000000000',
+      targetDomain: '0x52494e4b4542592d4d41535445522d3100000000000000000000000000000000',
+      receiver: '0x0000000000000000000000007c3a312068bacab339998367a7053e454ba0d4d8',
+      operator: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      amount: '0x0000000000000000000000000000000000000000000000000000000000000001',
+      nonce: '0x0000000000000000000000000000000000000000000000000000000000000150',
+      timestamp: '0x000000000000000000000000000000000000000000000000000000006242e2c6',
+    }
+    const { wormholeGUID: guid2 } = await testGetAttestations({ srcDomain, txHash, wormholeGUID: wormholeGUID2 })
+    expect(guid2).to.deep.equal(wormholeGUID2)
   })
 
   it('should throw when attestations timeout (kovan-optimism)', async () => {
