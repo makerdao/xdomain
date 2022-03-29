@@ -15,14 +15,16 @@ interface OracleData {
   }
 }
 
+interface Attestation {
+  signatures: string
+  wormholeGUID: WormholeGUID
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-async function fetchAttestations(txHash: string): Promise<{
-  signatures: string
-  wormholeGUID?: WormholeGUID
-}> {
+async function fetchAttestations(txHash: string): Promise<Attestation[]> {
   const response = await axios.get(ORACLE_API_URL, {
     params: {
       type: 'wormhole',
@@ -30,20 +32,18 @@ async function fetchAttestations(txHash: string): Promise<{
     },
   })
 
-  const results = response.data || []
+  const results = (response.data || []) as OracleData[]
 
-  const signatures = '0x' + results.map((oracle: OracleData) => oracle.signatures.ethereum.signature).join('')
-
-  let wormholeGUID = undefined
-  if (results.length > 0) {
-    const wormholeData = results[0].data.event.match(/.{64}/g).map((hex: string) => `0x${hex}`)
-    wormholeGUID = decodeWormholeData(wormholeData)
+  const wormholes = new Map<string, Attestation>()
+  for (const oracle of results) {
+    const h = oracle.data.hash
+    if (!wormholes.has(h)) {
+      wormholes.set(h, { signatures: '0x', wormholeGUID: decodeWormholeData(oracle.data.event) })
+    }
+    wormholes.get(h)!.signatures += oracle.signatures.ethereum.signature
   }
 
-  return {
-    signatures,
-    wormholeGUID,
-  }
+  return Array.from(wormholes.values())
 }
 
 export async function waitForAttestations(
@@ -51,30 +51,36 @@ export async function waitForAttestations(
   threshold: number,
   isValidAttestation: WormholeOracleAuth['isValid'],
   pollingIntervalMs: number,
+  wormholeGUID?: WormholeGUID,
   timeoutMs?: number,
   newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void,
 ): Promise<{
   signatures: string
-  wormholeGUID?: WormholeGUID
+  wormholeGUID: WormholeGUID
 }> {
   let timeSlept = 0
   let signatures: string
-  let wormholeGUID: WormholeGUID | undefined
+  let guid: WormholeGUID | undefined
   let prevNumSigs: number | undefined
 
   while (true) {
-    ;({ signatures, wormholeGUID } = await fetchAttestations(txHash))
+    const attestations = await fetchAttestations(txHash)
+    const attestation = wormholeGUID
+      ? attestations.find((att: Attestation) => getGuidHash(att.wormholeGUID) === getGuidHash(wormholeGUID!))
+      : attestations[0]
+    ;({ signatures, wormholeGUID: guid } = attestation || { signatures: '0x' })
+
     const numSigs = (signatures.length - 2) / 130
 
     if (prevNumSigs === undefined || prevNumSigs! < numSigs) {
       newSignatureReceivedCallback?.(numSigs, threshold)
 
-      if (wormholeGUID && numSigs >= threshold) {
-        const guidHash = getGuidHash(wormholeGUID!)
+      if (guid && numSigs >= threshold) {
+        const guidHash = getGuidHash(guid!)
         const signHash = hashMessage(arrayify(guidHash))
         const valid = await isValidAttestation(signHash, signatures, threshold)
         if (!valid) {
-          console.error(`Some oracle signatures are invalid! ${JSON.stringify(wormholeGUID)} ${signatures}`)
+          console.error(`Some oracle signatures are invalid! ${JSON.stringify(guid)} ${signatures}`)
           // keep waiting for more valid signatures
         } else {
           break
@@ -95,6 +101,6 @@ export async function waitForAttestations(
 
   return {
     signatures,
-    wormholeGUID,
+    wormholeGUID: guid!,
   }
 }
