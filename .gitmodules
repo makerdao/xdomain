@@ -1,3 +1,3 @@
-[submodule "packages/dss/lib/ds-test"]
-	path = packages/dss/lib/ds-test
-	url = https://github.com/dapphub/ds-test
+[submodule "packages/dss/lib/dss-test"]
+	path = packages/dss/lib/dss-test
+	url = https://github.com/makerdao/dss-test
