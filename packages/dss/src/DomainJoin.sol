@@ -28,15 +28,20 @@ interface VatLike {
 
 interface DaiJoinLike {
     function vat() external view returns (VatLike);
+    function dai() external view returns (DaiLike);
+    function join(address usr, uint256 wad) external;
     function exit(address usr, uint256 wad) external;
+}
+
+interface DaiLike {
+    function transferFrom(address src, address dst, uint256 wad) external returns (bool);
 }
 
 interface GovernanceRelayLike {
     function invoke(address target, bytes calldata targetData) external;
 }
 
-// Extend a line of credit to domain
-
+/// @title Extend a line of credit to domain
 contract DomainJoin {
     // --- Data ---
     mapping (address => uint256) public wards;
@@ -48,6 +53,7 @@ contract DomainJoin {
 
     VatLike     public immutable vat;       // The local vat
     DaiJoinLike public immutable daiJoin;
+    DaiLike     public immutable dai;
     bytes32     public immutable ilk;
 
     uint256 constant RAY = 10 ** 27;
@@ -69,11 +75,18 @@ contract DomainJoin {
         
         daiJoin = DaiJoinLike(daiJoin_);
         vat = daiJoin.vat();
+        dai = daiJoin.dai();
         ilk = ilk_;
         
         vat.hope(address(daiJoin));
     }
 
+    // --- Math ---
+    function _int256(uint256 x) internal pure returns (int256 y) {
+        require((y = int256(x)) >= 0);
+    }
+
+    // --- Administration ---
     function rely(address usr) external auth {
         wards[usr] = 1;
         emit Rely(usr);
@@ -92,7 +105,10 @@ contract DomainJoin {
         emit File(what, data);
     }
 
-    // Set the global debt ceiling for the remote domain
+    /// @notice Set the global debt ceiling for the remote domain
+    ///
+    /// @dev Please note that pre-mint DAI cannot be removed from the remote domain
+    /// until the remote domain signals that it is safe to do so
     function lift(uint256 wad) external auth {
         uint256 rad = wad * RAY;
 
@@ -112,5 +128,17 @@ contract DomainJoin {
             "Line",
             rad
         ));
+    }
+
+    /// @notice Withdraw pre-mint DAI from the remote domain
+    ///
+    /// @dev Should only be triggered by remote domain when it is safe to do so
+    function release(uint256 wad) external auth {
+        int256 amt = -_int256(wad);
+
+        require(dai.transferFrom(escrow, address(this), wad), "DomainJoin/transfer-failed");
+        daiJoin.join(address(this), wad);
+        vat.frob(ilk, address(this), address(this), address(this), amt, amt);
+        vat.slip(ilk, address(this), amt);
     }
 }
