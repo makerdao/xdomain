@@ -1,0 +1,40 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "ABSTRACT",
+      "outputs": [
+        {
+          "internalType": "contract ChainlogAbstract",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ADDRESS",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x6080604052348015600f57600080fd5b5060a38061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c8063a92d49af146037578063b51ce63d146037575b600080fd5b605173da0ab1e0017debcd72be8599041a2aa3ba7e740f81565b6040516001600160a01b03909116815260200160405180910390f3fea2646970667358221220fd5adfcf9363dbb35f89e27e98c47d785ada5c0e0ba8bfb8fde5a78ca11549ff64736f6c634300080d0033",
+    "sourceMap": "1089:194:15:-:0;;;;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x6080604052348015600f57600080fd5b506004361060325760003560e01c8063a92d49af146037578063b51ce63d146037575b600080fd5b605173da0ab1e0017debcd72be8599041a2aa3ba7e740f81565b6040516001600160a01b03909116815260200160405180910390f3fea2646970667358221220fd5adfcf9363dbb35f89e27e98c47d785ada5c0e0ba8bfb8fde5a78ca11549ff64736f6c634300080d0033",
+    "sourceMap": "1089:194:15:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1211:69;;1163:42;1211:69;;;;;-1:-1:-1;;;;;203:32:68;;;185:51;;173:2;158:18;1211:69:15;;;;;;",
+    "linkReferences": {}
+  }
+}
