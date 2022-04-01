@@ -41,7 +41,7 @@ interface GovernanceRelayLike {
     function invoke(address target, bytes calldata targetData) external;
 }
 
-/// @title Extend a line of credit to domain
+/// @title Extend a line of credit to a domain
 contract DomainJoin {
     // --- Data ---
     mapping (address => uint256) public wards;
@@ -63,6 +63,7 @@ contract DomainJoin {
     event Deny(address indexed usr);
     event File(bytes32 indexed what, address data);
     event Lift(uint256 wad);
+    event Release(uint256 wad);
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainJoin/not-authorized");
@@ -128,6 +129,8 @@ contract DomainJoin {
             "Line",
             rad
         ));
+
+        emit Lift(wad);
     }
 
     /// @notice Withdraw pre-mint DAI from the remote domain
@@ -140,5 +143,7 @@ contract DomainJoin {
         daiJoin.join(address(this), wad);
         vat.frob(ilk, address(this), address(this), address(this), amt, amt);
         vat.slip(ilk, address(this), amt);
+
+        emit Release(wad);
     }
 }

@@ -26,7 +26,7 @@ import "../DomainJoin.sol";
 contract DomainJoinTest is DSSTest {
 
     function setupEnv() internal virtual override returns (MCD) {
-        return new MCD();
+        return autoDetectEnv();
     }
 
     function postSetup() internal virtual override {
