@@ -4,15 +4,15 @@ export default defineConfig({
   contracts: {
     kovan: {
       'KOVAN-MASTER-1': {
-        WormholeOracleAuth: '0xcEBe310e86d44a55EC6Be05e0c233B033979BC67',
-        WormholeJoin: '0x5B321180cC155a6fd38bc14a64205d1344317975',
+        WormholeOracleAuth: '0x0b0D629e294Af96A6cc245a89A5CEa92C8Be9da4',
+        WormholeJoin: '0x556D9076A42Bba1892E3F4cA331daE587185Cef9',
         Vat: '0xbA987bDB501d131f766fEe8180Da5d81b34b69d9',
         Multicall: '0xC6D81A2e375Eee15a20E6464b51c5FC6Bb949fdA',
       },
     },
     optimismKovan: {
       'KOVAN-SLAVE-OPTIMISM-1': {
-        WormholeOutboundGateway: '0x45440Ae4988965A4cD94651E715fC9A04e62Fb41', // L2DAIWormholeBridge
+        WormholeOutboundGateway: '0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0', // L2DaiWormholeGateway
         Faucet: '0xDB66c86899967A3D9E4D77D7d2Bb703747aAEeA7', // L2Dai Faucet
       },
     },
