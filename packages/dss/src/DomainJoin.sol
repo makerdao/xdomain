@@ -41,6 +41,10 @@ interface GovernanceRelayLike {
     function invoke(address target, bytes calldata targetData) external;
 }
 
+interface DomainManagerLike {
+    function lift(uint256 line, uint256 minted) external;
+}
+
 /// @title Extend a line of credit to a domain
 contract DomainJoin {
     // --- Data ---
@@ -48,10 +52,10 @@ contract DomainJoin {
 
     GovernanceRelayLike public bridge;  // The local governance bridge for this domain
     address             public escrow;  // The local escrow for this domain
-    address             public rvat;    // The remote vat
+    address             public mgr;     // The remote DomainManager
     uint256             public line;
 
-    VatLike     public immutable vat;       // The local vat
+    VatLike     public immutable vat;
     DaiJoinLike public immutable daiJoin;
     DaiLike     public immutable dai;
     bytes32     public immutable ilk;
@@ -101,7 +105,7 @@ contract DomainJoin {
     function file(bytes32 what, address data) external auth {
         if (what == "bridge") bridge = GovernanceRelayLike(data);
         else if (what == "escrow") escrow = data;
-        else if (what == "rvat") rvat = data;
+        else if (what == "mgr") mgr = data;
         else revert("DomainJoin/file-unrecognized-param");
         emit File(what, data);
     }
@@ -112,22 +116,23 @@ contract DomainJoin {
     /// until the remote domain signals that it is safe to do so
     function lift(uint256 wad) external auth {
         uint256 rad = wad * RAY;
+        uint256 minted;
 
         if (rad > line) {
             // We are issuing new pre-minted DAI
-            uint256 amt = (rad - line) / RAY;           // No precision loss as line is always a multiple of RAY
-            vat.slip(ilk, address(this), int256(amt));  // No need for conversion check as amt is under a RAY of full size
-            vat.frob(ilk, address(this), address(this), address(this), int256(amt), int256(amt));
-            daiJoin.exit(escrow, amt);
+            minted = (rad - line) / RAY;                    // No precision loss as line is always a multiple of RAY
+            vat.slip(ilk, address(this), int256(minted));   // No need for conversion check as amt is under a RAY of full size
+            vat.frob(ilk, address(this), address(this), address(this), int256(minted), int256(minted));
+            daiJoin.exit(escrow, minted);
         }
 
         line = rad;
 
         // TODO - deal with different gas designs
-        bridge.invoke(rvat, abi.encodeWithSelector(
-            VatLike.file.selector,
-            "Line",
-            rad
+        bridge.invoke(mgr, abi.encodeWithSelector(
+            DomainManagerLike.lift.selector,
+            rad,
+            minted
         ));
 
         emit Lift(wad);

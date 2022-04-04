@@ -20,7 +20,8 @@
 pragma solidity ^0.8.13;
 
 interface VatLike {
-    function hope(address usr) external;
+    function debt() external view returns (uint256);
+    function Line() external view returns (uint256);
     function file(bytes32 what, uint256 data) external;
 }
 
@@ -28,14 +29,19 @@ interface GovernanceRelayLike {
     function invoke(address target, bytes calldata targetData) external;
 }
 
+interface DomainJoinLike {
+    function release(uint256 burned) external;
+}
+
 /// @title Keeps track of local slave-instance dss values and relays messages to DomainJoin
 contract DomainManager {
     // --- Data ---
     mapping (address => uint256) public wards;
 
+    VatLike             public vat;
     GovernanceRelayLike public bridge;  // The local governance bridge for this domain
-
-    VatLike public immutable vat;
+    address             public join;    // The remote DomainJoin
+    uint256             public grain;   // Keep track of the pre-minted DAI in the remote escrow
 
     uint256 constant RAY = 10 ** 27;
 
@@ -49,11 +55,18 @@ contract DomainManager {
         _;
     }
 
-    constructor(address vat_) {
+    constructor() {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
-        
-        vat = VatLike(vat_);
+    }
+
+    // --- Math ---
+    function _min(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x <= y ? x : y;
+    }
+
+    function _divup(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = (x + y - 1) / y;
     }
 
     // --- Administration ---
@@ -68,20 +81,32 @@ contract DomainManager {
     }
 
     function file(bytes32 what, address data) external auth {
-        if (what == "bridge") bridge = GovernanceRelayLike(data);
+        if (what == "vat") vat = VatLike(data);
+        else if (what == "bridge") bridge = GovernanceRelayLike(data);
+        else if (what == "join") join = data;
         else revert("DomainManager/file-unrecognized-param");
         emit File(what, data);
     }
 
     /// @notice Set the global debt ceiling for the local dss
     /// @dev Should only be triggered from the DomainJoin
-    function lift(uint256 wad) external auth {
-        
+    function lift(uint256 line, uint256 minted) external auth {
+        vat.file("Line", line);
+        grain += minted;
     }
 
     /// @notice Will release remote DAI from the escrow when it is safe to do so.
     /// @dev Should be run by keeper on a regular schedule
-    function release(uint256 wad) external {
-        // TODO calculate difference between debt and debt ceiling and signal to L1
+    function release() external {
+        uint256 limit = _min(vat.Line() / RAY, _divup(vat.debt(), RAY));
+        require(grain > limit, "DomainManager/no-extra-to-release");
+        uint256 burned = grain - limit;
+        grain = limit;
+
+        // TODO - deal with different gas designs
+        bridge.invoke(join, abi.encodeWithSelector(
+            DomainJoinLike.release.selector,
+            burned
+        ));
     }
 }
