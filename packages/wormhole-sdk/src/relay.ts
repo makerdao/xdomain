@@ -7,6 +7,7 @@ import { Relay, RelayInterface } from '.dethcrypto/eth-sdk-client/esm/types/Rela
 
 const GELATO_API_URL = 'https://relay.gelato.digital'
 const ETHEREUM_DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f'
+const ESTIMATED_RELAY_GAS_LIMIT = '400000' // = 391174 + a small margin
 
 async function queryGelatoApi(url: string, method: 'get' | 'post', params?: Object): Promise<any> {
   try {
@@ -27,9 +28,12 @@ async function getRelayCalldata(
   wormholeGUID: WormholeGUID,
   signatures: string,
   gasFee: BigNumberish,
-  maxFeePercentage: BigNumberish,
-  expiry: BigNumberish,
+  maxFeePercentage?: BigNumberish,
+  expiry?: BigNumberish,
 ): Promise<string> {
+  maxFeePercentage ||= 0
+  expiry ||= Math.floor(Date.now() / 1000 + 3600)
+
   const guidHash = getGuidHash(wormholeGUID)
   const payload = keccak256(
     hexConcat([
@@ -91,12 +95,16 @@ async function waitForRelayTaskConfirmation(
 
 async function getRelayGasLimit(
   relay: Relay,
-  receiver: Signer,
-  wormholeGUID: WormholeGUID,
-  signatures: string,
-  maxFeePercentage: BigNumberish,
-  expiry: BigNumberish,
+  relayParams?: {
+    receiver: Signer
+    wormholeGUID: WormholeGUID
+    signatures: string
+    maxFeePercentage?: BigNumberish
+    expiry?: BigNumberish
+  },
 ): Promise<string> {
+  if (!relayParams) return ESTIMATED_RELAY_GAS_LIMIT
+  const { receiver, wormholeGUID, signatures, maxFeePercentage, expiry } = relayParams
   const relayData = await getRelayCalldata(
     relay.interface,
     receiver,
@@ -143,28 +151,33 @@ async function getRelayGasLimit(
       })
     ).toString()
   } catch (e) {
-    gasUsed = '400000'
+    gasUsed = ESTIMATED_RELAY_GAS_LIMIT
     console.error(e)
   }
   return gasUsed
 }
 
-async function getRelayFee(
+export async function getRelayGasFee(
   relay: Relay,
-  receiver: Signer,
-  wormholeGUID: WormholeGUID,
-  signatures: string,
-  maxFeePercentage: BigNumberish,
-  isHighPriority: boolean,
-  expiry: BigNumberish,
+  isHighPriority?: boolean,
+  relayParams?: {
+    receiver: Signer
+    wormholeGUID: WormholeGUID
+    signatures: string
+    maxFeePercentage?: BigNumberish
+    expiry?: BigNumberish
+  },
 ): Promise<string> {
+  isHighPriority ||= false
+
   const { oracles } = await queryGelatoApi(`oracles`, 'get')
   const { chainId } = await relay.provider.getNetwork()
   if (!oracles.includes(chainId.toString())) {
     return '1' // use 1 wei for the relay fee on testnets
   }
 
-  const gasLimit = await getRelayGasLimit(relay, receiver, wormholeGUID, signatures, maxFeePercentage, expiry)
+  const gasLimit = await getRelayGasLimit(relay, relayParams)
+
   const { estimatedFee } = await queryGelatoApi(`oracles/${chainId}/estimate`, 'get', {
     params: { paymentToken: ETHEREUM_DAI_ADDRESS, gasLimit, isHighPriority },
   })
@@ -176,26 +189,14 @@ export async function waitForRelay(
   receiver: Signer,
   wormholeGUID: WormholeGUID,
   signatures: string,
+  relayFee: BigNumberish,
   maxFeePercentage?: BigNumberish,
-  isHighPriority?: boolean,
   expiry?: BigNumberish,
   pollingIntervalMs?: number,
   timeoutMs?: number,
 ): Promise<string> {
-  maxFeePercentage ||= 0
-  isHighPriority ||= false
-  expiry ||= Math.floor(Date.now() / 1000 + 3600)
   pollingIntervalMs ||= 2000
 
-  const relayFee = await getRelayFee(
-    relay,
-    receiver,
-    wormholeGUID,
-    signatures,
-    maxFeePercentage,
-    isHighPriority,
-    expiry,
-  )
   if (BigNumber.from(wormholeGUID.amount).lt(relayFee)) {
     throw new Error(
       `Amount transferred (${formatEther(wormholeGUID.amount)} DAI) must be greater than relay fee (${formatEther(

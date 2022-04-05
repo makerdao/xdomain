@@ -19,6 +19,7 @@ import {
   getDefaultDstDomain,
   getLikelyDomainId,
   getWormholeBridge,
+  getRelayFee,
   initRelayedWormhole,
   initWormhole,
   mintWithOracles,
@@ -269,10 +270,12 @@ describe('WormholeBridge', () => {
     srcDomain,
     useRelay,
     useWrapper,
+    usePreciseRelayFeeEstimation,
   }: {
     srcDomain: DomainDescription
     useRelay?: boolean
     useWrapper?: boolean
+    usePreciseRelayFeeEstimation?: boolean
   }) {
     const { l1User } = await getTestWallets(srcDomain)
 
@@ -289,17 +292,23 @@ describe('WormholeBridge', () => {
     const maxFeePercentage = fees.mul(WAD).div(mintable)
 
     if (useRelay) {
+      const relayParams = usePreciseRelayFeeEstimation
+        ? { receiver: l1User, wormholeGUID: wormholeGUID!, signatures }
+        : undefined
       let txHash
       if (useWrapper) {
+        const relayFee = await getRelayFee({ srcDomain, relayParams })
         txHash = await relayMintWithOracles({
           srcDomain,
           receiver: l1User,
           wormholeGUID: wormholeGUID!,
           signatures,
+          relayFee,
           maxFeePercentage,
         })
       } else {
-        txHash = await bridge!.relayMintWithOracles(l1User, wormholeGUID!, signatures, maxFeePercentage)
+        const relayFee = await bridge!.getRelayFee(true, relayParams)
+        txHash = await bridge!.relayMintWithOracles(l1User, wormholeGUID!, signatures, relayFee, maxFeePercentage)
       }
       expect(txHash)
         .to.have.lengthOf(66)
@@ -337,7 +346,12 @@ describe('WormholeBridge', () => {
     await testMintWithOracles({ srcDomain, useWrapper: true })
   })
 
-  it('should relay a mint with oracles (rinkeby-arbitrum)', async () => {
+  it('should relay a mint with oracles (rinkeby-arbitrum, precise relayFee)', async () => {
+    const srcDomain: DomainDescription = 'arbitrum-testnet'
+    await testMintWithOracles({ srcDomain, useRelay: true, usePreciseRelayFeeEstimation: true })
+  })
+
+  it('should relay a mint with oracles (rinkeby-arbitrum, non-precise relayFee)', async () => {
     const srcDomain: DomainDescription = 'arbitrum-testnet'
     await testMintWithOracles({ srcDomain, useRelay: true })
   })

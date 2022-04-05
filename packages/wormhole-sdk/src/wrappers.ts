@@ -87,12 +87,27 @@ export function mintWithOracles(
   )
 }
 
+export interface GetRelayFeeOpts {
+  isHighPriority?: boolean
+  relayParams?: {
+    receiver: Signer
+    wormholeGUID: WormholeGUID
+    signatures: string
+    maxFeePercentage?: BigNumberish
+    expiry?: BigNumberish
+  }
+}
+
+export function getRelayFee(opts: GetRelayFeeOpts & DomainContext): ReturnType<WormholeBridge['getRelayFee']> {
+  return getWormholeBridge(opts).getRelayFee(opts.isHighPriority, opts.relayParams)
+}
+
 export interface RelayMintWithOraclesOpts {
   receiver: Signer
   wormholeGUID: WormholeGUID
   signatures: string
+  relayFee: BigNumberish
   maxFeePercentage?: BigNumberish
-  isHighPriority?: boolean
   expiry?: BigNumberish
 }
 
@@ -103,8 +118,8 @@ export function relayMintWithOracles(
     opts.receiver,
     opts.wormholeGUID,
     opts.signatures,
+    opts.relayFee,
     opts.maxFeePercentage,
-    opts.isHighPriority,
     opts.expiry,
   )
 }

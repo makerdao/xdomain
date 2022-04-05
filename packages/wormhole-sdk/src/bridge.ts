@@ -10,6 +10,7 @@ import {
   getDefaultDstDomain,
   getGuidHash,
   getLikelyDomainId,
+  getRelayGasFee,
   getSdk,
   isArbitrumMessageInOutbox,
   multicall,
@@ -195,12 +196,31 @@ export class WormholeBridge {
     return oracleAuth.requestMint(wormholeGUID, signatures, maxFeePercentage || 0, operatorFee || 0, { ...overrides })
   }
 
+  public async getRelayFee(
+    isHighPriority?: boolean,
+    relayParams?: {
+      receiver: Signer
+      wormholeGUID: WormholeGUID
+      signatures: string
+      maxFeePercentage?: BigNumberish
+      expiry?: BigNumberish
+    },
+  ): Promise<string> {
+    const l1Signer = Wallet.createRandom().connect(this.dstDomainProvider)
+    const sdk = getSdk(this.dstDomain, l1Signer)
+    if (!sdk.Relay) {
+      throw new Error(`getRelayFee not yet supported on destination domain ${this.dstDomain}`)
+    }
+
+    return await getRelayGasFee(sdk.Relay, isHighPriority, relayParams)
+  }
+
   public async relayMintWithOracles(
     receiver: Signer,
     wormholeGUID: WormholeGUID,
     signatures: string,
+    relayFee: BigNumberish,
     maxFeePercentage?: BigNumberish,
-    isHighPriority?: boolean,
     expiry?: BigNumberish,
   ): Promise<string> {
     const l1Signer = Wallet.createRandom().connect(this.dstDomainProvider)
@@ -208,7 +228,8 @@ export class WormholeBridge {
     if (!sdk.Relay) {
       throw new Error(`relayMintWithOracles not yet supported on destination domain ${this.dstDomain}`)
     }
-    return await waitForRelay(sdk.Relay, receiver, wormholeGUID, signatures, maxFeePercentage, isHighPriority, expiry)
+
+    return await waitForRelay(sdk.Relay, receiver, wormholeGUID, signatures, relayFee, maxFeePercentage, expiry)
   }
 
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {
