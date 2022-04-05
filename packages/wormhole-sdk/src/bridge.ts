@@ -1,6 +1,6 @@
 import { Provider } from '@ethersproject/abstract-provider'
-import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrides, Signer, Wallet } from 'ethers'
-import { Interface } from 'ethers/lib/utils'
+import { BigNumber, BigNumberish, ContractTransaction, ethers, Overrides, Signer, Wallet } from 'ethers'
+import { hexZeroPad } from 'ethers/lib/utils'
 
 import {
   ArbitrumDstDomainId,
@@ -8,12 +8,11 @@ import {
   DomainDescription,
   DomainId,
   getDefaultDstDomain,
-  getGuidHash,
+  getFeesAndMintableAmounts,
   getLikelyDomainId,
   getRelayGasFee,
   getSdk,
   isArbitrumMessageInOutbox,
-  multicall,
   relayArbitrumMessage,
   waitForAttestations,
   waitForRelay,
@@ -21,8 +20,6 @@ import {
 } from '.'
 
 const bytes32 = ethers.utils.formatBytes32String
-const GET_FEE_METHOD_FRAGMENT =
-  'function getFee((bytes32,bytes32,bytes32,bytes32,uint128,uint80,uint48),uint256,int256,uint256,uint256) view returns (uint256)'
 
 interface AllBridgeSettings {
   useFakeArbitrumOutbox: boolean
@@ -117,69 +114,50 @@ export class WormholeBridge {
     )
   }
 
-  public async getAmountMintable(wormholeGUID: WormholeGUID): Promise<{
+  public async getAmounts(
+    withdrawn: BigNumberish,
+    isHighPriority?: boolean,
+  ): Promise<{
+    mintable: BigNumber
+    bridgeFee: BigNumber
+    relayFee: BigNumber
+  }> {
+    const zero = hexZeroPad('0x', 32)
+    const amount = hexZeroPad(BigNumber.from(withdrawn).toHexString(), 32)
+    const { mintable, bridgeFee, relayFee } = await getFeesAndMintableAmounts(
+      this.srcDomain,
+      this.dstDomain,
+      this.dstDomainProvider,
+      { sourceDomain: zero, targetDomain: zero, receiver: zero, operator: zero, amount, nonce: zero, timestamp: zero },
+      isHighPriority,
+    )
+    return { mintable, bridgeFee, relayFee }
+  }
+
+  public async getAmountsForWormholeGUID(
+    wormholeGUID: WormholeGUID,
+    isHighPriority?: boolean,
+    relayParams?: {
+      receiver: Signer
+      wormholeGUID: WormholeGUID
+      signatures: string
+      maxFeePercentage?: BigNumberish
+      expiry?: BigNumberish
+    },
+  ): Promise<{
     pending: BigNumber
     mintable: BigNumber
-    fees: BigNumber
+    bridgeFee: BigNumber
+    relayFee: BigNumber
   }> {
-    const l1Signer = Wallet.createRandom().connect(this.dstDomainProvider)
-    const sdk = getSdk(this.dstDomain, l1Signer)
-    const join = sdk.WormholeJoin!
-
-    const guidHash = getGuidHash(wormholeGUID)
-
-    const [{ vatLive }, { blessed, pending: pendingInJoin }, { line }, { debt }, { feeAddress }] = await multicall(
-      sdk.Multicall!,
-      [
-        {
-          target: sdk.Vat!,
-          method: 'live',
-          outputTypes: ['uint256 vatLive'],
-        },
-        {
-          target: join,
-          method: 'wormholes',
-          params: [guidHash],
-          outputTypes: ['bool blessed', 'uint248 pending'],
-        },
-        {
-          target: join,
-          method: 'line',
-          params: [bytes32(this.srcDomain)],
-          outputTypes: ['uint256 line'],
-        },
-        {
-          target: join,
-          method: 'debt',
-          params: [bytes32(this.srcDomain)],
-          outputTypes: ['int256 debt'],
-        },
-        {
-          target: join,
-          method: 'fees',
-          params: [bytes32(this.srcDomain)],
-          outputTypes: ['address feeAddress'],
-        },
-      ],
+    return await getFeesAndMintableAmounts(
+      this.srcDomain,
+      this.dstDomain,
+      this.dstDomainProvider,
+      wormholeGUID,
+      isHighPriority,
+      relayParams,
     )
-
-    const pending = blessed ? pendingInJoin : ethers.BigNumber.from(wormholeGUID.amount)
-
-    if (vatLive.isZero()) {
-      return {
-        pending,
-        mintable: BigNumber.from(0),
-        fees: BigNumber.from(0),
-      }
-    }
-
-    const margin = line.sub(debt)
-    const mintable = margin.gte(pending) ? pending : margin
-
-    const feeContract = new Contract(feeAddress, new Interface([GET_FEE_METHOD_FRAGMENT]), l1Signer)
-    const fees = await feeContract.getFee(Object.values(wormholeGUID), line, debt, pending, mintable)
-
-    return { pending, mintable, fees }
   }
 
   public async mintWithOracles(

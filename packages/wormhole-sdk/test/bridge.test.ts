@@ -14,12 +14,12 @@ import {
   DEFAULT_RPC_URLS,
   DomainDescription,
   DomainId,
-  getAmountMintable,
+  getAmounts,
+  getAmountsForWormholeGUID,
   getAttestations,
   getDefaultDstDomain,
   getLikelyDomainId,
   getWormholeBridge,
-  getRelayFee,
   initRelayedWormhole,
   initWormhole,
   mintWithOracles,
@@ -227,7 +227,7 @@ describe('WormholeBridge', () => {
     )
   })
 
-  async function testGetAmountMintable({
+  async function testGetAmountsForWormholeGUID({
     srcDomain,
     useRelay,
     useWrapper,
@@ -238,32 +238,67 @@ describe('WormholeBridge', () => {
   }) {
     const { bridge, wormholeGUID } = await testGetAttestations({ srcDomain, useRelay, useWrapper })
 
-    let res: Awaited<ReturnType<typeof getAmountMintable>>
+    let res: Awaited<ReturnType<typeof getAmountsForWormholeGUID>>
     if (useWrapper) {
-      res = await getAmountMintable({ srcDomain, wormholeGUID: wormholeGUID! })
+      res = await getAmountsForWormholeGUID({ srcDomain, wormholeGUID: wormholeGUID! })
     } else {
-      res = await bridge!.getAmountMintable(wormholeGUID!)
+      res = await bridge!.getAmountsForWormholeGUID(wormholeGUID!)
     }
-    const { pending, mintable, fees } = res
+    const { pending, mintable, bridgeFee } = res
 
     expect(pending).to.eq(mintable)
     expect(pending).to.eq(wormholeGUID?.amount)
-    expect(fees).to.eq(0)
+    expect(bridgeFee).to.eq(0)
+    return res
   }
 
-  it('should return amount mintable (kovan-optimism)', async () => {
+  async function testGetAmounts({
+    srcDomain,
+    useWrapper,
+  }: {
+    srcDomain: DomainDescription
+    useRelay?: boolean
+    useWrapper?: boolean
+  }) {
+    let res: Awaited<ReturnType<typeof getAmounts>>
+    if (useWrapper) {
+      res = await getAmounts({ srcDomain, withdrawn: amount })
+    } else {
+      const bridge = new WormholeBridge({ srcDomain })
+      res = await bridge.getAmounts(amount)
+    }
+    const { mintable, bridgeFee, relayFee } = res
+
+    expect(mintable).to.be.gt(0)
+    expect(bridgeFee).to.eq(0)
+    expect(relayFee).to.eq(1)
+  }
+
+  it('should return fees and mintable amounts (kovan-optimism)', async () => {
     const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
-    await testGetAmountMintable({ srcDomain })
+    const { relayFee } = await testGetAmountsForWormholeGUID({ srcDomain })
+    expect(relayFee).to.eq(-1)
   })
 
-  it('should return amount mintable (rinkeby-arbitrum)', async () => {
+  it('should return fees and mintable amounts (rinkeby-arbitrum)', async () => {
     const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    await testGetAmountMintable({ srcDomain })
+    const { relayFee } = await testGetAmountsForWormholeGUID({ srcDomain })
+    expect(relayFee).to.be.eq(1)
+  })
+
+  it('should return fees and mintable amounts (rinkeby-arbitrum, no wormholeGUID)', async () => {
+    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
+    await testGetAmounts({ srcDomain })
+  })
+
+  it('should return fees and mintable amounts (wrapper, no wormholeGUID)', async () => {
+    const srcDomain: DomainDescription = 'arbitrum-testnet'
+    await testGetAmounts({ srcDomain, useWrapper: true })
   })
 
   it('should return amount mintable (wrapper)', async () => {
     const srcDomain: DomainDescription = 'optimism-testnet'
-    await testGetAmountMintable({ srcDomain, useWrapper: true })
+    await testGetAmountsForWormholeGUID({ srcDomain, useWrapper: true })
   })
 
   async function testMintWithOracles({
@@ -281,23 +316,23 @@ describe('WormholeBridge', () => {
 
     const { bridge, wormholeGUID, signatures } = await testGetAttestations({ srcDomain, useRelay, useWrapper })
 
-    let res: Awaited<ReturnType<typeof getAmountMintable>>
-    if (useWrapper) {
-      res = await getAmountMintable({ srcDomain, wormholeGUID: wormholeGUID! })
-    } else {
-      res = await bridge!.getAmountMintable(wormholeGUID!)
-    }
-    const { mintable, fees } = res
+    const relayParams = usePreciseRelayFeeEstimation
+      ? { receiver: l1User, wormholeGUID: wormholeGUID!, signatures }
+      : undefined
 
-    const maxFeePercentage = fees.mul(WAD).div(mintable)
+    let res: Awaited<ReturnType<typeof getAmountsForWormholeGUID>>
+    if (useWrapper) {
+      res = await getAmountsForWormholeGUID({ srcDomain, wormholeGUID: wormholeGUID!, relayParams })
+    } else {
+      res = await bridge!.getAmountsForWormholeGUID(wormholeGUID!, undefined, relayParams)
+    }
+    const { mintable, bridgeFee, relayFee } = res
+
+    const maxFeePercentage = bridgeFee.mul(WAD).div(mintable)
 
     if (useRelay) {
-      const relayParams = usePreciseRelayFeeEstimation
-        ? { receiver: l1User, wormholeGUID: wormholeGUID!, signatures }
-        : undefined
       let txHash
       if (useWrapper) {
-        const relayFee = await getRelayFee({ srcDomain, relayParams })
         txHash = await relayMintWithOracles({
           srcDomain,
           receiver: l1User,
@@ -307,7 +342,6 @@ describe('WormholeBridge', () => {
           maxFeePercentage,
         })
       } else {
-        const relayFee = await bridge!.getRelayFee(true, relayParams)
         txHash = await bridge!.relayMintWithOracles(l1User, wormholeGUID!, signatures, relayFee, maxFeePercentage)
       }
       expect(txHash)

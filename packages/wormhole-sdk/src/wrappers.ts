@@ -59,10 +59,26 @@ export function getAttestations(
   )
 }
 
-export function getAmountMintable(
-  opts: { wormholeGUID: WormholeGUID } & DomainContext,
-): ReturnType<WormholeBridge['getAmountMintable']> {
-  return getWormholeBridge(opts).getAmountMintable(opts.wormholeGUID)
+export function getAmountsForWormholeGUID(
+  opts: {
+    wormholeGUID: WormholeGUID
+    isHighPriority?: boolean
+    relayParams?: {
+      receiver: Signer
+      wormholeGUID: WormholeGUID
+      signatures: string
+      maxFeePercentage?: BigNumberish
+      expiry?: BigNumberish
+    }
+  } & DomainContext,
+): ReturnType<WormholeBridge['getAmountsForWormholeGUID']> {
+  return getWormholeBridge(opts).getAmountsForWormholeGUID(opts.wormholeGUID, opts.isHighPriority, opts.relayParams)
+}
+
+export function getAmounts(
+  opts: { withdrawn: BigNumberish; isHighPriority?: boolean } & DomainContext,
+): ReturnType<WormholeBridge['getAmounts']> {
+  return getWormholeBridge(opts).getAmounts(opts.withdrawn, opts.isHighPriority)
 }
 
 export interface MintWithOraclesOpts {
@@ -85,21 +101,6 @@ export function mintWithOracles(
     opts.operatorFee,
     opts.overrides,
   )
-}
-
-export interface GetRelayFeeOpts {
-  isHighPriority?: boolean
-  relayParams?: {
-    receiver: Signer
-    wormholeGUID: WormholeGUID
-    signatures: string
-    maxFeePercentage?: BigNumberish
-    expiry?: BigNumberish
-  }
-}
-
-export function getRelayFee(opts: GetRelayFeeOpts & DomainContext): ReturnType<WormholeBridge['getRelayFee']> {
-  return getWormholeBridge(opts).getRelayFee(opts.isHighPriority, opts.relayParams)
 }
 
 export interface RelayMintWithOraclesOpts {
