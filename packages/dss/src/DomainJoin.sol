@@ -151,4 +151,9 @@ contract DomainJoin {
 
         emit Release(wad);
     }
+
+    /// @notice Initiate cage for this domain
+    function cage() external auth {
+        // TODO
+    }
 }

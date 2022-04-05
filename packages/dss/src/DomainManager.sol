@@ -23,6 +23,20 @@ interface VatLike {
     function debt() external view returns (uint256);
     function Line() external view returns (uint256);
     function file(bytes32 what, uint256 data) external;
+    function dai(address usr) external view returns (uint256);
+    function sin(address usr) external view returns (uint256);
+    function heal(uint256 rad) external;
+}
+
+interface DaiJoinLike {
+    function vat() external view returns (VatLike);
+    function dai() external view returns (DaiLike);
+    function join(address usr, uint256 wad) external;
+    function exit(address usr, uint256 wad) external;
+}
+
+interface DaiLike {
+    function transferFrom(address src, address dst, uint256 wad) external returns (bool);
 }
 
 interface GovernanceRelayLike {
@@ -33,15 +47,26 @@ interface DomainJoinLike {
     function release(uint256 burned) external;
 }
 
+interface TokenBridgeLike {
+    function withdrawTo(
+        address _l2Token,
+        address _to,
+        uint256 _amount
+    ) external;
+}
+
 /// @title Keeps track of local slave-instance dss values and relays messages to DomainJoin
 contract DomainManager {
     // --- Data ---
     mapping (address => uint256) public wards;
 
     VatLike             public vat;
-    GovernanceRelayLike public bridge;  // The local governance bridge for this domain
-    address             public join;    // The remote DomainJoin
-    uint256             public grain;   // Keep track of the pre-minted DAI in the remote escrow
+    GovernanceRelayLike public govBridge;   // The local governance bridge for this domain
+    TokenBridgeLike     public daiBridge;   // The local dai bridge for this domain
+    address             public join;        // The remote DomainJoin
+    DaiJoinLike         public daiJoin;     // The local DaiJoin
+    address             public dai;         // The local Dai
+    uint256             public grain;       // Keep track of the pre-minted DAI in the remote escrow
 
     uint256 constant RAY = 10 ** 27;
 
@@ -84,6 +109,8 @@ contract DomainManager {
         if (what == "vat") vat = VatLike(data);
         else if (what == "bridge") bridge = GovernanceRelayLike(data);
         else if (what == "join") join = data;
+        else if (what == "daiJoin") daiJoin = DaiJoinLike(data);
+        else if (what == "dai") dai = data;
         else revert("DomainManager/file-unrecognized-param");
         emit File(what, data);
     }
@@ -95,7 +122,7 @@ contract DomainManager {
         grain += minted;
     }
 
-    /// @notice Will release remote DAI from the escrow when it is safe to do so.
+    /// @notice Will release remote DAI from the escrow when it is safe to do so
     /// @dev Should be run by keeper on a regular schedule
     function release() external {
         uint256 limit = _min(vat.Line() / RAY, _divup(vat.debt(), RAY));
@@ -104,9 +131,27 @@ contract DomainManager {
         grain = limit;
 
         // TODO - deal with different gas designs
-        bridge.invoke(join, abi.encodeWithSelector(
+        govBridge.invoke(join, abi.encodeWithSelector(
             DomainJoinLike.release.selector,
             burned
         ));
+    }
+
+    /// @notice Push surplus (or deficit) to the master dss
+    /// @dev Should be run by keeper on a regular schedule
+    function push() external {
+        uint256 dai = vat.dai(address(this));
+        uint256 sin = vat.sin(address(this));
+        if (dai > sin) {
+            // We have a surplus
+            vat.heal(sin);
+
+            // TODO - Send any extra DAI to the remote surplus buffer
+        } else if (dai < sin) {
+            // We have a deficit
+            vat.heal(dai);
+
+            // TODO - send message to L1 to suck dai from surplus buffer and send to this escrow
+        }
     }
 }
