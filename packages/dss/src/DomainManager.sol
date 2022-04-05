@@ -39,50 +39,36 @@ interface DaiLike {
     function transferFrom(address src, address dst, uint256 wad) external returns (bool);
 }
 
-interface GovernanceRelayLike {
-    function invoke(address target, bytes calldata targetData) external;
-}
-
-interface DomainJoinLike {
-    function release(uint256 burned) external;
-}
-
-interface TokenBridgeLike {
-    function withdrawTo(
-        address _l2Token,
-        address _to,
-        uint256 _amount
-    ) external;
-}
-
 /// @title Keeps track of local slave-instance dss values and relays messages to DomainJoin
-contract DomainManager {
+abstract contract DomainManager {
+    
     // --- Data ---
     mapping (address => uint256) public wards;
 
-    VatLike             public vat;
-    GovernanceRelayLike public govBridge;   // The local governance bridge for this domain
-    TokenBridgeLike     public daiBridge;   // The local dai bridge for this domain
-    address             public join;        // The remote DomainJoin
-    DaiJoinLike         public daiJoin;     // The local DaiJoin
-    address             public dai;         // The local Dai
-    uint256             public grain;       // Keep track of the pre-minted DAI in the remote escrow
+    VatLike     public immutable vat;
+    DaiJoinLike public immutable daiJoin;
+    DaiLike     public immutable dai;
+
+    uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow
 
     uint256 constant RAY = 10 ** 27;
 
     // --- Events ---
     event Rely(address indexed usr);
     event Deny(address indexed usr);
-    event File(bytes32 indexed what, address data);
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainManager/not-authorized");
         _;
     }
 
-    constructor() {
+    constructor(address _daiJoin) {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
+
+        daiJoin = DaiJoinLike(_daiJoin);
+        vat = daiJoin.vat();
+        dai = daiJoin.dai();
     }
 
     // --- Math ---
@@ -105,16 +91,6 @@ contract DomainManager {
         emit Deny(usr);
     }
 
-    function file(bytes32 what, address data) external auth {
-        if (what == "vat") vat = VatLike(data);
-        else if (what == "bridge") bridge = GovernanceRelayLike(data);
-        else if (what == "join") join = data;
-        else if (what == "daiJoin") daiJoin = DaiJoinLike(data);
-        else if (what == "dai") dai = data;
-        else revert("DomainManager/file-unrecognized-param");
-        emit File(what, data);
-    }
-
     /// @notice Set the global debt ceiling for the local dss
     /// @dev Should only be triggered from the DomainJoin
     function lift(uint256 line, uint256 minted) external auth {
@@ -130,11 +106,7 @@ contract DomainManager {
         uint256 burned = grain - limit;
         grain = limit;
 
-        // TODO - deal with different gas designs
-        govBridge.invoke(join, abi.encodeWithSelector(
-            DomainJoinLike.release.selector,
-            burned
-        ));
+        _release(burned);
     }
 
     /// @notice Push surplus (or deficit) to the master dss
@@ -146,12 +118,20 @@ contract DomainManager {
             // We have a surplus
             vat.heal(sin);
 
-            // TODO - Send any extra DAI to the remote surplus buffer
+            uint256 wad = (dai - sin) / RAY;    // Leave the dust
+            daiJoin.exit(address(this), wad);
+            _surplus(wad);
         } else if (dai < sin) {
             // We have a deficit
             vat.heal(dai);
 
-            // TODO - send message to L1 to suck dai from surplus buffer and send to this escrow
+            _deficit(_divup(dai - sin, RAY));   // Round up to overcharge for deficit
         }
     }
+
+    // Bridge-specific functions
+    function _release(uint256 burned) internal virtual;
+    function _surplus(uint256 wad) internal virtual;
+    function _deficit(uint256 wad) internal virtual;
+    
 }

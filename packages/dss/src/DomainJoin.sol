@@ -37,51 +37,43 @@ interface DaiLike {
     function transferFrom(address src, address dst, uint256 wad) external returns (bool);
 }
 
-interface GovernanceRelayLike {
-    function invoke(address target, bytes calldata targetData) external;
-}
-
-interface DomainManagerLike {
-    function lift(uint256 line, uint256 minted) external;
-}
-
 /// @title Extend a line of credit to a domain
-contract DomainJoin {
+abstract contract DomainJoin {
+
     // --- Data ---
     mapping (address => uint256) public wards;
 
-    GovernanceRelayLike public bridge;  // The local governance bridge for this domain
-    address             public escrow;  // The local escrow for this domain
-    address             public mgr;     // The remote DomainManager
-    uint256             public line;
-
+    bytes32     public immutable ilk;
     VatLike     public immutable vat;
     DaiJoinLike public immutable daiJoin;
     DaiLike     public immutable dai;
-    bytes32     public immutable ilk;
+    address     public immutable escrow;
+
+    uint256 public line;
 
     uint256 constant RAY = 10 ** 27;
 
     // --- Events ---
     event Rely(address indexed usr);
     event Deny(address indexed usr);
-    event File(bytes32 indexed what, address data);
     event Lift(uint256 wad);
     event Release(uint256 wad);
+    event Cage();
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainJoin/not-authorized");
         _;
     }
 
-    constructor(address daiJoin_, bytes32 ilk_) {
+    constructor(bytes32 _ilk, address _daiJoin, address _escrow) {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
         
-        daiJoin = DaiJoinLike(daiJoin_);
+        ilk = _ilk;
+        daiJoin = DaiJoinLike(_daiJoin);
         vat = daiJoin.vat();
         dai = daiJoin.dai();
-        ilk = ilk_;
+        escrow = _escrow;
         
         vat.hope(address(daiJoin));
     }
@@ -102,14 +94,6 @@ contract DomainJoin {
         emit Deny(usr);
     }
 
-    function file(bytes32 what, address data) external auth {
-        if (what == "bridge") bridge = GovernanceRelayLike(data);
-        else if (what == "escrow") escrow = data;
-        else if (what == "mgr") mgr = data;
-        else revert("DomainJoin/file-unrecognized-param");
-        emit File(what, data);
-    }
-
     /// @notice Set the global debt ceiling for the remote domain
     ///
     /// @dev Please note that pre-mint DAI cannot be removed from the remote domain
@@ -128,12 +112,7 @@ contract DomainJoin {
 
         line = rad;
 
-        // TODO - deal with different gas designs
-        bridge.invoke(mgr, abi.encodeWithSelector(
-            DomainManagerLike.lift.selector,
-            rad,
-            minted
-        ));
+        _lift(rad, minted);
 
         emit Lift(wad);
     }
@@ -155,5 +134,13 @@ contract DomainJoin {
     /// @notice Initiate cage for this domain
     function cage() external auth {
         // TODO
+        _cage();
+
+        emit Cage();
     }
+
+    // Bridge-specific functions
+    function _lift(uint256 line, uint256 minted) internal virtual;
+    function _cage() internal virtual;
+
 }
