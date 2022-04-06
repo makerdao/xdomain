@@ -112,21 +112,25 @@ abstract contract DomainManager {
     /// @notice Push surplus (or deficit) to the master dss
     /// @dev Should be run by keeper on a regular schedule
     function push() external {
-        uint256 dai = vat.dai(address(this));
-        uint256 sin = vat.sin(address(this));
-        if (dai > sin) {
+        uint256 _dai = vat.dai(address(this));
+        uint256 _sin = vat.sin(address(this));
+        if (_dai > _sin) {
             // We have a surplus
-            vat.heal(sin);
+            vat.heal(_sin);
 
-            uint256 wad = (dai - sin) / RAY;    // Leave the dust
+            uint256 wad = (_dai - _sin) / RAY;    // Leave the dust
             daiJoin.exit(address(this), wad);
             _surplus(wad);
-        } else if (dai < sin) {
+        } else if (_dai < _sin) {
             // We have a deficit
-            vat.heal(dai);
+            vat.heal(_dai);
 
-            _deficit(_divup(dai - sin, RAY));   // Round up to overcharge for deficit
+            _deficit(_divup(_dai - _sin, RAY));   // Round up to overcharge for deficit
         }
+    }
+
+    function cage() external {
+        // TODO
     }
 
     // Bridge-specific functions

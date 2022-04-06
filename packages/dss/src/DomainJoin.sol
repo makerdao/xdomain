@@ -24,6 +24,7 @@ interface VatLike {
     function file(bytes32 what, uint256 data) external;
     function slip(bytes32 ilk, address usr, int256 wad) external;
     function frob(bytes32 i, address u, address v, address w, int dink, int dart) external;
+    function suck(address u, address v, uint256 rad) external;
 }
 
 interface DaiJoinLike {
@@ -50,14 +51,18 @@ abstract contract DomainJoin {
     address     public immutable escrow;
 
     uint256 public line;
+    address public vow;
 
     uint256 constant RAY = 10 ** 27;
 
     // --- Events ---
     event Rely(address indexed usr);
     event Deny(address indexed usr);
+    event File(bytes32 indexed what, address data);
     event Lift(uint256 wad);
     event Release(uint256 wad);
+    event Surplus(uint256 wad);
+    event Deficit(uint256 wad);
     event Cage();
 
     modifier auth {
@@ -92,6 +97,12 @@ abstract contract DomainJoin {
     function deny(address usr) external auth {
         wards[usr] = 0;
         emit Deny(usr);
+    }
+
+    function file(bytes32 what, address data) external auth {
+        if (what == "vow") vow = data;
+        else revert("DomainJoin/file-unrecognized-param");
+        emit File(what, data);
     }
 
     /// @notice Set the global debt ceiling for the remote domain
@@ -131,6 +142,29 @@ abstract contract DomainJoin {
         emit Release(wad);
     }
 
+    /// @notice Send DAI to surplus buffer
+    ///
+    /// @dev Should only be triggered by remote domain
+    function surplus(uint256 wad) external auth {
+        require(dai.transferFrom(escrow, address(this), wad), "DomainJoin/transfer-failed");
+        daiJoin.join(address(vow), wad);
+
+        emit Surplus(wad);
+    }
+
+    /// @notice Cover the remote domain's deficit by pulling debt from the surplus buffer
+    ///
+    /// @dev Should only be triggered by remote domain
+    function deficit(uint256 wad) external auth {
+        vat.suck(vow, address(this), wad * RAY);
+        daiJoin.exit(escrow, wad);
+        
+        // Need to signal to the remote domain that new DAI is ready to mint
+        _rectify(wad);
+
+        emit Deficit(wad);
+    }
+
     /// @notice Initiate cage for this domain
     function cage() external auth {
         // TODO
@@ -141,6 +175,7 @@ abstract contract DomainJoin {
 
     // Bridge-specific functions
     function _lift(uint256 line, uint256 minted) internal virtual;
+    function _rectify(uint256 wad) internal virtual;
     function _cage() internal virtual;
 
 }
