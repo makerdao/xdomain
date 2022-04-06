@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-/// DomainJoin.sol -- xdomain join adapter
+/// DomainGuest.sol -- xdomain guest dss manager
 
 // Copyright (C) 2022 Dai Foundation
 //
@@ -40,8 +40,8 @@ interface DaiLike {
     function transferFrom(address src, address dst, uint256 wad) external returns (bool);
 }
 
-/// @title Keeps track of local slave-instance dss values and relays messages to DomainJoin
-abstract contract DomainManager {
+/// @title Keeps track of local guest instance dss values and relays messages to DomainHost
+abstract contract DomainGuest {
     
     // --- Data ---
     mapping (address => uint256) public wards;
@@ -64,7 +64,7 @@ abstract contract DomainManager {
     event Cage();
 
     modifier auth {
-        require(wards[msg.sender] == 1, "DomainManager/not-authorized");
+        require(wards[msg.sender] == 1, "DomainGuest/not-authorized");
         _;
     }
 
@@ -98,7 +98,7 @@ abstract contract DomainManager {
     }
 
     /// @notice Set the global debt ceiling for the local dss
-    /// @dev Should only be triggered from the DomainJoin
+    /// @dev Should only be triggered from the DomainHost
     function lift(uint256 line, uint256 minted) external auth {
         vat.file("Line", line);
         grain += minted;
@@ -110,7 +110,7 @@ abstract contract DomainManager {
     /// @dev Should be run by keeper on a regular schedule
     function release() external {
         uint256 limit = _min(vat.Line() / RAY, _divup(vat.debt(), RAY));
-        require(grain > limit, "DomainManager/no-extra-to-release");
+        require(grain > limit, "DomainGuest/no-extra-to-release");
         uint256 burned = grain - limit;
         grain = limit;
 
@@ -119,9 +119,10 @@ abstract contract DomainManager {
         emit Release();
     }
 
-    /// @notice Push surplus (or deficit) to the master dss
+    /// @notice Push surplus (or deficit) to the host dss
     /// @dev Should be run by keeper on a regular schedule
     function push() external {
+        // TODO do we want some minimum value to trigger this to give a local buffer?
         uint256 _dai = vat.dai(address(this));
         uint256 _sin = vat.sin(address(this));
         if (_dai > _sin) {
@@ -130,6 +131,8 @@ abstract contract DomainManager {
 
             uint256 wad = (_dai - _sin) / RAY;    // Leave the dust
             daiJoin.exit(address(this), wad);
+
+            // Send ERC20 DAI to the remote DomainHost
             _surplus(wad);
         } else if (_dai < _sin) {
             // We have a deficit

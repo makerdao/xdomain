@@ -21,9 +21,9 @@ pragma solidity ^0.8.13;
 
 import "dss-test/DSSTest.sol";
 
-import "../DomainJoin.sol";
+import "../DomainHost.sol";
 
-contract DomainJoinTest is DSSTest {
+contract DomainHostTest is DSSTest {
 
     function setupEnv() internal virtual override returns (MCD) {
         return autoDetectEnv();

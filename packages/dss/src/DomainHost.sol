@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-/// DomainJoin.sol -- xdomain join adapter
+/// DomainHost.sol -- xdomain host dss credit faciility
 
 // Copyright (C) 2022 Dai Foundation
 //
@@ -35,11 +35,12 @@ interface DaiJoinLike {
 }
 
 interface DaiLike {
+    function balanceOf(address usr) external view returns (uint256);
     function transferFrom(address src, address dst, uint256 wad) external returns (bool);
 }
 
 /// @title Extend a line of credit to a domain
-abstract contract DomainJoin {
+abstract contract DomainHost {
 
     // --- Data ---
     mapping (address => uint256) public wards;
@@ -61,12 +62,12 @@ abstract contract DomainJoin {
     event File(bytes32 indexed what, address data);
     event Lift(uint256 wad);
     event Release(uint256 wad);
-    event Surplus(uint256 wad);
+    event Surplus();
     event Deficit(uint256 wad);
     event Cage();
 
     modifier auth {
-        require(wards[msg.sender] == 1, "DomainJoin/not-authorized");
+        require(wards[msg.sender] == 1, "DomainHost/not-authorized");
         _;
     }
 
@@ -101,7 +102,7 @@ abstract contract DomainJoin {
 
     function file(bytes32 what, address data) external auth {
         if (what == "vow") vow = data;
-        else revert("DomainJoin/file-unrecognized-param");
+        else revert("DomainHost/file-unrecognized-param");
         emit File(what, data);
     }
 
@@ -134,7 +135,7 @@ abstract contract DomainJoin {
     function release(uint256 wad) external auth {
         int256 amt = -_int256(wad);
 
-        require(dai.transferFrom(escrow, address(this), wad), "DomainJoin/transfer-failed");
+        require(dai.transferFrom(escrow, address(this), wad), "DomainHost/transfer-failed");
         daiJoin.join(address(this), wad);
         vat.frob(ilk, address(this), address(this), address(this), amt, amt);
         vat.slip(ilk, address(this), amt);
@@ -142,14 +143,11 @@ abstract contract DomainJoin {
         emit Release(wad);
     }
 
-    /// @notice Send DAI to surplus buffer
-    ///
-    /// @dev Should only be triggered by remote domain
-    function surplus(uint256 wad) external auth {
-        require(dai.transferFrom(escrow, address(this), wad), "DomainJoin/transfer-failed");
-        daiJoin.join(address(vow), wad);
+    /// @notice Send any DAI in the contract to the surplus buffer
+    function surplus() external {
+        daiJoin.join(address(vow), dai.balanceOf(address(this)));
 
-        emit Surplus(wad);
+        emit Surplus();
     }
 
     /// @notice Cover the remote domain's deficit by pulling debt from the surplus buffer
@@ -159,7 +157,7 @@ abstract contract DomainJoin {
         vat.suck(vow, address(this), wad * RAY);
         daiJoin.exit(address(this), wad);
         
-        // Send ERC20 DAI to the remote DomainManager
+        // Send ERC20 DAI to the remote DomainGuest
         _rectify(wad);
 
         emit Deficit(wad);
