@@ -64,13 +64,11 @@ describe('WormholeBridge', () => {
   }
 
   it('should auto-fill default RPC URLs and dstDomain (kovan-optimism)', () => {
-    const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
-    testDefaults(srcDomain)
+    testDefaults('KOVAN-SLAVE-OPTIMISM-1')
   })
 
   it('should auto-fill default RPC URLs and dstDomain (rinkeby-arbitrum)', () => {
-    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    testDefaults(srcDomain)
+    testDefaults('RINKEBY-SLAVE-ARBITRUM-1')
   })
 
   async function testInitWormhole({
@@ -107,18 +105,15 @@ describe('WormholeBridge', () => {
   }
 
   it.skip('should initiate withdrawal (kovan-optimism)', async () => {
-    const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
-    await testInitWormhole({ srcDomain })
+    await testInitWormhole({ srcDomain: 'optimism-testnet' })
   })
 
   it.skip('should initiate withdrawal (rinkeby-arbitrum)', async () => {
-    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    await testInitWormhole({ srcDomain })
+    await testInitWormhole({ srcDomain: 'arbitrum-testnet' })
   })
 
-  it.skip('should initiate withdrawal (wrapper)', async () => {
-    const srcDomain: DomainDescription = 'arbitrum-testnet'
-    await testInitWormhole({ srcDomain, useWrapper: true })
+  it.skip('should initiate withdrawal (rinkeby-arbitrum, wrapper)', async () => {
+    await testInitWormhole({ srcDomain: 'arbitrum-testnet', useWrapper: true })
   })
 
   async function testGetAttestations({
@@ -174,18 +169,15 @@ describe('WormholeBridge', () => {
   }
 
   it.skip('should produce attestations (kovan-optimism)', async () => {
-    const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
-    await testGetAttestations({ srcDomain })
+    await testGetAttestations({ srcDomain: 'optimism-testnet' })
   })
 
   it.skip('should produce attestations (rinkeby-arbitrum)', async () => {
-    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    await testGetAttestations({ srcDomain })
+    await testGetAttestations({ srcDomain: 'arbitrum-testnet' })
   })
 
-  it.skip('should produce attestations (wrapper)', async () => {
-    const srcDomain: DomainDescription = 'arbitrum-testnet'
-    await testGetAttestations({ srcDomain, useWrapper: true })
+  it.skip('should produce attestations (rinkeby-arbitrum, wrapper)', async () => {
+    await testGetAttestations({ srcDomain: 'arbitrum-testnet', useWrapper: true })
   })
 
   it('should produce attestations for a tx initiating multiple withdrawals (rinkeby-arbitrum, wrapper)', async () => {
@@ -221,8 +213,7 @@ describe('WormholeBridge', () => {
   })
 
   it('should throw when attestations timeout (kovan-optimism)', async () => {
-    const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
-    await expect(testGetAttestations({ srcDomain, timeoutMs: 1 })).to.be.rejectedWith(
+    await expect(testGetAttestations({ srcDomain: 'optimism-testnet', timeoutMs: 1 })).to.be.rejectedWith(
       'Did not receive required number of signatures',
     )
   })
@@ -244,12 +235,12 @@ describe('WormholeBridge', () => {
     } else {
       res = await bridge!.getAmountsForWormholeGUID(wormholeGUID!)
     }
-    const { pending, mintable, bridgeFee } = res
+    const { pending, mintable, bridgeFee, relayFee } = res
 
     expect(pending).to.eq(mintable)
     expect(pending).to.eq(wormholeGUID?.amount)
     expect(bridgeFee).to.eq(0)
-    return res
+    expect(relayFee).to.be.eq(1)
   }
 
   async function testGetAmounts({
@@ -274,31 +265,20 @@ describe('WormholeBridge', () => {
     expect(relayFee).to.eq(1)
   }
 
-  it('should return fees and mintable amounts (kovan-optimism)', async () => {
-    const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
-    const { relayFee } = await testGetAmountsForWormholeGUID({ srcDomain })
-    expect(relayFee).to.eq(-1)
+  it('should return fees and mintable amounts (kovan-optimism, with wormholeGUID)', async () => {
+    await testGetAmountsForWormholeGUID({ srcDomain: 'optimism-testnet' })
   })
 
-  it('should return fees and mintable amounts (rinkeby-arbitrum)', async () => {
-    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    const { relayFee } = await testGetAmountsForWormholeGUID({ srcDomain })
-    expect(relayFee).to.be.eq(1)
+  it('should return fees and mintable amounts (kovan-optimism, wrapper, with wormholeGUID)', async () => {
+    await testGetAmountsForWormholeGUID({ srcDomain: 'optimism-testnet', useWrapper: true })
   })
 
-  it('should return fees and mintable amounts (rinkeby-arbitrum, no wormholeGUID)', async () => {
-    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    await testGetAmounts({ srcDomain })
+  it('should return fees and mintable amounts (rinkeby-arbitrum, without wormholeGUID)', async () => {
+    await testGetAmounts({ srcDomain: 'arbitrum-testnet' })
   })
 
-  it('should return fees and mintable amounts (wrapper, no wormholeGUID)', async () => {
-    const srcDomain: DomainDescription = 'arbitrum-testnet'
-    await testGetAmounts({ srcDomain, useWrapper: true })
-  })
-
-  it('should return amount mintable (wrapper)', async () => {
-    const srcDomain: DomainDescription = 'optimism-testnet'
-    await testGetAmountsForWormholeGUID({ srcDomain, useWrapper: true })
+  it('should return fees and mintable amounts (rinkeby-arbitrum, wrapper, without wormholeGUID)', async () => {
+    await testGetAmounts({ srcDomain: 'arbitrum-testnet', useWrapper: true })
   })
 
   async function testMintWithOracles({
@@ -365,34 +345,44 @@ describe('WormholeBridge', () => {
     await tx.wait()
   }
 
+  // direct mints
+
   it('should mint with oracles (kovan-optimism)', async () => {
-    const srcDomain: DomainId = 'KOVAN-SLAVE-OPTIMISM-1'
-    await testMintWithOracles({ srcDomain })
+    await testMintWithOracles({ srcDomain: 'optimism-testnet' })
   })
 
   it('should mint with oracles (rinkeby-arbitrum)', async () => {
-    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    await testMintWithOracles({ srcDomain })
+    await testMintWithOracles({ srcDomain: 'arbitrum-testnet' })
   })
 
-  it('should mint with oracles (wrapper)', async () => {
-    const srcDomain: DomainDescription = 'arbitrum-testnet'
-    await testMintWithOracles({ srcDomain, useWrapper: true })
+  it('should mint with oracles (rinkeby-arbitrum, wrapper)', async () => {
+    await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useWrapper: true })
   })
+
+  // relayed mints
 
   it('should relay a mint with oracles (rinkeby-arbitrum, precise relayFee)', async () => {
-    const srcDomain: DomainDescription = 'arbitrum-testnet'
-    await testMintWithOracles({ srcDomain, useRelay: true, usePreciseRelayFeeEstimation: true })
+    await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay: true, usePreciseRelayFeeEstimation: true })
   })
 
   it('should relay a mint with oracles (rinkeby-arbitrum, non-precise relayFee)', async () => {
-    const srcDomain: DomainDescription = 'arbitrum-testnet'
-    await testMintWithOracles({ srcDomain, useRelay: true })
+    await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay: true })
   })
 
-  it('should relay a mint with oracles (wrapper-arbitrum)', async () => {
-    const srcDomain: DomainDescription = 'arbitrum-testnet'
-    await testMintWithOracles({ srcDomain, useRelay: true, useWrapper: true })
+  it('should relay a mint with oracles (rinkeby-arbitrum, wrapper, non-precise relayFee)', async () => {
+    await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay: true, useWrapper: true })
+  })
+
+  it('should relay a mint with oracles (kovan-optimism, precise relayFee)', async () => {
+    await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay: true, usePreciseRelayFeeEstimation: true })
+  })
+
+  it('should relay a mint with oracles (kovan-optimism, non-precise relayFee)', async () => {
+    await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay: true })
+  })
+
+  it('should relay a mint with oracles (kovan-optimism, wrapper, non-precise relayFee)', async () => {
+    await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay: true, useWrapper: true })
   })
 
   async function testMintWithoutOracles({
@@ -433,22 +423,26 @@ describe('WormholeBridge', () => {
   }
 
   it('should mint without oracles (fake outbox, rinkeby-arbitrum)', async () => {
-    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    await testMintWithoutOracles({ srcDomain, settings: { useFakeArbitrumOutbox: true } })
+    await testMintWithoutOracles({ srcDomain: 'arbitrum-testnet', settings: { useFakeArbitrumOutbox: true } })
   })
 
-  it('should mint without oracles (fake outbox, wrapper)', async () => {
-    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    await testMintWithoutOracles({ srcDomain, settings: { useFakeArbitrumOutbox: true }, useWrapper: true })
+  it('should mint without oracles (fake outbox, rinkeby-arbitrum, wrapper)', async () => {
+    await testMintWithoutOracles({
+      srcDomain: 'arbitrum-testnet',
+      settings: { useFakeArbitrumOutbox: true },
+      useWrapper: true,
+    })
   })
 
   it('should not allow minting without oracles before end of security period (real outbox, rinkeby-arbitrum)', async () => {
-    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    await testMintWithoutOracles({ srcDomain, settings: { useFakeArbitrumOutbox: false } })
+    await testMintWithoutOracles({ srcDomain: 'arbitrum-testnet', settings: { useFakeArbitrumOutbox: false } })
   })
 
-  it('should not allow minting without oracles before end of security period (real outbox, wrapper)', async () => {
-    const srcDomain: DomainId = 'RINKEBY-SLAVE-ARBITRUM-1'
-    await testMintWithoutOracles({ srcDomain, settings: { useFakeArbitrumOutbox: false }, useWrapper: true })
+  it('should not allow minting without oracles before end of security period (real outbox, rinkeby-arbitrum, wrapper)', async () => {
+    await testMintWithoutOracles({
+      srcDomain: 'arbitrum-testnet',
+      settings: { useFakeArbitrumOutbox: false },
+      useWrapper: true,
+    })
   })
 })

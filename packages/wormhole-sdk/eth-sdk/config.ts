@@ -8,6 +8,7 @@ export default defineConfig({
         WormholeJoin: '0x556D9076A42Bba1892E3F4cA331daE587185Cef9',
         Vat: '0xbA987bDB501d131f766fEe8180Da5d81b34b69d9',
         Multicall: '0xC6D81A2e375Eee15a20E6464b51c5FC6Bb949fdA',
+        Relay: '0x5B3363996Bd8164F07315faAf3F96B72D192382c',
       },
     },
     optimismKovan: {
