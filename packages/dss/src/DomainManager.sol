@@ -36,6 +36,7 @@ interface DaiJoinLike {
 }
 
 interface DaiLike {
+    function balanceOf(address usr) external view returns (uint256);
     function transferFrom(address src, address dst, uint256 wad) external returns (bool);
 }
 
@@ -56,6 +57,11 @@ abstract contract DomainManager {
     // --- Events ---
     event Rely(address indexed usr);
     event Deny(address indexed usr);
+    event Lift(uint256 line, uint256 minted);
+    event Release();
+    event Push();
+    event Rectify();
+    event Cage();
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainManager/not-authorized");
@@ -96,6 +102,8 @@ abstract contract DomainManager {
     function lift(uint256 line, uint256 minted) external auth {
         vat.file("Line", line);
         grain += minted;
+
+        emit Lift(line, minted);
     }
 
     /// @notice Will release remote DAI from the escrow when it is safe to do so
@@ -107,6 +115,8 @@ abstract contract DomainManager {
         grain = limit;
 
         _release(burned);
+
+        emit Release();
     }
 
     /// @notice Push surplus (or deficit) to the master dss
@@ -127,10 +137,21 @@ abstract contract DomainManager {
 
             _deficit(_divup(_dai - _sin, RAY));   // Round up to overcharge for deficit
         }
+
+        emit Push();
+    }
+
+    /// @notice Merge ERC20 DAI into surplus
+    function rectify() external {
+        daiJoin.join(address(this), dai.balanceOf(address(this)));
+
+        emit Rectify();
     }
 
     function cage() external {
-        // TODO
+        // TODO need to gracefully shutdown
+
+        emit Cage();
     }
 
     // Bridge-specific functions

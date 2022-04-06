@@ -157,9 +157,9 @@ abstract contract DomainJoin {
     /// @dev Should only be triggered by remote domain
     function deficit(uint256 wad) external auth {
         vat.suck(vow, address(this), wad * RAY);
-        daiJoin.exit(escrow, wad);
+        daiJoin.exit(address(this), wad);
         
-        // Need to signal to the remote domain that new DAI is ready to mint
+        // Send ERC20 DAI to the remote DomainManager
         _rectify(wad);
 
         emit Deficit(wad);
