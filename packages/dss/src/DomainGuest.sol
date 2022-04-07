@@ -28,6 +28,11 @@ interface VatLike {
     function heal(uint256 rad) external;
 }
 
+interface DaiLike {
+    function balanceOf(address usr) external view returns (uint256);
+    function transferFrom(address src, address dst, uint256 wad) external returns (bool);
+}
+
 interface DaiJoinLike {
     function vat() external view returns (VatLike);
     function dai() external view returns (DaiLike);
@@ -35,9 +40,8 @@ interface DaiJoinLike {
     function exit(address usr, uint256 wad) external;
 }
 
-interface DaiLike {
-    function balanceOf(address usr) external view returns (uint256);
-    function transferFrom(address src, address dst, uint256 wad) external returns (bool);
+interface EndLike {
+    function cage() external;
 }
 
 /// @title Keeps track of local guest instance dss values and relays messages to DomainHost
@@ -50,6 +54,7 @@ abstract contract DomainGuest {
     DaiJoinLike public immutable daiJoin;
     DaiLike     public immutable dai;
 
+    EndLike public end;
     uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow
 
     uint256 constant RAY = 10 ** 27;
@@ -57,6 +62,7 @@ abstract contract DomainGuest {
     // --- Events ---
     event Rely(address indexed usr);
     event Deny(address indexed usr);
+    event File(bytes32 indexed what, address data);
     event Lift(uint256 line, uint256 minted);
     event Release();
     event Push();
@@ -95,6 +101,12 @@ abstract contract DomainGuest {
     function deny(address usr) external auth {
         wards[usr] = 0;
         emit Deny(usr);
+    }
+
+    function file(bytes32 what, address data) external auth {
+        if (what == "end") end = data;
+        else revert("DomainGuest/file-unrecognized-param");
+        emit File(what, data);
     }
 
     /// @notice Set the global debt ceiling for the local dss
@@ -152,7 +164,9 @@ abstract contract DomainGuest {
     }
 
     function cage() external {
-        // TODO need to gracefully shutdown
+        end.cage();
+
+        // TODO need to relay the cure value after some settlement period
 
         emit Cage();
     }

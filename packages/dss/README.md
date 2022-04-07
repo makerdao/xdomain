@@ -38,6 +38,6 @@ This will trigger a call to `DomainHost.deficit(uint256 wad)`.
 
 ### `DomainHost.cage()`
 
-Trigger shutdown of the remote domain.
+Trigger shutdown of the remote domain. This will initiate an `end.cage()`. If you want to gracefully shutdown over a longer period you should call `DomainHost.lift(0)` to prevent new minting.
 
 This will trigger a call to `DomainGuest.cage()`.

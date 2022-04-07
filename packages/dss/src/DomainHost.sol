@@ -53,6 +53,7 @@ abstract contract DomainHost {
 
     uint256 public line;
     address public vow;
+    uint256 public cure;
 
     uint256 constant RAY = 10 ** 27;
 
@@ -65,6 +66,7 @@ abstract contract DomainHost {
     event Surplus();
     event Deficit(uint256 wad);
     event Cage();
+    event Tell(uint256 value);
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainHost/not-authorized");
@@ -107,7 +109,6 @@ abstract contract DomainHost {
     }
 
     /// @notice Set the global debt ceiling for the remote domain
-    ///
     /// @dev Please note that pre-mint DAI cannot be removed from the remote domain
     /// until the remote domain signals that it is safe to do so
     function lift(uint256 wad) external auth {
@@ -130,7 +131,6 @@ abstract contract DomainHost {
     }
 
     /// @notice Withdraw pre-mint DAI from the remote domain
-    ///
     /// @dev Should only be triggered by remote domain when it is safe to do so
     function release(uint256 wad) external auth {
         int256 amt = -_int256(wad);
@@ -151,7 +151,6 @@ abstract contract DomainHost {
     }
 
     /// @notice Cover the remote domain's deficit by pulling debt from the surplus buffer
-    ///
     /// @dev Should only be triggered by remote domain
     function deficit(uint256 wad) external auth {
         vat.suck(vow, address(this), wad * RAY);
@@ -163,12 +162,20 @@ abstract contract DomainHost {
         emit Deficit(wad);
     }
 
-    /// @notice Initiate cage for this domain
+    /// @notice Initiate shutdown for this domain
+    /// @dev This will trigger the end module on the remote domain
     function cage() external auth {
-        // TODO
         _cage();
 
         emit Cage();
+    }
+
+    /// @notice Set this domain's cure value
+    /// @dev Should only be triggered by remote domain
+    function tell(uint256 value) external auth {
+        cure = value;
+
+        emit Tell(value);
     }
 
     // Bridge-specific functions

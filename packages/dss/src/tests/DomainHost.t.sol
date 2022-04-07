@@ -21,16 +21,34 @@ pragma solidity ^0.8.13;
 
 import "dss-test/DSSTest.sol";
 
-import "../DomainHost.sol";
+import { DaiJoinMock } from "./mocks/DaiJoinMock.sol";
+import { DaiMock } from "./mocks/DaiMock.sol";
+import { EscrowMock } from "./mocks/EscrowMock.sol";
+import { VatMock } from "./mocks/VatMock.sol";
+import { DomainHost } from "../DomainHost.sol";
 
 contract DomainHostTest is DSSTest {
+
+    VatMock vat;
+    DaiJoinMock daiJoin;
+    DaiMock dai;
+    EscrowMock escrow;
+
+    DomainHost host;
 
     function setupEnv() internal virtual override returns (MCD) {
         return autoDetectEnv();
     }
 
     function postSetup() internal virtual override {
+        vat = new VatMock();
+        dai = new DaiMock();
+        daiJoin = new DaiJoinMock(address(vat), address(dai));
+        escrow = new EscrowMock();
 
+        host = new DomainHost(address(vat), address(dai), address(escrow));
+
+        escrow.approve(address(dai), address(host), type(uint256).max);
     }
 
     function testFail_basic_sanity() public {
