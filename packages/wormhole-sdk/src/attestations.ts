@@ -65,6 +65,10 @@ export async function waitForAttestations(
 
   while (true) {
     const attestations = await fetchAttestations(txHash)
+    if (attestations.length > 1 && !wormholeGUID) {
+      throw new Error('Ambiguous wormholeGUID: more than one wormhole found in tx but no wormholeGUID specified')
+    }
+
     const attestation = wormholeGUID
       ? attestations.find((att: Attestation) => getGuidHash(att.wormholeGUID) === getGuidHash(wormholeGUID!))
       : attestations[0]
