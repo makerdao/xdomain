@@ -40,18 +40,18 @@ export async function demo(
   ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
   console.log(`Withdrawing ${formatEther(amount)} DAI on ${srcDomain} ...`)
   const initTx = await initWormhole({ srcDomain, sender, receiverAddress: sender.address, amount })
-  console.log(`Withdrawal tx submitted: ${srcDomainEtherscan}${initTx.hash}`)
-  await initTx.wait()
+  console.log(`Withdrawal tx submitted: ${srcDomainEtherscan}${initTx.tx!.hash}`)
+  await initTx.tx!.wait()
   console.log(`Withdrawal tx confirmed.\n`)
 
   // ***********************************************/
   // ***********  getAttestations ******************/
   // ***********************************************/
 
-  console.log(`Requesting attestation for ${initTx.hash} ...`)
+  console.log(`Requesting attestation for ${initTx.tx!.hash} ...`)
 
   const { signatures, wormholeGUID } = await getAttestations({
-    txHash: initTx.hash,
+    txHash: initTx.tx!.hash,
     srcDomain,
     newSignatureReceivedCallback: (numSigs: number, threshold: number) =>
       console.log(`Signatures received: ${numSigs} (required: ${threshold}).`),
@@ -78,9 +78,9 @@ export async function demo(
     signatures,
     maxFeePercentage,
   })
-  console.log(`Minting tx submitted: ${dstDomainEtherscan}${mintTx.hash}`)
+  console.log(`Minting tx submitted: ${dstDomainEtherscan}${mintTx.tx!.hash}`)
 
-  await mintTx.wait()
+  await mintTx.tx!.wait()
   console.log(`Minting tx confirmed.\n`)
 
   const { mintable: mintableAfter, pending: pendingAfter } = await getAmountsForWormholeGUID({
