@@ -16,19 +16,19 @@ export function getWormholeBridge(opts: DomainContext): WormholeBridge {
 }
 
 export interface InitWormholeOpts {
-  sender: Signer
   receiverAddress: string
   amount: BigNumberish
   operatorAddress?: string
+  sender?: Signer
   overrides?: Overrides
 }
 
 export function initWormhole(opts: InitWormholeOpts & DomainContext): ReturnType<WormholeBridge['initWormhole']> {
   return getWormholeBridge(opts).initWormhole(
-    opts.sender,
     opts.receiverAddress,
     opts.amount,
     opts.operatorAddress,
+    opts.sender,
     opts.overrides,
   )
 }
@@ -36,7 +36,7 @@ export function initWormhole(opts: InitWormholeOpts & DomainContext): ReturnType
 export function initRelayedWormhole(
   opts: Omit<InitWormholeOpts, 'operatorAddress'> & DomainContext,
 ): ReturnType<WormholeBridge['initWormhole']> {
-  return getWormholeBridge(opts).initRelayedWormhole(opts.sender, opts.receiverAddress, opts.amount, opts.overrides)
+  return getWormholeBridge(opts).initRelayedWormhole(opts.receiverAddress, opts.amount, opts.sender, opts.overrides)
 }
 
 export interface GetAttestationsOpts {
@@ -82,11 +82,11 @@ export function getAmounts(
 }
 
 export interface MintWithOraclesOpts {
-  sender: Signer
   wormholeGUID: WormholeGUID
   signatures: string
   maxFeePercentage?: BigNumberish
   operatorFee?: BigNumberish
+  sender?: Signer
   overrides?: Overrides
 }
 
@@ -94,11 +94,11 @@ export function mintWithOracles(
   opts: MintWithOraclesOpts & DomainContext,
 ): ReturnType<WormholeBridge['mintWithOracles']> {
   return getWormholeBridge(opts).mintWithOracles(
-    opts.sender,
     opts.wormholeGUID,
     opts.signatures,
     opts.maxFeePercentage,
     opts.operatorFee,
+    opts.sender,
     opts.overrides,
   )
 }
@@ -139,6 +139,6 @@ export interface MintWithoutOracleOpts {
 
 export function mintWithoutOracles(
   opts: MintWithoutOracleOpts & DomainContext,
-): ReturnType<WormholeBridge['mintWithOracles']> {
+): ReturnType<WormholeBridge['mintWithoutOracles']> {
   return getWormholeBridge(opts).mintWithoutOracles(opts.sender, opts.txHash, opts.overrides)
 }

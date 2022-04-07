@@ -1,5 +1,5 @@
 import { Provider } from '@ethersproject/abstract-provider'
-import { BigNumber, BigNumberish, ContractTransaction, ethers, Overrides, Signer, Wallet } from 'ethers'
+import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrides, Signer, Wallet } from 'ethers'
 import { hexZeroPad } from 'ethers/lib/utils'
 
 import {
@@ -27,6 +27,12 @@ interface AllBridgeSettings {
 
 export type BridgeSettings = Partial<AllBridgeSettings>
 
+export interface Call {
+  tx?: ContractTransaction
+  to: string
+  data: string
+}
+
 export interface WormholeBridgeOpts {
   srcDomain: DomainDescription
   dstDomain?: DomainId
@@ -51,13 +57,30 @@ export class WormholeBridge {
     this.settings = { useFakeArbitrumOutbox: false, ...settings }
   }
 
+  private async _optionallySendTx(
+    shouldSendTx: boolean,
+    contract: Contract,
+    method: string,
+    data: any[],
+    overrides?: Overrides,
+  ): Promise<Call> {
+    return {
+      tx: shouldSendTx ? await contract[method](...data, { ...overrides }) : undefined,
+      to: contract.address,
+      data: contract.interface.encodeFunctionData(method, data),
+    }
+  }
+
   public async initWormhole(
-    sender: Signer,
     receiverAddress: string,
     amount: BigNumberish,
     operatorAddress?: string,
+    sender?: Signer,
     overrides?: Overrides,
-  ): Promise<ContractTransaction> {
+  ): Promise<Call> {
+    const shouldSendTx = Boolean(sender)
+    sender ||= Wallet.createRandom().connect(this.srcDomainProvider)
+
     const dstDomainBytes32 = bytes32(this.dstDomain)
     const sender_ = sender.provider ? sender : sender.connect(this.srcDomainProvider)
 
@@ -65,28 +88,32 @@ export class WormholeBridge {
     const l2Bridge = sdk.WormholeOutboundGateway!
 
     if (operatorAddress) {
-      return l2Bridge['initiateWormhole(bytes32,address,uint128,address)'](
-        dstDomainBytes32,
-        receiverAddress,
-        amount,
-        operatorAddress,
-        { ...overrides },
+      return await this._optionallySendTx(
+        shouldSendTx,
+        l2Bridge,
+        'initiateWormhole(bytes32,address,uint128,address)',
+        [dstDomainBytes32, receiverAddress, amount, operatorAddress],
+        overrides,
       )
     }
 
-    return l2Bridge['initiateWormhole(bytes32,address,uint128)'](dstDomainBytes32, receiverAddress, amount, {
-      ...overrides,
-    })
+    return await this._optionallySendTx(
+      shouldSendTx,
+      l2Bridge,
+      'initiateWormhole(bytes32,address,uint128)',
+      [dstDomainBytes32, receiverAddress, amount],
+      overrides,
+    )
   }
 
   public async initRelayedWormhole(
-    sender: Signer,
     receiverAddress: string,
     amount: BigNumberish,
+    sender?: Signer,
     overrides?: Overrides,
-  ): Promise<ContractTransaction> {
+  ): Promise<Call> {
     const dstDomainSdk = getSdk(this.dstDomain, Wallet.createRandom().connect(this.dstDomainProvider))
-    return await this.initWormhole(sender, receiverAddress, amount, dstDomainSdk.Relay!.address, overrides)
+    return await this.initWormhole(receiverAddress, amount, dstDomainSdk.Relay!.address, sender, overrides)
   }
 
   public async getAttestations(
@@ -161,17 +188,26 @@ export class WormholeBridge {
   }
 
   public async mintWithOracles(
-    sender: Signer,
     wormholeGUID: WormholeGUID,
     signatures: string,
     maxFeePercentage?: BigNumberish,
     operatorFee?: BigNumberish,
+    sender?: Signer,
     overrides?: Overrides,
-  ): Promise<ContractTransaction> {
+  ): Promise<Call> {
+    const shouldSendTx = Boolean(sender)
+    sender ||= Wallet.createRandom().connect(this.dstDomainProvider)
+
     const sender_ = sender.provider ? sender : sender.connect(this.dstDomainProvider)
     const sdk = getSdk(this.dstDomain, sender_)
     const oracleAuth = sdk.WormholeOracleAuth!
-    return oracleAuth.requestMint(wormholeGUID, signatures, maxFeePercentage || 0, operatorFee || 0, { ...overrides })
+    return await this._optionallySendTx(
+      shouldSendTx,
+      oracleAuth,
+      'requestMint',
+      [wormholeGUID, signatures, maxFeePercentage || 0, operatorFee || 0],
+      overrides,
+    )
   }
 
   public async getRelayFee(

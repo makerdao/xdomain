@@ -75,37 +75,69 @@ describe('WormholeBridge', () => {
     srcDomain,
     useRelay,
     useWrapper,
+    buildOnly,
     settings,
   }: {
     srcDomain: DomainDescription
     useRelay?: boolean
     useWrapper?: boolean
+    buildOnly?: boolean
     settings?: BridgeSettings
   }) {
     const { l2User } = await getTestWallets(srcDomain)
+    const sender = buildOnly ? undefined : l2User
 
-    let tx: ContractTransaction
+    let tx: ContractTransaction | undefined
+    let to: string | undefined
+    let data: string | undefined
     let bridge: WormholeBridge | undefined
     if (useWrapper) {
       if (useRelay) {
-        tx = await initRelayedWormhole({ srcDomain, settings, sender: l2User, receiverAddress: l2User.address, amount })
+        ;({ tx, to, data } = await initRelayedWormhole({
+          srcDomain,
+          settings,
+          sender,
+          receiverAddress: l2User.address,
+          amount,
+        }))
       } else {
-        tx = await initWormhole({ srcDomain, settings, sender: l2User, receiverAddress: l2User.address, amount })
+        ;({ tx, to, data } = await initWormhole({
+          srcDomain,
+          settings,
+          sender,
+          receiverAddress: l2User.address,
+          amount,
+        }))
       }
     } else {
       bridge = new WormholeBridge({ srcDomain, settings })
       if (useRelay) {
-        tx = await bridge.initRelayedWormhole(l2User, l2User.address, amount)
+        ;({ tx, to, data } = await bridge.initRelayedWormhole(l2User.address, amount, sender))
       } else {
-        tx = await bridge.initWormhole(l2User, l2User.address, amount)
+        ;({ tx, to, data } = await bridge.initWormhole(l2User.address, amount, undefined, sender))
       }
     }
-    await tx.wait()
-    return { txHash: tx.hash, bridge }
+
+    expect(to)
+      .to.have.lengthOf(42)
+      .and.satisfy((h: string) => h.startsWith('0x'))
+    expect(data).to.satisfy((h: string) => h.startsWith('0x'))
+
+    if (buildOnly) {
+      expect(tx).to.be.undefined
+      tx = await l2User.sendTransaction({ to, data })
+    }
+
+    await tx!.wait()
+    return { txHash: tx!.hash, bridge }
   }
 
   it.skip('should initiate withdrawal (kovan-optimism)', async () => {
     await testInitWormhole({ srcDomain: 'optimism-testnet' })
+  })
+
+  it.skip('should initiate withdrawal (kovan-optimism, build-only)', async () => {
+    await testInitWormhole({ srcDomain: 'optimism-testnet', buildOnly: true })
   })
 
   it.skip('should initiate withdrawal (rinkeby-arbitrum)', async () => {
@@ -120,13 +152,15 @@ describe('WormholeBridge', () => {
     srcDomain,
     useRelay,
     useWrapper,
-    timeoutMs = 900000,
+    buildOnly,
     txHash,
     wormholeGUID,
+    timeoutMs = 900000,
   }: {
     srcDomain: DomainDescription
     useRelay?: boolean
     useWrapper?: boolean
+    buildOnly?: boolean
     timeoutMs?: number
     txHash?: string
     wormholeGUID?: WormholeGUID
@@ -135,7 +169,7 @@ describe('WormholeBridge', () => {
     if (txHash) {
       bridge = getWormholeBridge({ srcDomain })
     } else {
-      ;({ bridge, txHash } = await testInitWormhole({ srcDomain, useRelay, useWrapper }))
+      ;({ bridge, txHash } = await testInitWormhole({ srcDomain, useRelay, useWrapper, buildOnly }))
     }
 
     let signatures: string
@@ -286,15 +320,23 @@ describe('WormholeBridge', () => {
     useRelay,
     useWrapper,
     usePreciseRelayFeeEstimation,
+    buildOnly,
   }: {
     srcDomain: DomainDescription
     useRelay?: boolean
     useWrapper?: boolean
     usePreciseRelayFeeEstimation?: boolean
+    buildOnly?: boolean
   }) {
     const { l1User } = await getTestWallets(srcDomain)
+    const sender = buildOnly ? undefined : l1User
 
-    const { bridge, wormholeGUID, signatures } = await testGetAttestations({ srcDomain, useRelay, useWrapper })
+    const { bridge, wormholeGUID, signatures } = await testGetAttestations({
+      srcDomain,
+      useRelay,
+      useWrapper,
+      buildOnly,
+    })
 
     const relayParams = usePreciseRelayFeeEstimation
       ? { receiver: l1User, wormholeGUID: wormholeGUID!, signatures }
@@ -330,25 +372,49 @@ describe('WormholeBridge', () => {
       return
     }
 
-    let tx: ContractTransaction
+    let tx: ContractTransaction | undefined
+    let to: string | undefined
+    let data: string | undefined
     if (useWrapper) {
-      tx = await mintWithOracles({
+      ;({ tx, to, data } = await mintWithOracles({
         srcDomain,
-        sender: l1User,
         wormholeGUID: wormholeGUID!,
         signatures,
         maxFeePercentage,
-      })
+        sender,
+      }))
     } else {
-      tx = await bridge!.mintWithOracles(l1User, wormholeGUID!, signatures, maxFeePercentage)
+      ;({ tx, to, data } = await bridge!.mintWithOracles(
+        wormholeGUID!,
+        signatures,
+        maxFeePercentage,
+        undefined,
+        sender,
+      ))
     }
-    await tx.wait()
+
+    expect(to)
+      .to.have.lengthOf(42)
+      .and.satisfy((h: string) => h.startsWith('0x'))
+    expect(data).to.satisfy((h: string) => h.startsWith('0x'))
+
+    if (buildOnly) {
+      expect(tx).to.be.undefined
+      tx = await l1User.sendTransaction({ to, data })
+    }
+
+    await tx!.wait()
+    return { txHash: tx!.hash, bridge }
   }
 
   // direct mints
 
   it('should mint with oracles (kovan-optimism)', async () => {
     await testMintWithOracles({ srcDomain: 'optimism-testnet' })
+  })
+
+  it('should mint with oracles (kovan-optimism, build-only)', async () => {
+    await testMintWithOracles({ srcDomain: 'optimism-testnet', buildOnly: true })
   })
 
   it('should mint with oracles (rinkeby-arbitrum)', async () => {
