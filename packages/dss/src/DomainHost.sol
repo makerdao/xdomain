@@ -51,8 +51,8 @@ abstract contract DomainHost {
     DaiLike     public immutable dai;
     address     public immutable escrow;
 
-    uint256 public line;
     address public vow;
+    uint256 public line;
     uint256 public cure;
 
     uint256 constant RAY = 10 ** 27;

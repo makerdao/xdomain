@@ -9,7 +9,7 @@ contract EscrowMock {
         address token,
         address spender,
         uint256 value
-    ) external auth {
+    ) external {
         DaiMock(token).approve(spender, value);
     }
 
