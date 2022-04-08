@@ -110,7 +110,7 @@ describe('WormholeBridge', () => {
   async function testGetAttestations({
     srcDomain,
     useWrapper,
-    timeoutMs = 300000,
+    timeoutMs = 900000,
     txHash,
     wormholeGUID,
   }: {
