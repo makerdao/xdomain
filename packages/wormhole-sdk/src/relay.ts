@@ -82,7 +82,7 @@ async function waitForRelayTaskConfirmation(
     }
     if (data[0]?.lastCheck?.message?.toLowerCase().includes('error')) {
       const { message, reason } = data[0].lastCheck
-      throw new Error(`Gelato relay failed. ${message}: "${reason}"`)
+      throw new Error(`Gelato relay failed. TaskId=${taskId} ${message}: "${reason}"`)
     }
 
     if (timeoutMs !== undefined && timeSlept >= timeoutMs) {

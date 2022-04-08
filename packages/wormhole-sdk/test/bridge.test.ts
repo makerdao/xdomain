@@ -161,9 +161,9 @@ describe('WormholeBridge', () => {
     useRelay?: boolean
     useWrapper?: boolean
     buildOnly?: boolean
-    timeoutMs?: number
     txHash?: string
     wormholeGUID?: WormholeGUID
+    timeoutMs?: number
   }) {
     let bridge
     if (txHash) {
