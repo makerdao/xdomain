@@ -4,12 +4,13 @@ import { waffleChai } from '@ethereum-waffle/chai'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { expect, use } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { ContractTransaction, ethers, Wallet } from 'ethers'
-import { parseEther } from 'ethers/lib/utils'
+import { Contract, ContractTransaction, ethers, Wallet } from 'ethers'
+import { formatBytes32String, parseEther } from 'ethers/lib/utils'
 
 import {
   BridgeSettings,
   canMintWithoutOracle,
+  decodeWormholeData,
   DEFAULT_RPC_URLS,
   DomainDescription,
   DomainId,
@@ -45,7 +46,7 @@ async function getTestWallets(srcDomainDescr: DomainDescription) {
 
   await fundTestWallet(l1User, l2User, srcDomain, dstDomain, amount)
 
-  return { l1User, l2User }
+  return { l1User, l2User, dstDomain }
 }
 
 describe('WormholeBridge', () => {
@@ -173,35 +174,35 @@ describe('WormholeBridge', () => {
   })
 
   it('should produce attestations for a tx initiating multiple withdrawals (rinkeby-arbitrum, wrapper)', async () => {
-    // this L2 tx initiates two wormholes
-    const txHash = '0x21f3f5b78da6cc88e85377cfbaeb80a52da87b67c9d2bfb73a4a357afb7a82b0'
     const srcDomain: DomainDescription = 'arbitrum-testnet'
 
+    const { l2User, dstDomain } = await getTestWallets(srcDomain)
+    const dai = new Contract(
+      '0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15',
+      ['function approve(address,uint256)'],
+      l2User,
+    )
+    // this L2 contract can initiate two wormholes
+    const multiWorm = new Contract(
+      '0xc905d0b8b1993d37e8a7058f24fb9a677caf1479',
+      ['function initiateWormhole(bytes32,address,uint128,uint256)'],
+      l2User,
+    )
+    await (await dai.approve(multiWorm.address, ethers.constants.MaxUint256)).wait()
+    const tx = await multiWorm.initiateWormhole(formatBytes32String(dstDomain), l2User.address, 1, 1)
+    const txHash = tx.hash
+    const txReceipt = await tx.wait()
+    const guids = (txReceipt.logs as { topics: string[]; data: string }[])
+      .filter(({ topics }) => topics[0] === '0x46d7dfb96bf7f7e8bb35ab641ff4632753a1411e3c8b30bec93e045e22f576de')
+      .map(({ data }) => decodeWormholeData(data))
+
     // check that we can get attestation for the first wormhole
-    const wormholeGUID1 = {
-      sourceDomain: '0x52494e4b4542592d534c4156452d415242495452554d2d310000000000000000',
-      targetDomain: '0x52494e4b4542592d4d41535445522d3100000000000000000000000000000000',
-      receiver: '0x0000000000000000000000007c3a312068bacab339998367a7053e454ba0d4d8',
-      operator: '0x0000000000000000000000000000000000000000000000000000000000000000',
-      amount: '0x0000000000000000000000000000000000000000000000000000000000000001',
-      nonce: '0x000000000000000000000000000000000000000000000000000000000000014f',
-      timestamp: '0x000000000000000000000000000000000000000000000000000000006242e2c6',
-    }
-    const { wormholeGUID: guid } = await testGetAttestations({ srcDomain, txHash, wormholeGUID: wormholeGUID1 })
-    expect(guid).to.deep.equal(wormholeGUID1)
+    const { wormholeGUID: guid } = await testGetAttestations({ srcDomain, txHash, wormholeGUID: guids[0] })
+    expect(guid).to.deep.equal(guids[0])
 
     // check that we can get attestation for the second wormhole
-    const wormholeGUID2 = {
-      sourceDomain: '0x52494e4b4542592d534c4156452d415242495452554d2d310000000000000000',
-      targetDomain: '0x52494e4b4542592d4d41535445522d3100000000000000000000000000000000',
-      receiver: '0x0000000000000000000000007c3a312068bacab339998367a7053e454ba0d4d8',
-      operator: '0x0000000000000000000000000000000000000000000000000000000000000000',
-      amount: '0x0000000000000000000000000000000000000000000000000000000000000001',
-      nonce: '0x0000000000000000000000000000000000000000000000000000000000000150',
-      timestamp: '0x000000000000000000000000000000000000000000000000000000006242e2c6',
-    }
-    const { wormholeGUID: guid2 } = await testGetAttestations({ srcDomain, txHash, wormholeGUID: wormholeGUID2 })
-    expect(guid2).to.deep.equal(wormholeGUID2)
+    const { wormholeGUID: guid2 } = await testGetAttestations({ srcDomain, txHash, wormholeGUID: guids[1] })
+    expect(guid2).to.deep.equal(guids[1])
   })
 
   it('should throw when attestations timeout (kovan-optimism)', async () => {
