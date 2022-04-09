@@ -20,10 +20,6 @@ interface Attestation {
   wormholeGUID: WormholeGUID
 }
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
 async function fetchAttestations(txHash: string): Promise<Attestation[]> {
   const response = await axios.get(ORACLE_API_URL, {
     params: {
