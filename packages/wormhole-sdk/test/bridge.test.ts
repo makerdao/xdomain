@@ -4,12 +4,13 @@ import { waffleChai } from '@ethereum-waffle/chai'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { expect, use } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { ContractTransaction, ethers, Wallet } from 'ethers'
-import { parseEther } from 'ethers/lib/utils'
+import { Contract, ContractTransaction, ethers, Wallet } from 'ethers'
+import { formatBytes32String, parseEther } from 'ethers/lib/utils'
 
 import {
   BridgeSettings,
   canMintWithoutOracle,
+  decodeWormholeData,
   DEFAULT_RPC_URLS,
   DomainDescription,
   DomainId,
@@ -17,6 +18,7 @@ import {
   getAttestations,
   getDefaultDstDomain,
   getLikelyDomainId,
+  getWormholeBridge,
   initWormhole,
   mintWithOracles,
   mintWithoutOracles,
@@ -44,7 +46,7 @@ async function getTestWallets(srcDomainDescr: DomainDescription) {
 
   await fundTestWallet(l1User, l2User, srcDomain, dstDomain, amount)
 
-  return { l1User, l2User }
+  return { l1User, l2User, dstDomain }
 }
 
 describe('WormholeBridge', () => {
@@ -84,7 +86,7 @@ describe('WormholeBridge', () => {
     if (useWrapper) {
       tx = await initWormhole({ srcDomain, settings, sender: l2User, receiverAddress: l2User.address, amount })
     } else {
-      bridge = new WormholeBridge({ srcDomain: srcDomain as DomainId, settings })
+      bridge = getWormholeBridge({ srcDomain, settings })
       tx = await bridge.initWormhole(l2User, l2User.address, 1)
     }
     await tx.wait()
@@ -109,34 +111,51 @@ describe('WormholeBridge', () => {
   async function testGetAttestations({
     srcDomain,
     useWrapper,
-    timeoutMs = 300000,
+    timeoutMs = 900000,
+    txHash,
+    wormholeGUID,
   }: {
     srcDomain: DomainDescription
     useWrapper?: boolean
     timeoutMs?: number
+    txHash?: string
+    wormholeGUID?: WormholeGUID
   }) {
-    const { bridge, txHash } = await testInitWormhole({ srcDomain, useWrapper })
+    let bridge
+    if (txHash) {
+      bridge = getWormholeBridge({ srcDomain })
+    } else {
+      ;({ bridge, txHash } = await testInitWormhole({ srcDomain, useWrapper }))
+    }
 
     let signatures: string
-    let wormholeGUID: WormholeGUID | undefined
+    let guid: WormholeGUID | undefined
 
     const newSignatureReceivedCallback = (numSigs: number, threshold: number) =>
       console.log(`Signatures received: ${numSigs} (required: ${threshold}).`)
 
     console.log(`Requesting attestation for ${txHash} (timeout: ${timeoutMs}ms)`)
     if (useWrapper) {
-      ;({ signatures, wormholeGUID } = await getAttestations({
+      ;({ signatures, wormholeGUID: guid } = await getAttestations({
         txHash,
         srcDomain,
         timeoutMs,
         newSignatureReceivedCallback,
+        wormholeGUID,
       }))
     } else {
-      ;({ signatures, wormholeGUID } = await bridge!.getAttestations(txHash, newSignatureReceivedCallback, timeoutMs))
+      ;({ signatures, wormholeGUID: guid } = await bridge!.getAttestations(
+        txHash,
+        newSignatureReceivedCallback,
+        timeoutMs,
+        undefined,
+        wormholeGUID,
+      ))
     }
-    expect(wormholeGUID).to.not.be.undefined
+    expect(guid).to.not.be.undefined
+    expect(signatures).to.have.length.gt(2)
 
-    return { bridge, wormholeGUID, signatures }
+    return { bridge, wormholeGUID: guid, signatures }
   }
 
   it.skip('should produce attestations (kovan-optimism)', async () => {
@@ -152,6 +171,38 @@ describe('WormholeBridge', () => {
   it.skip('should produce attestations (wrapper)', async () => {
     const srcDomain: DomainDescription = 'arbitrum-testnet'
     await testGetAttestations({ srcDomain, useWrapper: true })
+  })
+
+  it('should produce attestations for a tx initiating multiple withdrawals (rinkeby-arbitrum, wrapper)', async () => {
+    const srcDomain: DomainDescription = 'arbitrum-testnet'
+
+    const { l2User, dstDomain } = await getTestWallets(srcDomain)
+    const dai = new Contract(
+      '0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15',
+      ['function approve(address,uint256)'],
+      l2User,
+    )
+    // this L2 contract can initiate two wormholes
+    const multiWorm = new Contract(
+      '0xc905d0b8b1993d37e8a7058f24fb9a677caf1479',
+      ['function initiateWormhole(bytes32,address,uint128,uint256)'],
+      l2User,
+    )
+    await (await dai.approve(multiWorm.address, ethers.constants.MaxUint256)).wait()
+    const tx = await multiWorm.initiateWormhole(formatBytes32String(dstDomain), l2User.address, 1, 1)
+    const txHash = tx.hash
+    const txReceipt = await tx.wait()
+    const guids = (txReceipt.logs as { topics: string[]; data: string }[])
+      .filter(({ topics }) => topics[0] === '0x46d7dfb96bf7f7e8bb35ab641ff4632753a1411e3c8b30bec93e045e22f576de')
+      .map(({ data }) => decodeWormholeData(data))
+
+    // check that we can get attestation for the first wormhole
+    const { wormholeGUID: guid } = await testGetAttestations({ srcDomain, txHash, wormholeGUID: guids[0] })
+    expect(guid).to.deep.equal(guids[0])
+
+    // check that we can get attestation for the second wormhole
+    const { wormholeGUID: guid2 } = await testGetAttestations({ srcDomain, txHash, wormholeGUID: guids[1] })
+    expect(guid2).to.deep.equal(guids[1])
   })
 
   it('should throw when attestations timeout (kovan-optimism)', async () => {

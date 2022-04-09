@@ -83,9 +83,10 @@ export class WormholeBridge {
     newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void,
     timeoutMs?: number,
     pollingIntervalMs: number = 2000,
+    wormholeGUID?: WormholeGUID,
   ): Promise<{
     signatures: string
-    wormholeGUID?: WormholeGUID
+    wormholeGUID: WormholeGUID
   }> {
     const sdk = getSdk(this.dstDomain, Wallet.createRandom().connect(this.dstDomainProvider))
     const oracleAuth = sdk.WormholeOracleAuth!
@@ -96,6 +97,7 @@ export class WormholeBridge {
       threshold,
       oracleAuth.isValid,
       pollingIntervalMs,
+      wormholeGUID,
       timeoutMs,
       newSignatureReceivedCallback,
     )

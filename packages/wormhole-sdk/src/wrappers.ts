@@ -38,6 +38,7 @@ export interface GetAttestationsOpts {
   newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void
   timeoutMs?: number
   pollingIntervalMs?: number
+  wormholeGUID?: WormholeGUID
 }
 
 export function getAttestations(
@@ -48,6 +49,7 @@ export function getAttestations(
     opts.newSignatureReceivedCallback,
     opts.timeoutMs,
     opts.pollingIntervalMs,
+    opts.wormholeGUID,
   )
 }
 
