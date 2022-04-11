@@ -159,6 +159,13 @@
       "rules": {
         "@typescript-eslint/no-non-null-assertion": "off"
       }
+    },
+    {
+      "files": ["./src/sdk"],
+      "rules": {
+        "no-redeclare": "off",
+        "no-use-before-define": "off"
+      }
     }
   ]
 }

@@ -2,7 +2,7 @@ import axios from 'axios'
 import { arrayify, hashMessage } from 'ethers/lib/utils'
 
 import { decodeWormholeData, getGuidHash, WormholeGUID } from '.'
-import { WormholeOracleAuth } from '.dethcrypto/eth-sdk-client/esm/types'
+import { WormholeOracleAuth } from './sdk/esm/types'
 
 const ORACLE_API_URL = 'http://52.42.179.195:8080'
 

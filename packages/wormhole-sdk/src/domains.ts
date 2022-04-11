@@ -1,15 +1,8 @@
 import { providers, Signer } from 'ethers'
 import { Dictionary } from 'ts-essentials'
 
-import { getArbitrumTestnetSdk, getKovanSdk, getOptimismKovanSdk, getRinkebySdk } from '.dethcrypto/eth-sdk-client'
-import {
-  Faucet,
-  Multicall,
-  Vat,
-  WormholeJoin,
-  WormholeOracleAuth,
-  WormholeOutboundGateway,
-} from '.dethcrypto/eth-sdk-client/esm/types'
+import { getArbitrumTestnetSdk, getKovanSdk, getOptimismKovanSdk, getRinkebySdk } from './sdk'
+import { Faucet, Multicall, Vat, WormholeJoin, WormholeOracleAuth, WormholeOutboundGateway } from './sdk/esm/types'
 
 export interface WormholeSdk {
   WormholeOracleAuth?: WormholeOracleAuth
