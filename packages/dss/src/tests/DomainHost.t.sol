@@ -190,4 +190,34 @@ contract DomainHostTest is DSSTest {
         assertEq(host.liftMinted(), 0);
     }
 
+    function testAsyncReordering() public {
+        host.lift(100 ether);
+        host.lift(50 ether);        // Trigger lowering
+        host.lift(75 ether);        // Trigger raise before the release comes in
+
+        (uint256 ink, uint256 art) = vat.urns(ILK, address(host));
+        assertEq(ink, 125 ether);
+        assertEq(art, 125 ether);
+        assertEq(dai.balanceOf(address(escrow)), 125 ether);
+        assertEq(host.line(), 75 * RAD);
+        assertEq(host.liftLine(), 75 * RAD);
+        assertEq(host.liftMinted(), 25 ether);
+
+        host.release(25 ether);     // A partial release comes in
+
+        (ink, art) = vat.urns(ILK, address(host));
+        assertEq(ink, 100 ether);
+        assertEq(art, 100 ether);
+        assertEq(dai.balanceOf(address(escrow)), 100 ether);
+        assertEq(host.line(), 75 * RAD);
+
+        host.release(25 ether);     // The remainder release comes in
+
+        (ink, art) = vat.urns(ILK, address(host));
+        assertEq(ink, 75 ether);
+        assertEq(art, 75 ether);
+        assertEq(dai.balanceOf(address(escrow)), 75 ether);
+        assertEq(host.line(), 75 * RAD);
+    }
+
 }

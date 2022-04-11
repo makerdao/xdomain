@@ -64,7 +64,7 @@ abstract contract DomainHost {
     event File(bytes32 indexed what, address data);
     event Lift(uint256 wad);
     event Release(uint256 wad);
-    event Surplus();
+    event Surplus(uint256 wad);
     event Deficit(uint256 wad);
     event Cage();
     event Tell(uint256 value);
@@ -147,9 +147,10 @@ abstract contract DomainHost {
 
     /// @notice Send any DAI in the contract to the surplus buffer
     function surplus() external {
-        daiJoin.join(address(vow), dai.balanceOf(address(this)));
+        uint256 wad = dai.balanceOf(address(this));
+        daiJoin.join(address(vow), wad);
 
-        emit Surplus();
+        emit Surplus(wad);
     }
 
     /// @notice Cover the remote domain's deficit by pulling debt from the surplus buffer
