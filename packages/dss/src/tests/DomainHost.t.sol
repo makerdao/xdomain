@@ -240,4 +240,16 @@ contract DomainHostTest is DSSTest {
         assertEq(vat.dai(vow), 100 * RAD);
     }
 
+    function testDeficit() public {
+        assertEq(vat.sin(vow), 0);
+        assertEq(dai.balanceOf(address(host)), 0);
+        assertEq(host.rectify(), 0);
+
+        host.deficit(100 ether);
+
+        assertEq(vat.sin(vow), 100 * RAD);
+        assertEq(dai.balanceOf(address(host)), 100 ether);
+        assertEq(host.rectify(), 100 ether);
+    }
+
 }

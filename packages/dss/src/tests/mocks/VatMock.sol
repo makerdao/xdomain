@@ -14,6 +14,7 @@ contract VatMock {
     mapping (bytes32 => mapping (address => Urn ))    public urns;
     mapping (bytes32 => mapping (address => uint256)) public gem;
     mapping (address => uint256)                      public dai;
+    mapping (address => uint256)                      public sin;
 
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         unchecked {
@@ -87,7 +88,8 @@ contract VatMock {
         gem[ilk][usr] = add(gem[ilk][usr], wad);
     }
 
-    function suck(address, address v, uint256 rad) external {
+    function suck(address u, address v, uint256 rad) external {
         dai[v] = add(dai[v], rad);
+        sin[u] = add(sin[u], rad);
     }
 }
