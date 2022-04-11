@@ -5,8 +5,8 @@ import { ContractTransaction, Overrides, Signer, Wallet } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 import { Dictionary } from 'ts-essentials'
 
-import { getRinkebySdk } from '.dethcrypto/eth-sdk-client'
-import { FakeOutbox, Outbox } from '.dethcrypto/eth-sdk-client/esm/types'
+import { getRinkebySdk } from './sdk'
+import { FakeOutbox, Outbox } from './sdk/esm/types'
 
 export type ArbitrumDstDomainId = 'RINKEBY-MASTER-1' // | 'ETHEREUM-MASTER-1'
 
