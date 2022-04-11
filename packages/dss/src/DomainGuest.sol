@@ -20,6 +20,7 @@
 pragma solidity ^0.8.13;
 
 interface VatLike {
+    function hope(address usr) external;
     function debt() external view returns (uint256);
     function Line() external view returns (uint256);
     function file(bytes32 what, uint256 data) external;
@@ -31,6 +32,7 @@ interface VatLike {
 interface DaiLike {
     function balanceOf(address usr) external view returns (uint256);
     function transferFrom(address src, address dst, uint256 wad) external returns (bool);
+    function approve(address usr, uint wad) external returns (bool);
 }
 
 interface DaiJoinLike {
@@ -81,6 +83,9 @@ abstract contract DomainGuest {
         daiJoin = DaiJoinLike(_daiJoin);
         vat = daiJoin.vat();
         dai = daiJoin.dai();
+
+        vat.hope(address(daiJoin));
+        dai.approve(address(daiJoin), type(uint256).max);
     }
 
     // --- Math ---
@@ -139,7 +144,7 @@ abstract contract DomainGuest {
         uint256 _sin = vat.sin(address(this));
         if (_dai > _sin) {
             // We have a surplus
-            vat.heal(_sin);
+            if (_sin > 0) vat.heal(_sin);
 
             uint256 wad = (_dai - _sin) / RAY;    // Leave the dust
             daiJoin.exit(address(this), wad);
@@ -148,9 +153,9 @@ abstract contract DomainGuest {
             _surplus(wad);
         } else if (_dai < _sin) {
             // We have a deficit
-            vat.heal(_dai);
+            if (_dai > 0) vat.heal(_dai);
 
-            _deficit(_divup(_dai - _sin, RAY));   // Round up to overcharge for deficit
+            _deficit(_divup(_sin - _dai, RAY));   // Round up to overcharge for deficit
         }
 
         emit Push();

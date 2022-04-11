@@ -182,4 +182,79 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.releaseBurned(), 50 ether);
     }
 
+    function testPushSurplus() public {
+        vat.suck(address(this), address(guest), 100 * RAD);
+
+        assertEq(vat.dai(address(guest)), 100 * RAD);
+        assertEq(vat.sin(address(guest)), 0);
+        assertEq(guest.surplus(), 0);
+        assertEq(guest.deficit(), 0);
+        assertEq(dai.balanceOf(address(guest)), 0);
+
+        // Will push out a surplus of 100 DAI
+        guest.push();
+
+        assertEq(vat.dai(address(guest)), 0);
+        assertEq(vat.sin(address(guest)), 0);
+        assertEq(guest.surplus(), 100 ether);
+        assertEq(guest.deficit(), 0);
+        assertEq(dai.balanceOf(address(guest)), 100 ether);
+    }
+
+    function testPushSurplusPartial() public {
+        vat.suck(address(this), address(this), 100 * RAD);
+        vat.suck(address(guest), address(guest), 25 * RAD);
+        vat.move(address(this), address(guest), 100 * RAD);
+
+        assertEq(vat.dai(address(guest)), 125 * RAD);
+        assertEq(vat.sin(address(guest)), 25 * RAD);
+        assertEq(guest.surplus(), 0);
+        assertEq(guest.deficit(), 0);
+        assertEq(dai.balanceOf(address(guest)), 0);
+
+        // Will push out a surplus of 100 DAI (125 - 25)
+        guest.push();
+
+        assertEq(vat.dai(address(guest)), 0);
+        assertEq(vat.sin(address(guest)), 0);
+        assertEq(guest.surplus(), 100 ether);
+        assertEq(guest.deficit(), 0);
+        assertEq(dai.balanceOf(address(guest)), 100 ether);
+    }
+
+    function testPushDeficit() public {
+        vat.suck(address(guest), address(this), 100 * RAD);
+
+        assertEq(vat.dai(address(guest)), 0);
+        assertEq(vat.sin(address(guest)), 100 * RAD);
+        assertEq(guest.surplus(), 0);
+        assertEq(guest.deficit(), 0);
+
+        // Will push out a deficit of 100 DAI
+        guest.push();
+
+        assertEq(vat.dai(address(guest)), 0);
+        assertEq(vat.sin(address(guest)), 100 * RAD);
+        assertEq(guest.surplus(), 0);
+        assertEq(guest.deficit(), 100 ether);
+    }
+
+    function testPushDeficitPartial() public {
+        vat.suck(address(guest), address(guest), 100 * RAD);
+        vat.suck(address(guest), address(this), 25 * RAD);
+
+        assertEq(vat.dai(address(guest)), 100 * RAD);
+        assertEq(vat.sin(address(guest)), 125 * RAD);
+        assertEq(guest.surplus(), 0);
+        assertEq(guest.deficit(), 0);
+
+        // Will push out a deficit of 25 DAI (125 - 100)
+        guest.push();
+
+        assertEq(vat.dai(address(guest)), 0);
+        assertEq(vat.sin(address(guest)), 25 * RAD);
+        assertEq(guest.surplus(), 0);
+        assertEq(guest.deficit(), 25 ether);
+    }
+
 }
