@@ -19,18 +19,18 @@ export default defineConfig({
     },
     rinkeby: {
       'RINKEBY-MASTER-1': {
-        WormholeOracleAuth: '0x7FD07147305f7eCcA62d0a7737bbE0Bd8AC5359b',
-        WormholeJoin: '0x2Cd1b8fe049a5a52Bd48e9c7aA651b2C013545A6',
+        WormholeOracleAuth: '0x1E7722E502D3dCbB0704f99c75c99a5402598f13',
+        WormholeJoin: '0x894DB23D804c626f1aAA89a2Bc3280052e6c4750',
         Vat: '0x66b3D63621FDD5967603A824114Da95cc3A35107',
         Multicall: '0x86d3b107386756208154a5c9100a0d4557280747',
-        FakeOutbox: '0x1a8fe93d3c07cc860fee5c1fe4dacbe1fade62f9',
+        FakeOutbox: '0x4A2D3d40c14c10Df50a15A3f1359Fb0F5C893899',
         Outbox: '0x2360A33905dc1c72b12d975d975F42BaBdcef9F3',
-        Relay: '0x1908fcC97a16F9ED9C70d26c023A4fAd040e95A9',
+        Relay: '0xC35787975484A858B878032B045B6E0B6EfE2e2c',
       },
     },
     arbitrumTestnet: {
       'RINKEBY-SLAVE-ARBITRUM-1': {
-        WormholeOutboundGateway: '0xEbA80E9d7C6C2F575a642a43199e32F47Bbd1306', // L2DaiWormholeGateway
+        WormholeOutboundGateway: '0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3', // L2DaiWormholeGateway
         Faucet: '0xc72cfA99ef0aec40334A2df3E70eB1028402cceE', // L2Dai Faucet
       },
     },
