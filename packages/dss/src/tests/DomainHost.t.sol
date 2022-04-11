@@ -220,4 +220,8 @@ contract DomainHostTest is DSSTest {
         assertEq(host.line(), 75 * RAD);
     }
 
+    function testReleaseNoDai() public {
+        assertRevert(address(host), abi.encodeWithSelector(DomainHost.release.selector, uint256(1 ether)), "Dai/insufficient-balance");
+    }
+
 }
