@@ -132,10 +132,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.releaseBurned(), 0);
 
         // Should revert as no DAI is available to release
-        try guest.release() {
-            assertTrue(false);
-        } catch {
-        }
+        assertRevert(address(guest), abi.encodeWithSelector(DomainGuest.release.selector), "DomainGuest/no-extra-to-release");
 
         assertEq(guest.grain(), 100 ether);
         assertEq(vat.Line(), 100 * RAD);
@@ -153,6 +150,35 @@ contract DomainGuestTest is DSSTest {
 
         assertEq(guest.grain(), 50 ether);
         assertEq(vat.Line(), 50 * RAD);
+        assertEq(guest.releaseBurned(), 50 ether);
+    }
+
+    function testReleaseDebtTaken() public {
+        // Set so that debt is larger than the global DC
+        guest.lift(100 * RAD, 100 ether);
+        vat.suck(address(this), address(this), 50 * RAD);
+        guest.lift(0, 0);
+
+        assertEq(vat.Line(), 0);
+        assertEq(vat.debt(), 50 * RAD);
+        assertEq(guest.grain(), 100 ether);
+        assertEq(guest.releaseBurned(), 0);
+
+        // Should only release 50 DAI
+        guest.release();
+
+        assertEq(vat.Line(), 0);
+        assertEq(vat.debt(), 50 * RAD);
+        assertEq(guest.grain(), 50 ether);
+        assertEq(guest.releaseBurned(), 50 ether);
+
+        // Repay the loan and release
+        vat.heal(50 * RAD);
+        guest.release();
+
+        assertEq(vat.Line(), 0);
+        assertEq(vat.debt(), 0);
+        assertEq(guest.grain(), 0);
         assertEq(guest.releaseBurned(), 50 ether);
     }
 

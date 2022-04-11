@@ -83,7 +83,7 @@ contract VatMock {
         dai[w]    = add(dai[w],    dtab);
 
         urns[i][u] = urn;
-        
+
         debt = add(debt, dtab);
     }
 
@@ -95,6 +95,13 @@ contract VatMock {
 
     function slip(bytes32 ilk, address usr, int256 wad) external {
         gem[ilk][usr] = add(gem[ilk][usr], wad);
+    }
+
+    function heal(uint rad) external {
+        address u = msg.sender;
+        sin[u] = sub(sin[u], rad);
+        dai[u] = sub(dai[u], rad);
+        debt   = sub(debt,   rad);
     }
 
     function suck(address u, address v, uint256 rad) external {
