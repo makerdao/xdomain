@@ -252,4 +252,20 @@ contract DomainHostTest is DSSTest {
         assertEq(host.rectify(), 100 ether);
     }
 
+    function testCage() public {
+        assertTrue(!host.caged());
+
+        host.cage();
+
+        assertTrue(host.caged());
+    }
+
+    function testTell() public {
+        assertEq(host.cure(), 0);
+
+        host.tell(123);
+
+        assertEq(host.cure(), 123);
+    }
+
 }
