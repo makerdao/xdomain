@@ -61,7 +61,7 @@ contract DomainGuestTest is DSSTest {
         vat = new VatMock();
         dai = new DaiMock();
         daiJoin = new DaiJoinMock(address(vat), address(dai));
-        end = new EndMock();
+        end = new EndMock(address(vat));
 
         guest = new EmptyDomainGuest(address(daiJoin));
         guest.file("end", address(end));
@@ -255,6 +255,30 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.sin(address(guest)), 25 * RAD);
         assertEq(guest.surplus(), 0);
         assertEq(guest.deficit(), 25 ether);
+    }
+
+    function testRectify() public {
+        vat.suck(address(this), address(this), 100 * RAD);
+        vat.hope(address(daiJoin));
+        daiJoin.exit(address(guest), 100 ether);
+
+        assertEq(vat.dai(address(guest)), 0);
+        assertEq(dai.balanceOf(address(guest)), 100 ether);
+
+        guest.rectify();
+
+        assertEq(vat.dai(address(guest)), 100 * RAD);
+        assertEq(dai.balanceOf(address(guest)), 0);
+    }
+
+    function testCage() public {
+        assertEq(end.live(), 1);
+        assertEq(vat.live(), 1);
+
+        guest.cage();
+
+        assertEq(end.live(), 0);
+        assertEq(vat.live(), 0);
     }
 
 }
