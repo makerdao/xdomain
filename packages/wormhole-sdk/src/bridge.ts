@@ -1,5 +1,5 @@
 import { Provider } from '@ethersproject/abstract-provider'
-import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrides, Signer, Wallet } from 'ethers'
+import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrides, Signer } from 'ethers'
 import { hexZeroPad } from 'ethers/lib/utils'
 
 import {
@@ -57,20 +57,6 @@ export class WormholeBridge {
     this.settings = { useFakeArbitrumOutbox: false, ...settings }
   }
 
-  private async _optionallySendTx(
-    shouldSendTx: boolean,
-    contract: Contract,
-    method: string,
-    data: any[],
-    overrides?: Overrides,
-  ): Promise<Call> {
-    return {
-      tx: shouldSendTx ? await contract[method](...data, { ...overrides }) : undefined,
-      to: contract.address,
-      data: contract.interface.encodeFunctionData(method, data),
-    }
-  }
-
   public async initWormhole(
     receiverAddress: string,
     amount: BigNumberish,
@@ -79,16 +65,12 @@ export class WormholeBridge {
     overrides?: Overrides,
   ): Promise<Call> {
     const shouldSendTx = Boolean(sender)
-    sender ||= Wallet.createRandom().connect(this.srcDomainProvider)
-
-    const dstDomainBytes32 = bytes32(this.dstDomain)
-    const sender_ = sender.provider ? sender : sender.connect(this.srcDomainProvider)
-
-    const sdk = getSdk(this.srcDomain, sender_)
+    const sdk = getSdk(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender))
     const l2Bridge = sdk.WormholeOutboundGateway!
+    const dstDomainBytes32 = bytes32(this.dstDomain)
 
     if (operatorAddress) {
-      return await this._optionallySendTx(
+      return await _optionallySendTx(
         shouldSendTx,
         l2Bridge,
         'initiateWormhole(bytes32,address,uint128,address)',
@@ -97,7 +79,7 @@ export class WormholeBridge {
       )
     }
 
-    return await this._optionallySendTx(
+    return await _optionallySendTx(
       shouldSendTx,
       l2Bridge,
       'initiateWormhole(bytes32,address,uint128)',
@@ -112,7 +94,7 @@ export class WormholeBridge {
     sender?: Signer,
     overrides?: Overrides,
   ): Promise<Call> {
-    const dstDomainSdk = getSdk(this.dstDomain, Wallet.createRandom().connect(this.dstDomainProvider))
+    const dstDomainSdk = getSdk(this.dstDomain, this.dstDomainProvider)
     return await this.initWormhole(receiverAddress, amount, dstDomainSdk.Relay!.address, sender, overrides)
   }
 
@@ -126,7 +108,7 @@ export class WormholeBridge {
     signatures: string
     wormholeGUID: WormholeGUID
   }> {
-    const sdk = getSdk(this.dstDomain, Wallet.createRandom().connect(this.dstDomainProvider))
+    const sdk = getSdk(this.dstDomain, this.dstDomainProvider)
     const oracleAuth = sdk.WormholeOracleAuth!
     const threshold = (await oracleAuth.threshold()).toNumber()
 
@@ -196,12 +178,9 @@ export class WormholeBridge {
     overrides?: Overrides,
   ): Promise<Call> {
     const shouldSendTx = Boolean(sender)
-    sender ||= Wallet.createRandom().connect(this.dstDomainProvider)
-
-    const sender_ = sender.provider ? sender : sender.connect(this.dstDomainProvider)
-    const sdk = getSdk(this.dstDomain, sender_)
+    const sdk = getSdk(this.dstDomain, _getSignerOrProvider(this.dstDomainProvider, sender))
     const oracleAuth = sdk.WormholeOracleAuth!
-    return await this._optionallySendTx(
+    return await _optionallySendTx(
       shouldSendTx,
       oracleAuth,
       'requestMint',
@@ -220,8 +199,7 @@ export class WormholeBridge {
       expiry?: BigNumberish
     },
   ): Promise<string> {
-    const l1Signer = Wallet.createRandom().connect(this.dstDomainProvider)
-    const sdk = getSdk(this.dstDomain, l1Signer)
+    const sdk = getSdk(this.dstDomain, this.dstDomainProvider)
     if (!sdk.Relay) {
       throw new Error(`getRelayFee not yet supported on destination domain ${this.dstDomain}`)
     }
@@ -237,8 +215,7 @@ export class WormholeBridge {
     maxFeePercentage?: BigNumberish,
     expiry?: BigNumberish,
   ): Promise<string> {
-    const l1Signer = Wallet.createRandom().connect(this.dstDomainProvider)
-    const sdk = getSdk(this.dstDomain, l1Signer)
+    const sdk = getSdk(this.dstDomain, this.dstDomainProvider)
     if (!sdk.Relay) {
       throw new Error(`relayMintWithOracles not yet supported on destination domain ${this.dstDomain}`)
     }
@@ -260,12 +237,10 @@ export class WormholeBridge {
   }
 
   public async mintWithoutOracles(sender: Signer, txHash: string, overrides?: Overrides): Promise<ContractTransaction> {
-    const sender_ = sender.provider ? sender : sender.connect(this.dstDomainProvider)
-
     if (this.srcDomain === 'RINKEBY-SLAVE-ARBITRUM-1') {
       return await relayArbitrumMessage(
         txHash,
-        sender_,
+        sender.connect(this.dstDomainProvider),
         this.dstDomain as ArbitrumDstDomainId,
         this.srcDomainProvider,
         this.settings.useFakeArbitrumOutbox,
@@ -274,5 +249,23 @@ export class WormholeBridge {
     }
 
     throw new Error(`mintWithoutOracles not yet supported for source domain ${this.srcDomain}`)
+  }
+}
+
+function _getSignerOrProvider(provider: Provider, signer?: Signer): Signer | Provider {
+  return signer ? signer.connect(provider) : provider
+}
+
+async function _optionallySendTx(
+  shouldSendTx: boolean,
+  contract: Contract,
+  method: string,
+  data: any[],
+  overrides?: Overrides,
+): Promise<Call> {
+  return {
+    tx: shouldSendTx ? await contract[method](...data, { ...overrides }) : undefined,
+    to: contract.address,
+    data: contract.interface.encodeFunctionData(method, data),
   }
 }

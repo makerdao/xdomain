@@ -1,5 +1,5 @@
 import { Provider } from '@ethersproject/abstract-provider'
-import { BigNumber, BigNumberish, Contract, ethers, Signer, Wallet } from 'ethers'
+import { BigNumber, BigNumberish, Contract, ethers, Signer } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 
 import { DomainId, getGuidHash, getRelayGasFee, getSdk, multicall, WormholeGUID } from '.'
@@ -27,8 +27,7 @@ export async function getFeesAndMintableAmounts(
   bridgeFee: BigNumber
   relayFee: BigNumber
 }> {
-  const l1Signer = Wallet.createRandom().connect(dstDomainProvider)
-  const sdk = getSdk(dstDomain, l1Signer)
+  const sdk = getSdk(dstDomain, dstDomainProvider)
   const join = sdk.WormholeJoin!
 
   const guidHash = getGuidHash(wormholeGUID)
@@ -91,7 +90,7 @@ export async function getFeesAndMintableAmounts(
   const margin = line.sub(debt)
   const mintable = margin.gte(pending) ? pending : margin
 
-  const feeContract = new Contract(feeAddress, new Interface([GET_FEE_METHOD_FRAGMENT]), l1Signer)
+  const feeContract = new Contract(feeAddress, new Interface([GET_FEE_METHOD_FRAGMENT]), dstDomainProvider)
   const bridgeFee = await feeContract.getFee(Object.values(wormholeGUID), line, debt, pending, mintable)
 
   return { pending, mintable, bridgeFee, relayFee }

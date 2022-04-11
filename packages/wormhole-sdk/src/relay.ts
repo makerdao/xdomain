@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { BigNumber, BigNumberish, Contract, Signer, Wallet } from 'ethers'
+import { BigNumber, BigNumberish, Contract, Signer } from 'ethers'
 import { arrayify, formatEther, hexConcat, hexZeroPad, Interface, keccak256, splitSignature } from 'ethers/lib/utils'
 
 import { getGuidHash, sleep, WormholeGUID } from '.'
@@ -131,7 +131,7 @@ async function getRelayGasLimit(
     'function exec(address _service,bytes calldata _data,address _creditToken) returns (uint256 credit,uint256 gasDebitInNativeToken,uint256 gasDebitInCreditToken,uint256 estimatedGasUsed)',
     'function executors() view returns (address[] memory)',
   ])
-  const gelato = new Contract(gelatoAddress, gelatoInterface, Wallet.createRandom().connect(relay.provider))
+  const gelato = new Contract(gelatoAddress, gelatoInterface, relay.provider)
   const executors = await gelato.executors()
   const { baseFeePerGas } = await relay.provider.getBlock('latest')
 

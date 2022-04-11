@@ -1,3 +1,4 @@
+import { Provider } from '@ethersproject/abstract-provider'
 import { providers, Signer } from 'ethers'
 import { Dictionary } from 'ts-essentials'
 
@@ -68,7 +69,7 @@ export function getDefaultDstDomain(srcDomain: DomainDescription): DomainId {
   throw new Error(`No default destination domain for source domain "${srcDomain}"`)
 }
 
-export function getSdk(domain: DomainDescription, signer: Signer): WormholeSdk {
+export function getSdk(domain: DomainDescription, signerOrProvider: Signer | Provider): WormholeSdk {
   const sdkProviders: Dictionary<Function, DomainId> = {
     'RINKEBY-MASTER-1': getRinkebySdk,
     'RINKEBY-SLAVE-ARBITRUM-1': getArbitrumTestnetSdk,
@@ -77,8 +78,11 @@ export function getSdk(domain: DomainDescription, signer: Signer): WormholeSdk {
   }
 
   const domainId = getLikelyDomainId(domain)
-  if (!signer.provider) signer = signer.connect(new providers.JsonRpcProvider(DEFAULT_RPC_URLS[domainId]))
-  const sdk = (sdkProviders[domainId](signer) as any)[domainId]
+  const signer = signerOrProvider as Signer
+  if (!signer.provider && signer.connect) {
+    signerOrProvider = signer.connect(new providers.JsonRpcProvider(DEFAULT_RPC_URLS[domainId]))
+  }
+  const sdk = (sdkProviders[domainId](signerOrProvider as any) as any)[domainId]
 
   const res = {
     WormholeOracleAuth: undefined,
