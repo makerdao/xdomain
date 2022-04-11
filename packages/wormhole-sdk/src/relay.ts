@@ -3,7 +3,7 @@ import { BigNumber, BigNumberish, Contract, Signer } from 'ethers'
 import { arrayify, formatEther, hexConcat, hexZeroPad, Interface, keccak256, splitSignature } from 'ethers/lib/utils'
 
 import { getGuidHash, sleep, WormholeGUID } from '.'
-import { Relay, RelayInterface } from '.dethcrypto/eth-sdk-client/esm/types/Relay'
+import { Relay, RelayInterface } from './sdk/esm/types/Relay'
 
 const GELATO_API_URL = 'https://relay.gelato.digital'
 const ETHEREUM_DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f'
