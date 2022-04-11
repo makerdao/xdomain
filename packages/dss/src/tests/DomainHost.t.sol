@@ -55,6 +55,7 @@ contract DomainHostTest is DSSTest {
     DaiJoinMock daiJoin;
     DaiMock dai;
     EscrowMock escrow;
+    address vow;
 
     EmptyDomainHost host;
 
@@ -65,9 +66,10 @@ contract DomainHostTest is DSSTest {
         dai = new DaiMock();
         daiJoin = new DaiJoinMock(address(vat), address(dai));
         escrow = new EscrowMock();
+        vow = address(123);
 
         host = new EmptyDomainHost(ILK, address(daiJoin), address(escrow));
-        host.file("vow", address(this));
+        host.file("vow", vow);
 
         escrow.approve(address(dai), address(host), type(uint256).max);
     }
@@ -107,7 +109,7 @@ contract DomainHostTest is DSSTest {
     }
 
     function testFile() public {
-        assertEq(host.vow(), address(this));
+        assertEq(host.vow(), address(123));
         assertTrue(_tryFile("vow", address(888)));
         assertEq(host.vow(), address(888));
 
@@ -222,6 +224,20 @@ contract DomainHostTest is DSSTest {
 
     function testReleaseNoDai() public {
         assertRevert(address(host), abi.encodeWithSelector(DomainHost.release.selector, uint256(1 ether)), "Dai/insufficient-balance");
+    }
+
+    function testSurplus() public {
+        // Stick 100 DAI into the host
+        // This is to simulate the remote bridge sending surplus DAI
+        host.lift(100 ether);
+        escrow.approve(address(dai), address(this), type(uint256).max);
+        dai.transferFrom(address(escrow), address(host), 100 ether);
+
+        assertEq(vat.dai(vow), 0);
+
+        host.surplus();
+
+        assertEq(vat.dai(vow), 100 * RAD);
     }
 
 }

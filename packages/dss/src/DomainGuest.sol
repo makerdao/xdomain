@@ -104,7 +104,7 @@ abstract contract DomainGuest {
     }
 
     function file(bytes32 what, address data) external auth {
-        if (what == "end") end = data;
+        if (what == "end") end = EndLike(data);
         else revert("DomainGuest/file-unrecognized-param");
         emit File(what, data);
     }
