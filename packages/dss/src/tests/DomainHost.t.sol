@@ -155,4 +155,39 @@ contract DomainHostTest is DSSTest {
         assertEq(host.liftMinted(), 0);
     }
 
+    function testRelease() public {
+        // Set DC to 100
+        host.lift(100 ether);
+
+        (uint256 ink, uint256 art) = vat.urns(ILK, address(host));
+        assertEq(ink, 100 ether);
+        assertEq(art, 100 ether);
+        assertEq(dai.balanceOf(address(escrow)), 100 ether);
+        assertEq(host.line(), 100 * RAD);
+        assertEq(host.liftLine(), 100 * RAD);
+        assertEq(host.liftMinted(), 100 ether);
+
+        // Lower DC back to 50 - should not remove escrowed DAI
+        host.lift(50 ether);
+
+        (ink, art) = vat.urns(ILK, address(host));
+        assertEq(ink, 100 ether);
+        assertEq(art, 100 ether);
+        assertEq(dai.balanceOf(address(escrow)), 100 ether);
+        assertEq(host.line(), 50 * RAD);
+        assertEq(host.liftLine(), 50 * RAD);
+        assertEq(host.liftMinted(), 0);
+
+        // Remote domain triggers release at a later time
+        host.release(50 ether);
+
+        (ink, art) = vat.urns(ILK, address(host));
+        assertEq(ink, 50 ether);
+        assertEq(art, 50 ether);
+        assertEq(dai.balanceOf(address(escrow)), 50 ether);
+        assertEq(host.line(), 50 * RAD);
+        assertEq(host.liftLine(), 50 * RAD);
+        assertEq(host.liftMinted(), 0);
+    }
+
 }

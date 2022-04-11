@@ -37,6 +37,7 @@ interface DaiJoinLike {
 interface DaiLike {
     function balanceOf(address usr) external view returns (uint256);
     function transferFrom(address src, address dst, uint256 wad) external returns (bool);
+    function approve(address usr, uint wad) external returns (bool);
 }
 
 /// @title Extend a line of credit to a domain
@@ -84,6 +85,7 @@ abstract contract DomainHost {
         escrow = _escrow;
         
         vat.hope(address(daiJoin));
+        dai.approve(address(daiJoin), type(uint256).max);
     }
 
     // --- Math ---
