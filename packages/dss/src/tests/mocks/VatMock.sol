@@ -4,6 +4,8 @@ pragma solidity >=0.8.0;
 contract VatMock {
     uint256 internal constant RAY = 10 ** 27;
     uint256 public live = 1;
+    uint256 public Line;
+    uint256 public debt;
 
     struct Urn {
         uint256 ink;   // Locked Collateral  [wad]
@@ -64,6 +66,11 @@ contract VatMock {
         live = 0;
     }
 
+    function file(bytes32 what, uint256 data) external {
+        if (what == "Line") Line = data;
+        else revert();
+    }
+
     function frob(bytes32 i, address u, address v, address w, int256 dink, int256 dart) external {
         Urn memory urn = urns[i][u];
 
@@ -76,6 +83,8 @@ contract VatMock {
         dai[w]    = add(dai[w],    dtab);
 
         urns[i][u] = urn;
+        
+        debt = add(debt, dtab);
     }
 
     function move(address src, address dst, uint256 rad) external {
@@ -91,5 +100,6 @@ contract VatMock {
     function suck(address u, address v, uint256 rad) external {
         dai[v] = add(dai[v], rad);
         sin[u] = add(sin[u], rad);
+        debt += rad;
     }
 }

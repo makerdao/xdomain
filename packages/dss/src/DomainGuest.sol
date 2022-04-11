@@ -84,8 +84,8 @@ abstract contract DomainGuest {
     }
 
     // --- Math ---
-    function _min(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = x <= y ? x : y;
+    function _max(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x >= y ? x : y;
     }
 
     function _divup(uint256 x, uint256 y) internal pure returns (uint256 z) {
@@ -121,7 +121,7 @@ abstract contract DomainGuest {
     /// @notice Will release remote DAI from the escrow when it is safe to do so
     /// @dev Should be run by keeper on a regular schedule
     function release() external {
-        uint256 limit = _min(vat.Line() / RAY, _divup(vat.debt(), RAY));
+        uint256 limit = _max(vat.Line() / RAY, _divup(vat.debt(), RAY));
         require(grain > limit, "DomainGuest/no-extra-to-release");
         uint256 burned = grain - limit;
         grain = limit;

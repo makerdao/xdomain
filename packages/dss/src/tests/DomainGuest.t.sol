@@ -113,4 +113,47 @@ contract DomainGuestTest is DSSTest {
        assertTrue(!_tryFile("meh", address(888)));
     }
 
+    function testLift() public {
+        assertEq(guest.grain(), 0);
+        assertEq(vat.Line(), 0);
+
+        guest.lift(100 * RAD, 100 ether);
+
+        assertEq(guest.grain(), 100 ether);
+        assertEq(vat.Line(), 100 * RAD);
+    }
+
+    function testRelease() public {
+        // Set debt ceiling to 100 DAI
+        guest.lift(100 * RAD, 100 ether);
+
+        assertEq(guest.grain(), 100 ether);
+        assertEq(vat.Line(), 100 * RAD);
+        assertEq(guest.releaseBurned(), 0);
+
+        // Should revert as no DAI is available to release
+        try guest.release() {
+            assertTrue(false);
+        } catch {
+        }
+
+        assertEq(guest.grain(), 100 ether);
+        assertEq(vat.Line(), 100 * RAD);
+        assertEq(guest.releaseBurned(), 0);
+
+        // Lower debt ceiling to 50 DAI
+        guest.lift(50 * RAD, 0);
+
+        assertEq(guest.grain(), 100 ether);
+        assertEq(vat.Line(), 50 * RAD);
+        assertEq(guest.releaseBurned(), 0);
+
+        // Should release 50 DAI because nothing has been minted
+        guest.release();
+
+        assertEq(guest.grain(), 50 ether);
+        assertEq(vat.Line(), 50 * RAD);
+        assertEq(guest.releaseBurned(), 50 ether);
+    }
+
 }
