@@ -78,7 +78,8 @@ async function waitForRelayTaskConfirmation(
   while (true) {
     const { data } = await queryGelatoApi(`tasks/${taskId}`, 'get')
     if (data[0]?.taskState === 'ExecSuccess') {
-      return data[0].execution?.transactionHash
+      const txHash = data[0].execution?.transactionHash
+      if (txHash) return txHash
     }
     if (data[0]?.lastCheck?.message?.toLowerCase().includes('error')) {
       const { message, reason } = data[0].lastCheck
@@ -216,6 +217,6 @@ export async function waitForRelay(
   )
   const taskId = await createRelayTask(relay, relayData, relayFee)
   const txHash = await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)
-
+  console.log({ taskId, txHash })
   return txHash
 }
