@@ -366,6 +366,7 @@ describe('WormholeBridge', () => {
       } else {
         txHash = await bridge!.relayMintWithOracles(l1User, wormholeGUID!, signatures, relayFee, maxFeePercentage)
       }
+
       expect(txHash)
         .to.have.lengthOf(66)
         .and.satisfy((h: string) => h.startsWith('0x'))
