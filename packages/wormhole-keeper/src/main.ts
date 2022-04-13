@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 
-import { getOptimismKovanSdk } from '../sdk'
 import { flushL2Gateway } from './l2'
+import { getOptimismKovanSdk } from './sdk'
 
 export async function main() {
   const l2Provider = new ethers.providers.JsonRpcProvider('https://kovan.optimism.io/	')

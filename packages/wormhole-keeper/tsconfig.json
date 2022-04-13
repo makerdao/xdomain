@@ -11,6 +11,6 @@
     "strict": true,
     "target": "ES2018"
   },
-  "include": ["src/**/*", "test/**/*", "./sdk/**/*"],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["**/node_modules"]
 }

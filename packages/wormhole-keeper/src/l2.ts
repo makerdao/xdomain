@@ -1,6 +1,6 @@
 import { formatBytes32String, formatEther } from 'ethers/lib/utils'
 
-import { WormholeOutboundGateway } from '../sdk/types'
+import { WormholeOutboundGateway } from './sdk/types'
 
 export async function flushL2Gateway(gateway: WormholeOutboundGateway, domain: string) {
   const domainEncoded = formatBytes32String(domain)
