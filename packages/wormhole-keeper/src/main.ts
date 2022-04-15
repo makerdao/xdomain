@@ -1,15 +1,41 @@
-import { ethers } from 'ethers'
+import { Contract, ethers } from 'ethers'
 
-import { getOptimismKovanSdk } from './sdk'
+import { WormholeOutboundGateway } from './abis/WormholeOutboundGateway'
+import { idsToChains, networks } from './config'
+import { keep } from './keep'
 
-export async function main() {
-  const l1Provider = new ethers.providers.JsonRpcProvider(
-    'https://eth-kovan.alchemyapi.io/v2/ezK0RQvjbWxV8EoUVG-iLifNmAUHgDp8',
-  )
-  const l1Signer = new ethers.Wallet('42ddb062a194c46229678c4e001a8a169cab351b3d5d12f683ecf3a5a54ccc40', l1Provider) //0xDD55d89656446185Cf891f37bC2ea2B70e325AeE
-  const l2Provider = new ethers.providers.JsonRpcProvider('https://kovan.optimism.io/')
-  const l2Signer = new ethers.Wallet('42ddb062a194c46229678c4e001a8a169cab351b3d5d12f683ecf3a5a54ccc40', l2Provider) //0xDD55d89656446185Cf891f37bC2ea2B70e325AeE
-  const l2Sdk = getOptimismKovanSdk(l2Signer)
-  const domainToFlush = 'KOVAN-MASTER-1'
-  const MAX_TTL_FOR_MESSAGES = 60 * 60 * 24 * 9 // 9 days
+export async function main(l1Rpc: string, privKey: string) {
+  const l1Provider = new ethers.providers.JsonRpcProvider(l1Rpc)
+  const l1Signer = new ethers.Wallet(privKey, l1Provider)
+
+  const chainId = (await l1Provider.getNetwork()).chainId
+  const networkName = idsToChains[chainId]
+  const config = networks[chainId]
+
+  if (!networkName || !config) {
+    throw new Error(`Can't find config for network ${chainId}`)
+  }
+
+  console.log(`Running on ${networkName}. Keeping ${config.length} deployments.`)
+
+  for (const c of config) {
+    const l2Provider = new ethers.providers.JsonRpcProvider(c.l2Rpc)
+    const l2Signer = l1Signer.connect(l2Provider)
+
+    for (const domainToFlush of c.domainsToFlush) {
+      console.log(`Flushing ${c.name} -> ${domainToFlush}`)
+
+      await keep({
+        domainToFlush: domainToFlush,
+        finalizeMessage: await c.messageFinalizer(l1Signer, l2Signer),
+        l2Signer,
+        maxTtlForMessages: c.maxTtlForMessages,
+        wormholeOutboundGateway: new Contract(
+          c.wormholeOutboundGateway,
+          require('./abis/WormholeOutboundGateway.json'),
+          l2Signer,
+        ) as WormholeOutboundGateway,
+      })
+    }
+  }
 }

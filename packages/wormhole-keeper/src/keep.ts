@@ -1,8 +1,8 @@
 import { Signer } from 'ethers'
 import { formatBytes32String, formatEther } from 'ethers/lib/utils'
 
+import { WormholeOutboundGateway } from './abis/WormholeOutboundGateway'
 import { FinalizeMessage } from './domains'
-import { WormholeOutboundGateway } from './sdk/types'
 import { findNearestBlock } from './utils'
 
 export async function keep({

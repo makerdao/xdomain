@@ -1,7 +1,10 @@
+import { getL2Network, L2ToL1MessageStatus, L2TransactionReceipt } from '@arbitrum/sdk'
 import { CrossChainMessenger, MessageStatus } from '@eth-optimism/sdk'
+import assert from 'assert'
 import { Signer } from 'ethers'
 
 export type FinalizeMessage = (txHash: string) => Promise<void>
+export type MakeFinalizeMessage = (l1Signer: Signer, l2Signer: Signer) => Promise<FinalizeMessage>
 
 export async function makeFinalizeMessageForOptimism(l1Signer: Signer, l2Signer: Signer): Promise<FinalizeMessage> {
   const l1ChainId = await l1Signer.getChainId()
@@ -31,5 +34,39 @@ export async function makeFinalizeMessageForOptimism(l1Signer: Signer, l2Signer:
     }
 
     console.log(`Message from tx ${txHash} can't be finalized! :( Reason: ${messageStatus}`)
+  }
+}
+
+export async function makeFinalizeMessageForArbitrum(l1Signer: Signer, l2Signer: Signer): Promise<FinalizeMessage> {
+  const l2Network = await getL2Network(l2Signer)
+
+  return async (txHash) => {
+    const tx = await l2Signer.provider!.getTransactionReceipt(txHash)
+
+    const l2Tx = new L2TransactionReceipt(tx)
+    const l2Message = (await l2Tx.getL2ToL1Messages(l1Signer, l2Network))[0]
+    assert(l2Message, 'No messages found!')
+
+    const proof = await l2Message.tryGetProof(l2Signer.provider!)
+    if (!proof) {
+      console.log(`Message from tx ${txHash} not ready to relay.`)
+      return
+    }
+
+    const status = await l2Message.status(proof)
+
+    if (status === L2ToL1MessageStatus.EXECUTED) {
+      console.log(`Message from tx ${txHash} already relayed.`)
+      return
+    }
+
+    if (status === L2ToL1MessageStatus.UNCONFIRMED) {
+      console.log(`Message from tx ${txHash} not ready to relay.`)
+      return
+    }
+
+    console.log(`Message from tx ${txHash} ready to finalize.`)
+    const finalizeTx = await l2Message.execute(proof)
+    console.log(`Message from tx ${txHash} finalized in tx: ${finalizeTx.hash}`)
   }
 }
