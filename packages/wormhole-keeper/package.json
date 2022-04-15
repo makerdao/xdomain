@@ -20,6 +20,7 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@dethcrypto/eth-sdk": "^0.3.0",
+    "@eth-optimism/sdk": "^1.1.0",
     "@types/node": "^17.0.23",
     "axios": "^0.26.0",
     "ethers": "^5.5.4",
