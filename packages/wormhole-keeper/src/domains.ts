@@ -1,7 +1,9 @@
 import { getL2Network, L2ToL1MessageStatus, L2TransactionReceipt } from '@arbitrum/sdk'
+import { L2ToL1MessageWriter, MessageBatchProofInfo } from '@arbitrum/sdk/dist/lib/message/L2ToL1Message'
 import { CrossChainMessenger, MessageStatus } from '@eth-optimism/sdk'
 import assert from 'assert'
 import { Signer } from 'ethers'
+import { Provider } from 'ethers/node_modules/@ethersproject/providers'
 
 export type FinalizeMessage = (txHash: string) => Promise<void>
 export type MakeFinalizeMessage = (l1Signer: Signer, l2Signer: Signer) => Promise<FinalizeMessage>
@@ -47,7 +49,7 @@ export async function makeFinalizeMessageForArbitrum(l1Signer: Signer, l2Signer:
     const l2Message = (await l2Tx.getL2ToL1Messages(l1Signer, l2Network))[0]
     assert(l2Message, 'No messages found!')
 
-    const proof = await l2Message.tryGetProof(l2Signer.provider!)
+    const proof = await tryGetAProof(l2Message, l2Signer.provider!)
     if (!proof) {
       console.log(`Message from tx ${txHash} not ready to relay.`)
       return
@@ -68,5 +70,22 @@ export async function makeFinalizeMessageForArbitrum(l1Signer: Signer, l2Signer:
     console.log(`Message from tx ${txHash} ready to finalize.`)
     const finalizeTx = await l2Message.execute(proof)
     console.log(`Message from tx ${txHash} finalized in tx: ${finalizeTx.hash}`)
+  }
+}
+
+async function tryGetAProof(
+  l2Message: L2ToL1MessageWriter,
+  l2Provider: Provider,
+): Promise<MessageBatchProofInfo | undefined> {
+  try {
+    const proof = await l2Message.tryGetProof(l2Provider)
+
+    return proof || undefined
+  } catch (e) {
+    if (e instanceof Error && e.message.includes("batch doesn't exist")) {
+      return
+    }
+
+    throw e
   }
 }
