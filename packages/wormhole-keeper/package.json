@@ -8,7 +8,7 @@
   "license": "AGPL-3.0",
   "main": "dist/index.js",
   "scripts": {
-    "start": "ts-node ./src/main",
+    "start": "ts-node ./src",
     "format": "prettier --check \"./**/*.ts\"",
     "format:fix": "prettier --write \"./**/*.ts\"",
     "lint": "eslint --ext .ts src",

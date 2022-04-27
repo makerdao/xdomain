@@ -26,7 +26,7 @@ export const networks = {
       l2Rpc: 'https://rinkeby.arbitrum.io/rpc',
       domainsToFlush: ['RINKEBY-MASTER-1'],
       maxTtlForMessages: 9 * DAY,
-      wormholeOutboundGateway: '0xEbA80E9d7C6C2F575a642a43199e32F47Bbd1306',
+      wormholeOutboundGateway: '0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3',
       messageFinalizer: makeFinalizeMessageForArbitrum,
     },
   ],
