@@ -1,8 +1,15 @@
-name: Run Testnet Wormhole Flush Keepers
+name: Testnet Wormhole Flush Keepers
+
+# on:
+#   schedule:
+#     - cron: "30 0 * * *"
 
 on:
-  schedule:
-    - cron: "10 16 * * *"
+  push:
+    branches:
+      - master
+  pull_request:
+
 jobs:
   arbitrum-rinkeby-wormhole-keeper:
     name: Arbitrum Rinkeby Wormhole Keeper
