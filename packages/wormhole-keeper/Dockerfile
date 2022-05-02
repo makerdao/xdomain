@@ -6,5 +6,5 @@ RUN yarn --no-progress --non-interactive --frozen-lockfile
 
 COPY . .
 
-CMD [ "yarn", "start" ]
+ENTRYPOINT [ "yarn", "start" ]
 
