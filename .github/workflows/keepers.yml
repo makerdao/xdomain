@@ -1,0 +1,35 @@
+name: Testnet Wormhole Flush Keepers
+
+on:
+  schedule:
+    - cron: "30 0 * * *"
+
+jobs:
+  arbitrum-rinkeby-wormhole-keeper:
+    name: Arbitrum Rinkeby Wormhole Keeper
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/wormhole-keeper
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+      - name: Build keeper container
+        run: docker build -t wormhole-keeper .
+      - name: Run keeper container
+        run: docker run -t wormhole-keeper ${{ secrets.RINKEBY_RPC_URL }} ${{ secrets.TEST_KEEPER_PRIV_KEY }}
+
+  optimism-kovan-wormhole-keeper:
+    name: Optimism Kovan Wormhole Keeper
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/wormhole-keeper
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+      - name: Build keeper container
+        run: docker build -t wormhole-keeper .
+      - name: Run keeper container
+        run: docker run -t wormhole-keeper ${{ secrets.KOVAN_RPC_URL }} ${{ secrets.TEST_KEEPER_PRIV_KEY }}
