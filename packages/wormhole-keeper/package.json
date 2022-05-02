@@ -8,15 +8,13 @@
   "license": "AGPL-3.0",
   "main": "dist/index.js",
   "scripts": {
-    "start": "ts-node ./src/main",
+    "start": "ts-node ./src",
     "format": "prettier --check \"./**/*.ts\"",
     "format:fix": "prettier --write \"./**/*.ts\"",
     "lint": "eslint --ext .ts src",
     "lint:fix": "yarn lint --fix",
-    "test": "mocha -r ts-node/register test/**/*.test.ts",
-    "test:fix": "yarn lint:fix && yarn format:fix && yarn test && yarn typecheck",
     "typecheck": "tsc --noEmit",
-    "build": "rm -rf ./dist && tsc -p ./tsconfig.build.json && cp -R ./src/sdk ./dist/sdk"
+    "build": "rm -rf ./dist && tsc -p ./tsconfig.build.json"
   },
   "types": "dist/index.d.ts",
   "dependencies": {
