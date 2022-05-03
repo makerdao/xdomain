@@ -3,3 +3,4 @@ src/sdk
 tmp
 dist
 .env
+src/sdk

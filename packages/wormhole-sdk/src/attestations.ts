@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { arrayify, hashMessage } from 'ethers/lib/utils'
 
-import { decodeWormholeData, getGuidHash, WormholeGUID } from '.'
+import { decodeWormholeData, getGuidHash, sleep, WormholeGUID } from '.'
 import { WormholeOracleAuth } from './sdk/esm/types'
 
 const ORACLE_API_URL = 'http://52.42.179.195:8080'
@@ -18,10 +18,6 @@ interface OracleData {
 interface Attestation {
   signatures: string
   wormholeGUID: WormholeGUID
-}
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 async function fetchAttestations(txHash: string): Promise<Attestation[]> {

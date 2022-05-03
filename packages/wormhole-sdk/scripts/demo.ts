@@ -5,7 +5,7 @@ import { formatEther, parseEther } from 'ethers/lib/utils'
 
 import {
   DomainDescription,
-  getAmountMintable,
+  getAmountsForWormholeGUID,
   getAttestations,
   getDefaultDstDomain,
   initWormhole,
@@ -40,18 +40,18 @@ export async function demo(
   ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
   console.log(`Withdrawing ${formatEther(amount)} DAI on ${srcDomain} ...`)
   const initTx = await initWormhole({ srcDomain, sender, receiverAddress: sender.address, amount })
-  console.log(`Withdrawal tx submitted: ${srcDomainEtherscan}${initTx.hash}`)
-  await initTx.wait()
+  console.log(`Withdrawal tx submitted: ${srcDomainEtherscan}${initTx.tx!.hash}`)
+  await initTx.tx!.wait()
   console.log(`Withdrawal tx confirmed.\n`)
 
   // ***********************************************/
   // ***********  getAttestations ******************/
   // ***********************************************/
 
-  console.log(`Requesting attestation for ${initTx.hash} ...`)
+  console.log(`Requesting attestation for ${initTx.tx!.hash} ...`)
 
   const { signatures, wormholeGUID } = await getAttestations({
-    txHash: initTx.hash,
+    txHash: initTx.tx!.hash,
     srcDomain,
     newSignatureReceivedCallback: (numSigs: number, threshold: number) =>
       console.log(`Signatures received: ${numSigs} (required: ${threshold}).`),
@@ -64,13 +64,13 @@ export async function demo(
   // ***********  mintWithOracles ******************/
   // ***********************************************/
 
-  const { mintable, pending, fees } = await getAmountMintable({ srcDomain, wormholeGUID: wormholeGUID! })
+  const { mintable, pending, bridgeFee } = await getAmountsForWormholeGUID({ srcDomain, wormholeGUID: wormholeGUID! })
   console.log(`Pending: ${formatEther(pending)} DAI.`)
   console.log(`Mintable: ${formatEther(mintable)} DAI.`)
-  console.log(`Fees: ${formatEther(fees)} DAI.\n`)
+  console.log(`Fees: ${formatEther(bridgeFee)} DAI.\n`)
 
   console.log(`Minting ${formatEther(mintable)} DAI on ${dstDomain} ...`)
-  const maxFeePercentage = fees.mul(WAD).div(mintable)
+  const maxFeePercentage = bridgeFee.mul(WAD).div(mintable)
   const mintTx = await mintWithOracles({
     srcDomain,
     sender,
@@ -78,12 +78,12 @@ export async function demo(
     signatures,
     maxFeePercentage,
   })
-  console.log(`Minting tx submitted: ${dstDomainEtherscan}${mintTx.hash}`)
+  console.log(`Minting tx submitted: ${dstDomainEtherscan}${mintTx.tx!.hash}`)
 
-  await mintTx.wait()
+  await mintTx.tx!.wait()
   console.log(`Minting tx confirmed.\n`)
 
-  const { mintable: mintableAfter, pending: pendingAfter } = await getAmountMintable({
+  const { mintable: mintableAfter, pending: pendingAfter } = await getAmountsForWormholeGUID({
     srcDomain,
     wormholeGUID: wormholeGUID!,
   })

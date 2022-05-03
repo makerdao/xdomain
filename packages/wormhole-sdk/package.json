@@ -28,7 +28,7 @@
     "ts-essentials": "^9.1.2"
   },
   "devDependencies": {
-    "@arbitrum/sdk": "^1.0.0",
+    "@arbitrum/sdk": "^1.1.2",
     "@ethereum-waffle/chai": "^4.0.0-alpha.0",
     "@types/chai": "^4.3.0",
     "@types/chai-as-promised": "^7.1.5",
