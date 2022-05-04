@@ -6,5 +6,6 @@ RUN yarn --no-progress --non-interactive --frozen-lockfile
 
 COPY . .
 
-ENTRYPOINT [ "yarn", "start" ]
+# will timeout after 10 minutes
+ENTRYPOINT ["timeout", "-k", "650", "600", "yarn", "start" ]
 
