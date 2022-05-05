@@ -70,6 +70,7 @@ abstract contract DomainGuest {
     event Push();
     event Rectify();
     event Cage();
+    event Tell(uint256 value);
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainGuest/not-authorized");
@@ -168,17 +169,26 @@ abstract contract DomainGuest {
         emit Rectify();
     }
 
-    function cage() external {
+    /// @notice Trigger the end module
+    /// @dev Should only be triggered by remote domain
+    function cage() external auth {
         end.cage();
 
-        // TODO need to relay the cure value after some settlement period
-
         emit Cage();
+    }
+
+    /// @notice Set the cure value for the host
+    /// @dev Triggered during shutdown
+    function tell(uint256 value) external auth {
+        _tell(value);
+
+        emit Tell(value);
     }
 
     // Bridge-specific functions
     function _release(uint256 burned) internal virtual;
     function _surplus(uint256 wad) internal virtual;
     function _deficit(uint256 wad) internal virtual;
+    function _tell(uint256 value) internal virtual;
     
 }

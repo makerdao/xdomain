@@ -33,6 +33,7 @@ contract EmptyDomainGuest is DomainGuest {
     uint256 public releaseBurned;
     uint256 public surplus;
     uint256 public deficit;
+    uint256 public tellValue;
 
     constructor(address _daiJoin) DomainGuest(_daiJoin) {}
 
@@ -44,6 +45,9 @@ contract EmptyDomainGuest is DomainGuest {
     }
     function _deficit(uint256 wad) internal virtual override {
        deficit = wad;
+    }
+    function _tell(uint256 value) internal virtual override {
+       tellValue = value;
     }
 
 }
@@ -279,6 +283,14 @@ contract DomainGuestTest is DSSTest {
 
         assertEq(end.live(), 0);
         assertEq(vat.live(), 0);
+    }
+
+    function testTell() public {
+        assertEq(guest.tellValue(), 0);
+
+        guest.tell(123);
+
+        assertEq(guest.tellValue(), 123);
     }
 
 }
