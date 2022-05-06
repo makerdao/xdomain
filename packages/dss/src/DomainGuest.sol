@@ -66,11 +66,12 @@ abstract contract DomainGuest {
     event Deny(address indexed usr);
     event File(bytes32 indexed what, address data);
     event Lift(uint256 line, uint256 minted);
-    event Release();
-    event Push();
-    event Rectify();
+    event Release(uint256 burned, uint256 totalDebt);
+    event Push(int256 surplus);
+    event Rectify(uint256 balance);
     event Cage();
     event Tell(uint256 value);
+    event MintClaim(address indexed usr, uint256 claim);
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainGuest/not-authorized");
@@ -125,22 +126,25 @@ abstract contract DomainGuest {
     }
 
     /// @notice Will release remote DAI from the escrow when it is safe to do so
-    /// @dev Should be run by keeper on a regular schedule
+    /// @dev    Should be run by keeper on a regular schedule.
+    ///         This will also push the vat debt for informational purposes.
     function release() external {
-        uint256 limit = _max(vat.Line() / RAY, _divup(vat.debt(), RAY));
-        require(grain > limit, "DomainGuest/no-extra-to-release");
-        uint256 burned = grain - limit;
-        grain = limit;
+        uint256 totalDebt = vat.debt();
+        uint256 limit = _max(vat.Line() / RAY, _divup(totalDebt, RAY));
+        uint256 burned;
+        if (grain > limit) {
+            burned = grain - limit;
+            grain = limit;
+        }
 
-        _release(burned);
+        _release(burned, totalDebt);
 
-        emit Release();
+        emit Release(burned, totalDebt);
     }
 
     /// @notice Push surplus (or deficit) to the host dss
     /// @dev Should be run by keeper on a regular schedule
     function push() external {
-        // TODO do we want some minimum value to trigger this to give a local buffer?
         uint256 _dai = vat.dai(address(this));
         uint256 _sin = vat.sin(address(this));
         if (_dai > _sin) {
@@ -152,21 +156,27 @@ abstract contract DomainGuest {
 
             // Send ERC20 DAI to the remote DomainHost
             _surplus(wad);
+
+            require(wad < 2 ** 255, "DomainGuest/overflow");
+            emit Push(int256(wad));
         } else if (_dai < _sin) {
             // We have a deficit
             if (_dai > 0) vat.heal(_dai);
 
-            _deficit(_divup(_sin - _dai, RAY));   // Round up to overcharge for deficit
-        }
+            uint256 deficit = _divup(_sin - _dai, RAY);
+            _deficit(deficit);   // Round up to overcharge for deficit
 
-        emit Push();
+            require(deficit < 2 ** 255, "DomainGuest/overflow");
+            emit Push(-int256(deficit));
+        }
     }
 
     /// @notice Merge ERC20 DAI into surplus
     function rectify() external {
-        daiJoin.join(address(this), dai.balanceOf(address(this)));
+        uint256 balance = dai.balanceOf(address(this));
+        daiJoin.join(address(this), balance);
 
-        emit Rectify();
+        emit Rectify(balance);
     }
 
     /// @notice Trigger the end module
@@ -185,8 +195,17 @@ abstract contract DomainGuest {
         emit Tell(value);
     }
 
+    /// @notice Mint a claim token for the given user
+    /// @dev    Should only be triggered by remote domain.
+    ///         Claim amount is in units of local debt.
+    function mintClaim(address usr, uint256 claim) external auth {
+        // TODO mint claim
+
+        emit MintClaim(usr, claim);
+    }
+
     // Bridge-specific functions
-    function _release(uint256 burned) internal virtual;
+    function _release(uint256 burned, uint256 totalDebt) internal virtual;
     function _surplus(uint256 wad) internal virtual;
     function _deficit(uint256 wad) internal virtual;
     function _tell(uint256 value) internal virtual;

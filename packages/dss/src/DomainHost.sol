@@ -55,6 +55,8 @@ abstract contract DomainHost {
 
     address public vow;
     uint256 public line;
+    uint256 public grain;       // Keep track of the pre-minted DAI in the escrow
+    uint256 public debt;        // Last known debt for remote domain
     uint256 public cure;
 
     uint256 constant RAY = 10 ** 27;
@@ -69,6 +71,7 @@ abstract contract DomainHost {
     event Deficit(uint256 wad);
     event Cage();
     event Tell(uint256 value);
+    event Exit(address indexed usr, uint256 wad, uint256 claim);
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainHost/not-authorized");
@@ -119,11 +122,16 @@ abstract contract DomainHost {
         uint256 minted;
 
         if (rad > line) {
+            // Cannot raise debt ceiling during global shutdown
+            require(vat.live() == 1, "DomainHost/vat-not-live");
+
             // We are issuing new pre-minted DAI
             minted = (rad - line) / RAY;                    // No precision loss as line is always a multiple of RAY
             vat.slip(ilk, address(this), int256(minted));   // No need for conversion check as amt is under a RAY of full size
             vat.frob(ilk, address(this), address(this), address(this), int256(minted), int256(minted));
             daiJoin.exit(escrow, minted);
+
+            grain += minted;
         }
 
         line = rad;
@@ -134,14 +142,21 @@ abstract contract DomainHost {
     }
 
     /// @notice Withdraw pre-mint DAI from the remote domain
-    /// @dev Should only be triggered by remote domain when it is safe to do so
-    function release(uint256 wad) external auth {
+    /// @dev    Should only be triggered by remote domain when it is safe to do so.
+    ///         Also keeps the debt up to date.
+    function release(uint256 wad, uint256 totalDebt) external auth {
+        // Amounts are locked in during global shutdown
+        require(vat.live() == 1, "DomainHost/vat-not-live");
+        
         int256 amt = -_int256(wad);
 
         require(dai.transferFrom(escrow, address(this), wad), "DomainHost/transfer-failed");
         daiJoin.join(address(this), wad);
         vat.frob(ilk, address(this), address(this), address(this), amt, amt);
         vat.slip(ilk, address(this), amt);
+
+        debt = totalDebt;
+        grain -= wad;
 
         emit Release(wad);
     }
@@ -157,6 +172,9 @@ abstract contract DomainHost {
     /// @notice Cover the remote domain's deficit by pulling debt from the surplus buffer
     /// @dev Should only be triggered by remote domain
     function deficit(uint256 wad) external auth {
+        // Amounts are locked in during global shutdown
+        require(vat.live() == 1, "DomainHost/vat-not-live");
+        
         vat.suck(vow, address(this), wad * RAY);
         daiJoin.exit(address(this), wad);
         
@@ -184,9 +202,28 @@ abstract contract DomainHost {
         emit Tell(value);
     }
 
+    /// @notice Allow DAI holders to exit during global settlement
+    /// @dev    This will mint a pro-rata claim token on the remote domain.
+    ///         Gem amount is scaled by the actual debt of the remote domain.
+    ///         `usr` is the address for the mint on the remote domain.
+    function exit(address usr, uint256 wad) external {
+        require(vat.live() == 0, "DomainHost/vat-live");
+        require(wad <= 2 ** 255, "DomainHost/overflow");
+        vat.slip(ilk, msg.sender, -int256(wad));
+
+        // Convert to actual debt amount
+        // Round against the user
+        uint256 claim = wad * (grain - cure) / grain;
+        
+        _mintClaim(usr, claim);
+
+        emit Exit(usr, wad, claim);
+    }
+
     // Bridge-specific functions
     function _lift(uint256 line, uint256 minted) internal virtual;
     function _rectify(uint256 wad) internal virtual;
     function _cage() internal virtual;
+    function _mintClaim(address usr, uint256 claim) internal virtual;
 
 }

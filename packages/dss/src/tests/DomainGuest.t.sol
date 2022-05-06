@@ -31,14 +31,16 @@ import { DomainGuest } from "../DomainGuest.sol";
 contract EmptyDomainGuest is DomainGuest {
 
     uint256 public releaseBurned;
+    uint256 public releaseTotalDebt;
     uint256 public surplus;
     uint256 public deficit;
     uint256 public tellValue;
 
     constructor(address _daiJoin) DomainGuest(_daiJoin) {}
 
-    function _release(uint256 burned) internal override {
+    function _release(uint256 burned, uint256 totalDebt) internal override {
         releaseBurned = burned;
+        releaseTotalDebt = totalDebt;
     }
     function _surplus(uint256 wad) internal virtual override {
         surplus = wad;
@@ -134,13 +136,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.grain(), 100 ether);
         assertEq(vat.Line(), 100 * RAD);
         assertEq(guest.releaseBurned(), 0);
-
-        // Should revert as no DAI is available to release
-        assertRevert(address(guest), abi.encodeWithSelector(DomainGuest.release.selector), "DomainGuest/no-extra-to-release");
-
-        assertEq(guest.grain(), 100 ether);
-        assertEq(vat.Line(), 100 * RAD);
-        assertEq(guest.releaseBurned(), 0);
+        assertEq(guest.releaseTotalDebt(), 0);
 
         // Lower debt ceiling to 50 DAI
         guest.lift(50 * RAD, 0);
@@ -148,6 +144,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.grain(), 100 ether);
         assertEq(vat.Line(), 50 * RAD);
         assertEq(guest.releaseBurned(), 0);
+        assertEq(guest.releaseTotalDebt(), 0);
 
         // Should release 50 DAI because nothing has been minted
         guest.release();
@@ -155,6 +152,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.grain(), 50 ether);
         assertEq(vat.Line(), 50 * RAD);
         assertEq(guest.releaseBurned(), 50 ether);
+        assertEq(guest.releaseTotalDebt(), 0);
     }
 
     function testReleaseDebtTaken() public {

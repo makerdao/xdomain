@@ -33,6 +33,8 @@ contract EmptyDomainHost is DomainHost {
     uint256 public liftMinted;
     uint256 public rectify;
     bool public caged;
+    address public claimUsr;
+    uint256 public claimAmount;
 
     constructor(bytes32 _ilk, address _daiJoin, address _escrow) DomainHost(_ilk, _daiJoin, _escrow) {}
 
@@ -45,6 +47,10 @@ contract EmptyDomainHost is DomainHost {
     }
     function _cage() internal virtual override {
         caged = true;
+    }
+    function _mintClaim(address usr, uint256 claim) internal virtual override {
+        claimUsr = usr;
+        claimAmount = claim;
     }
 
 }
@@ -131,6 +137,7 @@ contract DomainHostTest is DSSTest {
         assertEq(art, 100 ether);
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.line(), 100 * RAD);
+        assertEq(host.grain(), 100 ether);
         assertEq(host.liftLine(), 100 * RAD);
         assertEq(host.liftMinted(), 100 ether);
 
@@ -142,6 +149,7 @@ contract DomainHostTest is DSSTest {
         assertEq(art, 200 ether);
         assertEq(dai.balanceOf(address(escrow)), 200 ether);
         assertEq(host.line(), 200 * RAD);
+        assertEq(host.grain(), 200 ether);
         assertEq(host.liftLine(), 200 * RAD);
         assertEq(host.liftMinted(), 100 ether);
 
@@ -153,6 +161,7 @@ contract DomainHostTest is DSSTest {
         assertEq(art, 200 ether);
         assertEq(dai.balanceOf(address(escrow)), 200 ether);
         assertEq(host.line(), 100 * RAD);
+        assertEq(host.grain(), 200 ether);
         assertEq(host.liftLine(), 100 * RAD);
         assertEq(host.liftMinted(), 0);
     }
@@ -166,6 +175,8 @@ contract DomainHostTest is DSSTest {
         assertEq(art, 100 ether);
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.line(), 100 * RAD);
+        assertEq(host.grain(), 100 ether);
+        assertEq(host.debt(), 0);
         assertEq(host.liftLine(), 100 * RAD);
         assertEq(host.liftMinted(), 100 ether);
 
@@ -177,17 +188,22 @@ contract DomainHostTest is DSSTest {
         assertEq(art, 100 ether);
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.line(), 50 * RAD);
+        assertEq(host.grain(), 100 ether);
+        assertEq(host.debt(), 0);
         assertEq(host.liftLine(), 50 * RAD);
         assertEq(host.liftMinted(), 0);
 
         // Remote domain triggers release at a later time
-        host.release(50 ether);
+        // Reports a used debt amount of 20
+        host.release(50 ether, 20 * RAD);
 
         (ink, art) = vat.urns(ILK, address(host));
         assertEq(ink, 50 ether);
         assertEq(art, 50 ether);
         assertEq(dai.balanceOf(address(escrow)), 50 ether);
         assertEq(host.line(), 50 * RAD);
+        assertEq(host.grain(), 50 ether);
+        assertEq(host.debt(), 20 * RAD);
         assertEq(host.liftLine(), 50 * RAD);
         assertEq(host.liftMinted(), 0);
     }
@@ -196,34 +212,45 @@ contract DomainHostTest is DSSTest {
         host.lift(100 ether);
         host.lift(50 ether);        // Trigger lowering
         host.lift(75 ether);        // Trigger raise before the release comes in
+        host.lift(50 ether);        // Trigger another lowering
 
         (uint256 ink, uint256 art) = vat.urns(ILK, address(host));
         assertEq(ink, 125 ether);
         assertEq(art, 125 ether);
         assertEq(dai.balanceOf(address(escrow)), 125 ether);
-        assertEq(host.line(), 75 * RAD);
-        assertEq(host.liftLine(), 75 * RAD);
-        assertEq(host.liftMinted(), 25 ether);
+        assertEq(host.line(), 50 * RAD);
+        assertEq(host.grain(), 125 ether);
+        assertEq(host.debt(), 0);
+        assertEq(host.liftLine(), 50 * RAD);
+        assertEq(host.liftMinted(), 0);
 
-        host.release(25 ether);     // A partial release comes in
-
-        (ink, art) = vat.urns(ILK, address(host));
-        assertEq(ink, 100 ether);
-        assertEq(art, 100 ether);
-        assertEq(dai.balanceOf(address(escrow)), 100 ether);
-        assertEq(host.line(), 75 * RAD);
-
-        host.release(25 ether);     // The remainder release comes in
+        host.release(50 ether, 10 * RAD);   // First release comes in
 
         (ink, art) = vat.urns(ILK, address(host));
         assertEq(ink, 75 ether);
         assertEq(art, 75 ether);
         assertEq(dai.balanceOf(address(escrow)), 75 ether);
-        assertEq(host.line(), 75 * RAD);
+        assertEq(host.line(), 50 * RAD);
+        assertEq(host.grain(), 75 ether);
+        assertEq(host.debt(), 10 * RAD);
+        assertEq(host.liftLine(), 50 * RAD);
+        assertEq(host.liftMinted(), 0);
+
+        host.release(25 ether, 15 * RAD);   // Second release comes in
+
+        (ink, art) = vat.urns(ILK, address(host));
+        assertEq(ink, 50 ether);
+        assertEq(art, 50 ether);
+        assertEq(dai.balanceOf(address(escrow)), 50 ether);
+        assertEq(host.line(), 50 * RAD);
+        assertEq(host.grain(), 50 ether);
+        assertEq(host.debt(), 15 * RAD);
+        assertEq(host.liftLine(), 50 * RAD);
+        assertEq(host.liftMinted(), 0);
     }
 
     function testReleaseNoDai() public {
-        assertRevert(address(host), abi.encodeWithSelector(DomainHost.release.selector, uint256(1 ether)), "Dai/insufficient-balance");
+        assertRevert(address(host), abi.encodeWithSelector(DomainHost.release.selector, uint256(1 ether), 0), "Dai/insufficient-balance");
     }
 
     function testSurplus() public {
