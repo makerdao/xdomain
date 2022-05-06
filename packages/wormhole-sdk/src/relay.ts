@@ -1,13 +1,33 @@
 import axios from 'axios'
-import { BigNumber, BigNumberish, Contract, Signer } from 'ethers'
+import { BigNumber, BigNumberish, constants, Contract, Signer } from 'ethers'
 import { arrayify, formatEther, hexConcat, hexZeroPad, Interface, keccak256, splitSignature } from 'ethers/lib/utils'
 
 import { getGuidHash, sleep, WormholeGUID } from '.'
-import { Relay, RelayInterface } from './sdk/esm/types/Relay'
+import { BasicRelay, BasicRelayInterface } from './sdk/esm/types/BasicRelay'
+import { TrustedRelay, TrustedRelayInterface } from './sdk/esm/types/TrustedRelay'
 
 const GELATO_API_URL = 'https://relay.gelato.digital'
 const ETHEREUM_DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f'
-const ESTIMATED_RELAY_GAS_LIMIT = '400000' // = 391174 + a small margin
+const GELATO_ADDRESSES: { [chainId: number]: { service: string; gelato: string } } = {
+  4: {
+    service: '0x227148553058e2aC89f3a4a2a19B6dC644A4695A',
+    gelato: '0x0630d1b8C2df3F0a68Df578D02075027a6397173',
+  },
+  42: {
+    service: '0xb34758F24fFEf132dc5831C2Cd9A0a5e120CD564',
+    gelato: '0xDf592cB2d32445F8e831d211AB20D3233cA41bD8',
+  },
+}
+
+export type Relay = BasicRelay | TrustedRelay
+type RelayInterface = BasicRelayInterface | TrustedRelayInterface
+
+function getEstimatedRelayGasLimit(relay: BasicRelay | TrustedRelay): string {
+  if (relay.hasOwnProperty('signers')) {
+    return '420000' // = 385462 + a small margin (estimate for TrustedRelay)
+  }
+  return '400000' // = 371516 + a small margin (estimate for BasicRelay)
+}
 
 async function queryGelatoApi(url: string, method: 'get' | 'post', params?: Object): Promise<any> {
   try {
@@ -30,6 +50,8 @@ async function getRelayCalldata(
   gasFee: BigNumberish,
   maxFeePercentage?: BigNumberish,
   expiry?: BigNumberish,
+  to?: string,
+  data?: string,
 ): Promise<string> {
   maxFeePercentage ||= 0
   expiry ||= Math.floor(Date.now() / 1000 + 3600)
@@ -44,7 +66,10 @@ async function getRelayCalldata(
     ]),
   )
   const { r, s, v } = splitSignature(await receiver.signMessage(arrayify(payload)))
-  const calldata = relayInterface.encodeFunctionData('relay', [
+
+  const useTrustedRelay = relayInterface.functions.hasOwnProperty('signers(address)')
+  const extCall = useTrustedRelay ? [to || constants.AddressZero, data || '0x'] : []
+  const calldata = (relayInterface as any).encodeFunctionData('relay', [
     wormholeGUID,
     signatures,
     maxFeePercentage,
@@ -53,6 +78,7 @@ async function getRelayCalldata(
     v,
     r,
     s,
+    ...extCall,
   ])
   return calldata
 }
@@ -105,10 +131,13 @@ async function getRelayGasLimit(
     signatures: string
     maxFeePercentage?: BigNumberish
     expiry?: BigNumberish
+    to?: string
+    data?: string
   },
 ): Promise<string> {
-  if (!relayParams) return ESTIMATED_RELAY_GAS_LIMIT
-  const { receiver, wormholeGUID, signatures, maxFeePercentage, expiry } = relayParams
+  if (!relayParams) return getEstimatedRelayGasLimit(relay)
+  const { receiver, wormholeGUID, signatures, maxFeePercentage, expiry, to, data } = relayParams
+
   const relayData = await getRelayCalldata(
     relay.interface,
     receiver,
@@ -117,9 +146,13 @@ async function getRelayGasLimit(
     1,
     maxFeePercentage,
     expiry,
+    to,
+    data,
   )
+  const { chainId } = await relay.provider.getNetwork()
+  const addresses = GELATO_ADDRESSES[chainId]
 
-  const serviceAddress = '0x227148553058e2aC89f3a4a2a19B6dC644A4695A'
+  const serviceAddress = addresses.service
   const serviceInterface = new Interface([
     'function execTransit(address _dest,bytes calldata _data,uint256 _minFee,address _token)',
   ])
@@ -130,7 +163,7 @@ async function getRelayGasLimit(
     await relay.dai(),
   ])
 
-  const gelatoAddress = '0x0630d1b8C2df3F0a68Df578D02075027a6397173'
+  const gelatoAddress = addresses.gelato
   const gelatoInterface = new Interface([
     'function exec(address _service,bytes calldata _data,address _creditToken) returns (uint256 credit,uint256 gasDebitInNativeToken,uint256 gasDebitInCreditToken,uint256 estimatedGasUsed)',
     'function executors() view returns (address[] memory)',
@@ -155,7 +188,7 @@ async function getRelayGasLimit(
       })
     ).toString()
   } catch (e) {
-    gasUsed = ESTIMATED_RELAY_GAS_LIMIT
+    gasUsed = getEstimatedRelayGasLimit(relay)
     console.error(e)
   }
   return gasUsed
@@ -170,21 +203,25 @@ export async function getRelayGasFee(
     signatures: string
     maxFeePercentage?: BigNumberish
     expiry?: BigNumberish
+    to?: string
+    data?: string
   },
 ): Promise<string> {
   isHighPriority ||= false
 
-  const { oracles } = await queryGelatoApi(`oracles`, 'get')
-  const { chainId } = await relay.provider.getNetwork()
-  if (!oracles.includes(chainId.toString())) {
-    return '1' // use 1 wei for the relay fee on testnets
-  }
-
   const gasLimit = await getRelayGasLimit(relay, relayParams)
 
-  const { estimatedFee } = await queryGelatoApi(`oracles/${chainId}/estimate`, 'get', {
+  const { oracles } = await queryGelatoApi(`oracles`, 'get')
+  const { chainId } = await relay.provider.getNetwork()
+  const oracleChainId = oracles.includes(chainId.toString()) ? chainId : 1
+
+  const { estimatedFee } = await queryGelatoApi(`oracles/${oracleChainId}/estimate`, 'get', {
     params: { paymentToken: ETHEREUM_DAI_ADDRESS, gasLimit, isHighPriority },
   })
+
+  if ([3, 4, 5, 42].includes(chainId)) {
+    return '1' // use 1 wei for the relay fee on testnets
+  }
   return estimatedFee
 }
 
@@ -196,6 +233,8 @@ export async function waitForRelay(
   relayFee: BigNumberish,
   maxFeePercentage?: BigNumberish,
   expiry?: BigNumberish,
+  to?: string,
+  data?: string,
   pollingIntervalMs?: number,
   timeoutMs?: number,
 ): Promise<string> {
@@ -217,6 +256,8 @@ export async function waitForRelay(
     relayFee,
     maxFeePercentage,
     expiry,
+    to,
+    data,
   )
   const taskId = await createRelayTask(relay, relayData, relayFee)
   const txHash = await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)

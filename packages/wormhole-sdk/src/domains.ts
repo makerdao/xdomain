@@ -4,9 +4,10 @@ import { Dictionary } from 'ts-essentials'
 
 import { getArbitrumTestnetSdk, getKovanSdk, getOptimismKovanSdk, getRinkebySdk } from './sdk'
 import {
+  BasicRelay,
   Faucet,
   Multicall,
-  Relay,
+  TrustedRelay,
   Vat,
   WormholeJoin,
   WormholeOracleAuth,
@@ -20,7 +21,8 @@ export interface WormholeSdk {
   Vat?: Vat
   Multicall?: Multicall
   Faucet?: Faucet
-  Relay?: Relay
+  BasicRelay?: BasicRelay
+  TrustedRelay?: TrustedRelay
 }
 
 export const DOMAINS = [
@@ -91,7 +93,8 @@ export function getSdk(domain: DomainDescription, signerOrProvider: Signer | Pro
     Vat: undefined,
     Multicall: undefined,
     Faucet: undefined,
-    Relay: undefined,
+    BasicRelay: undefined,
+    TrustedRelay: undefined,
     ...sdk,
   }
 

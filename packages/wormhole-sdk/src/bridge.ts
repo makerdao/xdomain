@@ -13,6 +13,7 @@ import {
   getRelayGasFee,
   getSdk,
   isArbitrumMessageInOutbox,
+  Relay,
   relayArbitrumMessage,
   waitForAttestations,
   waitForRelay,
@@ -92,10 +93,11 @@ export class WormholeBridge {
     receiverAddress: string,
     amount: BigNumberish,
     sender?: Signer,
+    relayAddress?: string,
     overrides?: Overrides,
   ): Promise<Call> {
-    const dstDomainSdk = getSdk(this.dstDomain, this.dstDomainProvider)
-    return await this.initWormhole(receiverAddress, amount, dstDomainSdk.Relay!.address, sender, overrides)
+    const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
+    return await this.initWormhole(receiverAddress, amount, relay.address, sender, overrides)
   }
 
   public async getAttestations(
@@ -126,6 +128,7 @@ export class WormholeBridge {
   public async getAmounts(
     withdrawn: BigNumberish,
     isHighPriority?: boolean,
+    relayAddress?: string,
   ): Promise<{
     mintable: BigNumber
     bridgeFee: BigNumber
@@ -133,11 +136,14 @@ export class WormholeBridge {
   }> {
     const zero = hexZeroPad('0x', 32)
     const amount = hexZeroPad(BigNumber.from(withdrawn).toHexString(), 32)
+    const sdk = getSdk(this.dstDomain, this.dstDomainProvider)
+    const relay = sdk.BasicRelay && _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
     const { mintable, bridgeFee, relayFee } = await getFeesAndMintableAmounts(
       this.srcDomain,
       this.dstDomain,
       this.dstDomainProvider,
       { sourceDomain: zero, targetDomain: zero, receiver: zero, operator: zero, amount, nonce: zero, timestamp: zero },
+      relay,
       isHighPriority,
     )
     return { mintable, bridgeFee, relayFee }
@@ -152,18 +158,24 @@ export class WormholeBridge {
       signatures: string
       maxFeePercentage?: BigNumberish
       expiry?: BigNumberish
+      to?: string
+      data?: string
     },
+    relayAddress?: string,
   ): Promise<{
     pending: BigNumber
     mintable: BigNumber
     bridgeFee: BigNumber
     relayFee: BigNumber
   }> {
+    const sdk = getSdk(this.dstDomain, this.dstDomainProvider)
+    const relay = sdk.BasicRelay && _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
     return await getFeesAndMintableAmounts(
       this.srcDomain,
       this.dstDomain,
       this.dstDomainProvider,
       wormholeGUID,
+      relay,
       isHighPriority,
       relayParams,
     )
@@ -197,14 +209,13 @@ export class WormholeBridge {
       signatures: string
       maxFeePercentage?: BigNumberish
       expiry?: BigNumberish
+      to?: string
+      data?: string
     },
+    relayAddress?: string,
   ): Promise<string> {
-    const sdk = getSdk(this.dstDomain, this.dstDomainProvider)
-    if (!sdk.Relay) {
-      throw new Error(`getRelayFee not yet supported on destination domain ${this.dstDomain}`)
-    }
-
-    return await getRelayGasFee(sdk.Relay, isHighPriority, relayParams)
+    const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
+    return await getRelayGasFee(relay, isHighPriority, relayParams)
   }
 
   public async relayMintWithOracles(
@@ -214,13 +225,12 @@ export class WormholeBridge {
     relayFee: BigNumberish,
     maxFeePercentage?: BigNumberish,
     expiry?: BigNumberish,
+    to?: string,
+    data?: string,
+    relayAddress?: string,
   ): Promise<string> {
-    const sdk = getSdk(this.dstDomain, this.dstDomainProvider)
-    if (!sdk.Relay) {
-      throw new Error(`relayMintWithOracles not yet supported on destination domain ${this.dstDomain}`)
-    }
-
-    return await waitForRelay(sdk.Relay, receiver, wormholeGUID, signatures, relayFee, maxFeePercentage, expiry)
+    const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
+    return await waitForRelay(relay, receiver, wormholeGUID, signatures, relayFee, maxFeePercentage, expiry, to, data)
   }
 
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {
@@ -268,4 +278,16 @@ async function _optionallySendTx(
     to: contract.address,
     data: contract.interface.encodeFunctionData(method, data),
   }
+}
+
+function _getRelay(dstDomain: DomainDescription, dstDomainProvider: Provider, relayAddress?: string): Relay {
+  const sdk = getSdk(dstDomain, dstDomainProvider)
+  if (!sdk.BasicRelay) {
+    throw new Error(`Relaying not yet supported on destination domain ${dstDomain}`)
+  }
+  if (relayAddress && ![sdk.BasicRelay.address, sdk.TrustedRelay?.address].includes(relayAddress)) {
+    throw new Error(`${relayAddress} is not a valid relay address on destination domain ${dstDomain}`)
+  }
+  const relay = sdk.TrustedRelay && relayAddress === sdk.TrustedRelay.address ? sdk.TrustedRelay : sdk.BasicRelay
+  return relay
 }

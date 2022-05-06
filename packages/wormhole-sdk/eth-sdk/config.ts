@@ -8,7 +8,8 @@ export default defineConfig({
         WormholeJoin: '0x556D9076A42Bba1892E3F4cA331daE587185Cef9',
         Vat: '0xbA987bDB501d131f766fEe8180Da5d81b34b69d9',
         Multicall: '0xC6D81A2e375Eee15a20E6464b51c5FC6Bb949fdA',
-        Relay: '0x5B3363996Bd8164F07315faAf3F96B72D192382c',
+        BasicRelay: '0x5B3363996Bd8164F07315faAf3F96B72D192382c',
+        TrustedRelay: '0xAAFa36901AdC6C03df8B935fFA129677D1D7Eb81',
       },
     },
     optimismKovan: {
@@ -25,7 +26,8 @@ export default defineConfig({
         Multicall: '0x86d3b107386756208154a5c9100a0d4557280747',
         FakeOutbox: '0x4A2D3d40c14c10Df50a15A3f1359Fb0F5C893899',
         Outbox: '0x2360A33905dc1c72b12d975d975F42BaBdcef9F3',
-        Relay: '0xC35787975484A858B878032B045B6E0B6EfE2e2c',
+        BasicRelay: '0xC35787975484A858B878032B045B6E0B6EfE2e2c',
+        TrustedRelay: '0xef4dF54E711e0d42754a12e85fD4186f8fF2c7A7',
       },
     },
     arbitrumTestnet: {
