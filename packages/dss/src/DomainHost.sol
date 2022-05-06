@@ -20,6 +20,7 @@
 pragma solidity ^0.8.13;
 
 interface VatLike {
+    function live() external view returns (uint256);
     function hope(address usr) external;
     function file(bytes32 what, uint256 data) external;
     function slip(bytes32 ilk, address usr, int256 wad) external;
@@ -167,7 +168,9 @@ abstract contract DomainHost {
 
     /// @notice Initiate shutdown for this domain
     /// @dev This will trigger the end module on the remote domain
-    function cage() external auth {
+    function cage() external {
+        require(vat.live() == 0, "DomainHost/vat-live");
+
         _cage();
 
         emit Cage();

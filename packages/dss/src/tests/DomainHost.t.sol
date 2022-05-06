@@ -255,6 +255,13 @@ contract DomainHostTest is DSSTest {
     function testCage() public {
         assertTrue(!host.caged());
 
+        // Cannot cage when vat is live
+        assertRevert(address(host), abi.encodeWithSelector(DomainHost.cage.selector), "DomainHost/vat-live");
+
+        // Cage the vat
+        vat.cage();
+
+        // Can cage now
         host.cage();
 
         assertTrue(host.caged());
