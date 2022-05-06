@@ -29,15 +29,16 @@ interface VatLike {
     function heal(uint256 rad) external;
 }
 
-interface DaiLike {
+interface TokenLike {
     function balanceOf(address usr) external view returns (uint256);
     function transferFrom(address src, address dst, uint256 wad) external returns (bool);
     function approve(address usr, uint wad) external returns (bool);
+    function mint(address to, uint256 value) external;
 }
 
 interface DaiJoinLike {
     function vat() external view returns (VatLike);
-    function dai() external view returns (DaiLike);
+    function dai() external view returns (TokenLike);
     function join(address usr, uint256 wad) external;
     function exit(address usr, uint256 wad) external;
 }
@@ -54,7 +55,8 @@ abstract contract DomainGuest {
 
     VatLike     public immutable vat;
     DaiJoinLike public immutable daiJoin;
-    DaiLike     public immutable dai;
+    TokenLike   public immutable dai;
+    TokenLike   public immutable claimToken;
 
     EndLike public end;
     uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow
@@ -78,13 +80,14 @@ abstract contract DomainGuest {
         _;
     }
 
-    constructor(address _daiJoin) {
+    constructor(address _daiJoin, address _claimToken) {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
 
         daiJoin = DaiJoinLike(_daiJoin);
         vat = daiJoin.vat();
         dai = daiJoin.dai();
+        claimToken = TokenLike(_claimToken);
 
         vat.hope(address(daiJoin));
         dai.approve(address(daiJoin), type(uint256).max);
@@ -199,7 +202,7 @@ abstract contract DomainGuest {
     /// @dev    Should only be triggered by remote domain.
     ///         Claim amount is in units of local debt.
     function mintClaim(address usr, uint256 claim) external auth {
-        // TODO mint claim
+        claimToken.mint(usr, claim);
 
         emit MintClaim(usr, claim);
     }

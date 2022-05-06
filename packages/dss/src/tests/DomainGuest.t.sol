@@ -26,6 +26,7 @@ import { DaiMock } from "./mocks/DaiMock.sol";
 import { EndMock } from "./mocks/EndMock.sol";
 import { EscrowMock } from "./mocks/EscrowMock.sol";
 import { VatMock } from "./mocks/VatMock.sol";
+import { ClaimToken } from "../ClaimToken.sol";
 import { DomainGuest } from "../DomainGuest.sol";
 
 contract EmptyDomainGuest is DomainGuest {
@@ -36,7 +37,7 @@ contract EmptyDomainGuest is DomainGuest {
     uint256 public deficit;
     uint256 public tellValue;
 
-    constructor(address _daiJoin) DomainGuest(_daiJoin) {}
+    constructor(address _daiJoin, address _claimToken) DomainGuest(_daiJoin, _claimToken) {}
 
     function _release(uint256 burned, uint256 totalDebt) internal override {
         releaseBurned = burned;
@@ -61,6 +62,7 @@ contract DomainGuestTest is DSSTest {
     DaiMock dai;
     EndMock end;
 
+    ClaimToken claimToken;
     EmptyDomainGuest guest;
 
     function postSetup() internal virtual override {
@@ -69,7 +71,8 @@ contract DomainGuestTest is DSSTest {
         daiJoin = new DaiJoinMock(address(vat), address(dai));
         end = new EndMock(address(vat));
 
-        guest = new EmptyDomainGuest(address(daiJoin));
+        claimToken = new ClaimToken();
+        guest = new EmptyDomainGuest(address(daiJoin), address(claimToken));
         guest.file("end", address(end));
     }
 
