@@ -14,7 +14,7 @@ const GELATO_ADDRESSES: { [chainId: number]: { service: string; gelato: string }
     gelato: '0x0630d1b8C2df3F0a68Df578D02075027a6397173',
   },
   42: {
-    service: '0xb34758F24fFEf132dc5831C2Cd9A0a5e120CD564',
+    service: '0x4efaEe0fAD71A451c6Ca621df5AeFc5c01668a26',
     gelato: '0xDf592cB2d32445F8e831d211AB20D3233cA41bD8',
   },
 }
@@ -69,6 +69,7 @@ async function getRelayCalldata(
 
   const useTrustedRelay = relayInterface.functions.hasOwnProperty('signers(address)')
   const extCall = useTrustedRelay ? [to || constants.AddressZero, data || '0x'] : []
+  console.log('arr', [wormholeGUID, signatures, maxFeePercentage, gasFee, expiry, v, r, s, ...extCall])
   const calldata = (relayInterface as any).encodeFunctionData('relay', [
     wormholeGUID,
     signatures,
@@ -104,6 +105,7 @@ async function waitForRelayTaskConfirmation(
   let isExecPending = false
   while (true) {
     const { data } = await queryGelatoApi(`tasks/${taskId}`, 'get')
+    // console.log(`TaskId=${taskId}, data:`, data[0])
     if (data[0]?.taskState === 'ExecSuccess') {
       const txHash = data[0].execution?.transactionHash
       if (txHash) return txHash
@@ -170,6 +172,7 @@ async function getRelayGasLimit(
   ])
   const gelato = new Contract(gelatoAddress, gelatoInterface, relay.provider)
   const executors = await gelato.executors()
+  console.log({ executors })
   const { baseFeePerGas } = await relay.provider.getBlock('latest')
 
   let gasUsed
@@ -191,6 +194,7 @@ async function getRelayGasLimit(
     gasUsed = getEstimatedRelayGasLimit(relay)
     console.error(e)
   }
+  console.log({ gasUsed })
   return gasUsed
 }
 
