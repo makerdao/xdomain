@@ -120,6 +120,7 @@ abstract contract DomainHost {
     /// @notice Set the global debt ceiling for the remote domain
     /// @dev Please note that pre-mint DAI cannot be removed from the remote domain
     /// until the remote domain signals that it is safe to do so
+    /// @param wad The new debt ceiling [WAD]
     function lift(uint256 wad) external auth {
         uint256 rad = wad * RAY;
         uint256 minted;

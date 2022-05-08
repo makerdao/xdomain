@@ -29,6 +29,10 @@ import { ClaimToken } from "../ClaimToken.sol";
 import { DomainHost } from "../DomainHost.sol";
 import { DomainGuest } from "../DomainGuest.sol";
 
+interface EscrowLike {
+    function approve(address token, address spender, uint256 value) external;
+}
+
 contract SimpleDomainHost is DomainHost {
 
     DomainGuest guest;
@@ -81,10 +85,15 @@ contract SimpleDomainGuest is DomainGuest {
 
 contract IntegrationTest is DSSTest {
 
+    using GodMode for *;
+
     // Bridge
     ClaimToken claimToken;
     SimpleDomainHost host;
     SimpleDomainGuest guest;
+
+    // Local contracts
+    EscrowLike escrow;
 
     // Remote domain MCD deploy
     Vat vat;
@@ -98,15 +107,50 @@ contract IntegrationTest is DSSTest {
     }
 
     function postSetup() internal virtual override {
+        escrow = EscrowLike(mcd.chainlog().getAddress("OPTIMISM_ESCROW"));
+
         vat = new Vat();
         dai = new Dai();
-        daiJoin = new DaiJoin(address(vat), address(daiJoin));
+        daiJoin = new DaiJoin(address(vat), address(dai));
 
         claimToken = new ClaimToken();
-        host = new SimpleDomainHost(ILK, address(mcd.daiJoin()), mcd.chainlog().getAddress("OPTIMISM_ESCROW"));
+        host = new SimpleDomainHost(ILK, address(mcd.daiJoin()), address(escrow));
         guest = new SimpleDomainGuest(address(daiJoin), address(claimToken), address(host));
+        host.file("vow", address(mcd.vow()));
         host.setGuest(address(guest));
+        host.rely(address(guest));
+        guest.rely(address(host));
         //guest.file("end", address(end));
+
+        mcd.vat().setWard(address(this), 1);
+        mcd.vat().setWard(address(host), 1);
+        address(escrow).setWard(address(this), 1);
+        escrow.approve(address(mcd.dai()), address(host), type(uint256).max);
+        mcd.vat().init(ILK);
+        mcd.vat().file(ILK, "line", 1_000_000 * RAD);
+        mcd.vat().file(ILK, "spot", RAY);
+        vat.rely(address(guest));
+    }
+
+    function testRaiseDebtCeiling() public {
+        uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
+        (uint256 ink, uint256 art) = mcd.vat().urns(ILK, address(host));
+        assertEq(ink, 0);
+        assertEq(art, 0);
+        assertEq(host.grain(), 0);
+        assertEq(host.line(), 0);
+        assertEq(vat.Line(), 0);
+
+        host.lift(100 ether);
+
+        assertEq(vat.Line(), 100 * RAD);
+        (ink, art) = mcd.vat().urns(ILK, address(host));
+        assertEq(ink, 100 ether);
+        assertEq(art, 100 ether);
+        assertEq(host.grain(), 100 ether);
+        assertEq(host.line(), 100 * RAD);
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
+        assertEq(vat.Line(), 100 * RAD);
     }
 
 }
