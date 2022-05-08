@@ -1,3 +1,6 @@
 [submodule "packages/dss/lib/dss-test"]
 	path = packages/dss/lib/dss-test
 	url = https://github.com/makerdao/dss-test
+[submodule "packages/dss/lib/xdomain-dss"]
+	path = packages/dss/lib/xdomain-dss
+	url = https://github.com/makerdao/xdomain-dss
