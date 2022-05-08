@@ -59,7 +59,7 @@ abstract contract DomainGuest {
     TokenLike   public immutable claimToken;
 
     EndLike public end;
-    uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow
+    uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow [WAD]
 
     uint256 constant RAY = 10 ** 27;
 
@@ -121,6 +121,8 @@ abstract contract DomainGuest {
 
     /// @notice Set the global debt ceiling for the local dss
     /// @dev Should only be triggered from the DomainHost
+    /// @param line The new global debt ceiling [RAD]
+    /// @param minted The amount of DAI minted into the remote escrow
     function lift(uint256 line, uint256 minted) external auth {
         vat.file("Line", line);
         grain += minted;
@@ -192,6 +194,7 @@ abstract contract DomainGuest {
 
     /// @notice Set the cure value for the host
     /// @dev Triggered during shutdown
+    /// @param value Cure value [RAD]
     function tell(uint256 value) external auth {
         _tell(value);
 
@@ -201,6 +204,8 @@ abstract contract DomainGuest {
     /// @notice Mint a claim token for the given user
     /// @dev    Should only be triggered by remote domain.
     ///         Claim amount is in units of local debt.
+    /// @param usr The destination to send the claim tokens to
+    /// @param claim The amount of claim tokens to mint
     function mintClaim(address usr, uint256 claim) external auth {
         claimToken.mint(usr, claim);
 

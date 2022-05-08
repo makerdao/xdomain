@@ -54,10 +54,10 @@ abstract contract DomainHost {
     address     public immutable escrow;
 
     address public vow;
-    uint256 public line;
-    uint256 public grain;       // Keep track of the pre-minted DAI in the escrow
-    uint256 public debt;        // Last known debt for remote domain
-    uint256 public cure;
+    uint256 public line;        // Remove domain global debt ceiling [RAD]
+    uint256 public grain;       // Keep track of the pre-minted DAI in the escrow [WAD]
+    uint256 public debt;        // Last known debt for remote domain [RAD]
+    uint256 public cure;        // The amount of unused debt [RAD]
 
     uint256 constant RAY = 10 ** 27;
 
@@ -95,6 +95,9 @@ abstract contract DomainHost {
     // --- Math ---
     function _int256(uint256 x) internal pure returns (int256 y) {
         require((y = int256(x)) >= 0);
+    }
+    function _divup(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = (x + y - 1) / y;
     }
 
     // --- Administration ---
@@ -213,7 +216,7 @@ abstract contract DomainHost {
 
         // Convert to actual debt amount
         // Round against the user
-        uint256 claim = wad * (grain - cure) / grain;
+        uint256 claim = wad * (grain - _divup(cure, RAY)) / grain;
         
         _mintClaim(usr, claim);
 
