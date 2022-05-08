@@ -20,9 +20,10 @@
 pragma solidity ^0.8.13;
 
 import "dss-test/DSSTest.sol";
-import {
-    VatAbstract
-} from "dss-interfaces/Interfaces.sol";
+
+import { Dai } from "xdomain-dss/Dai.sol";
+import { DaiJoin } from "xdomain-dss/DaiJoin.sol";
+import { Vat } from "xdomain-dss/Vat.sol";
 
 import { ClaimToken } from "../ClaimToken.sol";
 import { DomainHost } from "../DomainHost.sol";
@@ -42,7 +43,7 @@ contract SimpleDomainHost is DomainHost {
         guest.lift(_line, _minted);
     }
     function _rectify(uint256 wad) internal virtual override {
-        dai.transfer(address(guest), wad);
+        dai.transferFrom(address(this), address(guest), wad);
         guest.rectify();
     }
     function _cage() internal virtual override {
@@ -66,7 +67,7 @@ contract SimpleDomainGuest is DomainGuest {
         host.release(burned, totalDebt);
     }
     function _surplus(uint256 wad) internal virtual override {
-        dai.transfer(address(host), wad);
+        dai.transferFrom(address(this), address(host), wad);
         host.surplus();
     }
     function _deficit(uint256 wad) internal virtual override {
@@ -86,7 +87,9 @@ contract IntegrationTest is DSSTest {
     SimpleDomainGuest guest;
 
     // Remote domain MCD deploy
-    
+    Vat vat;
+    Dai dai;
+    DaiJoin daiJoin;
 
     bytes32 constant ILK = "SOME-DOMAIN-A";
 
@@ -95,10 +98,15 @@ contract IntegrationTest is DSSTest {
     }
 
     function postSetup() internal virtual override {
+        vat = new Vat();
+        dai = new Dai();
+        daiJoin = new DaiJoin(address(vat), address(daiJoin));
+
         claimToken = new ClaimToken();
         host = new SimpleDomainHost(ILK, address(mcd.daiJoin()), mcd.chainlog().getAddress("OPTIMISM_ESCROW"));
-        guest = new SimpleDomainGuest(address(mcd.daiJoin()), address(claimToken));
-        guest.file("end", address(end));
+        guest = new SimpleDomainGuest(address(daiJoin), address(claimToken), address(host));
+        host.setGuest(address(guest));
+        //guest.file("end", address(end));
     }
 
 }
