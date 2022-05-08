@@ -302,4 +302,19 @@ contract DomainHostTest is DSSTest {
         assertEq(host.cure(), 123);
     }
 
+    function testExit() public {
+        // Setup initial conditions
+        host.lift(100 ether);       // DC raised to 100
+        vat.cage();
+        host.tell(70 * RAD);        // Guest later reports on 30 debt is actually used
+
+        // Simulate user getting some gems for this ilk (normally handled by end)
+        vat.slip(ILK, address(this), 50 ether);
+
+        host.exit(address(123), 50 ether);
+
+        assertEq(host.claimUsr(), address(123));
+        assertEq(host.claimAmount(), 15 ether);     // 50% of 30 debt is 15
+    }
+
 }

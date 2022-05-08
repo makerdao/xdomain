@@ -294,4 +294,12 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.tellValue(), 123);
     }
 
+    function testMintClaim() public {
+        assertEq(claimToken.balanceOf(address(123)), 0);
+
+        claimToken.mint(address(123), 100 ether);
+
+        assertEq(claimToken.balanceOf(address(123)), 100 ether);
+    }
+
 }
