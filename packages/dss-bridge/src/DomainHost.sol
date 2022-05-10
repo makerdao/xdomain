@@ -58,6 +58,7 @@ abstract contract DomainHost {
     uint256 public grain;       // Keep track of the pre-minted DAI in the escrow [WAD]
     uint256 public debt;        // Last known debt for remote domain [RAD]
     uint256 public cure;        // The amount of unused debt [RAD]
+    uint256 public live;
 
     uint256 constant RAY = 10 ** 27;
 
@@ -90,6 +91,8 @@ abstract contract DomainHost {
         
         vat.hope(address(daiJoin));
         dai.approve(address(daiJoin), type(uint256).max);
+
+        live = 1;
     }
 
     // --- Math ---
@@ -122,13 +125,12 @@ abstract contract DomainHost {
     /// until the remote domain signals that it is safe to do so
     /// @param wad The new debt ceiling [WAD]
     function lift(uint256 wad) external auth {
+        require(vat.live() == 1, "DomainHost/vat-not-live");
+        
         uint256 rad = wad * RAY;
         uint256 minted;
 
         if (rad > line) {
-            // Cannot raise debt ceiling during global shutdown
-            require(vat.live() == 1, "DomainHost/vat-not-live");
-
             // We are issuing new pre-minted DAI
             minted = (rad - line) / RAY;                    // No precision loss as line is always a multiple of RAY
             vat.slip(ilk, address(this), int256(minted));   // No need for conversion check as amt is under a RAY of full size
@@ -192,6 +194,9 @@ abstract contract DomainHost {
     /// @dev This will trigger the end module on the remote domain
     function cage() external {
         require(vat.live() == 0, "DomainHost/vat-live");
+        require(live == 1, "DomainHost/not-live");
+
+        live = 0;
 
         _cage();
 

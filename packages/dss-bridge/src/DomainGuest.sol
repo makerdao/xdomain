@@ -60,6 +60,7 @@ abstract contract DomainGuest {
 
     EndLike public end;
     uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow [WAD]
+    uint256 public live;
 
     uint256 constant RAY = 10 ** 27;
 
@@ -91,6 +92,8 @@ abstract contract DomainGuest {
 
         vat.hope(address(daiJoin));
         dai.approve(address(daiJoin), type(uint256).max);
+
+        live = 1;
     }
 
     // --- Math ---
@@ -124,6 +127,8 @@ abstract contract DomainGuest {
     /// @param line The new global debt ceiling [RAD]
     /// @param minted The amount of DAI minted into the remote escrow
     function lift(uint256 line, uint256 minted) external auth {
+        require(live == 1, "DomainGuest/not-live");
+        
         vat.file("Line", line);
         grain += minted;
 
@@ -134,6 +139,8 @@ abstract contract DomainGuest {
     /// @dev    Should be run by keeper on a regular schedule.
     ///         This will also push the vat debt for informational purposes.
     function release() external {
+        require(live == 1, "DomainGuest/not-live");
+        
         uint256 totalDebt = vat.debt();
         uint256 limit = _max(vat.Line() / RAY, _divup(totalDebt, RAY));
         uint256 burned;
@@ -150,6 +157,8 @@ abstract contract DomainGuest {
     /// @notice Push surplus (or deficit) to the host dss
     /// @dev Should be run by keeper on a regular schedule
     function push() external {
+        require(live == 1, "DomainGuest/not-live");
+
         uint256 _dai = vat.dai(address(this));
         uint256 _sin = vat.sin(address(this));
         if (_dai > _sin) {
@@ -187,6 +196,9 @@ abstract contract DomainGuest {
     /// @notice Trigger the end module
     /// @dev Should only be triggered by remote domain
     function cage() external auth {
+        require(live == 1, "DomainGuest/not-live");
+
+        live = 0;
         end.cage();
 
         emit Cage();
