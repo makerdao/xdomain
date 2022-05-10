@@ -10,11 +10,11 @@ const GELATO_API_URL = 'https://relay.gelato.digital'
 const ETHEREUM_DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f'
 const GELATO_ADDRESSES: { [chainId: number]: { service: string; gelato: string } } = {
   4: {
-    service: '0x227148553058e2aC89f3a4a2a19B6dC644A4695A',
+    service: '0x7084d869F0C120957E40D762Ebe3104474D5248f',
     gelato: '0x0630d1b8C2df3F0a68Df578D02075027a6397173',
   },
   42: {
-    service: '0x4efaEe0fAD71A451c6Ca621df5AeFc5c01668a26',
+    service: '0xb34758F24fFEf132dc5831C2Cd9A0a5e120CD564',
     gelato: '0xDf592cB2d32445F8e831d211AB20D3233cA41bD8',
   },
 }
