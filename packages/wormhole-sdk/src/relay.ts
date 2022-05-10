@@ -69,7 +69,6 @@ async function getRelayCalldata(
 
   const useTrustedRelay = relayInterface.functions.hasOwnProperty('signers(address)')
   const extCall = useTrustedRelay ? [to || constants.AddressZero, data || '0x'] : []
-  console.log('arr', [wormholeGUID, signatures, maxFeePercentage, gasFee, expiry, v, r, s, ...extCall])
   const calldata = (relayInterface as any).encodeFunctionData('relay', [
     wormholeGUID,
     signatures,
