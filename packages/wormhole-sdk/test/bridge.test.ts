@@ -475,10 +475,6 @@ describe('WormholeBridge', () => {
       it('should relay a mint with oracles (kovan-optimism, wrapper, non-precise relayFee)', async () => {
         await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay, useWrapper: true })
       })
-
-      it('should relay a mint with oracles (rinkeby-arbitrum, precise relayFee)', async () => {
-        await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay, usePreciseRelayFeeEstimation: true })
-      })
     }
     describe('Using BasicRelay', async () => {
       await testRelayMint({ useRelay: true })
