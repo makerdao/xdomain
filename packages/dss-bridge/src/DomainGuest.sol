@@ -97,6 +97,10 @@ abstract contract DomainGuest {
     }
 
     // --- Math ---
+    function _min(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x <= y ? x : y;
+    }
+
     function _max(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x >= y ? x : y;
     }
@@ -152,6 +156,14 @@ abstract contract DomainGuest {
         _release(burned, totalDebt);
 
         emit Release(burned, totalDebt);
+    }
+
+    function heal(uint256 amount) external {
+        vat.heal(amount);
+    }
+
+    function heal() external {
+        vat.heal(_min(vat.dai(address(this)), vat.sin(address(this))));
     }
 
     /// @notice Push surplus (or deficit) to the host dss
