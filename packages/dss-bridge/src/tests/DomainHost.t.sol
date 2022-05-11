@@ -176,7 +176,6 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.line(), 100 * RAD);
         assertEq(host.grain(), 100 ether);
-        assertEq(host.debt(), 0);
         assertEq(host.liftLine(), 100 * RAD);
         assertEq(host.liftMinted(), 100 ether);
 
@@ -189,13 +188,12 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(host.grain(), 100 ether);
-        assertEq(host.debt(), 0);
         assertEq(host.liftLine(), 50 * RAD);
         assertEq(host.liftMinted(), 0);
 
         // Remote domain triggers release at a later time
         // Reports a used debt amount of 20
-        host.release(50 ether, 20 * RAD);
+        host.release(50 ether);
 
         (ink, art) = vat.urns(ILK, address(host));
         assertEq(ink, 50 ether);
@@ -203,7 +201,6 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 50 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(host.grain(), 50 ether);
-        assertEq(host.debt(), 20 * RAD);
         assertEq(host.liftLine(), 50 * RAD);
         assertEq(host.liftMinted(), 0);
     }
@@ -220,11 +217,10 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 125 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(host.grain(), 125 ether);
-        assertEq(host.debt(), 0);
         assertEq(host.liftLine(), 50 * RAD);
         assertEq(host.liftMinted(), 0);
 
-        host.release(50 ether, 10 * RAD);   // First release comes in
+        host.release(50 ether);   // First release comes in
 
         (ink, art) = vat.urns(ILK, address(host));
         assertEq(ink, 75 ether);
@@ -232,11 +228,10 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 75 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(host.grain(), 75 ether);
-        assertEq(host.debt(), 10 * RAD);
         assertEq(host.liftLine(), 50 * RAD);
         assertEq(host.liftMinted(), 0);
 
-        host.release(25 ether, 15 * RAD);   // Second release comes in
+        host.release(25 ether);   // Second release comes in
 
         (ink, art) = vat.urns(ILK, address(host));
         assertEq(ink, 50 ether);
@@ -244,7 +239,6 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 50 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(host.grain(), 50 ether);
-        assertEq(host.debt(), 15 * RAD);
         assertEq(host.liftLine(), 50 * RAD);
         assertEq(host.liftMinted(), 0);
     }

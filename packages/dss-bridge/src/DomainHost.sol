@@ -56,7 +56,6 @@ abstract contract DomainHost {
     address public vow;
     uint256 public line;        // Remove domain global debt ceiling [RAD]
     uint256 public grain;       // Keep track of the pre-minted DAI in the escrow [WAD]
-    uint256 public debt;        // Last known debt for remote domain [RAD]
     uint256 public cure;        // The amount of unused debt [RAD]
     uint256 public live;
 
@@ -149,8 +148,7 @@ abstract contract DomainHost {
 
     /// @notice Withdraw pre-mint DAI from the remote domain
     /// @dev    Should only be triggered by remote domain when it is safe to do so.
-    ///         Also keeps the debt up to date.
-    function release(uint256 wad, uint256 totalDebt) external auth {
+    function release(uint256 wad) external auth {
         // Amounts are locked in during global shutdown
         require(vat.live() == 1, "DomainHost/vat-not-live");
         
@@ -161,7 +159,6 @@ abstract contract DomainHost {
         vat.frob(ilk, address(this), address(this), address(this), amt, amt);
         vat.slip(ilk, address(this), amt);
 
-        debt = totalDebt;
         grain -= wad;
 
         emit Release(wad);

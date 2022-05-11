@@ -69,7 +69,7 @@ abstract contract DomainGuest {
     event Deny(address indexed usr);
     event File(bytes32 indexed what, address data);
     event Lift(uint256 line, uint256 minted);
-    event Release(uint256 burned, uint256 totalDebt);
+    event Release(uint256 burned);
     event Push(int256 surplus);
     event Rectify(uint256 balance);
     event Cage();
@@ -145,25 +145,14 @@ abstract contract DomainGuest {
     function release() external {
         require(live == 1, "DomainGuest/not-live");
         
-        uint256 totalDebt = vat.debt();
-        uint256 limit = _max(vat.Line() / RAY, _divup(totalDebt, RAY));
-        uint256 burned;
-        if (grain > limit) {
-            burned = grain - limit;
-            grain = limit;
-        }
+        uint256 limit = _max(vat.Line() / RAY, _divup(vat.debt(), RAY));
+        require(grain > limit, "DomainGuest/limit-too-high");
+        uint256 burned = grain - limit;
+        grain = limit;
 
-        _release(burned, totalDebt);
+        _release(burned);
 
-        emit Release(burned, totalDebt);
-    }
-
-    function heal(uint256 amount) external {
-        vat.heal(amount);
-    }
-
-    function heal() external {
-        vat.heal(_min(vat.dai(address(this)), vat.sin(address(this))));
+        emit Release(burned);
     }
 
     /// @notice Push surplus (or deficit) to the host dss
@@ -236,8 +225,15 @@ abstract contract DomainGuest {
         emit MintClaim(usr, claim);
     }
 
+    function heal(uint256 amount) external {
+        vat.heal(amount);
+    }
+    function heal() external {
+        vat.heal(_min(vat.dai(address(this)), vat.sin(address(this))));
+    }
+
     // Bridge-specific functions
-    function _release(uint256 burned, uint256 totalDebt) internal virtual;
+    function _release(uint256 burned) internal virtual;
     function _surplus(uint256 wad) internal virtual;
     function _deficit(uint256 wad) internal virtual;
     function _tell(uint256 value) internal virtual;

@@ -67,8 +67,8 @@ contract SimpleDomainGuest is DomainGuest {
         host = DomainHost(_host);
     }
 
-    function _release(uint256 burned, uint256 totalDebt) internal override {
-        host.release(burned, totalDebt);
+    function _release(uint256 burned) internal override {
+        host.release(burned);
     }
     function _surplus(uint256 wad) internal virtual override {
         dai.transferFrom(address(this), address(host), wad);
@@ -208,6 +208,10 @@ contract IntegrationTest is DSSTest {
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 40 ether);
         assertEq(vat.Line(), 25 * RAD);
         assertEq(vat.debt(), 40 * RAD);
+    }
+
+    function testSurplus() public {
+
     }
 
 }
