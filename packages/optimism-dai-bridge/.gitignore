@@ -1,0 +1,19 @@
+node_modules/
+artifacts/
+cache/
+artifacts-l2
+typechain-types
+artifacts-ovm
+cache-ovm
+.env
+gasReporterOutput.json
+coverage*
+
+# echidna
+crytic-export/
+corpus/
+
+# certora
+.*certora*
+.last_confs/
+*.zip

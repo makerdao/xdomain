@@ -1,0 +1,23 @@
+name: Slither
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  analyze-optimism-dai-bridge:
+    name: Slither
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/optimism-dai-bridge
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run Slither
+        uses: crytic/slither-action@v0.1.1
+        with:
+          node-version: 12
