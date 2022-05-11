@@ -120,7 +120,7 @@ contract IntegrationTest is DSSTest {
         host.setGuest(address(guest));
         host.rely(address(guest));
         guest.rely(address(host));
-        //guest.file("end", address(end));
+        //guest.file("end", address(end));  // TODO add this when end is merged
 
         mcd.vat().setWard(address(this), 1);
         mcd.vat().setWard(address(host), 1);
@@ -143,7 +143,6 @@ contract IntegrationTest is DSSTest {
 
         host.lift(100 ether);
 
-        assertEq(vat.Line(), 100 * RAD);
         (ink, art) = mcd.vat().urns(ILK, address(host));
         assertEq(ink, 100 ether);
         assertEq(art, 100 ether);
@@ -151,6 +150,64 @@ contract IntegrationTest is DSSTest {
         assertEq(host.line(), 100 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
         assertEq(vat.Line(), 100 * RAD);
+    }
+
+    function testRaiseLowerDebtCeiling() public {
+        uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
+        (uint256 ink, uint256 art) = mcd.vat().urns(ILK, address(host));
+        assertEq(ink, 0);
+        assertEq(art, 0);
+        assertEq(host.grain(), 0);
+        assertEq(host.line(), 0);
+        assertEq(vat.Line(), 0);
+
+        host.lift(100 ether);
+
+        (ink, art) = mcd.vat().urns(ILK, address(host));
+        assertEq(ink, 100 ether);
+        assertEq(art, 100 ether);
+        assertEq(host.grain(), 100 ether);
+        assertEq(host.line(), 100 * RAD);
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
+        assertEq(vat.Line(), 100 * RAD);
+
+        // Pre-mint DAI is not released here
+        host.lift(50 ether);
+
+        (ink, art) = mcd.vat().urns(ILK, address(host));
+        assertEq(ink, 100 ether);
+        assertEq(art, 100 ether);
+        assertEq(host.grain(), 100 ether);
+        assertEq(host.line(), 50 * RAD);
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
+        assertEq(vat.Line(), 50 * RAD);
+
+        // Notify the host that the DAI is safe to remove
+        guest.release();
+
+        (ink, art) = mcd.vat().urns(ILK, address(host));
+        assertEq(ink, 50 ether);
+        assertEq(art, 50 ether);
+        assertEq(host.grain(), 50 ether);
+        assertEq(host.line(), 50 * RAD);
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 50 ether);
+        assertEq(vat.Line(), 50 * RAD);
+        assertEq(vat.debt(), 0);
+
+        // Add some debt to the guest instance, lower the DC and release some more pre-mint
+        // This can only release pre-mint DAI up to the debt
+        vat.suck(address(guest), address(this), 40 * RAD);
+        host.lift(25 ether);
+        guest.release();
+
+        (ink, art) = mcd.vat().urns(ILK, address(host));
+        assertEq(ink, 40 ether);
+        assertEq(art, 40 ether);
+        assertEq(host.grain(), 40 ether);
+        assertEq(host.line(), 25 * RAD);
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 40 ether);
+        assertEq(vat.Line(), 25 * RAD);
+        assertEq(vat.debt(), 40 * RAD);
     }
 
 }

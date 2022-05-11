@@ -23,7 +23,7 @@ contract ClaimToken {
 
     // --- ERC20 Data ---
     string  public constant name     = "Maker Global Settlement Claim";
-    string  public constant symbol   = "CLM";
+    string  public constant symbol   = "CLAIM";
     string  public constant version  = "1";
     uint8   public constant decimals = 18;
     uint256 public totalSupply;
