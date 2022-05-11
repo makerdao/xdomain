@@ -47,7 +47,11 @@ contract SimpleDomainHost is DomainHost {
         guest.lift(_line, _minted);
     }
     function _rectify(uint256 wad) internal virtual override {
-        dai.transferFrom(address(this), address(guest), wad);
+        // Simulate a bridge transfer
+        // Move DAI into host escrow and mint on the other side
+        dai.transferFrom(address(this), address(escrow), wad);
+        Dai(address(guest.dai())).mint(address(guest), wad);
+
         guest.rectify();
     }
     function _cage() internal virtual override {
@@ -71,7 +75,11 @@ contract SimpleDomainGuest is DomainGuest {
         host.release(burned);
     }
     function _surplus(uint256 wad) internal virtual override {
-        dai.transferFrom(address(this), address(host), wad);
+        // Simulate a bridge transfer
+        // Burn guest domain DAI and move escrow host DAI to the host
+        Dai(address(dai)).burn(address(this), wad);
+        host.dai().transferFrom(host.escrow(), address(host), wad);
+
         host.surplus();
     }
     function _deficit(uint256 wad) internal virtual override {
@@ -112,6 +120,7 @@ contract IntegrationTest is DSSTest {
         vat = new Vat();
         dai = new Dai();
         daiJoin = new DaiJoin(address(vat), address(dai));
+        dai.rely(address(daiJoin));
 
         claimToken = new ClaimToken();
         host = new SimpleDomainHost(ILK, address(mcd.daiJoin()), address(escrow));
@@ -126,10 +135,12 @@ contract IntegrationTest is DSSTest {
         mcd.vat().setWard(address(host), 1);
         address(escrow).setWard(address(this), 1);
         escrow.approve(address(mcd.dai()), address(host), type(uint256).max);
+        escrow.approve(address(mcd.dai()), address(guest), type(uint256).max);
         mcd.vat().init(ILK);
         mcd.vat().file(ILK, "line", 1_000_000 * RAD);
         mcd.vat().file(ILK, "spot", RAY);
         vat.rely(address(guest));
+        dai.rely(address(host));
     }
 
     function testRaiseDebtCeiling() public {
@@ -210,8 +221,52 @@ contract IntegrationTest is DSSTest {
         assertEq(vat.debt(), 40 * RAD);
     }
 
-    function testSurplus() public {
+    function testPushSurplus() public {
+        uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
 
+        // Set global DC and add 50 DAI surplus + 20 DAI debt to vow
+        host.lift(100 ether);
+        vat.suck(address(123), address(guest), 50 * RAD);
+        vat.suck(address(guest), address(123), 20 * RAD);
+
+        uint256 vowDai = mcd.vat().dai(address(mcd.vow()));
+        uint256 vowSin = mcd.vat().sin(address(mcd.vow()));
+
+        assertEq(vat.dai(address(guest)), 50 * RAD);
+        assertEq(vat.sin(address(guest)), 20 * RAD);
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
+
+        guest.push();
+
+        assertEq(vat.dai(address(guest)), 0);
+        assertEq(vat.sin(address(guest)), 0);
+        assertEq(mcd.vat().dai(address(mcd.vow())), vowDai + 30 * RAD);
+        assertEq(mcd.vat().sin(address(mcd.vow())), vowSin);
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 70 ether);
+    }
+
+    function testPushDeficit() public {
+        uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
+
+        // Set global DC and add 20 DAI surplus + 50 DAI debt to vow
+        host.lift(100 ether);
+        vat.suck(address(123), address(guest), 20 * RAD);
+        vat.suck(address(guest), address(123), 50 * RAD);
+
+        uint256 vowDai = mcd.vat().dai(address(mcd.vow()));
+        uint256 vowSin = mcd.vat().sin(address(mcd.vow()));
+
+        assertEq(vat.dai(address(guest)), 20 * RAD);
+        assertEq(vat.sin(address(guest)), 50 * RAD);
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
+
+        guest.push();
+
+        assertEq(vat.dai(address(guest)), 0);
+        assertEq(vat.sin(address(guest)), 0);
+        assertEq(mcd.vat().dai(address(mcd.vow())), vowDai);
+        assertEq(mcd.vat().sin(address(mcd.vow())), vowSin + 30 * RAD);
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 130 ether);
     }
 
 }
