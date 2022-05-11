@@ -75,9 +75,9 @@ jobs:
 
       - run: yarn build
       - run: REPORT_GAS=1 yarn test
-      - run: yarn codechecks # compares gas report
-        env: # Or as an environment variable
-          CC_SECRET: ${{ secrets.CC_SECRET }}
+      # - run: yarn codechecks # compares gas report
+      #   env: # Or as an environment variable
+      #     CC_SECRET: ${{ secrets.CC_SECRET }}
       - run: yarn coverage
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2
@@ -138,6 +138,6 @@ jobs:
 
       - name: Run e2e Tests
         run: |
-          ./.github/workflows/wait-for-it.sh -h localhost -p 8080 -t 120
+          ../../.github/workflows/wait-for-it.sh -h localhost -p 8080 -t 120
           sleep 60 # we still need to wait for contracts to be deployed really
           yarn test-e2e
