@@ -123,17 +123,17 @@ jobs:
           git checkout b9ee4fbbb5401a2f756821923e41ee1cee3698af
 
       - name: Build the services
-        working-directory: ./optimism/ops
+        working-directory: ./packages/optimism-dai-bridge/optimism/ops
         run: ./scripts/build-ci.sh
 
       - name: Bring the stack up
-        working-directory: ./optimism/ops
+        working-directory: ./packages/optimism-dai-bridge/optimism/ops
         run: |
           ./scripts/stats.sh &
           docker-compose up -d
 
       - name: Wait for the Sequencer node
-        working-directory: ./optimism/ops
+        working-directory: ./packages/optimism-dai-bridge/optimism/ops
         run: ./scripts/wait-for-sequencer.sh
 
       - name: Run e2e Tests
