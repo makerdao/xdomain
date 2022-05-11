@@ -88,6 +88,7 @@ jobs:
             coverage.json
   test-e2e-optimism-dai-bridge:
     name: Tests E2E Optimism Dai Bridge
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./packages/optimism-dai-bridge
