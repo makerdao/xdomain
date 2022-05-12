@@ -47,12 +47,7 @@ contract SimpleDomainHost is DomainHost {
         guest.lift(_line, _minted);
     }
     function _rectify(uint256 wad) internal virtual override {
-        // Simulate a bridge transfer
-        // Move DAI into host escrow and mint on the other side
-        dai.transferFrom(address(this), address(escrow), wad);
-        Dai(address(guest.dai())).mint(address(guest), wad);
-
-        guest.rectify();
+        guest.rectify(wad);
     }
     function _cage() internal virtual override {
         guest.cage();
@@ -75,12 +70,7 @@ contract SimpleDomainGuest is DomainGuest {
         host.release(burned);
     }
     function _surplus(uint256 wad) internal virtual override {
-        // Simulate a bridge transfer
-        // Burn guest domain DAI and move escrow host DAI to the host
-        Dai(address(dai)).burn(address(this), wad);
-        host.dai().transferFrom(host.escrow(), address(host), wad);
-
-        host.surplus();
+        host.surplus(wad);
     }
     function _deficit(uint256 wad) internal virtual override {
         host.deficit(wad);
@@ -135,12 +125,10 @@ contract IntegrationTest is DSSTest {
         mcd.vat().setWard(address(host), 1);
         address(escrow).setWard(address(this), 1);
         escrow.approve(address(mcd.dai()), address(host), type(uint256).max);
-        escrow.approve(address(mcd.dai()), address(guest), type(uint256).max);
         mcd.vat().init(ILK);
         mcd.vat().file(ILK, "line", 1_000_000 * RAD);
         mcd.vat().file(ILK, "spot", RAY);
         vat.rely(address(guest));
-        dai.rely(address(host));
     }
 
     function testRaiseDebtCeiling() public {
@@ -234,12 +222,14 @@ contract IntegrationTest is DSSTest {
 
         assertEq(vat.dai(address(guest)), 50 * RAD);
         assertEq(vat.sin(address(guest)), 20 * RAD);
+        assertEq(vat.surf(), 0);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
 
         guest.push();
 
         assertEq(vat.dai(address(guest)), 0);
         assertEq(vat.sin(address(guest)), 0);
+        assertEq(vat.surf(), -int256(30 * RAD));
         assertEq(mcd.vat().dai(address(mcd.vow())), vowDai + 30 * RAD);
         assertEq(mcd.vat().sin(address(mcd.vow())), vowSin);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 70 ether);
@@ -258,12 +248,23 @@ contract IntegrationTest is DSSTest {
 
         assertEq(vat.dai(address(guest)), 20 * RAD);
         assertEq(vat.sin(address(guest)), 50 * RAD);
+        assertEq(vat.surf(), 0);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
 
         guest.push();
 
+        assertEq(vat.dai(address(guest)), 30 * RAD);
+        assertEq(vat.sin(address(guest)), 30 * RAD);
+        assertEq(vat.surf(), int256(30 * RAD));
+        assertEq(mcd.vat().dai(address(mcd.vow())), vowDai);
+        assertEq(mcd.vat().sin(address(mcd.vow())), vowSin + 30 * RAD);
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 130 ether);
+
+        guest.heal();
+
         assertEq(vat.dai(address(guest)), 0);
         assertEq(vat.sin(address(guest)), 0);
+        assertEq(vat.surf(), int256(30 * RAD));
         assertEq(mcd.vat().dai(address(mcd.vow())), vowDai);
         assertEq(mcd.vat().sin(address(mcd.vow())), vowSin + 30 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 130 ether);

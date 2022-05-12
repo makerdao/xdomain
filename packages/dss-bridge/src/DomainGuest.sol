@@ -27,6 +27,7 @@ interface VatLike {
     function dai(address usr) external view returns (uint256);
     function sin(address usr) external view returns (uint256);
     function heal(uint256 rad) external;
+    function swell(address u, int256 rad) external;
 }
 
 interface TokenLike {
@@ -71,7 +72,7 @@ abstract contract DomainGuest {
     event Lift(uint256 line, uint256 minted);
     event Release(uint256 burned);
     event Push(int256 surplus);
-    event Rectify(uint256 balance);
+    event Rectify(uint256 wad);
     event Cage();
     event Tell(uint256 value);
     event MintClaim(address indexed usr, uint256 claim);
@@ -167,12 +168,14 @@ abstract contract DomainGuest {
             if (_sin > 0) vat.heal(_sin);
 
             uint256 wad = (_dai - _sin) / RAY;    // Leave the dust
-            daiJoin.exit(address(this), wad);
+            uint256 rad = wad * RAY;
 
-            // Send ERC20 DAI to the remote DomainHost
+            require(rad < 2 ** 255, "DomainGuest/overflow");
+
+            // Burn the DAI and unload on the other side
+            vat.swell(address(this), -int256(rad));
             _surplus(wad);
 
-            require(wad < 2 ** 255, "DomainGuest/overflow");
             emit Push(int256(wad));
         } else if (_dai < _sin) {
             // We have a deficit
@@ -186,12 +189,14 @@ abstract contract DomainGuest {
         }
     }
 
-    /// @notice Merge ERC20 DAI into surplus
-    function rectify() external {
-        uint256 balance = dai.balanceOf(address(this));
-        daiJoin.join(address(this), balance);
+    /// @notice Merge DAI into surplus
+    /// @dev Should only be triggered by remote domain
+    function rectify(uint256 wad) external auth {
+        uint256 rad = wad * RAY;
+        require(rad < 2 ** 255, "DomainGuest/overflow");
+        vat.swell(address(this), int256(rad));
 
-        emit Rectify(balance);
+        emit Rectify(wad);
     }
 
     /// @notice Trigger the end module

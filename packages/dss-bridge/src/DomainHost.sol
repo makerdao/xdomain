@@ -164,9 +164,10 @@ abstract contract DomainHost {
         emit Release(wad);
     }
 
-    /// @notice Send any DAI in the contract to the surplus buffer
-    function surplus() external {
-        uint256 wad = dai.balanceOf(address(this));
+    /// @notice Merge DAI into surplus
+    /// @dev Should only be triggered by remote domain
+    function surplus(uint256 wad) external auth {
+        dai.transferFrom(address(escrow), address(this), wad);
         daiJoin.join(address(vow), wad);
 
         emit Surplus(wad);
@@ -179,7 +180,7 @@ abstract contract DomainHost {
         require(vat.live() == 1, "DomainHost/vat-not-live");
         
         vat.suck(vow, address(this), wad * RAY);
-        daiJoin.exit(address(this), wad);
+        daiJoin.exit(address(escrow), wad);
         
         // Send ERC20 DAI to the remote DomainGuest
         _rectify(wad);

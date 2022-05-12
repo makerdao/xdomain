@@ -187,18 +187,18 @@ contract DomainGuestTest is DSSTest {
 
         assertEq(vat.dai(address(guest)), 100 * RAD);
         assertEq(vat.sin(address(guest)), 0);
+        assertEq(vat.surf(), 0);
         assertEq(guest.surplus(), 0);
         assertEq(guest.deficit(), 0);
-        assertEq(dai.balanceOf(address(guest)), 0);
 
         // Will push out a surplus of 100 DAI
         guest.push();
 
         assertEq(vat.dai(address(guest)), 0);
         assertEq(vat.sin(address(guest)), 0);
+        assertEq(vat.surf(), -int256(100 * RAD));
         assertEq(guest.surplus(), 100 ether);
         assertEq(guest.deficit(), 0);
-        assertEq(dai.balanceOf(address(guest)), 100 ether);
     }
 
     function testPushSurplusPartial() public {
@@ -208,18 +208,18 @@ contract DomainGuestTest is DSSTest {
 
         assertEq(vat.dai(address(guest)), 125 * RAD);
         assertEq(vat.sin(address(guest)), 25 * RAD);
+        assertEq(vat.surf(), 0);
         assertEq(guest.surplus(), 0);
         assertEq(guest.deficit(), 0);
-        assertEq(dai.balanceOf(address(guest)), 0);
 
         // Will push out a surplus of 100 DAI (125 - 25)
         guest.push();
 
         assertEq(vat.dai(address(guest)), 0);
         assertEq(vat.sin(address(guest)), 0);
+        assertEq(vat.surf(), -int256(100 * RAD));
         assertEq(guest.surplus(), 100 ether);
         assertEq(guest.deficit(), 0);
-        assertEq(dai.balanceOf(address(guest)), 100 ether);
     }
 
     function testPushDeficit() public {
@@ -258,17 +258,13 @@ contract DomainGuestTest is DSSTest {
     }
 
     function testRectify() public {
-        vat.suck(address(this), address(this), 100 * RAD);
-        vat.hope(address(daiJoin));
-        daiJoin.exit(address(guest), 100 ether);
-
         assertEq(vat.dai(address(guest)), 0);
-        assertEq(dai.balanceOf(address(guest)), 100 ether);
+        assertEq(vat.surf(), 0);
 
-        guest.rectify();
+        guest.rectify(100 ether);
 
         assertEq(vat.dai(address(guest)), 100 * RAD);
-        assertEq(dai.balanceOf(address(guest)), 0);
+        assertEq(vat.surf(), int256(100 * RAD));
     }
 
     function testCage() public {

@@ -248,17 +248,18 @@ contract DomainHostTest is DSSTest {
     }
 
     function testSurplus() public {
-        // Stick 100 DAI into the host
-        // This is to simulate the remote bridge sending surplus DAI
-        host.lift(100 ether);
-        escrow.approve(address(dai), address(this), type(uint256).max);
-        dai.transferFrom(address(escrow), address(host), 100 ether);
+        uint256 balance = dai.balanceOf(address(escrow));
+        vat.hope(address(daiJoin));
+        vat.suck(address(123), address(this), 100 * RAD);
+        daiJoin.exit(address(escrow), 100 ether);
 
         assertEq(vat.dai(vow), 0);
+        assertEq(dai.balanceOf(address(escrow)), balance + 100 ether);
 
-        host.surplus();
+        host.surplus(100 ether);
 
         assertEq(vat.dai(vow), 100 * RAD);
+        assertEq(dai.balanceOf(address(escrow)), balance);
     }
 
     function testDeficit() public {
@@ -269,7 +270,7 @@ contract DomainHostTest is DSSTest {
         host.deficit(100 ether);
 
         assertEq(vat.sin(vow), 100 * RAD);
-        assertEq(dai.balanceOf(address(host)), 100 ether);
+        assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.rectify(), 100 ether);
     }
 

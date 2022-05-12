@@ -6,6 +6,7 @@ contract VatMock {
     uint256 public live = 1;
     uint256 public Line;
     uint256 public debt;
+    int256 public surf;
 
     struct Urn {
         uint256 ink;   // Locked Collateral  [wad]
@@ -110,5 +111,10 @@ contract VatMock {
         dai[v] = add(dai[v], rad);
         sin[u] = add(sin[u], rad);
         debt += rad;
+    }
+
+    function swell(address u, int256 rad) external {
+        dai[u] = add(dai[u], rad);
+        surf += rad;
     }
 }
