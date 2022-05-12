@@ -38,9 +38,9 @@ jobs:
 
       - run: yarn build
       - run: REPORT_GAS=1 yarn test
-      # - run: yarn codechecks # compares gas report
-      #   env: # Or as an environment variable
-      #     CC_SECRET: ${{ secrets.CC_SECRET }}
+      - run: yarn codechecks # compares gas report
+        env: # Or as an environment variable
+          CC_SECRET: ${{ secrets.CC_SECRET }}
       - run: yarn coverage
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2

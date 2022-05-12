@@ -40,10 +40,10 @@ jobs:
 
       - run: yarn build
       - run: REPORT_GAS=1 yarn test
-      # - name: Compare gas reports on GitHub
-      #   run: yarn codechecks
-      #   env:
-      #     CC_SECRET: ${{ secrets.CC_SECRET }}
+      - name: Compare gas reports on GitHub
+        run: yarn codechecks
+        env:
+          CC_SECRET: ${{ secrets.CC_SECRET }}
       - run: yarn coverage
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2
