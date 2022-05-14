@@ -1,0 +1,10 @@
+groups:
+  - name: wormhole
+    rules:
+      - alert: BridgeInvariantBroken
+        expr: wormhole_l1_dai_balance > wormhole_l2_dai_balance
+        for: 1s
+        labels:
+          severity: page
+        annotations:
+          summary: Bridge invariant broken
