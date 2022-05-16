@@ -55,7 +55,6 @@
     "no-extend-native": "error",
     "no-extra-bind": "error",
     "no-extra-boolean-cast": "error",
-    "no-extra-parens": ["error", "functions"],
     "no-floating-decimal": "error",
     "no-func-assign": "error",
     "no-global-assign": "error",

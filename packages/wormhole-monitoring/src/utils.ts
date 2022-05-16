@@ -1,7 +1,17 @@
-export async function setIntervalAsync(fn: () => Promise<void>, gap: number): Promise<never> {
-  while (true) {
-    await fn()
-    await delay(gap)
+export function setIntervalAsync(fn: () => Promise<void>, gap: number): { cancel: () => void } {
+  let cancelled = false
+  setTimeout(async () => {
+    // eslint-disable-next-line
+    while (!cancelled) {
+      await fn()
+      await delay(gap)
+    }
+  })
+
+  return {
+    cancel: () => {
+      cancelled = true
+    },
   }
 }
 
