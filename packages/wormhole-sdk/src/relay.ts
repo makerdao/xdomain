@@ -171,8 +171,7 @@ async function getRelayGasLimit(
   ])
   const gelato = new Contract(gelatoAddress, gelatoInterface, relay.provider)
   const executors = await gelato.executors()
-  console.log({ executors })
-  const { baseFeePerGas } = await relay.provider.getBlock('latest')
+  const gasPrice = await relay.provider.getGasPrice()
 
   let gasUsed
   try {
@@ -185,15 +184,14 @@ async function getRelayGasLimit(
           '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
         ]),
         from: executors[0],
-        gasLimit: 600000,
-        gasPrice: baseFeePerGas?.mul(2).toString() || '1000',
+        gasLimit: 2000000,
+        gasPrice: gasPrice.toString() || '100000000000',
       })
     ).toString()
   } catch (e) {
     gasUsed = getEstimatedRelayGasLimit(relay)
     console.error(e)
   }
-  console.log({ gasUsed })
   return gasUsed
 }
 
