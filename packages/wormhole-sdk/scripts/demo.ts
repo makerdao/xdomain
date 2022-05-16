@@ -1,27 +1,32 @@
 import 'dotenv/config'
 
-import { BigNumberish, ethers, Wallet } from 'ethers'
+import { BigNumberish, ethers, providers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 
 import {
+  DEFAULT_RPC_URLS,
   DomainDescription,
   getAmountsForWormholeGUID,
   getAttestations,
   getDefaultDstDomain,
+  initRelayedWormhole,
   initWormhole,
   mintWithOracles,
+  relayMintWithOracles,
 } from '../src/index'
 import { fundTestWallet } from '../test/faucet'
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 
 const WAD = parseEther('1.0')
+const RELAY_MINT = true
 
 export async function demo(
   srcDomain: DomainDescription,
   srcDomainEtherscan: string,
   dstDomainEtherscan: string,
   amount: BigNumberish = parseEther('0.01'),
+  relayAddress?: string,
 ) {
   const dstDomain = getDefaultDstDomain(srcDomain)
   if (!process.env.DEMO_USER_PRIV_KEY) throw new Error('Please add DEMO_USER_PRIV_KEY to .env')
@@ -34,12 +39,17 @@ export async function demo(
   await fundTestWallet(sender, sender, srcDomain, dstDomain, amount)
 
   // *****************************************/
-  // ********  initWormhole ******************/
+  // ********  init(Relayed)Wormhole ******************/
   // *****************************************/
 
   ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
   console.log(`Withdrawing ${formatEther(amount)} DAI on ${srcDomain} ...`)
-  const initTx = await initWormhole({ srcDomain, sender, receiverAddress: sender.address, amount })
+  let initTx
+  if (RELAY_MINT) {
+    initTx = await initRelayedWormhole({ srcDomain, sender, receiverAddress: sender.address, amount, relayAddress })
+  } else {
+    initTx = await initWormhole({ srcDomain, sender, receiverAddress: sender.address, amount })
+  }
   console.log(`Withdrawal tx submitted: ${srcDomainEtherscan}${initTx.tx!.hash}`)
   await initTx.tx!.wait()
   console.log(`Withdrawal tx confirmed.\n`)
@@ -60,28 +70,57 @@ export async function demo(
   console.log(`Signatures: ${signatures}`)
   console.log(`WormholeGUID: ${JSON.stringify(wormholeGUID)}\n`)
 
-  // ***********************************************/
-  // ***********  mintWithOracles ******************/
-  // ***********************************************/
+  // ***********************************************************************/
+  // ***********  getAmountsForWormholeGUID (before mint) ******************/
+  // ***********************************************************************/
 
-  const { mintable, pending, bridgeFee } = await getAmountsForWormholeGUID({ srcDomain, wormholeGUID: wormholeGUID! })
+  const { mintable, pending, bridgeFee, relayFee } = await getAmountsForWormholeGUID({
+    srcDomain,
+    wormholeGUID: wormholeGUID!,
+  })
   console.log(`Pending: ${formatEther(pending)} DAI.`)
   console.log(`Mintable: ${formatEther(mintable)} DAI.`)
-  console.log(`Fees: ${formatEther(bridgeFee)} DAI.\n`)
+  console.log(`Fees: ${formatEther(bridgeFee)} DAI.`)
 
-  console.log(`Minting ${formatEther(mintable)} DAI on ${dstDomain} ...`)
+  // ***********************************************/
+  // ***********  (relay)MintWithOracles ***********/
+  // ***********************************************/
+
   const maxFeePercentage = bridgeFee.mul(WAD).div(mintable)
-  const mintTx = await mintWithOracles({
-    srcDomain,
-    sender,
-    wormholeGUID: wormholeGUID!,
-    signatures,
-    maxFeePercentage,
-  })
-  console.log(`Minting tx submitted: ${dstDomainEtherscan}${mintTx.tx!.hash}`)
 
-  await mintTx.tx!.wait()
-  console.log(`Minting tx confirmed.\n`)
+  if (RELAY_MINT) {
+    console.log(`Relay Fees: ${formatEther(relayFee)} DAI.`)
+    console.log(`\nRelaying minting of ${formatEther(mintable)} DAI on ${dstDomain} ...`)
+    const mintTxHash = await relayMintWithOracles({
+      receiver: sender,
+      srcDomain,
+      wormholeGUID: wormholeGUID!,
+      signatures,
+      maxFeePercentage,
+      relayFee,
+      relayAddress,
+    })
+    console.log(`Relayed minting tx submitted: ${dstDomainEtherscan}${mintTxHash}`)
+    const dstProvider = new providers.JsonRpcProvider(DEFAULT_RPC_URLS[getDefaultDstDomain(srcDomain)])
+    await dstProvider.getTransactionReceipt(mintTxHash)
+    console.log(`Relayed minting tx confirmed.\n`)
+  } else {
+    console.log(`\nMinting ${formatEther(mintable)} DAI on ${dstDomain} ...`)
+    const mintTx = await mintWithOracles({
+      srcDomain,
+      sender,
+      wormholeGUID: wormholeGUID!,
+      signatures,
+      maxFeePercentage,
+    })
+    console.log(`Minting tx submitted: ${dstDomainEtherscan}${mintTx.tx!.hash}`)
+    await mintTx.tx!.wait()
+    console.log(`Minting tx confirmed.\n`)
+  }
+
+  // ***********************************************************************/
+  // ***********  getAmountsForWormholeGUID (after mint) ******************/
+  // ***********************************************************************/
 
   const { mintable: mintableAfter, pending: pendingAfter } = await getAmountsForWormholeGUID({
     srcDomain,
