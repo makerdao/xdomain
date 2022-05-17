@@ -162,7 +162,7 @@ async function getRelayGasLimit(
     relayData,
     0,
     await relay.dai(),
-    ethers.constants.HashZero,
+    ethers.constants.MaxUint256.toHexString(),
   ])
 
   const gelatoAddress = addresses.gelato
