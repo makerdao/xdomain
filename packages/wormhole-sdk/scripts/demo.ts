@@ -53,7 +53,7 @@ export async function demo(
     withdrawn: amount,
     relayAddress,
   })
-  console.log(`Desired withdrawal: ${formatEther(amount)} DAI.`)
+  console.log(`\nDesired withdrawal: ${formatEther(amount)} DAI.`)
   console.log(`Expected Mintable: ${formatEther(expectedMintable)} DAI.`)
   console.log(`Expected Bridge Fees: ${formatEther(expectedBridgeFee)} DAI.`)
   RELAY_MINT && console.log(`Expected Relay Fees: ${formatEther(expectedRelayFee)} DAI.`)
