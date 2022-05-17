@@ -7,7 +7,7 @@ import { delay } from '../utils'
 // todo: this needs to go to some kind of config file
 const startingBlock = 1791185 // block of L2WormholeGateway deployment
 const syncBatch = 100_000
-type Wormhole = {
+export type Wormhole = {
   sourceDomain: string
   targetDomain: string
   receiver: string

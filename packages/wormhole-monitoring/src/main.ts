@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 
 import { onEveryFinalizedBlock } from './blockchain'
 import { bridgeInvariant } from './monitoring/bridge-invariant'
@@ -23,7 +23,10 @@ export async function main() {
     console.log('New block detected')
 
     if (isSynced.isSynced) {
-      await monitorWormholeMints(wormholes, blockNumber, l1Sdk)
+      const newBadDebt = await monitorWormholeMints(wormholes, blockNumber, l1Sdk)
+      const previousBadDebt = BigNumber.from(metrics['wormhole_bad_debt'] || 0)
+
+      metrics['wormhole_bad_debt'] = previousBadDebt.add(newBadDebt).toString()
     }
 
     const balances = await bridgeInvariant(l1Sdk, l2Sdk)
