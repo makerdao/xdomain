@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { BigNumber, BigNumberish, constants, Contract, Signer } from 'ethers'
+import { BigNumber, BigNumberish, constants, Contract, ethers, Signer } from 'ethers'
 import { arrayify, formatEther, hexConcat, hexZeroPad, Interface, keccak256, splitSignature } from 'ethers/lib/utils'
 
 import { getGuidHash, sleep, WormholeGUID } from '.'
