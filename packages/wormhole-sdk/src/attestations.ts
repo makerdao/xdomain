@@ -54,7 +54,7 @@ export async function waitForAttestations(
   signatures: string
   wormholeGUID: WormholeGUID
 }> {
-  let timeSlept = 0
+  const startTime = Date.now()
   let signatures: string
   let guid: WormholeGUID | undefined
   let prevNumSigs: number | undefined
@@ -90,13 +90,12 @@ export async function waitForAttestations(
 
     prevNumSigs = numSigs
 
-    if (timeoutMs !== undefined && timeSlept >= timeoutMs) {
+    if (timeoutMs !== undefined && Date.now() - startTime >= timeoutMs) {
       throw new Error(
         `Did not receive required number of signatures within ${timeoutMs}ms. Received: ${numSigs}. Threshold: ${threshold}`,
       )
     }
     await sleep(pollingIntervalMs)
-    timeSlept += pollingIntervalMs
   }
 
   return {

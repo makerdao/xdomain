@@ -174,25 +174,20 @@ async function getRelayGasLimit(
   const executors = await gelato.executors()
   const gasPrice = await relay.provider.getGasPrice()
 
-  let gasUsed
-  try {
-    gasUsed = (
-      await relay.provider.estimateGas({
-        to: gelatoAddress,
-        data: gelatoInterface.encodeFunctionData('exec', [
-          serviceAddress,
-          serviceData,
-          '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-        ]),
-        from: executors[0],
-        gasLimit: 2000000,
-        gasPrice: gasPrice.toString() || '100000000000',
-      })
-    ).toString()
-  } catch (e) {
-    gasUsed = getEstimatedRelayGasLimit(relay)
-    console.error(e)
-  }
+  const gasUsed = (
+    await relay.provider.estimateGas({
+      to: gelatoAddress,
+      data: gelatoInterface.encodeFunctionData('exec', [
+        serviceAddress,
+        serviceData,
+        '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+      ]),
+      from: executors[0],
+      gasLimit: 2000000,
+      gasPrice: gasPrice.toString(),
+    })
+  ).toString()
+
   return gasUsed
 }
 
