@@ -1,7 +1,7 @@
 import { BigNumber } from 'ethers'
 
-import { L1Sdk } from '../types'
-import { Wormhole } from './wormhole-inits'
+import { L1Sdk } from '../sdks'
+import { Wormhole } from './wormholeInits'
 
 export async function monitorWormholeMints(wormholes: { [hash: string]: Wormhole }, blockNumber: number, l1Sdk: L1Sdk) {
   const filter = l1Sdk.join.filters.Mint()

@@ -1,0 +1,41 @@
+import { BigNumber, ethers, providers } from 'ethers'
+
+import { onEveryFinalizedBlock } from './blockchain'
+import { bridgeInvariant } from './monitoring/bridgeInvariant'
+import { syncWormholeInits } from './monitoring/wormholeInits'
+import { monitorWormholeMints } from './monitoring/wormholeMints'
+import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from './sdks'
+import { startServer } from './server'
+import { Metrics, NetworkConfig } from './types'
+
+export async function monitor(network: NetworkConfig, l1Provider: providers.Provider) {
+  const metrics: Metrics = {}
+
+  const l1Sdk = getL1SdkBasedOnNetworkName(network.sdkName, l1Provider)
+
+  for (const domain of network.slaves) {
+    console.log(`Setting up monitoring for ${domain.name}`)
+    const l2Provider = new ethers.providers.JsonRpcProvider(domain.l2Rpc)
+    const l2Sdk = getL2SdkBasedOnNetworkName(domain.sdkName, l2Provider)
+
+    const ctx = await syncWormholeInits(l2Provider, l2Sdk)
+
+    await onEveryFinalizedBlock(async (blockNumber) => {
+      console.log(`New block finalized: ${blockNumber}`)
+
+      if (ctx.isSynced) {
+        const newBadDebt = await monitorWormholeMints(ctx.wormholes, blockNumber, l1Sdk)
+        const previousBadDebt = BigNumber.from(metrics[`${domain.name}_wormhole_bad_debt`] || 0)
+
+        metrics[`${domain.name}_wormhole_bad_debt`] = previousBadDebt.add(newBadDebt).toString()
+      }
+
+      const balances = await bridgeInvariant(l1Sdk, l2Sdk)
+      metrics[`${domain.name}_wormhole_l1_dai_balance`] = balances.l1Balance
+      metrics[`${domain.name}_wormhole_l2_dai_balance`] = balances.l2Balance
+      metrics[`${domain.name}_wormhole_l1_block`] = await l1Provider.getBlockNumber()
+    }, l1Provider)
+  }
+
+  await Promise.all([startServer(metrics)])
+}

@@ -1,39 +1,20 @@
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 
-import { onEveryFinalizedBlock } from './blockchain'
-import { bridgeInvariant } from './monitoring/bridge-invariant'
-import { isSynced, syncWormholeInits, wormholes } from './monitoring/wormhole-inits'
-import { monitorWormholeMints } from './monitoring/wormholeMints'
-import { getKovanSdk, getOptimismKovanSdk } from './sdk'
-import { startServer } from './server'
-import { Metrics } from './types'
+import { idsToChains, networks } from './config'
+import { monitor } from './monitor'
 
-export async function main() {
-  const l1Provider = new ethers.providers.JsonRpcProvider(
-    'https://eth-kovan.alchemyapi.io/v2/ezK0RQvjbWxV8EoUVG-iLifNmAUHgDp8',
-  )
-  const l2Provider = new ethers.providers.JsonRpcProvider('https://kovan.optimism.io/	')
+export async function main(l1Rpc: string) {
+  const l1Provider = new ethers.providers.JsonRpcProvider(l1Rpc)
 
-  const l1Sdk = getKovanSdk(l1Provider as any)
-  const l2Sdk = getOptimismKovanSdk(l2Provider as any)
+  const chainId = (await l1Provider.getNetwork()).chainId
+  const networkName = idsToChains[chainId]
+  const network = networks[chainId]
 
-  const metrics: Metrics = {}
+  if (!networkName || !network) {
+    throw new Error(`Can't find config for network ${chainId}`)
+  }
 
-  await onEveryFinalizedBlock(async (blockNumber) => {
-    console.log('New block detected')
+  console.log(`Loaded config for ${networkName}`)
 
-    if (isSynced.isSynced) {
-      const newBadDebt = await monitorWormholeMints(wormholes, blockNumber, l1Sdk)
-      const previousBadDebt = BigNumber.from(metrics['wormhole_bad_debt'] || 0)
-
-      metrics['wormhole_bad_debt'] = previousBadDebt.add(newBadDebt).toString()
-    }
-
-    const balances = await bridgeInvariant(l1Sdk, l2Sdk)
-    metrics['wormhole_l1_dai_balance'] = balances.l1Balance
-    metrics['wormhole_l2_dai_balance'] = balances.l2Balance
-    metrics['wormhole_l1_block'] = await l1Provider.getBlockNumber()
-  }, l1Provider)
-
-  await Promise.all([startServer(metrics), syncWormholeInits(l2Provider, l2Sdk)])
+  await monitor(network, l1Provider)
 }
