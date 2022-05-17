@@ -6,6 +6,7 @@ import { formatEther, parseEther } from 'ethers/lib/utils'
 import {
   DEFAULT_RPC_URLS,
   DomainDescription,
+  getAmounts,
   getAmountsForWormholeGUID,
   getAttestations,
   getDefaultDstDomain,
@@ -39,12 +40,29 @@ export async function demo(
 
   await fundTestWallet(sender, sender, srcDomain, dstDomain, amount)
 
-  // *****************************************/
-  // ********  init(Relayed)Wormhole ******************/
-  // *****************************************/
+  // *******************************************/
+  // ***********  getAmounts *******************/
+  // *******************************************/
 
-  ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
-  console.log(`Withdrawing ${formatEther(amount)} DAI on ${srcDomain} ...`)
+  const {
+    mintable: expectedMintable,
+    bridgeFee: expectedBridgeFee,
+    relayFee: expectedRelayFee,
+  } = await getAmounts({
+    srcDomain,
+    withdrawn: amount,
+    relayAddress,
+  })
+  console.log(`Desired withdrawal: ${formatEther(amount)} DAI.`)
+  console.log(`Expected Mintable: ${formatEther(expectedMintable)} DAI.`)
+  console.log(`Expected Bridge Fees: ${formatEther(expectedBridgeFee)} DAI.`)
+  RELAY_MINT && console.log(`Expected Relay Fees: ${formatEther(expectedRelayFee)} DAI.`)
+
+  // *******************************************/
+  // ********  init(Relayed)Wormhole ***********/
+  // *******************************************/
+
+  console.log(`\nWithdrawing ${formatEther(amount)} DAI on ${srcDomain} ...`)
   let initTx
   if (RELAY_MINT) {
     initTx = await initRelayedWormhole({ srcDomain, sender, receiverAddress: sender.address, amount, relayAddress })
@@ -53,13 +71,13 @@ export async function demo(
   }
   console.log(`Withdrawal tx submitted: ${srcDomainEtherscan}${initTx.tx!.hash}`)
   await initTx.tx!.wait()
-  console.log(`Withdrawal tx confirmed.\n`)
+  console.log(`Withdrawal tx confirmed.`)
 
   // ***********************************************/
   // ***********  getAttestations ******************/
   // ***********************************************/
 
-  console.log(`Requesting attestation for ${initTx.tx!.hash} ...`)
+  console.log(`\nRequesting attestation for ${initTx.tx!.hash} ...`)
 
   const { signatures, wormholeGUID } = await getAttestations({
     txHash: initTx.tx!.hash,
@@ -69,7 +87,7 @@ export async function demo(
   })
 
   console.log(`Signatures: ${signatures}`)
-  console.log(`WormholeGUID: ${JSON.stringify(wormholeGUID)}\n`)
+  console.log(`WormholeGUID: ${JSON.stringify(wormholeGUID)}`)
 
   // ***********************************************************************/
   // ***********  getAmountsForWormholeGUID (before mint) ******************/
@@ -88,9 +106,9 @@ export async function demo(
     relayAddress,
     relayParams,
   })
-  console.log(`Pending: ${formatEther(pending)} DAI.`)
+  console.log(`\nPending: ${formatEther(pending)} DAI.`)
   console.log(`Mintable: ${formatEther(mintable)} DAI.`)
-  console.log(`Fees: ${formatEther(bridgeFee)} DAI.`)
+  console.log(`Bridge Fees: ${formatEther(bridgeFee)} DAI.`)
 
   // ***********************************************/
   // ***********  (relay)MintWithOracles ***********/
