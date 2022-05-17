@@ -81,13 +81,18 @@ export function getAmountsForWormholeGUID(
     relayAddress?: string
   } & DomainContext,
 ): ReturnType<WormholeBridge['getAmountsForWormholeGUID']> {
-  return getWormholeBridge(opts).getAmountsForWormholeGUID(opts.wormholeGUID, opts.isHighPriority, opts.relayParams)
+  return getWormholeBridge(opts).getAmountsForWormholeGUID(
+    opts.wormholeGUID,
+    opts.isHighPriority,
+    opts.relayParams,
+    opts.relayAddress,
+  )
 }
 
 export function getAmounts(
   opts: { withdrawn: BigNumberish; isHighPriority?: boolean; relayAddress?: string } & DomainContext,
 ): ReturnType<WormholeBridge['getAmounts']> {
-  return getWormholeBridge(opts).getAmounts(opts.withdrawn, opts.isHighPriority)
+  return getWormholeBridge(opts).getAmounts(opts.withdrawn, opts.isHighPriority, opts.relayAddress)
 }
 
 export interface MintWithOraclesOpts {

@@ -20,6 +20,7 @@ ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 
 const WAD = parseEther('1.0')
 const RELAY_MINT = true
+const PRECISE_RELAY_FEE_ESTIMATION = false
 
 export async function demo(
   srcDomain: DomainDescription,
@@ -74,9 +75,18 @@ export async function demo(
   // ***********  getAmountsForWormholeGUID (before mint) ******************/
   // ***********************************************************************/
 
+  const relayParams =
+    (PRECISE_RELAY_FEE_ESTIMATION && {
+      receiver: sender,
+      wormholeGUID: wormholeGUID!,
+      signatures,
+    }) ||
+    undefined
   const { mintable, pending, bridgeFee, relayFee } = await getAmountsForWormholeGUID({
     srcDomain,
     wormholeGUID: wormholeGUID!,
+    relayAddress,
+    relayParams,
   })
   console.log(`Pending: ${formatEther(pending)} DAI.`)
   console.log(`Mintable: ${formatEther(mintable)} DAI.`)
@@ -125,6 +135,7 @@ export async function demo(
   const { mintable: mintableAfter, pending: pendingAfter } = await getAmountsForWormholeGUID({
     srcDomain,
     wormholeGUID: wormholeGUID!,
+    relayAddress,
   })
   console.log(`Pending: ${formatEther(mintableAfter)} DAI.`)
   console.log(`Mintable: ${formatEther(pendingAfter)} DAI.`)

@@ -155,13 +155,14 @@ async function getRelayGasLimit(
 
   const serviceAddress = addresses.service
   const serviceInterface = new Interface([
-    'function execTransit(address _dest,bytes calldata _data,uint256 _minFee,address _token)',
+    'function execTransit(address _dest,bytes calldata _data,uint256 _minFee,address _token,bytes32 _taskId)',
   ])
   const serviceData = serviceInterface.encodeFunctionData('execTransit', [
     relay.address,
     relayData,
     0,
     await relay.dai(),
+    ethers.constants.HashZero,
   ])
 
   const gelatoAddress = addresses.gelato
