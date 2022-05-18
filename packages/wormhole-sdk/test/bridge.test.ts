@@ -19,6 +19,7 @@ import {
   getAttestations,
   getDefaultDstDomain,
   getLikelyDomainId,
+  getSdk,
   getWormholeBridge,
   initRelayedWormhole,
   initWormhole,
@@ -53,22 +54,24 @@ async function getTestWallets(srcDomainDescr: DomainDescription) {
 }
 
 describe('WormholeBridge', () => {
-  function testDefaults(srcDomain: DomainId) {
-    const bridge = new WormholeBridge({ srcDomain })
-    expect(bridge.srcDomain).to.eq(srcDomain)
-    expect(bridge.dstDomain).to.eq(getDefaultDstDomain(srcDomain))
-    expect((bridge.srcDomainProvider as JsonRpcProvider).connection.url).to.eq(DEFAULT_RPC_URLS[srcDomain])
-    expect((bridge.dstDomainProvider as JsonRpcProvider).connection.url).to.eq(
-      DEFAULT_RPC_URLS[getDefaultDstDomain(srcDomain)],
-    )
-  }
+  describe('Defaults', async () => {
+    function testDefaults(srcDomain: DomainId) {
+      const bridge = new WormholeBridge({ srcDomain })
+      expect(bridge.srcDomain).to.eq(srcDomain)
+      expect(bridge.dstDomain).to.eq(getDefaultDstDomain(srcDomain))
+      expect((bridge.srcDomainProvider as JsonRpcProvider).connection.url).to.eq(DEFAULT_RPC_URLS[srcDomain])
+      expect((bridge.dstDomainProvider as JsonRpcProvider).connection.url).to.eq(
+        DEFAULT_RPC_URLS[getDefaultDstDomain(srcDomain)],
+      )
+    }
 
-  it('should auto-fill default RPC URLs and dstDomain (kovan-optimism)', () => {
-    testDefaults('KOVAN-SLAVE-OPTIMISM-1')
-  })
+    it('should auto-fill default RPC URLs and dstDomain (kovan-optimism)', () => {
+      testDefaults('KOVAN-SLAVE-OPTIMISM-1')
+    })
 
-  it('should auto-fill default RPC URLs and dstDomain (rinkeby-arbitrum)', () => {
-    testDefaults('RINKEBY-SLAVE-ARBITRUM-1')
+    it('should auto-fill default RPC URLs and dstDomain (rinkeby-arbitrum)', () => {
+      testDefaults('RINKEBY-SLAVE-ARBITRUM-1')
+    })
   })
 
   async function testInitWormhole({
@@ -79,18 +82,20 @@ describe('WormholeBridge', () => {
     settings,
   }: {
     srcDomain: DomainDescription
-    useRelay?: boolean
+    useRelay?: boolean | 'BasicRelay' | 'TrustedRelay'
     useWrapper?: boolean
     buildOnly?: boolean
     settings?: BridgeSettings
   }) {
-    const { l2User } = await getTestWallets(srcDomain)
+    const { l1User, l2User, dstDomain } = await getTestWallets(srcDomain)
     const sender = buildOnly ? undefined : l2User
 
     let tx: ContractTransaction | undefined
     let to: string | undefined
     let data: string | undefined
     let bridge: WormholeBridge | undefined
+    const relayAddress = useRelay === 'TrustedRelay' ? getSdk(dstDomain, l1User).TrustedRelay?.address : undefined
+
     if (useWrapper) {
       if (useRelay) {
         ;({ tx, to, data } = await initRelayedWormhole({
@@ -99,6 +104,7 @@ describe('WormholeBridge', () => {
           sender,
           receiverAddress: l2User.address,
           amount,
+          relayAddress,
         }))
       } else {
         ;({ tx, to, data } = await initWormhole({
@@ -112,7 +118,7 @@ describe('WormholeBridge', () => {
     } else {
       bridge = new WormholeBridge({ srcDomain, settings })
       if (useRelay) {
-        ;({ tx, to, data } = await bridge.initRelayedWormhole(l2User.address, amount, sender))
+        ;({ tx, to, data } = await bridge.initRelayedWormhole(l2User.address, amount, sender, relayAddress))
       } else {
         ;({ tx, to, data } = await bridge.initWormhole(l2User.address, amount, undefined, sender))
       }
@@ -132,20 +138,22 @@ describe('WormholeBridge', () => {
     return { txHash: tx!.hash, bridge }
   }
 
-  it.skip('should initiate withdrawal (kovan-optimism)', async () => {
-    await testInitWormhole({ srcDomain: 'optimism-testnet' })
-  })
+  describe('Init Wormhole', async () => {
+    it.skip('should initiate withdrawal (kovan-optimism)', async () => {
+      await testInitWormhole({ srcDomain: 'optimism-testnet' })
+    })
 
-  it.skip('should initiate withdrawal (kovan-optimism, build-only)', async () => {
-    await testInitWormhole({ srcDomain: 'optimism-testnet', buildOnly: true })
-  })
+    it.skip('should initiate withdrawal (kovan-optimism, build-only)', async () => {
+      await testInitWormhole({ srcDomain: 'optimism-testnet', buildOnly: true })
+    })
 
-  it.skip('should initiate withdrawal (rinkeby-arbitrum)', async () => {
-    await testInitWormhole({ srcDomain: 'arbitrum-testnet' })
-  })
+    it.skip('should initiate withdrawal (rinkeby-arbitrum)', async () => {
+      await testInitWormhole({ srcDomain: 'arbitrum-testnet' })
+    })
 
-  it.skip('should initiate withdrawal (rinkeby-arbitrum, wrapper)', async () => {
-    await testInitWormhole({ srcDomain: 'arbitrum-testnet', useWrapper: true })
+    it.skip('should initiate withdrawal (rinkeby-arbitrum, wrapper)', async () => {
+      await testInitWormhole({ srcDomain: 'arbitrum-testnet', useWrapper: true })
+    })
   })
 
   async function testGetAttestations({
@@ -158,7 +166,7 @@ describe('WormholeBridge', () => {
     timeoutMs = 900000,
   }: {
     srcDomain: DomainDescription
-    useRelay?: boolean
+    useRelay?: boolean | 'BasicRelay' | 'TrustedRelay'
     useWrapper?: boolean
     buildOnly?: boolean
     txHash?: string
@@ -202,117 +210,121 @@ describe('WormholeBridge', () => {
     return { bridge, wormholeGUID: guid, signatures }
   }
 
-  it.skip('should produce attestations (kovan-optimism)', async () => {
-    await testGetAttestations({ srcDomain: 'optimism-testnet' })
+  describe('Get Attestations', async () => {
+    it.skip('should produce attestations (kovan-optimism)', async () => {
+      await testGetAttestations({ srcDomain: 'optimism-testnet' })
+    })
+
+    it.skip('should produce attestations (rinkeby-arbitrum)', async () => {
+      await testGetAttestations({ srcDomain: 'arbitrum-testnet' })
+    })
+
+    it.skip('should produce attestations (rinkeby-arbitrum, wrapper)', async () => {
+      await testGetAttestations({ srcDomain: 'arbitrum-testnet', useWrapper: true })
+    })
+
+    it('should produce attestations for a tx initiating multiple withdrawals (rinkeby-arbitrum, wrapper)', async () => {
+      const srcDomain: DomainDescription = 'arbitrum-testnet'
+
+      const { l2User, dstDomain } = await getTestWallets(srcDomain)
+      const dai = new Contract(
+        '0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15',
+        ['function approve(address,uint256)'],
+        l2User,
+      )
+      // this L2 contract can initiate two wormholes
+      const multiWorm = new Contract(
+        '0xc905d0b8b1993d37e8a7058f24fb9a677caf1479',
+        ['function initiateWormhole(bytes32,address,uint128,uint256)'],
+        l2User,
+      )
+      await (await dai.approve(multiWorm.address, ethers.constants.MaxUint256)).wait()
+      const tx = await multiWorm.initiateWormhole(formatBytes32String(dstDomain), l2User.address, 1, 1)
+      const txHash = tx.hash
+      const txReceipt = await tx.wait()
+      const guids = (txReceipt.logs as { topics: string[]; data: string }[])
+        .filter(({ topics }) => topics[0] === '0x46d7dfb96bf7f7e8bb35ab641ff4632753a1411e3c8b30bec93e045e22f576de')
+        .map(({ data }) => decodeWormholeData(data))
+
+      // check that we can get attestation for the first wormhole
+      const { wormholeGUID: guid } = await testGetAttestations({ srcDomain, txHash, wormholeGUID: guids[0] })
+      expect(guid).to.deep.equal(guids[0])
+
+      // check that we can get attestation for the second wormhole
+      const { wormholeGUID: guid2 } = await testGetAttestations({ srcDomain, txHash, wormholeGUID: guids[1] })
+      expect(guid2).to.deep.equal(guids[1])
+    })
+
+    it('should throw when attestations timeout (kovan-optimism)', async () => {
+      await expect(testGetAttestations({ srcDomain: 'optimism-testnet', timeoutMs: 1 })).to.be.rejectedWith(
+        'Did not receive required number of signatures',
+      )
+    })
   })
 
-  it.skip('should produce attestations (rinkeby-arbitrum)', async () => {
-    await testGetAttestations({ srcDomain: 'arbitrum-testnet' })
-  })
+  describe('Get Amounts', async () => {
+    async function testGetAmountsForWormholeGUID({
+      srcDomain,
+      useRelay,
+      useWrapper,
+    }: {
+      srcDomain: DomainDescription
+      useRelay?: boolean | 'BasicRelay' | 'TrustedRelay'
+      useWrapper?: boolean
+    }) {
+      const { bridge, wormholeGUID } = await testGetAttestations({ srcDomain, useRelay, useWrapper })
 
-  it.skip('should produce attestations (rinkeby-arbitrum, wrapper)', async () => {
-    await testGetAttestations({ srcDomain: 'arbitrum-testnet', useWrapper: true })
-  })
+      let res: Awaited<ReturnType<typeof getAmountsForWormholeGUID>>
+      if (useWrapper) {
+        res = await getAmountsForWormholeGUID({ srcDomain, wormholeGUID: wormholeGUID! })
+      } else {
+        res = await bridge!.getAmountsForWormholeGUID(wormholeGUID!)
+      }
+      const { pending, mintable, bridgeFee, relayFee } = res
 
-  it('should produce attestations for a tx initiating multiple withdrawals (rinkeby-arbitrum, wrapper)', async () => {
-    const srcDomain: DomainDescription = 'arbitrum-testnet'
-
-    const { l2User, dstDomain } = await getTestWallets(srcDomain)
-    const dai = new Contract(
-      '0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15',
-      ['function approve(address,uint256)'],
-      l2User,
-    )
-    // this L2 contract can initiate two wormholes
-    const multiWorm = new Contract(
-      '0xc905d0b8b1993d37e8a7058f24fb9a677caf1479',
-      ['function initiateWormhole(bytes32,address,uint128,uint256)'],
-      l2User,
-    )
-    await (await dai.approve(multiWorm.address, ethers.constants.MaxUint256)).wait()
-    const tx = await multiWorm.initiateWormhole(formatBytes32String(dstDomain), l2User.address, 1, 1)
-    const txHash = tx.hash
-    const txReceipt = await tx.wait()
-    const guids = (txReceipt.logs as { topics: string[]; data: string }[])
-      .filter(({ topics }) => topics[0] === '0x46d7dfb96bf7f7e8bb35ab641ff4632753a1411e3c8b30bec93e045e22f576de')
-      .map(({ data }) => decodeWormholeData(data))
-
-    // check that we can get attestation for the first wormhole
-    const { wormholeGUID: guid } = await testGetAttestations({ srcDomain, txHash, wormholeGUID: guids[0] })
-    expect(guid).to.deep.equal(guids[0])
-
-    // check that we can get attestation for the second wormhole
-    const { wormholeGUID: guid2 } = await testGetAttestations({ srcDomain, txHash, wormholeGUID: guids[1] })
-    expect(guid2).to.deep.equal(guids[1])
-  })
-
-  it('should throw when attestations timeout (kovan-optimism)', async () => {
-    await expect(testGetAttestations({ srcDomain: 'optimism-testnet', timeoutMs: 1 })).to.be.rejectedWith(
-      'Did not receive required number of signatures',
-    )
-  })
-
-  async function testGetAmountsForWormholeGUID({
-    srcDomain,
-    useRelay,
-    useWrapper,
-  }: {
-    srcDomain: DomainDescription
-    useRelay?: boolean
-    useWrapper?: boolean
-  }) {
-    const { bridge, wormholeGUID } = await testGetAttestations({ srcDomain, useRelay, useWrapper })
-
-    let res: Awaited<ReturnType<typeof getAmountsForWormholeGUID>>
-    if (useWrapper) {
-      res = await getAmountsForWormholeGUID({ srcDomain, wormholeGUID: wormholeGUID! })
-    } else {
-      res = await bridge!.getAmountsForWormholeGUID(wormholeGUID!)
+      expect(pending).to.eq(mintable)
+      expect(pending).to.eq(wormholeGUID?.amount)
+      expect(bridgeFee).to.eq(0)
+      expect(relayFee).to.be.eq(1)
     }
-    const { pending, mintable, bridgeFee, relayFee } = res
 
-    expect(pending).to.eq(mintable)
-    expect(pending).to.eq(wormholeGUID?.amount)
-    expect(bridgeFee).to.eq(0)
-    expect(relayFee).to.be.eq(1)
-  }
+    async function testGetAmounts({
+      srcDomain,
+      useWrapper,
+    }: {
+      srcDomain: DomainDescription
+      useRelay?: boolean | 'BasicRelay' | 'TrustedRelay'
+      useWrapper?: boolean
+    }) {
+      let res: Awaited<ReturnType<typeof getAmounts>>
+      if (useWrapper) {
+        res = await getAmounts({ srcDomain, withdrawn: amount })
+      } else {
+        const bridge = new WormholeBridge({ srcDomain })
+        res = await bridge.getAmounts(amount)
+      }
+      const { mintable, bridgeFee, relayFee } = res
 
-  async function testGetAmounts({
-    srcDomain,
-    useWrapper,
-  }: {
-    srcDomain: DomainDescription
-    useRelay?: boolean
-    useWrapper?: boolean
-  }) {
-    let res: Awaited<ReturnType<typeof getAmounts>>
-    if (useWrapper) {
-      res = await getAmounts({ srcDomain, withdrawn: amount })
-    } else {
-      const bridge = new WormholeBridge({ srcDomain })
-      res = await bridge.getAmounts(amount)
+      expect(mintable).to.be.gt(0)
+      expect(bridgeFee).to.eq(0)
+      expect(relayFee).to.eq(1)
     }
-    const { mintable, bridgeFee, relayFee } = res
 
-    expect(mintable).to.be.gt(0)
-    expect(bridgeFee).to.eq(0)
-    expect(relayFee).to.eq(1)
-  }
+    it('should return fees and mintable amounts (kovan-optimism, with wormholeGUID)', async () => {
+      await testGetAmountsForWormholeGUID({ srcDomain: 'optimism-testnet' })
+    })
 
-  it('should return fees and mintable amounts (kovan-optimism, with wormholeGUID)', async () => {
-    await testGetAmountsForWormholeGUID({ srcDomain: 'optimism-testnet' })
-  })
+    it('should return fees and mintable amounts (kovan-optimism, wrapper, with wormholeGUID)', async () => {
+      await testGetAmountsForWormholeGUID({ srcDomain: 'optimism-testnet', useWrapper: true })
+    })
 
-  it('should return fees and mintable amounts (kovan-optimism, wrapper, with wormholeGUID)', async () => {
-    await testGetAmountsForWormholeGUID({ srcDomain: 'optimism-testnet', useWrapper: true })
-  })
+    it('should return fees and mintable amounts (rinkeby-arbitrum, without wormholeGUID)', async () => {
+      await testGetAmounts({ srcDomain: 'arbitrum-testnet' })
+    })
 
-  it('should return fees and mintable amounts (rinkeby-arbitrum, without wormholeGUID)', async () => {
-    await testGetAmounts({ srcDomain: 'arbitrum-testnet' })
-  })
-
-  it('should return fees and mintable amounts (rinkeby-arbitrum, wrapper, without wormholeGUID)', async () => {
-    await testGetAmounts({ srcDomain: 'arbitrum-testnet', useWrapper: true })
+    it('should return fees and mintable amounts (rinkeby-arbitrum, wrapper, without wormholeGUID)', async () => {
+      await testGetAmounts({ srcDomain: 'arbitrum-testnet', useWrapper: true })
+    })
   })
 
   async function testMintWithOracles({
@@ -323,12 +335,12 @@ describe('WormholeBridge', () => {
     buildOnly,
   }: {
     srcDomain: DomainDescription
-    useRelay?: boolean
+    useRelay?: boolean | 'BasicRelay' | 'TrustedRelay'
     useWrapper?: boolean
     usePreciseRelayFeeEstimation?: boolean
     buildOnly?: boolean
   }) {
-    const { l1User } = await getTestWallets(srcDomain)
+    const { l1User, dstDomain } = await getTestWallets(srcDomain)
     const sender = buildOnly ? undefined : l1User
 
     const { bridge, wormholeGUID, signatures } = await testGetAttestations({
@@ -341,12 +353,13 @@ describe('WormholeBridge', () => {
     const relayParams = usePreciseRelayFeeEstimation
       ? { receiver: l1User, wormholeGUID: wormholeGUID!, signatures }
       : undefined
+    const relayAddress = useRelay === 'TrustedRelay' ? getSdk(dstDomain, l1User).TrustedRelay?.address : undefined
 
     let res: Awaited<ReturnType<typeof getAmountsForWormholeGUID>>
     if (useWrapper) {
-      res = await getAmountsForWormholeGUID({ srcDomain, wormholeGUID: wormholeGUID!, relayParams })
+      res = await getAmountsForWormholeGUID({ srcDomain, wormholeGUID: wormholeGUID!, relayParams, relayAddress })
     } else {
-      res = await bridge!.getAmountsForWormholeGUID(wormholeGUID!, undefined, relayParams)
+      res = await bridge!.getAmountsForWormholeGUID(wormholeGUID!, undefined, relayParams, relayAddress)
     }
     const { mintable, bridgeFee, relayFee } = res
 
@@ -362,9 +375,20 @@ describe('WormholeBridge', () => {
           signatures,
           relayFee,
           maxFeePercentage,
+          relayAddress,
         })
       } else {
-        txHash = await bridge!.relayMintWithOracles(l1User, wormholeGUID!, signatures, relayFee, maxFeePercentage)
+        txHash = await bridge!.relayMintWithOracles(
+          l1User,
+          wormholeGUID!,
+          signatures,
+          relayFee,
+          maxFeePercentage,
+          undefined,
+          undefined,
+          undefined,
+          relayAddress,
+        )
       }
 
       expect(txHash)
@@ -408,108 +432,119 @@ describe('WormholeBridge', () => {
     return { txHash: tx!.hash, bridge }
   }
 
-  // direct mints
+  describe('Direct mints', async () => {
+    it('should mint with oracles (kovan-optimism)', async () => {
+      await testMintWithOracles({ srcDomain: 'optimism-testnet' })
+    })
 
-  it('should mint with oracles (kovan-optimism)', async () => {
-    await testMintWithOracles({ srcDomain: 'optimism-testnet' })
-  })
+    it('should mint with oracles (kovan-optimism, build-only)', async () => {
+      await testMintWithOracles({ srcDomain: 'optimism-testnet', buildOnly: true })
+    })
 
-  it('should mint with oracles (kovan-optimism, build-only)', async () => {
-    await testMintWithOracles({ srcDomain: 'optimism-testnet', buildOnly: true })
-  })
+    it('should mint with oracles (rinkeby-arbitrum)', async () => {
+      await testMintWithOracles({ srcDomain: 'arbitrum-testnet' })
+    })
 
-  it('should mint with oracles (rinkeby-arbitrum)', async () => {
-    await testMintWithOracles({ srcDomain: 'arbitrum-testnet' })
-  })
-
-  it('should mint with oracles (rinkeby-arbitrum, wrapper)', async () => {
-    await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useWrapper: true })
-  })
-
-  // relayed mints
-
-  it('should relay a mint with oracles (rinkeby-arbitrum, precise relayFee)', async () => {
-    await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay: true, usePreciseRelayFeeEstimation: true })
-  })
-
-  it('should relay a mint with oracles (rinkeby-arbitrum, non-precise relayFee)', async () => {
-    await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay: true })
-  })
-
-  it('should relay a mint with oracles (rinkeby-arbitrum, wrapper, non-precise relayFee)', async () => {
-    await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay: true, useWrapper: true })
-  })
-
-  it('should relay a mint with oracles (kovan-optimism, precise relayFee)', async () => {
-    await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay: true, usePreciseRelayFeeEstimation: true })
-  })
-
-  it('should relay a mint with oracles (kovan-optimism, non-precise relayFee)', async () => {
-    await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay: true })
-  })
-
-  it('should relay a mint with oracles (kovan-optimism, wrapper, non-precise relayFee)', async () => {
-    await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay: true, useWrapper: true })
-  })
-
-  async function testMintWithoutOracles({
-    srcDomain,
-    settings,
-    useWrapper,
-  }: {
-    srcDomain: DomainDescription
-    settings: BridgeSettings
-    useWrapper?: boolean
-  }) {
-    const { l1User } = await getTestWallets(srcDomain)
-    const { bridge, txHash } = await testInitWormhole({ srcDomain, settings, useWrapper })
-
-    let canMint: boolean
-    if (useWrapper) {
-      canMint = await canMintWithoutOracle({ srcDomain, settings, txHash })
-    } else {
-      canMint = await bridge!.canMintWithoutOracle(txHash)
-    }
-    expect(canMint).to.be.eq(settings.useFakeArbitrumOutbox || false)
-
-    if (canMint) {
-      let tx: ContractTransaction
-      if (useWrapper) {
-        tx = await mintWithoutOracles({
-          srcDomain,
-          settings,
-          sender: l1User,
-          txHash,
-        })
-      } else {
-        tx = await bridge!.mintWithoutOracles(l1User, txHash)
-      }
-
-      await tx.wait()
-    }
-  }
-
-  it('should mint without oracles (fake outbox, rinkeby-arbitrum)', async () => {
-    await testMintWithoutOracles({ srcDomain: 'arbitrum-testnet', settings: { useFakeArbitrumOutbox: true } })
-  })
-
-  it('should mint without oracles (fake outbox, rinkeby-arbitrum, wrapper)', async () => {
-    await testMintWithoutOracles({
-      srcDomain: 'arbitrum-testnet',
-      settings: { useFakeArbitrumOutbox: true },
-      useWrapper: true,
+    it('should mint with oracles (rinkeby-arbitrum, wrapper)', async () => {
+      await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useWrapper: true })
     })
   })
 
-  it('should not allow minting without oracles before end of security period (real outbox, rinkeby-arbitrum)', async () => {
-    await testMintWithoutOracles({ srcDomain: 'arbitrum-testnet', settings: { useFakeArbitrumOutbox: false } })
+  describe('Relayed mints', async () => {
+    async function testRelayMint({ useRelay }: { useRelay: boolean | 'BasicRelay' | 'TrustedRelay' }) {
+      it('should relay a mint with oracles (rinkeby-arbitrum, precise relayFee)', async () => {
+        await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay, usePreciseRelayFeeEstimation: true })
+      })
+
+      it('should relay a mint with oracles (rinkeby-arbitrum, non-precise relayFee)', async () => {
+        await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay })
+      })
+
+      it('should relay a mint with oracles (rinkeby-arbitrum, wrapper, non-precise relayFee)', async () => {
+        await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay, useWrapper: true })
+      })
+
+      it('should relay a mint with oracles (kovan-optimism, precise relayFee)', async () => {
+        await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay, usePreciseRelayFeeEstimation: true })
+      })
+
+      it('should relay a mint with oracles (kovan-optimism, non-precise relayFee)', async () => {
+        await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay })
+      })
+
+      it('should relay a mint with oracles (kovan-optimism, wrapper, non-precise relayFee)', async () => {
+        await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay, useWrapper: true })
+      })
+    }
+    describe('Using BasicRelay', async () => {
+      await testRelayMint({ useRelay: true })
+    })
+
+    describe('Using TrustedRelay', async () => {
+      await testRelayMint({ useRelay: 'TrustedRelay' })
+    })
   })
 
-  it('should not allow minting without oracles before end of security period (real outbox, rinkeby-arbitrum, wrapper)', async () => {
-    await testMintWithoutOracles({
-      srcDomain: 'arbitrum-testnet',
-      settings: { useFakeArbitrumOutbox: false },
-      useWrapper: true,
+  describe('Using the slow path', () => {
+    async function testMintWithoutOracles({
+      srcDomain,
+      settings,
+      useWrapper,
+    }: {
+      srcDomain: DomainDescription
+      settings: BridgeSettings
+      useWrapper?: boolean
+    }) {
+      const { l1User } = await getTestWallets(srcDomain)
+      const { bridge, txHash } = await testInitWormhole({ srcDomain, settings, useWrapper })
+
+      let canMint: boolean
+      if (useWrapper) {
+        canMint = await canMintWithoutOracle({ srcDomain, settings, txHash })
+      } else {
+        canMint = await bridge!.canMintWithoutOracle(txHash)
+      }
+      expect(canMint).to.be.eq(settings.useFakeArbitrumOutbox || false)
+
+      if (canMint) {
+        let tx: ContractTransaction
+        if (useWrapper) {
+          tx = await mintWithoutOracles({
+            srcDomain,
+            settings,
+            sender: l1User,
+            txHash,
+          })
+        } else {
+          tx = await bridge!.mintWithoutOracles(l1User, txHash)
+        }
+
+        await tx.wait()
+      }
+    }
+
+    it('should mint without oracles (fake outbox, rinkeby-arbitrum)', async () => {
+      await testMintWithoutOracles({ srcDomain: 'arbitrum-testnet', settings: { useFakeArbitrumOutbox: true } })
+    })
+
+    it('should mint without oracles (fake outbox, rinkeby-arbitrum, wrapper)', async () => {
+      await testMintWithoutOracles({
+        srcDomain: 'arbitrum-testnet',
+        settings: { useFakeArbitrumOutbox: true },
+        useWrapper: true,
+      })
+    })
+
+    it('should not allow minting without oracles before end of security period (real outbox, rinkeby-arbitrum)', async () => {
+      await testMintWithoutOracles({ srcDomain: 'arbitrum-testnet', settings: { useFakeArbitrumOutbox: false } })
+    })
+
+    it('should not allow minting without oracles before end of security period (real outbox, rinkeby-arbitrum, wrapper)', async () => {
+      await testMintWithoutOracles({
+        srcDomain: 'arbitrum-testnet',
+        settings: { useFakeArbitrumOutbox: false },
+        useWrapper: true,
+      })
     })
   })
 })

@@ -34,9 +34,15 @@ export function initWormhole(opts: InitWormholeOpts & DomainContext): ReturnType
 }
 
 export function initRelayedWormhole(
-  opts: Omit<InitWormholeOpts, 'operatorAddress'> & DomainContext,
+  opts: Omit<InitWormholeOpts, 'operatorAddress'> & { relayAddress?: string } & DomainContext,
 ): ReturnType<WormholeBridge['initWormhole']> {
-  return getWormholeBridge(opts).initRelayedWormhole(opts.receiverAddress, opts.amount, opts.sender, opts.overrides)
+  return getWormholeBridge(opts).initRelayedWormhole(
+    opts.receiverAddress,
+    opts.amount,
+    opts.sender,
+    opts.relayAddress,
+    opts.overrides,
+  )
 }
 
 export interface GetAttestationsOpts {
@@ -69,16 +75,24 @@ export function getAmountsForWormholeGUID(
       signatures: string
       maxFeePercentage?: BigNumberish
       expiry?: BigNumberish
+      to?: string
+      data?: string
     }
+    relayAddress?: string
   } & DomainContext,
 ): ReturnType<WormholeBridge['getAmountsForWormholeGUID']> {
-  return getWormholeBridge(opts).getAmountsForWormholeGUID(opts.wormholeGUID, opts.isHighPriority, opts.relayParams)
+  return getWormholeBridge(opts).getAmountsForWormholeGUID(
+    opts.wormholeGUID,
+    opts.isHighPriority,
+    opts.relayParams,
+    opts.relayAddress,
+  )
 }
 
 export function getAmounts(
-  opts: { withdrawn: BigNumberish; isHighPriority?: boolean } & DomainContext,
+  opts: { withdrawn: BigNumberish; isHighPriority?: boolean; relayAddress?: string } & DomainContext,
 ): ReturnType<WormholeBridge['getAmounts']> {
-  return getWormholeBridge(opts).getAmounts(opts.withdrawn, opts.isHighPriority)
+  return getWormholeBridge(opts).getAmounts(opts.withdrawn, opts.isHighPriority, opts.relayAddress)
 }
 
 export interface MintWithOraclesOpts {
@@ -110,6 +124,9 @@ export interface RelayMintWithOraclesOpts {
   relayFee: BigNumberish
   maxFeePercentage?: BigNumberish
   expiry?: BigNumberish
+  to?: string
+  data?: string
+  relayAddress?: string
 }
 
 export function relayMintWithOracles(
@@ -122,6 +139,9 @@ export function relayMintWithOracles(
     opts.relayFee,
     opts.maxFeePercentage,
     opts.expiry,
+    opts.to,
+    opts.data,
+    opts.relayAddress,
   )
 }
 

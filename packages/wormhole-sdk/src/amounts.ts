@@ -2,7 +2,7 @@ import { Provider } from '@ethersproject/abstract-provider'
 import { BigNumber, BigNumberish, Contract, ethers, Signer } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 
-import { DomainId, getGuidHash, getRelayGasFee, getSdk, multicall, WormholeGUID } from '.'
+import { DomainId, getGuidHash, getRelayGasFee, getSdk, multicall, Relay, WormholeGUID } from '.'
 
 const bytes32 = ethers.utils.formatBytes32String
 const GET_FEE_METHOD_FRAGMENT =
@@ -13,6 +13,7 @@ export async function getFeesAndMintableAmounts(
   dstDomain: DomainId,
   dstDomainProvider: Provider,
   wormholeGUID: WormholeGUID,
+  relay?: Relay,
   isHighPriority?: boolean,
   relayParams?: {
     receiver: Signer
@@ -20,6 +21,8 @@ export async function getFeesAndMintableAmounts(
     signatures: string
     maxFeePercentage?: BigNumberish
     expiry?: BigNumberish
+    to?: string
+    data?: string
   },
 ): Promise<{
   pending: BigNumber
@@ -68,9 +71,9 @@ export async function getFeesAndMintableAmounts(
   )
 
   let relayFee = BigNumber.from(-1)
-  if (sdk.Relay) {
+  if (relay) {
     try {
-      relayFee = BigNumber.from(await getRelayGasFee(sdk.Relay, isHighPriority, relayParams))
+      relayFee = BigNumber.from(await getRelayGasFee(relay, isHighPriority, relayParams))
     } catch (e) {
       console.error(`getRelayGasFee failed:`, e)
     }
