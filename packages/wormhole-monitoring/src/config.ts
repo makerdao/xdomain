@@ -16,6 +16,8 @@ export const networks: { [id: number]: NetworkConfig } = {
         name: 'KOVAN-SLAVE-OPTIMISM-1',
         l2Rpc: 'https://kovan.optimism.io/',
         sdkName: 'OptimismKovan',
+        bridgeDeploymentBlock: 1791185,
+        syncBatchSize: 100_000,
       },
     ],
   },

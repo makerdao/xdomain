@@ -7,11 +7,11 @@ export async function startServer(metrics: Metrics) {
     logger: true,
   })
 
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', async (_req, reply) => {
     await reply.type('text/html').send('<a href="/metrics">/metrics</a>')
   })
 
-  fastify.get('/metrics', async (req, reply) => {
+  fastify.get('/metrics', async (_req, reply) => {
     const response = Object.entries(metrics)
       .map(([k, v]) => `${k} ${v}`)
       .join('\n')

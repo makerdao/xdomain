@@ -9,4 +9,6 @@ type L2Config = {
   name: string
   l2Rpc: string
   sdkName: string
+  bridgeDeploymentBlock: number
+  syncBatchSize: number
 }

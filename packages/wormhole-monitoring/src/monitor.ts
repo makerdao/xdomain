@@ -18,7 +18,12 @@ export async function monitor(network: NetworkConfig, l1Provider: providers.Prov
     const l2Provider = new ethers.providers.JsonRpcProvider(domain.l2Rpc)
     const l2Sdk = getL2SdkBasedOnNetworkName(domain.sdkName, l2Provider)
 
-    const ctx = await syncWormholeInits(l2Provider, l2Sdk)
+    const ctx = await syncWormholeInits({
+      l2Provider,
+      l2Sdk,
+      blocksPerBatch: domain.syncBatchSize,
+      startingBlock: domain.bridgeDeploymentBlock,
+    })
 
     await onEveryFinalizedBlock(async (blockNumber) => {
       console.log(`New block finalized: ${blockNumber}`)

@@ -13,7 +13,7 @@ export async function main(l1Rpc: string, privKey: string) {
   const config = networks[chainId]
 
   if (!networkName || !config) {
-    throw new Error(`Can't find config for network ${chainId}`)
+    throw new Error(`Can't find config for network with id: ${chainId}`)
   }
 
   console.log(`Running on ${networkName}. Keeping ${config.length} deployments.`)
