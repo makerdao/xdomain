@@ -16,7 +16,7 @@
 
 pragma solidity 0.8.13;
 
-interface WormholeJoinLike {
+interface TeleportJoinLike {
   function file(
     bytes32 what,
     bytes32 domain,
@@ -25,21 +25,21 @@ interface WormholeJoinLike {
 }
 
 contract FileJoinFeesSpell {
-  WormholeJoinLike public immutable wormholeJoin;
+  TeleportJoinLike public immutable teleportJoin;
   bytes32 public immutable domain;
   address public immutable fees;
 
   constructor(
-    address _wormholeJoin,
+    address _teleportJoin,
     bytes32 _domain,
     address _fees
   ) {
-    wormholeJoin = WormholeJoinLike(_wormholeJoin);
+    teleportJoin = TeleportJoinLike(_teleportJoin);
     domain = _domain;
     fees = _fees;
   }
 
   function execute() external {
-    wormholeJoin.file("fees", domain, fees);
+    teleportJoin.file("fees", domain, fees);
   }
 }

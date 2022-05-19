@@ -1,7 +1,7 @@
 import { BigNumber, ContractReceipt, Event, Wallet } from 'ethers'
 import { arrayify, hashMessage, Interface, keccak256 } from 'ethers/lib/utils'
 
-export interface WormholeGUID {
+export interface TeleportGUID {
   sourceDomain: string
   targetDomain: string
   receiver: string
@@ -13,17 +13,17 @@ export interface WormholeGUID {
 
 export async function getAttestations(
   txReceipt: ContractReceipt,
-  l2WormholeBridgeInterface: Interface,
+  l2TeleportBridgeInterface: Interface,
   signers: Wallet[],
-): Promise<{ signHash: string; signatures: string; wormholeGUID: WormholeGUID; guidHash: string }> {
-  const initEvent = txReceipt.events?.find((e: Event) => e.event === 'WormholeInitialized')!
-  const wormholeGUID: WormholeGUID = l2WormholeBridgeInterface.parseLog(initEvent).args.wormhole
+): Promise<{ signHash: string; signatures: string; teleportGUID: TeleportGUID; guidHash: string }> {
+  const initEvent = txReceipt.events?.find((e: Event) => e.event === 'TeleportInitialized')!
+  const teleportGUID: TeleportGUID = l2TeleportBridgeInterface.parseLog(initEvent).args.teleport
   const guidHash = keccak256(initEvent.data)
-  const { signHash, signatures } = await signWormholeGUID(guidHash, signers)
-  return { signHash, signatures, wormholeGUID, guidHash }
+  const { signHash, signatures } = await signTeleportGUID(guidHash, signers)
+  return { signHash, signatures, teleportGUID, guidHash }
 }
 
-async function signWormholeGUID(
+async function signTeleportGUID(
   guidHash: string,
   signers: Wallet[],
 ): Promise<{ signHash: string; signatures: string; guidHash: string }> {

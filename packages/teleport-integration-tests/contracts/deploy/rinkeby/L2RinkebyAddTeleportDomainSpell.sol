@@ -14,21 +14,31 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.6.11;
+pragma solidity 0.8.13;
 
-// Standard Maker Wormhole GUID
-struct WormholeGUID {
-  bytes32 sourceDomain;
-  bytes32 targetDomain;
-  bytes32 receiver;
-  bytes32 operator;
-  uint128 amount;
-  uint80 nonce;
-  uint48 timestamp;
+interface DaiLike {
+  function rely(address usr) external;
 }
 
-library WormholeGUIDHelper {
-  function addressToBytes32(address addr) internal pure returns (bytes32) {
-    return bytes32(uint256(uint160(addr)));
+interface TeleportBridgeLike {
+  function file(
+    bytes32 what,
+    bytes32 domain,
+    uint256 data
+  ) external;
+}
+
+contract L2RinkebyAddTeleportDomainSpell {
+  function execute() external {
+    DaiLike dai = DaiLike(0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15);
+    TeleportBridgeLike teleportBridge = TeleportBridgeLike(
+      0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3
+    );
+    bytes32 masterDomain = "RINKEBY-MASTER-1";
+
+    // teleport bridge has to burn without approval
+    dai.rely(address(teleportBridge));
+
+    teleportBridge.file(bytes32("validDomains"), masterDomain, 1);
   }
 }

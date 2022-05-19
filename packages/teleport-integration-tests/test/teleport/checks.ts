@@ -4,15 +4,15 @@ import { Signer } from 'ethers'
 import { compact } from 'lodash'
 
 import { AuthableLike } from '../pe-utils/auth'
-import { BaseBridgeSdk, WormholeBridgeSdk, WormholeSdk } from '.'
+import { BaseBridgeSdk, TeleportBridgeSdk, TeleportSdk } from '.'
 import { MakerSdk } from './setup'
 
 export async function performSanityChecks(
   l1Signer: Signer,
   makerSdk: MakerSdk,
-  wormholeSdk: WormholeSdk,
+  teleportSdk: TeleportSdk,
   baseBridgeSdk: BaseBridgeSdk,
-  wormholeBridgeSdk: WormholeBridgeSdk,
+  teleportBridgeSdk: TeleportBridgeSdk,
   l1BlockOfBeginningOfDeployment: number,
   l2BlockOfBeginningOfDeployment: number,
   includeDeployer: boolean,
@@ -27,32 +27,32 @@ export async function performSanityChecks(
     expect(normalizeAddresses(actualPermissions)).to.deep.eq(normalizeAddresses(expectedPermissions))
   }
 
-  await checkPermissions(wormholeSdk.join, l1BlockOfBeginningOfDeployment, [
-    wormholeSdk.oracleAuth.address,
-    wormholeSdk.router.address,
+  await checkPermissions(teleportSdk.join, l1BlockOfBeginningOfDeployment, [
+    teleportSdk.oracleAuth.address,
+    teleportSdk.router.address,
     makerSdk.pause_proxy.address,
     makerSdk.esm.address,
   ])
-  await checkPermissions(wormholeSdk.oracleAuth, l1BlockOfBeginningOfDeployment, [
+  await checkPermissions(teleportSdk.oracleAuth, l1BlockOfBeginningOfDeployment, [
     makerSdk.pause_proxy.address,
     makerSdk.esm.address,
   ])
-  await checkPermissions(wormholeSdk.router, l1BlockOfBeginningOfDeployment, [
+  await checkPermissions(teleportSdk.router, l1BlockOfBeginningOfDeployment, [
     makerSdk.pause_proxy.address,
     makerSdk.esm.address,
   ])
-  await checkPermissions(wormholeSdk.trustedRelay, l1BlockOfBeginningOfDeployment, [
+  await checkPermissions(teleportSdk.trustedRelay, l1BlockOfBeginningOfDeployment, [
     makerSdk.pause_proxy.address,
     makerSdk.esm.address,
   ])
 
-  await checkPermissions(wormholeBridgeSdk.l2WormholeBridge, l2BlockOfBeginningOfDeployment, [
+  await checkPermissions(teleportBridgeSdk.l2TeleportBridge, l2BlockOfBeginningOfDeployment, [
     baseBridgeSdk.l2GovRelay.address,
   ])
 
-  expect(await wormholeSdk.join.vat()).to.be.eq(makerSdk.vat.address)
-  expect(await wormholeSdk.oracleAuth.teleportJoin()).to.be.eq(wormholeSdk.join.address)
-  expect(await wormholeBridgeSdk.l1WormholeBridge.l1Escrow()).to.be.eq(baseBridgeSdk.l1Escrow.address)
+  expect(await teleportSdk.join.vat()).to.be.eq(makerSdk.vat.address)
+  expect(await teleportSdk.oracleAuth.teleportJoin()).to.be.eq(teleportSdk.join.address)
+  expect(await teleportBridgeSdk.l1TeleportBridge.l1Escrow()).to.be.eq(baseBridgeSdk.l1Escrow.address)
 }
 
 function normalizeAddresses(addresses: string[]): string[] {

@@ -7,15 +7,15 @@ import { formatEther, Interface, parseUnits } from 'ethers/lib/utils'
 import * as hre from 'hardhat'
 
 import { getContractFactory, impersonateAccount, waitForTx } from '../../test/helpers'
-import { getAttestations } from '../../test/wormhole'
+import { getAttestations } from '../../test/teleport'
 dotenv.config()
 
 const bytes32 = hre.ethers.utils.formatBytes32String
 
-import { OptimismL2DaiWormholeGateway__factory } from '../../typechain'
+import { OptimismL2DaiTeleportGateway__factory } from '../../typechain'
 
 const l2Spell = '0xEd326504C77Dcd0Ffbb554a7925338EEd3F5fE01'
-const l2WormholeGateway = '0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0'
+const l2TeleportGateway = '0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0'
 
 // note: before running this script you need to setup hardhat network to use with optimistic-kovan network in fork mode
 async function main() {
@@ -48,12 +48,12 @@ async function main() {
   const daiBefore = await optimismKovanSdk.optimismDaiBridge.dai.balanceOf(user)
   console.log('DAI before: ', formatEther(daiBefore))
 
-  const l2WormholeBridge = getContractFactory<OptimismL2DaiWormholeGateway__factory>(
-    'OptimismL2DaiWormholeGateway',
+  const l2TeleportBridge = getContractFactory<OptimismL2DaiTeleportGateway__factory>(
+    'OptimismL2DaiTeleportGateway',
     signer,
-  ).attach(l2WormholeGateway)
+  ).attach(l2TeleportGateway)
   const tx = await waitForTx(
-    l2WormholeBridge['initiateWormhole(bytes32,address,uint128)'](
+    l2TeleportBridge['initiateTeleport(bytes32,address,uint128)'](
       masterDomain,
       await signer.getAddress(),
       parseUnits('1', 'ether'),
@@ -64,7 +64,7 @@ async function main() {
   console.log('DAI after: ', formatEther(daiAfter))
   assert(daiAfter.lt(daiBefore), 'L2 DAI balance should have been reduced')
 
-  const attestations = await getAttestations(tx, l2WormholeBridge.interface, [
+  const attestations = await getAttestations(tx, l2TeleportBridge.interface, [
     new Wallet(oraclePrivKey, signer.provider),
   ])
 

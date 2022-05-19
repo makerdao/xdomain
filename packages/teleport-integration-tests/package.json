@@ -12,8 +12,8 @@
     "lint:fix": "yarn lint --fix",
     "typecheck": "tsc --noEmit --incremental false --composite false",
     "clean": "hardhat clean",
-    "test:optimism": "hardhat test test/wormhole.optimism.test.ts",
-    "test:arbitrum": "hardhat test test/wormhole.arbitrum.test.ts",
+    "test:optimism": "hardhat test test/teleport.optimism.test.ts",
+    "test:arbitrum": "hardhat test test/teleport.arbitrum.test.ts",
     "test": "hardhat test",
     "test:fix": "yarn lint:fix && yarn format:fix && yarn test && yarn typecheck"
   },

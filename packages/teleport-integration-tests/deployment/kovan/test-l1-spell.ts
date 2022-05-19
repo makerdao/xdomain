@@ -31,7 +31,7 @@ async function main() {
     const spellInterface = new Interface(['function cast()', 'function schedule()'])
     l1SpellContract = new Contract(l1Spell, spellInterface)
   } else {
-    const SpellFactory = await hre.ethers.getContractFactory('L1KovanAddWormholeDomainSpell')
+    const SpellFactory = await hre.ethers.getContractFactory('L1KovanAddTeleportDomainSpell')
     l1SpellContract = await deployUsingFactoryAndVerify(signer, SpellFactory, [])
     console.log('L1 spell deployed at: ', l1SpellContract.address)
   }

@@ -3,12 +3,12 @@ import { arrayify, hexConcat, hexZeroPad, Interface, keccak256, splitSignature }
 
 import { BasicRelay, TrustedRelay } from '../../typechain'
 import { toEthersBigNumber, waitForTx } from '../helpers'
-import { getAttestations, WormholeGUID } from './attestations'
+import { getAttestations, TeleportGUID } from './attestations'
 
 interface GetRelayArgsOpts {
   payloadSigner: Signer
   txReceipt: ContractReceipt
-  l2WormholeBridgeInterface: Interface
+  l2TeleportBridgeInterface: Interface
   oracleWallets: Wallet[]
   expiry: BigNumberish
   gasFee: BigNumberish
@@ -25,7 +25,7 @@ export async function callBasicRelay({
   l1Signer,
   payloadSigner,
   txReceipt,
-  l2WormholeBridgeInterface,
+  l2TeleportBridgeInterface,
   oracleWallets,
   expiry,
   gasFee,
@@ -33,7 +33,7 @@ export async function callBasicRelay({
 }: CallBasicRelayOpts) {
   const relayArgs = await getRelayArgs({
     txReceipt,
-    l2WormholeBridgeInterface,
+    l2TeleportBridgeInterface,
     payloadSigner,
     oracleWallets,
     maxFeePercentage,
@@ -54,7 +54,7 @@ export async function callTrustedRelay({
   l1Signer,
   payloadSigner,
   txReceipt,
-  l2WormholeBridgeInterface,
+  l2TeleportBridgeInterface,
   oracleWallets,
   expiry,
   gasFee,
@@ -62,7 +62,7 @@ export async function callTrustedRelay({
 }: CallTrustedRelayOpts) {
   const relayArgs = await getRelayArgs({
     txReceipt,
-    l2WormholeBridgeInterface,
+    l2TeleportBridgeInterface,
     payloadSigner,
     oracleWallets,
     maxFeePercentage,
@@ -75,7 +75,7 @@ export async function callTrustedRelay({
 
 async function getRelayArgs({
   txReceipt,
-  l2WormholeBridgeInterface,
+  l2TeleportBridgeInterface,
   payloadSigner,
   oracleWallets,
   maxFeePercentage,
@@ -83,7 +83,7 @@ async function getRelayArgs({
   expiry,
 }: GetRelayArgsOpts): Promise<
   [
-    wormholeGUID: WormholeGUID,
+    teleportGUID: TeleportGUID,
     signatures: string,
     maxFeePercentage: BigNumberish,
     gasFee: BigNumberish,
@@ -93,9 +93,9 @@ async function getRelayArgs({
     s: string,
   ]
 > {
-  const { signatures, wormholeGUID, guidHash } = await getAttestations(
+  const { signatures, teleportGUID, guidHash } = await getAttestations(
     txReceipt,
-    l2WormholeBridgeInterface,
+    l2TeleportBridgeInterface,
     oracleWallets,
   )
   const payload = arrayify(
@@ -109,5 +109,5 @@ async function getRelayArgs({
     ),
   )
   const { r, s, v } = splitSignature(await payloadSigner.signMessage(payload))
-  return [wormholeGUID, signatures, maxFeePercentage, gasFee, expiry, v, r, s]
+  return [teleportGUID, signatures, maxFeePercentage, gasFee, expiry, v, r, s]
 }

@@ -16,7 +16,7 @@
 
 pragma solidity 0.8.13;
 
-interface WormholeJoinLike {
+interface TeleportJoinLike {
   function settle(bytes32 sourceDomain, uint256 batchedDaiToFlush) external;
 }
 
@@ -39,7 +39,7 @@ interface DaiJoinLike {
 contract PushBadDebtSpell {
   uint256 public constant RAY = 10**27;
 
-  WormholeJoinLike public immutable wormholeJoin;
+  TeleportJoinLike public immutable teleportJoin;
   VatLike public immutable vat;
   DaiJoinLike public immutable daiJoin;
   address public immutable vow;
@@ -47,14 +47,14 @@ contract PushBadDebtSpell {
   uint256 public immutable badDebt;
 
   constructor(
-    WormholeJoinLike _wormholeJoin,
+    TeleportJoinLike _teleportJoin,
     VatLike _vat,
     DaiJoinLike _daiJoin,
     address _vow,
     bytes32 _sourceDomain,
     uint256 _badDebt
   ) {
-    wormholeJoin = _wormholeJoin;
+    teleportJoin = _teleportJoin;
     vat = _vat;
     daiJoin = _daiJoin;
     vow = _vow;
@@ -68,7 +68,7 @@ contract PushBadDebtSpell {
     }
 
     vat.suck(vow, address(this), badDebt * RAY);
-    daiJoin.exit(address(wormholeJoin), badDebt);
-    wormholeJoin.settle(sourceDomain, badDebt);
+    daiJoin.exit(address(teleportJoin), badDebt);
+    teleportJoin.settle(sourceDomain, badDebt);
   }
 }

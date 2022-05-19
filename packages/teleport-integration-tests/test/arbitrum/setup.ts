@@ -5,13 +5,13 @@ import { ContractReceipt, ContractTransaction, Wallet } from 'ethers'
 import { formatEther } from 'ethers/lib/utils'
 import { ethers } from 'hardhat'
 
-import { L1AddWormholeArbitrumSpell__factory, L2AddWormholeDomainSpell__factory } from '../../typechain'
+import { L1AddTeleportArbitrumSpell__factory, L2AddTeleportDomainSpell__factory } from '../../typechain'
 import { deployUsingFactory, getContractFactory, waitForTx } from '../helpers'
 import { RetryProvider } from '../helpers/RetryProvider'
-import { deployWormhole, DomainSetupOpts, DomainSetupResult } from '../wormhole'
+import { deployTeleport, DomainSetupOpts, DomainSetupResult } from '../teleport'
 import {
   deployArbitrumBaseBridge,
-  deployArbitrumWormholeBridge,
+  deployArbitrumTeleportBridge,
   deployFakeArbitrumInbox,
   depositToStandardBridge,
   getGasPriceBid,
@@ -69,7 +69,7 @@ export async function setupArbitrumTests({
     await makerSdk.dai.transfer(l1User.address, l2DaiAmount)
   }
 
-  const wormholeSdk = await deployWormhole({
+  const teleportSdk = await deployTeleport({
     defaultSigner: l1Signer,
     makerSdk,
     ilk,
@@ -88,36 +88,36 @@ export async function setupArbitrumTests({
   // Deploy a fake Arbitrum Inbox that allows relaying arbitrary L2>L1 messages without delay
   const { fakeInbox, fakeOutbox } = await deployFakeArbitrumInbox({ l1Signer, arbitrumRollupSdk })
 
-  const wormholeBridgeSdk = await deployArbitrumWormholeBridge({
+  const teleportBridgeSdk = await deployArbitrumTeleportBridge({
     makerSdk,
     l1Signer,
     l2Signer,
-    wormholeSdk,
+    teleportSdk,
     baseBridgeSdk,
     slaveDomain: domain,
     arbitrumRollupSdk: { ...arbitrumRollupSdk, inbox: fakeInbox },
   })
 
-  const relayTxToL1 = makeRelayTxToL1(wormholeBridgeSdk.l2WormholeBridge, fakeOutbox)
+  const relayTxToL1 = makeRelayTxToL1(teleportBridgeSdk.l2TeleportBridge, fakeOutbox)
   const relayTxToL2 = (
     l1Tx: Promise<ContractTransaction> | ContractTransaction | Promise<ContractReceipt> | ContractReceipt,
   ) => waitToRelayTxsToL2(l1Tx, arbitrumRollupSdk.inbox.address, l1Provider, l2Provider)
 
   console.log('Deploy Arbitrum L2 spell...')
-  const l2AddWormholeDomainSpell = await deployUsingFactory(
+  const l2AddTeleportDomainSpell = await deployUsingFactory(
     l2Signer,
-    getContractFactory<L2AddWormholeDomainSpell__factory>('L2AddWormholeDomainSpell'),
-    [baseBridgeSdk.l2Dai.address, wormholeBridgeSdk.l2WormholeBridge.address, masterDomain],
+    getContractFactory<L2AddTeleportDomainSpell__factory>('L2AddTeleportDomainSpell'),
+    [baseBridgeSdk.l2Dai.address, teleportBridgeSdk.l2TeleportBridge.address, masterDomain],
   )
-  console.log('Arbitrum L2 spell deployed at:', l2AddWormholeDomainSpell.address)
+  console.log('Arbitrum L2 spell deployed at:', l2AddTeleportDomainSpell.address)
 
-  const L1AddWormholeArbitrumSpellFactory = getContractFactory<L1AddWormholeArbitrumSpell__factory>(
-    'L1AddWormholeArbitrumSpell',
+  const L1AddTeleportArbitrumSpellFactory = getContractFactory<L1AddTeleportArbitrumSpell__factory>(
+    'L1AddTeleportArbitrumSpell',
     l1Signer,
   )
-  const l2SpellCalldata = l2AddWormholeDomainSpell.interface.encodeFunctionData('execute')
+  const l2SpellCalldata = l2AddTeleportDomainSpell.interface.encodeFunctionData('execute')
   const l2MessageCalldata = baseBridgeSdk.l2GovRelay.interface.encodeFunctionData('relay', [
-    l2AddWormholeDomainSpell.address,
+    l2AddTeleportDomainSpell.address,
     l2SpellCalldata,
   ])
   const calldataLength = l2MessageCalldata.length
@@ -136,25 +136,25 @@ export async function setupArbitrumTests({
   console.log(`Funding Arbitrum L1GovernanceRelay with ${formatEther(ethValue)} ETH...`)
   await l1Signer.sendTransaction({ to: baseBridgeSdk.l1GovRelay.address, value: ethValue })
   console.log('Deploy Arbitrum L1 spell...')
-  const addWormholeDomainSpell = await L1AddWormholeArbitrumSpellFactory.deploy(
+  const addTeleportDomainSpell = await L1AddTeleportArbitrumSpellFactory.deploy(
     domain,
-    wormholeSdk.join.address,
-    wormholeSdk.constantFee.address,
+    teleportSdk.join.address,
+    teleportSdk.constantFee.address,
     line,
-    wormholeSdk.router.address,
-    wormholeBridgeSdk.l1WormholeBridge.address,
+    teleportSdk.router.address,
+    teleportBridgeSdk.l1TeleportBridge.address,
     baseBridgeSdk.l1Escrow.address,
     makerSdk.dai.address,
     {
       l1GovRelay: baseBridgeSdk.l1GovRelay.address,
-      l2ConfigureDomainSpell: l2AddWormholeDomainSpell.address,
+      l2ConfigureDomainSpell: l2AddTeleportDomainSpell.address,
       l1CallValue: ethValue,
       maxGas,
       gasPriceBid,
       maxSubmissionCost,
     },
   )
-  console.log('Arbitrum L1 spell deployed at:', addWormholeDomainSpell.address)
+  console.log('Arbitrum L1 spell deployed at:', addTeleportDomainSpell.address)
 
   console.log('Moving some DAI to L2...')
   await waitForTx(makerSdk.dai.connect(l1Signer).transfer(l1User.address, l2DaiAmount))
@@ -183,12 +183,12 @@ export async function setupArbitrumTests({
     makerSdk,
     relayTxToL1,
     relayTxToL2,
-    wormholeSdk,
+    teleportSdk,
     baseBridgeSdk,
-    wormholeBridgeSdk,
+    teleportBridgeSdk,
     ttl: TTL,
     forwardTimeToAfterFinalization,
-    addWormholeDomainSpell,
+    addTeleportDomainSpell,
   }
 }
 

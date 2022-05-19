@@ -20,8 +20,8 @@ pragma abicoder v2;
 import {iOVM_L1ERC20Bridge} from "@eth-optimism/contracts/iOVM/bridge/tokens/iOVM_L1ERC20Bridge.sol";
 import {iOVM_L2ERC20Bridge} from "@eth-optimism/contracts/iOVM/bridge/tokens/iOVM_L2ERC20Bridge.sol";
 import {OVM_CrossDomainEnabled} from "@eth-optimism/contracts/libraries/bridge/OVM_CrossDomainEnabled.sol";
-import {WormholeGUID} from "../common/WormholeGUID.sol";
-import {IL1WormholeGateway, IL1WormholeRouter} from "../common/WormholeInterfaces.sol";
+import {TeleportGUID} from "../common/TeleportGUID.sol";
+import {IL1TeleportGateway, IL1TeleportRouter} from "../common/TeleportInterfaces.sol";
 
 interface TokenLike {
   function approve(address, uint256) external returns (bool);
@@ -33,43 +33,43 @@ interface TokenLike {
   ) external returns (bool success);
 }
 
-contract L1DaiWormholeGateway is OVM_CrossDomainEnabled, IL1WormholeGateway {
+contract L1DaiTeleportGateway is OVM_CrossDomainEnabled, IL1TeleportGateway {
   address public immutable override l1Token;
-  address public immutable override l2WormholeGateway;
+  address public immutable override l2TeleportGateway;
   address public immutable override l1Escrow;
-  IL1WormholeRouter public immutable override l1WormholeRouter;
+  IL1TeleportRouter public immutable override l1TeleportRouter;
 
   constructor(
     address _l1Token,
-    address _l2WormholeGateway,
+    address _l2TeleportGateway,
     address _l1Messenger,
     address _l1Escrow,
-    address _l1WormholeRouter
+    address _l1TeleportRouter
   ) OVM_CrossDomainEnabled(_l1Messenger) {
     l1Token = _l1Token;
-    l2WormholeGateway = _l2WormholeGateway;
+    l2TeleportGateway = _l2TeleportGateway;
     l1Escrow = _l1Escrow;
-    l1WormholeRouter = IL1WormholeRouter(_l1WormholeRouter);
+    l1TeleportRouter = IL1TeleportRouter(_l1TeleportRouter);
     // Approve the router to pull DAI from this contract during settle() (after the DAI has been pulled by this contract from the escrow)
-    TokenLike(_l1Token).approve(_l1WormholeRouter, type(uint256).max);
+    TokenLike(_l1Token).approve(_l1TeleportRouter, type(uint256).max);
   }
 
   function finalizeFlush(bytes32 targetDomain, uint256 daiToFlush)
     external
     override
-    onlyFromCrossDomainAccount(l2WormholeGateway)
+    onlyFromCrossDomainAccount(l2TeleportGateway)
   {
     // Pull DAI from the escrow to this contract
     TokenLike(l1Token).transferFrom(l1Escrow, address(this), daiToFlush);
     // The router will pull the DAI from this contract
-    l1WormholeRouter.settle(targetDomain, daiToFlush);
+    l1TeleportRouter.settle(targetDomain, daiToFlush);
   }
 
-  function finalizeRegisterWormhole(WormholeGUID calldata wormhole)
+  function finalizeRegisterTeleport(TeleportGUID calldata teleport)
     external
     override
-    onlyFromCrossDomainAccount(l2WormholeGateway)
+    onlyFromCrossDomainAccount(l2TeleportGateway)
   {
-    l1WormholeRouter.requestMint(wormhole, 0, 0);
+    l1TeleportRouter.requestMint(teleport, 0, 0);
   }
 }

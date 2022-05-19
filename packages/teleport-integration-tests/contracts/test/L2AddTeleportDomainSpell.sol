@@ -20,7 +20,7 @@ interface DaiLike {
   function rely(address usr) external;
 }
 
-interface WormholeBridgeLike {
+interface TeleportBridgeLike {
   function file(
     bytes32 what,
     bytes32 domain,
@@ -28,17 +28,25 @@ interface WormholeBridgeLike {
   ) external;
 }
 
-contract L2RinkebyAddWormholeDomainSpell {
+contract L2AddTeleportDomainSpell {
+  DaiLike public immutable dai;
+  TeleportBridgeLike public immutable teleportBridge;
+  bytes32 public immutable masterDomain;
+
+  constructor(
+    DaiLike _dai,
+    TeleportBridgeLike _teleportBridge,
+    bytes32 _masterDomain
+  ) {
+    dai = _dai;
+    teleportBridge = _teleportBridge;
+    masterDomain = _masterDomain;
+  }
+
   function execute() external {
-    DaiLike dai = DaiLike(0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15);
-    WormholeBridgeLike wormholeBridge = WormholeBridgeLike(
-      0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3
-    );
-    bytes32 masterDomain = "RINKEBY-MASTER-1";
+    // teleport bridge has to burn without approval
+    dai.rely(address(teleportBridge));
 
-    // wormhole bridge has to burn without approval
-    dai.rely(address(wormholeBridge));
-
-    wormholeBridge.file(bytes32("validDomains"), masterDomain, 1);
+    teleportBridge.file(bytes32("validDomains"), masterDomain, 1);
   }
 }

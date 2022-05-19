@@ -31,7 +31,7 @@ interface VatLike {
   ) external;
 }
 
-interface WormholeJoinLike {
+interface TeleportJoinLike {
   function file(bytes32 what, address val) external;
 
   function file(
@@ -103,7 +103,7 @@ contract DssSpellAction is DssAction {
   uint256 public constant gasPriceBid = 12695842;
   uint256 public constant maxSubmissionCost = 8284037848;
 
-  string public constant override description = "Rinkeby Arbitrum Wormhole deployment spell";
+  string public constant override description = "Rinkeby Arbitrum Teleport deployment spell";
 
   function officeHours() public pure override returns (bool) {
     return false;
@@ -132,23 +132,23 @@ contract DssSpellAction is DssAction {
 
   function actions() public override {
     bytes32 masterDomain = "RINKEBY-MASTER-1";
-    WormholeJoinLike wormholeJoin = WormholeJoinLike(0x894DB23D804c626f1aAA89a2Bc3280052e6c4750);
+    TeleportJoinLike teleportJoin = TeleportJoinLike(0x894DB23D804c626f1aAA89a2Bc3280052e6c4750);
     address vow = 0xD9dFdf1f1604eF572EFd9c8c2e5c6DDca659150A;
     VatLike vat = VatLike(0x66b3D63621FDD5967603A824114Da95cc3A35107);
     uint256 globalLine = 10000000000 * RAD;
     RouterLike router = RouterLike(0x26266ff35E2d69C6a2DC3fAE9FA71456043a0611);
 
-    wormholeJoin.file(bytes32("vow"), vow);
-    router.file(bytes32("gateway"), masterDomain, address(wormholeJoin));
-    vat.rely(address(wormholeJoin));
-    bytes32 ilk = wormholeJoin.ilk();
+    teleportJoin.file(bytes32("vow"), vow);
+    router.file(bytes32("gateway"), masterDomain, address(teleportJoin));
+    vat.rely(address(teleportJoin));
+    bytes32 ilk = teleportJoin.ilk();
     vat.init(ilk);
     vat.file(ilk, bytes32("spot"), RAY);
     vat.file(ilk, bytes32("line"), globalLine);
     setupOracleAuth();
     setupTrustedRelay();
 
-    // configure optimism wormhole
+    // configure optimism teleport
     bytes32 slaveDomain = "RINKEBY-SLAVE-ARBITRUM-1";
     uint256 optimismSlaveLine = 100 * RAD;
     address constantFees = 0xeFf66D2A040097919A1A36D9D8816c21acC3C6C0;
@@ -161,8 +161,8 @@ contract DssSpellAction is DssAction {
     address l2ConfigureDomainSpell = 0x65adb7A66759304b5A081506Baad5408F8ceb650;
 
     router.file(bytes32("gateway"), slaveDomain, slaveDomainBridge);
-    wormholeJoin.file(bytes32("fees"), slaveDomain, constantFees);
-    wormholeJoin.file(bytes32("line"), slaveDomain, optimismSlaveLine);
+    teleportJoin.file(bytes32("fees"), slaveDomain, constantFees);
+    teleportJoin.file(bytes32("line"), slaveDomain, optimismSlaveLine);
     escrow.approve(dai, slaveDomainBridge, type(uint256).max);
 
     l1GovRelay.relay(
@@ -176,11 +176,11 @@ contract DssSpellAction is DssAction {
   }
 }
 
-contract L1RinkebyAddWormholeDomainSpell is DssExec {
+contract L1RinkebyAddTeleportDomainSpell is DssExec {
   // hack allowing execution of spell without full MCD deployment
   function execute() external {
     (bool success, ) = address(action).delegatecall(abi.encodeWithSignature("actions()"));
-    require(success, "L1RinkebyAddWormholeDomainSpell/delegatecall-failed");
+    require(success, "L1RinkebyAddTeleportDomainSpell/delegatecall-failed");
   }
 
   constructor() DssExec(block.timestamp + 30 days, address(new DssSpellAction())) {}

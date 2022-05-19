@@ -73,12 +73,12 @@ copyOptimismBridgeArtifact('l2/dai.sol/Dai.json', output)
 copyOptimismBridgeArtifact('l1/L1Escrow.sol/L1Escrow.json', output)
 copyOptimismBridgeArtifact('l1/L1DAITokenBridge.sol/L1DAITokenBridge.json', output)
 copyOptimismBridgeArtifact('l2/L2DAITokenBridge.sol/L2DAITokenBridge.json', output)
-copyOptimismBridgeArtifact('l1/L1DaiWormholeGateway.sol/L1DaiWormholeGateway.json', output)
-copyOptimismBridgeArtifact('l2/L2DaiWormholeGateway.sol/L2DaiWormholeGateway.json', output)
+copyOptimismBridgeArtifact('l1/L1DaiTeleportGateway.sol/L1DaiTeleportGateway.json', output)
+copyOptimismBridgeArtifact('l2/L2DaiTeleportGateway.sol/L2DaiTeleportGateway.json', output)
 copyOptimismBridgeArtifact('l1/L1GovernanceRelay.sol/L1GovernanceRelay.json', output)
 copyOptimismBridgeArtifact('l2/L2GovernanceRelay.sol/L2GovernanceRelay.json', output)
-copyOptimismBridgeArtifact('common/WormholeInterfaces.sol/IL1WormholeGateway.json', output)
-copyOptimismBridgeArtifact('common/WormholeInterfaces.sol/IL2WormholeGateway.json', output)
+copyOptimismBridgeArtifact('common/TeleportInterfaces.sol/IL1TeleportGateway.json', output)
+copyOptimismBridgeArtifact('common/TeleportInterfaces.sol/IL2TeleportGateway.json', output)
 
 // copy arbitrum-dai-bridge artifacts
 copyArbitrumBridgeArtifact('l2/dai.sol/Dai.json', output)
@@ -86,8 +86,8 @@ copyArbitrumBridgeArtifact('l1/L1Escrow.sol/L1Escrow.json', output)
 copyArbitrumBridgeArtifact('l1/L1DaiGateway.sol/L1DaiGateway.json', output)
 copyArbitrumBridgeArtifact('l2/L2DaiGateway.sol/L2DaiGateway.json', output)
 copyArbitrumBridgeArtifact('l2/L2CrossDomainEnabled.sol/L2CrossDomainEnabled.json', output)
-copyArbitrumBridgeArtifact('l1/L1DaiWormholeGateway.sol/L1DaiWormholeGateway.json', output)
-copyArbitrumBridgeArtifact('l2/L2DaiWormholeGateway.sol/L2DaiWormholeGateway.json', output)
+copyArbitrumBridgeArtifact('l1/L1DaiTeleportGateway.sol/L1DaiTeleportGateway.json', output)
+copyArbitrumBridgeArtifact('l2/L2DaiTeleportGateway.sol/L2DaiTeleportGateway.json', output)
 copyArbitrumBridgeArtifact('l1/L1GovernanceRelay.sol/L1GovernanceRelay.json', output)
 copyArbitrumBridgeArtifact('l2/L2GovernanceRelay.sol/L2GovernanceRelay.json', output)
 
@@ -101,24 +101,24 @@ copyHardhatArtifact(join(hardhatTestArtifacts, 'test/FileJoinLineSpell.sol/FileJ
 copyHardhatArtifact(join(hardhatTestArtifacts, 'test/PushBadDebtSpell.sol/PushBadDebtSpell.json'), output)
 copyHardhatArtifact(join(hardhatTestArtifacts, 'test/PushBadDebtSpell.sol/DaiJoinLike.json'), output)
 copyHardhatArtifact(join(hardhatTestArtifacts, 'test/PushBadDebtSpell.sol/VatLike.json'), output)
-copyHardhatArtifact(join(hardhatTestArtifacts, 'test/PushBadDebtSpell.sol/WormholeJoinLike.json'), output)
+copyHardhatArtifact(join(hardhatTestArtifacts, 'test/PushBadDebtSpell.sol/TeleportJoinLike.json'), output)
 copyHardhatArtifact(join(hardhatTestArtifacts, 'test/rinkeby/FakeArbitrumInbox.sol/FakeArbitrumInbox.json'), output)
 copyHardhatArtifact(join(hardhatTestArtifacts, 'test/rinkeby/FakeArbitrumBridge.sol/FakeArbitrumBridge.json'), output)
 copyHardhatArtifact(join(hardhatTestArtifacts, 'test/rinkeby/FakeArbitrumOutbox.sol/FakeArbitrumOutbox.json'), output)
 
 copyHardhatArtifact(
-  join(hardhatTestArtifacts, 'test/kovan/L1AddWormholeOptimismSpell.sol/L1AddWormholeOptimismSpell.json'),
+  join(hardhatTestArtifacts, 'test/kovan/L1AddTeleportOptimismSpell.sol/L1AddTeleportOptimismSpell.json'),
   output,
 )
 copyHardhatArtifact(
-  join(hardhatTestArtifacts, 'test/rinkeby/L1AddWormholeArbitrumSpell.sol/L1AddWormholeArbitrumSpell.json'),
+  join(hardhatTestArtifacts, 'test/rinkeby/L1AddTeleportArbitrumSpell.sol/L1AddTeleportArbitrumSpell.json'),
   output,
 )
 copyHardhatArtifact(
-  join(hardhatTestArtifacts, 'test/L1ConfigureWormholeSpell.sol/L1ConfigureWormholeSpell.json'),
+  join(hardhatTestArtifacts, 'test/L1ConfigureTeleportSpell.sol/L1ConfigureTeleportSpell.json'),
   output,
 )
 copyHardhatArtifact(
-  join(hardhatTestArtifacts, 'test/L2AddWormholeDomainSpell.sol/L2AddWormholeDomainSpell.json'),
+  join(hardhatTestArtifacts, 'test/L2AddTeleportDomainSpell.sol/L2AddTeleportDomainSpell.json'),
   output,
 )

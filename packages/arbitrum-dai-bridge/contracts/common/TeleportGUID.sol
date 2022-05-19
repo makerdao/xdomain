@@ -14,31 +14,21 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.13;
+pragma solidity ^0.6.11;
 
-interface DaiLike {
-  function rely(address usr) external;
+// Standard Maker Teleport GUID
+struct TeleportGUID {
+  bytes32 sourceDomain;
+  bytes32 targetDomain;
+  bytes32 receiver;
+  bytes32 operator;
+  uint128 amount;
+  uint80 nonce;
+  uint48 timestamp;
 }
 
-interface WormholeGatewayLike {
-  function file(
-    bytes32 what,
-    bytes32 domain,
-    uint256 data
-  ) external;
-}
-
-contract L2KovanAddWormholeDomainSpell {
-  function execute() external {
-    DaiLike dai = DaiLike(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
-    WormholeGatewayLike wormholeGateway = WormholeGatewayLike(
-      0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0
-    );
-    bytes32 masterDomain = "KOVAN-MASTER-1";
-
-    // wormhole gateway has to burn without approval
-    dai.rely(address(wormholeGateway));
-
-    wormholeGateway.file(bytes32("validDomains"), masterDomain, 1);
+library TeleportGUIDHelper {
+  function addressToBytes32(address addr) internal pure returns (bytes32) {
+    return bytes32(uint256(uint160(addr)));
   }
 }

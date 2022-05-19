@@ -3,22 +3,22 @@ import { JsonRpcProvider } from '@ethersproject/providers'
 import { getOptionalEnv, getRequiredEnv } from '@makerdao/hardhat-utils'
 import { ethers, Wallet } from 'ethers'
 
-import { L1AddWormholeOptimismSpell__factory, L2AddWormholeDomainSpell__factory } from '../../typechain'
+import { L1AddTeleportOptimismSpell__factory, L2AddTeleportDomainSpell__factory } from '../../typechain'
 import { deployUsingFactory, forwardTime, getContractFactory, mintEther, toEthersBigNumber } from '../helpers'
 import { RetryProvider } from '../helpers/RetryProvider'
 import {
-  deployWormhole,
+  deployTeleport,
   DomainSetupOpts,
   DomainSetupResult,
   mintDai,
   OPTIMISTIC_ROLLUP_FLUSH_FINALIZATION_TIME,
-} from '../wormhole'
+} from '../teleport'
 import { getDynamicOptimismRollupSdk } from '.'
 import {
   defaultL2Data,
   defaultL2Gas,
   deployOptimismBaseBridge,
-  deployOptimismWormholeBridge,
+  deployOptimismTeleportBridge,
   makeRelayMessagesToL1,
   makeWaitToRelayTxsToL2,
   makeWatcher,
@@ -72,7 +72,7 @@ export async function setupOptimismTests({
   console.log('Funding l2User ETH balance...')
   await mintL2Ether(relayTxToL2, optimismRollupSdk, l1Provider, l1User.address)
 
-  const wormholeSdk = await deployWormhole({
+  const teleportSdk = await deployTeleport({
     defaultSigner: l1Signer,
     makerSdk: l1Sdk.maker,
     ilk,
@@ -87,38 +87,38 @@ export async function setupOptimismTests({
     makerSdk,
     optimismRollupSdk,
   })
-  const wormholeBridgeSdk = await deployOptimismWormholeBridge({
+  const teleportBridgeSdk = await deployOptimismTeleportBridge({
     makerSdk: makerSdk,
     l1Signer,
     l2Signer,
-    wormholeSdk,
+    teleportSdk,
     baseBridgeSdk,
     slaveDomain: domain,
     optimismRollupSdk,
   })
 
   console.log('Deploy Optimism L2 spell...')
-  const l2AddWormholeDomainSpell = await deployUsingFactory(
+  const l2AddTeleportDomainSpell = await deployUsingFactory(
     l2Signer,
-    getContractFactory<L2AddWormholeDomainSpell__factory>('L2AddWormholeDomainSpell'),
-    [baseBridgeSdk.l2Dai.address, wormholeBridgeSdk.l2WormholeBridge.address, masterDomain],
+    getContractFactory<L2AddTeleportDomainSpell__factory>('L2AddTeleportDomainSpell'),
+    [baseBridgeSdk.l2Dai.address, teleportBridgeSdk.l2TeleportBridge.address, masterDomain],
   )
   console.log('Deploy Optimism L1 spell...')
-  const L1AddWormholeOptimismSpellFactory = getContractFactory<L1AddWormholeOptimismSpell__factory>(
-    'L1AddWormholeOptimismSpell',
+  const L1AddTeleportOptimismSpellFactory = getContractFactory<L1AddTeleportOptimismSpell__factory>(
+    'L1AddTeleportOptimismSpell',
     l1Signer,
   )
-  const addWormholeDomainSpell = await L1AddWormholeOptimismSpellFactory.deploy(
+  const addTeleportDomainSpell = await L1AddTeleportOptimismSpellFactory.deploy(
     domain,
-    wormholeSdk.join.address,
-    wormholeSdk.constantFee.address,
+    teleportSdk.join.address,
+    teleportSdk.constantFee.address,
     line,
-    wormholeSdk.router.address,
-    wormholeBridgeSdk.l1WormholeBridge.address,
+    teleportSdk.router.address,
+    teleportBridgeSdk.l1TeleportBridge.address,
     baseBridgeSdk.l1Escrow.address,
     makerSdk.dai.address,
     baseBridgeSdk.l1GovRelay.address,
-    l2AddWormholeDomainSpell.address,
+    l2AddTeleportDomainSpell.address,
   )
 
   console.log('Moving some DAI to L2...')
@@ -142,12 +142,12 @@ export async function setupOptimismTests({
     makerSdk,
     relayTxToL1,
     relayTxToL2,
-    wormholeBridgeSdk,
+    teleportBridgeSdk,
     baseBridgeSdk,
-    wormholeSdk,
+    teleportSdk,
     ttl: TTL,
     forwardTimeToAfterFinalization,
-    addWormholeDomainSpell,
+    addTeleportDomainSpell,
   }
 }
 

@@ -31,7 +31,7 @@ interface VatLike {
   ) external;
 }
 
-interface WormholeJoinLike {
+interface TeleportJoinLike {
   function file(bytes32 what, address val) external;
 
   function file(
@@ -95,7 +95,7 @@ contract DssSpellAction is DssAction {
   uint256 public constant RAY = 10**27;
   uint256 public constant RAD = 10**45;
 
-  string public constant override description = "Kovan Optimism Wormhole deployment spell";
+  string public constant override description = "Kovan Optimism Teleport deployment spell";
 
   function officeHours() public pure override returns (bool) {
     return false;
@@ -124,23 +124,23 @@ contract DssSpellAction is DssAction {
 
   function actions() public override {
     bytes32 masterDomain = "KOVAN-MASTER-1";
-    WormholeJoinLike wormholeJoin = WormholeJoinLike(0x556D9076A42Bba1892E3F4cA331daE587185Cef9);
+    TeleportJoinLike teleportJoin = TeleportJoinLike(0x556D9076A42Bba1892E3F4cA331daE587185Cef9);
     address vow = 0x0F4Cbe6CBA918b7488C26E29d9ECd7368F38EA3b;
     VatLike vat = VatLike(0xbA987bDB501d131f766fEe8180Da5d81b34b69d9);
     uint256 globalLine = 10000000000 * RAD;
     RouterLike router = RouterLike(0xb15e4cfb29C587c924f547c4Fcbf440B195f3EF8);
 
-    wormholeJoin.file(bytes32("vow"), vow);
-    router.file(bytes32("gateway"), masterDomain, address(wormholeJoin));
-    vat.rely(address(wormholeJoin));
-    bytes32 ilk = wormholeJoin.ilk();
+    teleportJoin.file(bytes32("vow"), vow);
+    router.file(bytes32("gateway"), masterDomain, address(teleportJoin));
+    vat.rely(address(teleportJoin));
+    bytes32 ilk = teleportJoin.ilk();
     vat.init(ilk);
     vat.file(ilk, bytes32("spot"), RAY);
     vat.file(ilk, bytes32("line"), globalLine);
     setupOracleAuth();
     setupTrustedRelay();
 
-    // configure optimism wormhole
+    // configure optimism teleport
     bytes32 slaveDomain = "KOVAN-SLAVE-OPTIMISM-1";
     uint256 optimismSlaveLine = 100 * RAD;
     address constantFees = 0xf61A6F9d13aF9BBf4df95657Db5698c04A97EF85;
@@ -153,13 +153,13 @@ contract DssSpellAction is DssAction {
     address l2ConfigureDomainSpell = 0xEd326504C77Dcd0Ffbb554a7925338EEd3F5fE01;
 
     router.file(bytes32("gateway"), slaveDomain, slaveDomainGateway);
-    wormholeJoin.file(bytes32("fees"), slaveDomain, constantFees);
-    wormholeJoin.file(bytes32("line"), slaveDomain, optimismSlaveLine);
+    teleportJoin.file(bytes32("fees"), slaveDomain, constantFees);
+    teleportJoin.file(bytes32("line"), slaveDomain, optimismSlaveLine);
     escrow.approve(dai, slaveDomainGateway, type(uint256).max);
     l1GovRelay.relay(l2ConfigureDomainSpell, abi.encodeWithSignature("execute()"), 3_000_000);
   }
 }
 
-contract L1KovanAddWormholeDomainSpell is DssExec {
+contract L1KovanAddTeleportDomainSpell is DssExec {
   constructor() DssExec(block.timestamp + 30 days, address(new DssSpellAction())) {}
 }

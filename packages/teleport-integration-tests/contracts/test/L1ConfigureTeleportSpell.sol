@@ -28,7 +28,7 @@ interface VatLike {
   ) external;
 }
 
-interface WormholeJoinLike {
+interface TeleportJoinLike {
   function file(bytes32 what, address val) external;
 
   function ilk() external returns (bytes32);
@@ -48,12 +48,12 @@ interface RouterLike {
   ) external;
 }
 
-contract L1ConfigureWormholeSpell {
+contract L1ConfigureTeleportSpell {
   uint256 public constant RAY = 10**27;
 
   bytes32 public immutable masterDomain;
 
-  WormholeJoinLike public immutable wormholeJoin;
+  TeleportJoinLike public immutable teleportJoin;
   address public immutable vow;
 
   VatLike public immutable vat;
@@ -68,7 +68,7 @@ contract L1ConfigureWormholeSpell {
 
   constructor(
     bytes32 _masterDomain,
-    WormholeJoinLike _wormholeJoin,
+    TeleportJoinLike _teleportJoin,
     address _vow,
     VatLike _vat,
     uint256 _line,
@@ -79,7 +79,7 @@ contract L1ConfigureWormholeSpell {
     address _oracle3
   ) {
     masterDomain = _masterDomain;
-    wormholeJoin = _wormholeJoin;
+    teleportJoin = _teleportJoin;
     vow = _vow;
     vat = _vat;
     line = _line;
@@ -91,11 +91,11 @@ contract L1ConfigureWormholeSpell {
   }
 
   function execute() external {
-    wormholeJoin.file(bytes32("vow"), vow);
-    router.file(bytes32("gateway"), masterDomain, address(wormholeJoin));
+    teleportJoin.file(bytes32("vow"), vow);
+    router.file(bytes32("gateway"), masterDomain, address(teleportJoin));
 
-    vat.rely(address(wormholeJoin));
-    bytes32 ilk = wormholeJoin.ilk();
+    vat.rely(address(teleportJoin));
+    bytes32 ilk = teleportJoin.ilk();
     vat.init(ilk);
     vat.file(ilk, bytes32("spot"), RAY);
     vat.file(ilk, bytes32("line"), line);

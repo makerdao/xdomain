@@ -16,8 +16,8 @@
 
 pragma solidity >=0.7.6;
 
-// Standard Maker Wormhole GUID
-struct WormholeGUID {
+// Standard Maker Teleport GUID
+struct TeleportGUID {
   bytes32 sourceDomain;
   bytes32 targetDomain;
   bytes32 receiver;

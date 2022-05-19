@@ -12,10 +12,10 @@ import {
   TeleportOracleAuth,
   TeleportRouter,
 } from '../../typechain'
-import { BaseBridgeSdk, DaiLike, L1EscrowLike, WormholeBridgeSdk } from '.'
+import { BaseBridgeSdk, DaiLike, L1EscrowLike, TeleportBridgeSdk } from '.'
 import { performSanityChecks } from './checks'
 import { RelayTxToL1Function, RelayTxToL2Function } from './messages'
-import { configureWormhole, WormholeSdk } from './wormhole'
+import { configureTeleport, TeleportSdk } from './teleport'
 
 const bytes32 = ethers.utils.formatBytes32String
 
@@ -34,14 +34,14 @@ export interface DomainSetupOpts {
 
 export interface DomainSetupResult {
   makerSdk: MakerSdk
-  wormholeSdk: WormholeSdk
+  teleportSdk: TeleportSdk
   relayTxToL1: RelayTxToL1Function
   relayTxToL2: RelayTxToL2Function
-  wormholeBridgeSdk: WormholeBridgeSdk
+  teleportBridgeSdk: TeleportBridgeSdk
   baseBridgeSdk: BaseBridgeSdk
   ttl: number
   forwardTimeToAfterFinalization: ForwardTimeFunction
-  addWormholeDomainSpell: Contract
+  addTeleportDomainSpell: Contract
   l1Signer: Wallet
   l2Signer: Wallet
   l1Provider: JsonRpcProvider
@@ -79,7 +79,7 @@ interface SetupTestResult {
   trustedRelay: TrustedRelay
   l2Dai: DaiLike
   l1Escrow: L1EscrowLike
-  l2WormholeBridge: any
+  l2TeleportBridge: any
   relayTxToL1: RelayTxToL1Function
   makerSdk: MakerSdk
   ttl: number
@@ -106,12 +106,12 @@ export async function setupTest({
     makerSdk,
     relayTxToL1,
     relayTxToL2,
-    wormholeBridgeSdk,
+    teleportBridgeSdk,
     baseBridgeSdk,
-    wormholeSdk,
+    teleportSdk,
     ttl,
     forwardTimeToAfterFinalization,
-    addWormholeDomainSpell,
+    addTeleportDomainSpell,
   } = await setupDomain({
     l2DaiAmount,
     domain,
@@ -121,24 +121,24 @@ export async function setupTest({
     line,
   })
 
-  await configureWormhole({
+  await configureTeleport({
     makerSdk,
-    wormholeSdk,
+    teleportSdk,
     joinDomain: masterDomain,
     defaultSigner: l1Signer,
     domain,
     oracleAddresses,
     globalLine: line,
     relayTxToL2,
-    addWormholeDomainSpell,
+    addTeleportDomainSpell,
   })
 
   await performSanityChecks(
     l1Signer,
     makerSdk,
-    wormholeSdk,
+    teleportSdk,
     baseBridgeSdk,
-    wormholeBridgeSdk,
+    teleportBridgeSdk,
     l1StartingBlock,
     l2StartingBlock,
     false,
@@ -153,9 +153,9 @@ export async function setupTest({
     l1User,
     l2User,
     ilk,
-    ...wormholeSdk,
+    ...teleportSdk,
     ...baseBridgeSdk,
-    ...wormholeBridgeSdk,
+    ...teleportBridgeSdk,
     relayTxToL1,
     ttl,
     forwardTimeToAfterFinalization,

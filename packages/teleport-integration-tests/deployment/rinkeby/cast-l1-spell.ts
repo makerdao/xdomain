@@ -8,7 +8,7 @@ import { formatEther, Interface } from 'ethers/lib/utils'
 import * as hre from 'hardhat'
 
 import { deployUsingFactoryAndVerify, waitForTx } from '../../test/helpers'
-import { executeSpell, MakerSdk } from '../../test/wormhole'
+import { executeSpell, MakerSdk } from '../../test/teleport'
 
 const L1_GOV_RELAY_ADDR = '0x97057eF24d3C69D974Cc5348145b7258c5a503B6'
 
@@ -56,7 +56,7 @@ async function deployAndExecuteSpell(l1Signer: Signer, makerSdk: MakerSdk) {
     l1SpellContract = new ethers.Contract(l1Spell, l1SpellInterface, l1Signer)
   } else {
     console.log('Deploying L1 spell...')
-    const SpellFactory = await hre.ethers.getContractFactory('L1RinkebyAddWormholeDomainSpell')
+    const SpellFactory = await hre.ethers.getContractFactory('L1RinkebyAddTeleportDomainSpell')
     l1SpellContract = await deployUsingFactoryAndVerify(l1Signer, SpellFactory, [])
     console.log('L1 spell deployed at: ', l1SpellContract.address)
   }

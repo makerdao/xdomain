@@ -14,13 +14,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.6;
-pragma abicoder v2;
-import {WormholeGUID} from "./WormholeGUID.sol";
+pragma solidity ^0.6.11;
+pragma experimental ABIEncoderV2;
 
-interface IL1WormholeRouter {
+import {TeleportGUID} from "./TeleportGUID.sol";
+
+interface IL1TeleportRouter {
   function requestMint(
-    WormholeGUID calldata wormholeGUID,
+    TeleportGUID calldata teleportGUID,
     uint256 maxFeePercentage,
     uint256 operatorFee
   ) external returns (uint256 postFeeAmount, uint256 totalFee);
@@ -28,44 +29,44 @@ interface IL1WormholeRouter {
   function settle(bytes32 targetDomain, uint256 batchedDaiToFlush) external;
 }
 
-interface IL1WormholeGateway {
+interface IL1TeleportGateway {
   function l1Token() external view returns (address);
 
   function l1Escrow() external view returns (address);
 
-  function l1WormholeRouter() external view returns (IL1WormholeRouter);
+  function l1TeleportRouter() external view returns (IL1TeleportRouter);
 
-  function l2WormholeGateway() external view returns (address);
+  function l2TeleportGateway() external view returns (address);
 
   function finalizeFlush(bytes32 targetDomain, uint256 daiToFlush) external;
 
-  function finalizeRegisterWormhole(WormholeGUID calldata wormhole) external;
+  function finalizeRegisterTeleport(TeleportGUID calldata teleport) external;
 }
 
-interface IL2WormholeGateway {
-  event WormholeInitialized(WormholeGUID wormhole);
+interface IL2TeleportGateway {
+  event TeleportInitialized(TeleportGUID teleport);
   event Flushed(bytes32 indexed targetDomain, uint256 dai);
 
   function l2Token() external view returns (address);
 
-  function l1WormholeGateway() external view returns (address);
+  function l1TeleportGateway() external view returns (address);
 
   function domain() external view returns (bytes32);
 
-  function initiateWormhole(
+  function initiateTeleport(
     bytes32 targetDomain,
     address receiver,
     uint128 amount
   ) external;
 
-  function initiateWormhole(
+  function initiateTeleport(
     bytes32 targetDomain,
     address receiver,
     uint128 amount,
     address operator
   ) external;
 
-  function initiateWormhole(
+  function initiateTeleport(
     bytes32 targetDomain,
     bytes32 receiver,
     uint128 amount,

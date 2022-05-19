@@ -4,11 +4,11 @@ import { constants, Signer } from 'ethers'
 import {
   ArbitrumDai__factory,
   ArbitrumL1DaiGateway__factory,
-  ArbitrumL1DaiWormholeGateway__factory,
+  ArbitrumL1DaiTeleportGateway__factory,
   ArbitrumL1Escrow__factory,
   ArbitrumL1GovernanceRelay__factory,
   ArbitrumL2DaiGateway__factory,
-  ArbitrumL2DaiWormholeGateway__factory,
+  ArbitrumL2DaiTeleportGateway__factory,
   ArbitrumL2GovernanceRelay__factory,
   FakeArbitrumBridge__factory,
   FakeArbitrumInbox__factory,
@@ -16,50 +16,50 @@ import {
 } from '../../typechain'
 import { deployUsingFactoryAndVerify, getContractFactory, waitForTx } from '../helpers'
 import { getAddressOfNextDeployedContract } from '../pe-utils/address'
-import { MakerSdk } from '../wormhole'
-import { WormholeSdk } from '../wormhole/wormhole'
+import { MakerSdk } from '../teleport'
+import { TeleportSdk } from '../teleport/teleport'
 import { ArbitrumRollupSdk } from '.'
 
-interface ArbitrumWormholeBridgeDeployOpts {
+interface ArbitrumTeleportBridgeDeployOpts {
   l1Signer: Signer
   l2Signer: Signer
   makerSdk: MakerSdk
   arbitrumRollupSdk: ArbitrumRollupSdk
-  wormholeSdk: WormholeSdk
+  teleportSdk: TeleportSdk
   baseBridgeSdk: ArbitrumBaseBridgeSdk
   slaveDomain: string
 }
 
-export async function deployArbitrumWormholeBridge(opts: ArbitrumWormholeBridgeDeployOpts) {
-  console.log('Deploying Arbitrum Wormhole Bridge...')
-  const futureL1WormholeBridgeAddress = await getAddressOfNextDeployedContract(opts.l1Signer)
-  const L2WormholeBridgeFactory = getContractFactory<ArbitrumL2DaiWormholeGateway__factory>(
-    'ArbitrumL2DaiWormholeGateway',
+export async function deployArbitrumTeleportBridge(opts: ArbitrumTeleportBridgeDeployOpts) {
+  console.log('Deploying Arbitrum Teleport Bridge...')
+  const futureL1TeleportBridgeAddress = await getAddressOfNextDeployedContract(opts.l1Signer)
+  const L2TeleportBridgeFactory = getContractFactory<ArbitrumL2DaiTeleportGateway__factory>(
+    'ArbitrumL2DaiTeleportGateway',
     opts.l2Signer,
   )
-  const l2WormholeBridge = await deployUsingFactoryAndVerify(opts.l2Signer, L2WormholeBridgeFactory, [
+  const l2TeleportBridge = await deployUsingFactoryAndVerify(opts.l2Signer, L2TeleportBridgeFactory, [
     opts.baseBridgeSdk.l2Dai.address,
-    futureL1WormholeBridgeAddress,
+    futureL1TeleportBridgeAddress,
     opts.slaveDomain,
   ])
-  console.log('L2DaiWormholeGateway deployed at: ', l2WormholeBridge.address)
+  console.log('L2DaiTeleportGateway deployed at: ', l2TeleportBridge.address)
 
-  const L1WormholeBridgeFactory =
-    getContractFactory<ArbitrumL1DaiWormholeGateway__factory>('ArbitrumL1DaiWormholeGateway')
-  const l1WormholeBridge = await deployUsingFactoryAndVerify(opts.l1Signer, L1WormholeBridgeFactory, [
+  const L1TeleportBridgeFactory =
+    getContractFactory<ArbitrumL1DaiTeleportGateway__factory>('ArbitrumL1DaiTeleportGateway')
+  const l1TeleportBridge = await deployUsingFactoryAndVerify(opts.l1Signer, L1TeleportBridgeFactory, [
     opts.makerSdk.dai.address,
-    l2WormholeBridge.address,
+    l2TeleportBridge.address,
     opts.arbitrumRollupSdk.inbox.address,
     opts.baseBridgeSdk.l1Escrow.address,
-    opts.wormholeSdk.router.address,
+    opts.teleportSdk.router.address,
   ])
-  expect(l1WormholeBridge.address).to.be.eq(futureL1WormholeBridgeAddress, 'Future address doesnt match actual address')
-  console.log('L1DaiWormholeGateway deployed at: ', l1WormholeBridge.address)
+  expect(l1TeleportBridge.address).to.be.eq(futureL1TeleportBridgeAddress, 'Future address doesnt match actual address')
+  console.log('L1DaiTeleportGateway deployed at: ', l1TeleportBridge.address)
 
-  await l2WormholeBridge.rely(opts.baseBridgeSdk.l2GovRelay.address)
-  await l2WormholeBridge.deny(await opts.l2Signer.getAddress())
+  await l2TeleportBridge.rely(opts.baseBridgeSdk.l2GovRelay.address)
+  await l2TeleportBridge.deny(await opts.l2Signer.getAddress())
 
-  return { l2WormholeBridge, l1WormholeBridge }
+  return { l2TeleportBridge, l1TeleportBridge }
 }
 
 interface ArbitrumBaseBridgeDeployOpts {

@@ -1,20 +1,20 @@
 import { BigNumber, BytesLike, CallOverrides, Contract } from 'ethers'
 
 import {
-  OptimismIL1WormholeGateway as IL1WormholeGateway,
-  OptimismIL2WormholeGateway as IL2WormholeGateway,
+  OptimismIL1TeleportGateway as IL1TeleportGateway,
+  OptimismIL2TeleportGateway as IL2TeleportGateway,
 } from '../../typechain'
 import { AuthableLike } from '../pe-utils/auth'
 
-export type L1WormholeBridgeLike = IL1WormholeGateway
-export type L2WormholeBridgeLike = IL2WormholeGateway & {
+export type L1TeleportBridgeLike = IL1TeleportGateway
+export type L2TeleportBridgeLike = IL2TeleportGateway & {
   batchedDaiToFlush(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>
 } & AuthableLike
 
 export type DaiLike = Contract
 export type L1EscrowLike = Contract
 
-export type WormholeBridgeSdk = { l1WormholeBridge: L1WormholeBridgeLike; l2WormholeBridge: L2WormholeBridgeLike }
+export type TeleportBridgeSdk = { l1TeleportBridge: L1TeleportBridgeLike; l2TeleportBridge: L2TeleportBridgeLike }
 export type BaseBridgeSdk = {
   l2Dai: DaiLike
   l1Escrow: L1EscrowLike

@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import { BigNumber, ContractReceipt, ContractTransaction, ethers, providers, utils } from 'ethers'
 
 import { FakeArbitrumOutbox } from '../../typechain'
-import { L2WormholeBridgeLike } from '../wormhole'
+import { L2TeleportBridgeLike } from '../teleport'
 
 export async function waitToRelayTxsToL2(
   l1Tx: Promise<ContractTransaction> | ContractTransaction | Promise<ContractReceipt> | ContractReceipt,
@@ -91,13 +91,13 @@ function calculateL2RetryableTransactionHash(requestID: string) {
   )
 }
 
-export function makeRelayTxToL1(l2CrossDomainEnabled: L2WormholeBridgeLike, fakeOutbox: FakeArbitrumOutbox) {
+export function makeRelayTxToL1(l2CrossDomainEnabled: L2TeleportBridgeLike, fakeOutbox: FakeArbitrumOutbox) {
   return (l2OriginatingTx: Promise<ContractTransaction> | ContractTransaction | ContractReceipt) =>
     waitToRelayTxToL1(l2CrossDomainEnabled, fakeOutbox, l2OriginatingTx)
 }
 
 async function waitToRelayTxToL1(
-  l2CrossDomainEnabled: L2WormholeBridgeLike,
+  l2CrossDomainEnabled: L2TeleportBridgeLike,
   fakeOutbox: FakeArbitrumOutbox,
   l2OriginatingTx: Promise<ContractTransaction> | ContractTransaction | ContractReceipt,
 ): Promise<providers.TransactionReceipt[]> {

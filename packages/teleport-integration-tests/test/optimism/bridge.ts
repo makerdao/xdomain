@@ -4,61 +4,61 @@ import { constants, ethers, Signer } from 'ethers'
 import {
   OptimismDai__factory,
   OptimismL1DAITokenBridge__factory,
-  OptimismL1DaiWormholeGateway__factory,
+  OptimismL1DaiTeleportGateway__factory,
   OptimismL1Escrow__factory,
   OptimismL1GovernanceRelay__factory,
   OptimismL2DAITokenBridge__factory,
-  OptimismL2DaiWormholeGateway__factory,
+  OptimismL2DaiTeleportGateway__factory,
   OptimismL2GovernanceRelay__factory,
 } from '../../typechain'
 import { deployUsingFactoryAndVerify, getContractFactory, mintEther } from '../helpers'
 import { waitForTx } from '../helpers'
 import { getAddressOfNextDeployedContract } from '../pe-utils/address'
-import { MakerSdk } from '../wormhole'
-import { WormholeSdk } from '../wormhole/wormhole'
+import { MakerSdk } from '../teleport'
+import { TeleportSdk } from '../teleport/teleport'
 import { OptimismRollupSdk } from '.'
 
-interface OptimismWormholeBridgeDeployOpts {
+interface OptimismTeleportBridgeDeployOpts {
   l1Signer: Signer
   l2Signer: Signer
   makerSdk: MakerSdk
-  wormholeSdk: WormholeSdk
+  teleportSdk: TeleportSdk
   baseBridgeSdk: OptimismBaseBridgeSdk
   optimismRollupSdk: OptimismRollupSdk
   slaveDomain: string
 }
 
-export async function deployOptimismWormholeBridge(opts: OptimismWormholeBridgeDeployOpts) {
-  console.log('Deploying Optimism Wormhole Bridge...')
-  const futureL1WormholeBridgeAddress = await getAddressOfNextDeployedContract(opts.l1Signer)
-  const L2WormholeBridgeFactory =
-    getContractFactory<OptimismL2DaiWormholeGateway__factory>('OptimismL2DaiWormholeGateway')
-  const l2WormholeBridge = await deployUsingFactoryAndVerify(opts.l2Signer, L2WormholeBridgeFactory, [
+export async function deployOptimismTeleportBridge(opts: OptimismTeleportBridgeDeployOpts) {
+  console.log('Deploying Optimism Teleport Bridge...')
+  const futureL1TeleportBridgeAddress = await getAddressOfNextDeployedContract(opts.l1Signer)
+  const L2TeleportBridgeFactory =
+    getContractFactory<OptimismL2DaiTeleportGateway__factory>('OptimismL2DaiTeleportGateway')
+  const l2TeleportBridge = await deployUsingFactoryAndVerify(opts.l2Signer, L2TeleportBridgeFactory, [
     opts.optimismRollupSdk.l2XDomainMessenger.address,
     opts.baseBridgeSdk.l2Dai.address,
-    futureL1WormholeBridgeAddress,
+    futureL1TeleportBridgeAddress,
     opts.slaveDomain,
   ])
-  console.log('L2DAIWormholeBridge deployed at: ', l2WormholeBridge.address)
+  console.log('L2DAITeleportBridge deployed at: ', l2TeleportBridge.address)
 
-  const L1WormholeBridgeFactory =
-    getContractFactory<OptimismL1DaiWormholeGateway__factory>('OptimismL1DaiWormholeGateway')
-  const l1WormholeBridge = await deployUsingFactoryAndVerify(opts.l1Signer, L1WormholeBridgeFactory, [
+  const L1TeleportBridgeFactory =
+    getContractFactory<OptimismL1DaiTeleportGateway__factory>('OptimismL1DaiTeleportGateway')
+  const l1TeleportBridge = await deployUsingFactoryAndVerify(opts.l1Signer, L1TeleportBridgeFactory, [
     opts.makerSdk.dai.address,
-    l2WormholeBridge.address,
+    l2TeleportBridge.address,
     opts.optimismRollupSdk.l1XDomainMessenger.address,
     opts.baseBridgeSdk.l1Escrow.address,
-    opts.wormholeSdk.router.address,
+    opts.teleportSdk.router.address,
   ])
-  expect(l1WormholeBridge.address).to.be.eq(futureL1WormholeBridgeAddress, 'Future address doesnt match actual address')
-  console.log('L1WormholeBridge deployed at: ', l1WormholeBridge.address)
+  expect(l1TeleportBridge.address).to.be.eq(futureL1TeleportBridgeAddress, 'Future address doesnt match actual address')
+  console.log('L1TeleportBridge deployed at: ', l1TeleportBridge.address)
 
-  await waitForTx(l2WormholeBridge.rely(opts.baseBridgeSdk.l2GovRelay.address))
-  await waitForTx(l2WormholeBridge.deny(await opts.l2Signer.getAddress()))
+  await waitForTx(l2TeleportBridge.rely(opts.baseBridgeSdk.l2GovRelay.address))
+  await waitForTx(l2TeleportBridge.deny(await opts.l2Signer.getAddress()))
 
-  return { l2WormholeBridge, l1WormholeBridge }
+  return { l2TeleportBridge, l1TeleportBridge }
 }
-export type OptimismWormholeBridgeSdk = Awaited<ReturnType<typeof deployOptimismWormholeBridge>>
+export type OptimismTeleportBridgeSdk = Awaited<ReturnType<typeof deployOptimismTeleportBridge>>
 
 interface OptimismBaseBridgeDeployOpts {
   l1Signer: Signer

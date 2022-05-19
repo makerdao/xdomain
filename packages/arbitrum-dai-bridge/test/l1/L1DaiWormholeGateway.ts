@@ -4,8 +4,8 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
 import { deployArbitrumContractMock } from '../../arbitrum-helpers/mocks'
-import { Dai__factory, L1DaiWormholeGateway__factory, L1Escrow__factory } from '../../typechain-types'
-import { WormholeGUIDStruct } from '../../typechain-types/L1DaiWormholeGateway'
+import { Dai__factory, L1DaiTeleportGateway__factory, L1Escrow__factory } from '../../typechain-types'
+import { TeleportGUIDStruct } from '../../typechain-types/L1DaiTeleportGateway'
 import { addressToBytes32, deployAbstractMock, deployMock } from '../helpers'
 
 const INITIAL_ESCROW_BALANCE = 3000
@@ -18,35 +18,35 @@ const errorMessages = {
   onlyCounterpartGateway: 'ONLY_COUNTERPART_GATEWAY',
 }
 
-describe('L1DaiWormholeGateway', () => {
+describe('L1DaiTeleportGateway', () => {
   it('has correct public interface', async () => {
-    await assertPublicMutableMethods('L1DaiWormholeGateway', [
+    await assertPublicMutableMethods('L1DaiTeleportGateway', [
       'finalizeFlush(bytes32,uint256)',
-      'finalizeRegisterWormhole((bytes32,bytes32,bytes32,bytes32,uint128,uint80,uint48))',
+      'finalizeRegisterTeleport((bytes32,bytes32,bytes32,bytes32,uint128,uint80,uint48))',
     ])
   })
 
   describe('constructor', () => {
     it('sets all variables and approvals properly', async () => {
-      const [l2DaiWormholeGateway, inbox, l1Escrow, wormholeRouter] = await ethers.getSigners()
+      const [l2DaiTeleportGateway, inbox, l1Escrow, teleportRouter] = await ethers.getSigners()
 
       const l1Dai = await simpleDeploy<Dai__factory>('Dai', [])
-      const l1DaiWormholeGateway = await simpleDeploy<L1DaiWormholeGateway__factory>('L1DaiWormholeGateway', [
+      const l1DaiTeleportGateway = await simpleDeploy<L1DaiTeleportGateway__factory>('L1DaiTeleportGateway', [
         l1Dai.address,
-        l2DaiWormholeGateway.address,
+        l2DaiTeleportGateway.address,
         inbox.address,
         l1Escrow.address,
-        wormholeRouter.address,
+        teleportRouter.address,
       ])
 
       // Check that all variables have been assigned correctly
-      expect(await l1DaiWormholeGateway.l1Token()).to.eq(l1Dai.address)
-      expect(await l1DaiWormholeGateway.l2WormholeGateway()).to.eq(l2DaiWormholeGateway.address)
-      expect(await l1DaiWormholeGateway.l1Escrow()).to.eq(l1Escrow.address)
-      expect(await l1DaiWormholeGateway.inbox()).to.eq(inbox.address)
-      expect(await l1DaiWormholeGateway.l1WormholeRouter()).to.eq(wormholeRouter.address)
-      // Check that the wormholeRouter has been given infinite approval
-      expect(await l1Dai.allowance(l1DaiWormholeGateway.address, wormholeRouter.address)).to.eq(
+      expect(await l1DaiTeleportGateway.l1Token()).to.eq(l1Dai.address)
+      expect(await l1DaiTeleportGateway.l2TeleportGateway()).to.eq(l2DaiTeleportGateway.address)
+      expect(await l1DaiTeleportGateway.l1Escrow()).to.eq(l1Escrow.address)
+      expect(await l1DaiTeleportGateway.inbox()).to.eq(inbox.address)
+      expect(await l1DaiTeleportGateway.l1TeleportRouter()).to.eq(teleportRouter.address)
+      // Check that the teleportRouter has been given infinite approval
+      expect(await l1Dai.allowance(l1DaiTeleportGateway.address, teleportRouter.address)).to.eq(
         ethers.constants.MaxUint256,
       )
     })
@@ -55,12 +55,12 @@ describe('L1DaiWormholeGateway', () => {
   describe('finalizeFlush', () => {
     it('calls the router to settle the dai debt', async () => {
       const [_, inboxImpersonator, bridgeImpersonator, outboxImpersonator] = await ethers.getSigners()
-      const { outboxMock, l1Dai, l1DaiWormholeGateway, l2DaiWormholeGateway, l1Escrow, wormholeRouterMock } =
+      const { outboxMock, l1Dai, l1DaiTeleportGateway, l2DaiTeleportGateway, l1Escrow, teleportRouterMock } =
         await setupTest({ inboxImpersonator, bridgeImpersonator, outboxImpersonator })
-      outboxMock.smocked.l2ToL1Sender.will.return.with(() => l2DaiWormholeGateway.address)
+      outboxMock.smocked.l2ToL1Sender.will.return.with(() => l2DaiTeleportGateway.address)
 
-      await waitForTx(l1DaiWormholeGateway.connect(bridgeImpersonator).finalizeFlush(TARGET_DOMAIN_NAME, AMOUNT))
-      const routerSettleCallData = wormholeRouterMock.smocked.settle.calls[0]
+      await waitForTx(l1DaiTeleportGateway.connect(bridgeImpersonator).finalizeFlush(TARGET_DOMAIN_NAME, AMOUNT))
+      const routerSettleCallData = teleportRouterMock.smocked.settle.calls[0]
 
       expect(routerSettleCallData.targetDomain).to.equal(TARGET_DOMAIN_NAME)
       expect(routerSettleCallData.batchedDaiToFlush).to.equal(AMOUNT)
@@ -69,21 +69,21 @@ describe('L1DaiWormholeGateway', () => {
 
     it('reverts when not called by the bridge', async () => {
       const [_, inboxImpersonator, bridgeImpersonator, outboxImpersonator, user] = await ethers.getSigners()
-      const { outboxMock, l1DaiWormholeGateway, l2DaiWormholeGateway } = await setupTest({
+      const { outboxMock, l1DaiTeleportGateway, l2DaiTeleportGateway } = await setupTest({
         inboxImpersonator,
         bridgeImpersonator,
         outboxImpersonator,
       })
-      outboxMock.smocked.l2ToL1Sender.will.return.with(() => l2DaiWormholeGateway.address)
+      outboxMock.smocked.l2ToL1Sender.will.return.with(() => l2DaiTeleportGateway.address)
 
-      await expect(l1DaiWormholeGateway.connect(user).finalizeFlush(TARGET_DOMAIN_NAME, AMOUNT)).to.be.revertedWith(
+      await expect(l1DaiTeleportGateway.connect(user).finalizeFlush(TARGET_DOMAIN_NAME, AMOUNT)).to.be.revertedWith(
         errorMessages.notFromBridge,
       )
     })
 
-    it('reverts when called by the bridge but not relaying a message from l2DaiWormholeGateway', async () => {
+    it('reverts when called by the bridge but not relaying a message from l2DaiTeleportGateway', async () => {
       const [_, inboxImpersonator, bridgeImpersonator, outboxImpersonator, user] = await ethers.getSigners()
-      const { outboxMock, l1DaiWormholeGateway } = await setupTest({
+      const { outboxMock, l1DaiTeleportGateway } = await setupTest({
         inboxImpersonator,
         bridgeImpersonator,
         outboxImpersonator,
@@ -91,16 +91,16 @@ describe('L1DaiWormholeGateway', () => {
       outboxMock.smocked.l2ToL1Sender.will.return.with(() => user.address)
 
       await expect(
-        l1DaiWormholeGateway.connect(bridgeImpersonator).finalizeFlush(TARGET_DOMAIN_NAME, AMOUNT),
+        l1DaiTeleportGateway.connect(bridgeImpersonator).finalizeFlush(TARGET_DOMAIN_NAME, AMOUNT),
       ).to.be.revertedWith(errorMessages.onlyCounterpartGateway)
     })
   })
 
-  describe('finalizeRegisterWormhole', () => {
-    let wormhole: WormholeGUIDStruct
+  describe('finalizeRegisterTeleport', () => {
+    let teleport: TeleportGUIDStruct
     beforeEach(async () => {
       const receiver = await getRandomAddress()
-      wormhole = {
+      teleport = {
         sourceDomain: SOURCE_DOMAIN_NAME,
         targetDomain: TARGET_DOMAIN_NAME,
         receiver: addressToBytes32(receiver),
@@ -113,18 +113,18 @@ describe('L1DaiWormholeGateway', () => {
 
     it('calls the router to request DAI', async () => {
       const [_, inboxImpersonator, bridgeImpersonator, outboxImpersonator] = await ethers.getSigners()
-      const { outboxMock, l1DaiWormholeGateway, l2DaiWormholeGateway, wormholeRouterMock } = await setupTest({
+      const { outboxMock, l1DaiTeleportGateway, l2DaiTeleportGateway, teleportRouterMock } = await setupTest({
         inboxImpersonator,
         bridgeImpersonator,
         outboxImpersonator,
       })
-      outboxMock.smocked.l2ToL1Sender.will.return.with(() => l2DaiWormholeGateway.address)
+      outboxMock.smocked.l2ToL1Sender.will.return.with(() => l2DaiTeleportGateway.address)
 
-      await waitForTx(l1DaiWormholeGateway.connect(bridgeImpersonator).finalizeRegisterWormhole(wormhole))
-      const routerSettleCallData = wormholeRouterMock.smocked.requestMint.calls[0]
+      await waitForTx(l1DaiTeleportGateway.connect(bridgeImpersonator).finalizeRegisterTeleport(teleport))
+      const routerSettleCallData = teleportRouterMock.smocked.requestMint.calls[0]
 
-      expect(JSON.stringify(routerSettleCallData.wormholeGUID.map((v: any) => v.toString()))).to.equal(
-        JSON.stringify(Object.values(wormhole).map((v: any) => v.toString())),
+      expect(JSON.stringify(routerSettleCallData.teleportGUID.map((v: any) => v.toString()))).to.equal(
+        JSON.stringify(Object.values(teleport).map((v: any) => v.toString())),
       )
       expect(routerSettleCallData.maxFeePercentage).to.equal(0)
       expect(routerSettleCallData.operatorFee).to.equal(0)
@@ -132,21 +132,21 @@ describe('L1DaiWormholeGateway', () => {
 
     it('reverts when not called by the bridge', async () => {
       const [_, inboxImpersonator, bridgeImpersonator, outboxImpersonator, user] = await ethers.getSigners()
-      const { outboxMock, l1DaiWormholeGateway, l2DaiWormholeGateway } = await setupTest({
+      const { outboxMock, l1DaiTeleportGateway, l2DaiTeleportGateway } = await setupTest({
         inboxImpersonator,
         bridgeImpersonator,
         outboxImpersonator,
       })
-      outboxMock.smocked.l2ToL1Sender.will.return.with(() => l2DaiWormholeGateway.address)
+      outboxMock.smocked.l2ToL1Sender.will.return.with(() => l2DaiTeleportGateway.address)
 
-      await expect(l1DaiWormholeGateway.connect(user).finalizeRegisterWormhole(wormhole)).to.be.revertedWith(
+      await expect(l1DaiTeleportGateway.connect(user).finalizeRegisterTeleport(teleport)).to.be.revertedWith(
         errorMessages.notFromBridge,
       )
     })
 
-    it('reverts when called by the bridge but not relaying a message from l2DaiWormholeGateway', async () => {
+    it('reverts when called by the bridge but not relaying a message from l2DaiTeleportGateway', async () => {
       const [_, inboxImpersonator, bridgeImpersonator, outboxImpersonator, user] = await ethers.getSigners()
-      const { outboxMock, l1DaiWormholeGateway } = await setupTest({
+      const { outboxMock, l1DaiTeleportGateway } = await setupTest({
         inboxImpersonator,
         bridgeImpersonator,
         outboxImpersonator,
@@ -154,7 +154,7 @@ describe('L1DaiWormholeGateway', () => {
       outboxMock.smocked.l2ToL1Sender.will.return.with(() => user.address)
 
       await expect(
-        l1DaiWormholeGateway.connect(bridgeImpersonator).finalizeRegisterWormhole(wormhole),
+        l1DaiTeleportGateway.connect(bridgeImpersonator).finalizeRegisterTeleport(teleport),
       ).to.be.revertedWith(errorMessages.onlyCounterpartGateway)
     })
   })
@@ -176,27 +176,27 @@ describe('L1DaiWormholeGateway', () => {
     inboxMock.smocked.bridge.will.return.with(bridgeMock.address)
     bridgeMock.smocked.activeOutbox.will.return.with(outboxMock.address)
 
-    const wormholeRouterMock = await deployAbstractMock('IL1WormholeRouter')
-    const l2DaiWormholeGateway = await deployMock('L2DaiWormholeGateway')
+    const teleportRouterMock = await deployAbstractMock('IL1TeleportRouter')
+    const l2DaiTeleportGateway = await deployMock('L2DaiTeleportGateway')
     const l1Dai = await simpleDeploy<Dai__factory>('Dai', [])
     const l1Escrow = await simpleDeploy<L1Escrow__factory>('L1Escrow', [])
-    const l1DaiWormholeGateway = await simpleDeploy<L1DaiWormholeGateway__factory>('L1DaiWormholeGateway', [
+    const l1DaiTeleportGateway = await simpleDeploy<L1DaiTeleportGateway__factory>('L1DaiTeleportGateway', [
       l1Dai.address,
-      l2DaiWormholeGateway.address,
+      l2DaiTeleportGateway.address,
       inboxMock.address,
       l1Escrow.address,
-      wormholeRouterMock.address,
+      teleportRouterMock.address,
     ])
-    await l1Escrow.approve(l1Dai.address, l1DaiWormholeGateway.address, ethers.constants.MaxUint256)
+    await l1Escrow.approve(l1Dai.address, l1DaiTeleportGateway.address, ethers.constants.MaxUint256)
     await l1Dai.mint(l1Escrow.address, INITIAL_ESCROW_BALANCE)
 
     return {
       outboxMock,
       l1Dai,
-      l1DaiWormholeGateway,
-      l2DaiWormholeGateway,
+      l1DaiTeleportGateway,
+      l2DaiTeleportGateway,
       l1Escrow,
-      wormholeRouterMock,
+      teleportRouterMock,
     }
   }
 })

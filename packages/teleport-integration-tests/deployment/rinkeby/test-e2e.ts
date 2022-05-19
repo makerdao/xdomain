@@ -7,14 +7,14 @@ import { ethers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 
 import { getContractFactory, waitForTx } from '../../test/helpers'
-import { getAttestations } from '../../test/wormhole'
-import { ArbitrumL2DaiWormholeGateway__factory, TeleportOracleAuth__factory } from '../../typechain'
+import { getAttestations } from '../../test/teleport'
+import { ArbitrumL2DaiTeleportGateway__factory, TeleportOracleAuth__factory } from '../../typechain'
 
 const bytes32 = ethers.utils.formatBytes32String
 const masterDomain = 'RINKEBY-MASTER-1'
 
 const oracleAuth = '0x1E7722E502D3dCbB0704f99c75c99a5402598f13'
-const l2WormholeGateway = '0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3'
+const l2TeleportGateway = '0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3'
 
 async function main() {
   const { l1Signer, l2Signer } = await setupSigners()
@@ -40,14 +40,14 @@ async function main() {
   console.log('Receiver DAI before: ', formatEther(receiverBefore))
 
   const auth = getContractFactory<TeleportOracleAuth__factory>('TeleportOracleAuth', receiver).attach(oracleAuth)
-  const l2Gateway = getContractFactory<ArbitrumL2DaiWormholeGateway__factory>(
-    'ArbitrumL2DaiWormholeGateway',
+  const l2Gateway = getContractFactory<ArbitrumL2DaiTeleportGateway__factory>(
+    'ArbitrumL2DaiTeleportGateway',
     l2Signer,
-  ).attach(l2WormholeGateway)
+  ).attach(l2TeleportGateway)
 
-  console.log('initiateWormhole...')
+  console.log('initiateTeleport...')
   const txR = await waitForTx(
-    l2Gateway['initiateWormhole(bytes32,address,uint128)'](
+    l2Gateway['initiateTeleport(bytes32,address,uint128)'](
       bytes32(masterDomain),
       receiver.address,
       parseEther('0.01'),
@@ -62,7 +62,7 @@ async function main() {
 
   console.log('Attestations: ', JSON.stringify(attestations))
 
-  await waitForTx(auth.requestMint(attestations.wormholeGUID, attestations.signatures, 0, 0))
+  await waitForTx(auth.requestMint(attestations.teleportGUID, attestations.signatures, 0, 0))
   // await waitForTx(
   //   oracleAuth.requestMint(
   //     [

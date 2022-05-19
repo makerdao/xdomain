@@ -7,15 +7,15 @@ import { mapValues } from 'lodash'
 import { Dictionary } from 'ts-essentials'
 dotenv.config()
 
-import { deployOptimismWormholeBridge, OptimismBaseBridgeSdk, OptimismRollupSdk } from '../../test/optimism'
-import { deployWormhole } from '../../test/wormhole'
-import { performSanityChecks } from '../../test/wormhole/checks'
+import { deployOptimismTeleportBridge, OptimismBaseBridgeSdk, OptimismRollupSdk } from '../../test/optimism'
+import { deployTeleport } from '../../test/teleport'
+import { performSanityChecks } from '../../test/teleport/checks'
 
 const bytes32 = ethers.utils.formatBytes32String
 
 async function main() {
   const fee = 0 // 0 fees
-  const feeTTL = 60 * 60 * 24 * 8 // flush should happen more or less, 1 day after initWormhole, and should take 7 days to finalize
+  const feeTTL = 60 * 60 * 24 * 8 // flush should happen more or less, 1 day after initTeleport, and should take 7 days to finalize
   const ilk: string = bytes32('WH-KOVAN-TEST-2')
   const masterDomain = bytes32('KOVAN-MASTER-1')
   const optimismSlaveDomain = bytes32('KOVAN-SLAVE-OPTIMISM-1')
@@ -45,7 +45,7 @@ async function main() {
     l2DaiTokenBridge: optimismKovanSdk.optimismDaiBridge.l2DAITokenBridge,
   }
 
-  const wormholeSdk = await deployWormhole({
+  const teleportSdk = await deployTeleport({
     defaultSigner: l1Signer,
     makerSdk: kovanSdk.maker,
     ilk,
@@ -54,11 +54,11 @@ async function main() {
     globalFeeTTL: feeTTL,
   })
 
-  const wormholeBridgeSdk = await deployOptimismWormholeBridge({
+  const teleportBridgeSdk = await deployOptimismTeleportBridge({
     makerSdk: kovanSdk.maker,
     l1Signer,
     l2Signer,
-    wormholeSdk,
+    teleportSdk,
     baseBridgeSdk,
     slaveDomain: optimismSlaveDomain,
     optimismRollupSdk,
@@ -67,16 +67,16 @@ async function main() {
   await performSanityChecks(
     l1Signer,
     kovanSdk.maker,
-    wormholeSdk,
+    teleportSdk,
     baseBridgeSdk,
-    wormholeBridgeSdk,
+    teleportBridgeSdk,
     l1StartingBlock,
     l2StartingBlock,
     false,
   )
 
-  console.log('Wormhole: ', getSdkAddresses(wormholeSdk))
-  console.log('Optimism wormhole bridge: ', getSdkAddresses(wormholeBridgeSdk))
+  console.log('Teleport: ', getSdkAddresses(teleportSdk))
+  console.log('Optimism teleport bridge: ', getSdkAddresses(teleportBridgeSdk))
 }
 
 async function setupSigners() {

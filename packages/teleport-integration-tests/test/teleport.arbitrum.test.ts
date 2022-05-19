@@ -1,8 +1,8 @@
 import { ethers } from 'hardhat'
 
 import { setupArbitrumTests } from './arbitrum'
-import { runWormholeTests } from './wormhole.test'
+import { runTeleportTests } from './teleport'
 
 const arbitrumDomain = ethers.utils.formatBytes32String('ARBITRUM-A')
 
-runWormholeTests(arbitrumDomain, setupArbitrumTests)
+runTeleportTests(arbitrumDomain, setupArbitrumTests)

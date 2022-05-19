@@ -13,12 +13,15 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.6.11;
-pragma experimental ABIEncoderV2;
+pragma solidity >=0.7.6;
+pragma abicoder v2;
 
-import {WormholeGUID, WormholeGUIDHelper} from "../common/WormholeGUID.sol";
-import {IL1WormholeGateway, IL2WormholeGateway} from "../common/WormholeInterfaces.sol";
-import "./L2CrossDomainEnabled.sol";
+import {iOVM_L1ERC20Bridge} from "@eth-optimism/contracts/iOVM/bridge/tokens/iOVM_L1ERC20Bridge.sol";
+import {iOVM_L2ERC20Bridge} from "@eth-optimism/contracts/iOVM/bridge/tokens/iOVM_L2ERC20Bridge.sol";
+import {OVM_CrossDomainEnabled} from "@eth-optimism/contracts/libraries/bridge/OVM_CrossDomainEnabled.sol";
+import {OVM_L2CrossDomainMessenger} from "@eth-optimism/contracts/OVM/bridge/messaging/OVM_L2CrossDomainMessenger.sol";
+import {TeleportGUID, addressToBytes32} from "../common/TeleportGUID.sol";
+import {IL1TeleportGateway, IL2TeleportGateway} from "../common/TeleportInterfaces.sol";
 
 interface Mintable {
   function mint(address usr, uint256 wad) external;
@@ -26,7 +29,7 @@ interface Mintable {
   function burn(address usr, uint256 wad) external;
 }
 
-contract L2DaiWormholeGateway is L2CrossDomainEnabled, IL2WormholeGateway {
+contract L2DaiTeleportGateway is OVM_CrossDomainEnabled, IL2TeleportGateway {
   // --- Auth ---
   mapping(address => uint256) public wards;
 
@@ -41,15 +44,14 @@ contract L2DaiWormholeGateway is L2CrossDomainEnabled, IL2WormholeGateway {
   }
 
   modifier auth() {
-    require(wards[msg.sender] == 1, "L2DaiWormholeGateway/not-authorized");
+    require(wards[msg.sender] == 1, "L2DaiTeleportGateway/not-authorized");
     _;
   }
 
   address public immutable override l2Token;
-  address public immutable override l1WormholeGateway;
+  address public immutable override l1TeleportGateway;
   bytes32 public immutable override domain;
   uint256 public isOpen = 1;
-  uint80 public nonce;
   mapping(bytes32 => uint256) public validDomains;
   mapping(bytes32 => uint256) public batchedDaiToFlush;
 
@@ -59,15 +61,16 @@ contract L2DaiWormholeGateway is L2CrossDomainEnabled, IL2WormholeGateway {
   event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
 
   constructor(
+    address _l2CrossDomainMessenger,
     address _l2Token,
-    address _l1WormholeGateway,
+    address _l1TeleportGateway,
     bytes32 _domain
-  ) public {
+  ) OVM_CrossDomainEnabled(_l2CrossDomainMessenger) {
     wards[msg.sender] = 1;
     emit Rely(msg.sender);
 
     l2Token = _l2Token;
-    l1WormholeGateway = _l1WormholeGateway;
+    l1TeleportGateway = _l1TeleportGateway;
     domain = _domain;
   }
 
@@ -83,67 +86,66 @@ contract L2DaiWormholeGateway is L2CrossDomainEnabled, IL2WormholeGateway {
     uint256 data
   ) external auth {
     if (what == "validDomains") {
-      require(data <= 1, "L2DaiWormholeGateway/invalid-data");
+      require(data <= 1, "L2DaiTeleportGateway/invalid-data");
 
       validDomains[domain] = data;
     } else {
-      revert("L2DaiWormholeGateway/file-unrecognized-param");
+      revert("L2DaiTeleportGateway/file-unrecognized-param");
     }
     emit File(what, domain, data);
   }
 
-  function initiateWormhole(
+  function initiateTeleport(
     bytes32 targetDomain,
     address receiver,
     uint128 amount
   ) external override {
-    return
-      _initiateWormhole(targetDomain, WormholeGUIDHelper.addressToBytes32(receiver), amount, 0);
+    return _initiateTeleport(targetDomain, addressToBytes32(receiver), amount, 0);
   }
 
-  function initiateWormhole(
+  function initiateTeleport(
     bytes32 targetDomain,
     address receiver,
     uint128 amount,
     address operator
   ) external override {
     return
-      _initiateWormhole(
+      _initiateTeleport(
         targetDomain,
-        WormholeGUIDHelper.addressToBytes32(receiver),
+        addressToBytes32(receiver),
         amount,
-        WormholeGUIDHelper.addressToBytes32(operator)
+        addressToBytes32(operator)
       );
   }
 
-  function initiateWormhole(
+  function initiateTeleport(
     bytes32 targetDomain,
     bytes32 receiver,
     uint128 amount,
     bytes32 operator
   ) external override {
-    return _initiateWormhole(targetDomain, receiver, amount, operator);
+    return _initiateTeleport(targetDomain, receiver, amount, operator);
   }
 
-  function _initiateWormhole(
+  function _initiateTeleport(
     bytes32 targetDomain,
     bytes32 receiver,
     uint128 amount,
     bytes32 operator
   ) private {
-    // Disallow initiating new wormhole transfer if bridge is closed
-    require(isOpen == 1, "L2DaiWormholeGateway/closed");
+    // Disallow initiating new teleport transfer if gateway is closed
+    require(isOpen == 1, "L2DaiTeleportGateway/closed");
 
-    // Disallow initiating new wormhole transfer if targetDomain has not been whitelisted
-    require(validDomains[targetDomain] == 1, "L2DaiWormholeGateway/invalid-domain");
+    // Disallow initiating new teleport transfer if targetDomain has not been whitelisted
+    require(validDomains[targetDomain] == 1, "L2DaiTeleportGateway/invalid-domain");
 
-    WormholeGUID memory wormhole = WormholeGUID({
+    TeleportGUID memory teleport = TeleportGUID({
       sourceDomain: domain,
       targetDomain: targetDomain,
       receiver: receiver,
       operator: operator,
       amount: amount,
-      nonce: nonce++,
+      nonce: uint80(OVM_L2CrossDomainMessenger(address(getCrossDomainMessenger())).messageNonce()), // gas optimization, we don't need to maintain our own nonce
       timestamp: uint48(block.timestamp)
     });
 
@@ -151,27 +153,27 @@ contract L2DaiWormholeGateway is L2CrossDomainEnabled, IL2WormholeGateway {
     Mintable(l2Token).burn(msg.sender, amount);
 
     bytes memory message = abi.encodeWithSelector(
-      IL1WormholeGateway.finalizeRegisterWormhole.selector,
-      wormhole
+      IL1TeleportGateway.finalizeRegisterTeleport.selector,
+      teleport
     );
-    sendTxToL1(msg.sender, l1WormholeGateway, message);
+    sendCrossDomainMessage(l1TeleportGateway, 0, message);
 
-    emit WormholeInitialized(wormhole);
+    emit TeleportInitialized(teleport);
   }
 
   function flush(bytes32 targetDomain) external override {
     // We do not check for valid domain because previously valid domains still need their DAI flushed
     uint256 daiToFlush = batchedDaiToFlush[targetDomain];
-    require(daiToFlush > 0, "L2DaiWormholeGateway/zero-dai-flush");
+    require(daiToFlush > 0, "L2DaiTeleportGateway/zero-dai-flush");
 
     batchedDaiToFlush[targetDomain] = 0;
 
     bytes memory message = abi.encodeWithSelector(
-      IL1WormholeGateway.finalizeFlush.selector,
+      IL1TeleportGateway.finalizeFlush.selector,
       targetDomain,
       daiToFlush
     );
-    sendTxToL1(msg.sender, l1WormholeGateway, message);
+    sendCrossDomainMessage(l1TeleportGateway, 0, message);
 
     emit Flushed(targetDomain, daiToFlush);
   }

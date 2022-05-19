@@ -20,7 +20,7 @@ interface DaiLike {
   function rely(address usr) external;
 }
 
-interface WormholeBridgeLike {
+interface TeleportGatewayLike {
   function file(
     bytes32 what,
     bytes32 domain,
@@ -28,25 +28,17 @@ interface WormholeBridgeLike {
   ) external;
 }
 
-contract L2AddWormholeDomainSpell {
-  DaiLike public immutable dai;
-  WormholeBridgeLike public immutable wormholeBridge;
-  bytes32 public immutable masterDomain;
-
-  constructor(
-    DaiLike _dai,
-    WormholeBridgeLike _wormholeBridge,
-    bytes32 _masterDomain
-  ) {
-    dai = _dai;
-    wormholeBridge = _wormholeBridge;
-    masterDomain = _masterDomain;
-  }
-
+contract L2KovanAddTeleportDomainSpell {
   function execute() external {
-    // wormhole bridge has to burn without approval
-    dai.rely(address(wormholeBridge));
+    DaiLike dai = DaiLike(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
+    TeleportGatewayLike teleportGateway = TeleportGatewayLike(
+      0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0
+    );
+    bytes32 masterDomain = "KOVAN-MASTER-1";
 
-    wormholeBridge.file(bytes32("validDomains"), masterDomain, 1);
+    // teleport gateway has to burn without approval
+    dai.rely(address(teleportGateway));
+
+    teleportGateway.file(bytes32("validDomains"), masterDomain, 1);
   }
 }

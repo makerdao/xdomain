@@ -1,11 +1,11 @@
-# Wormhole integration tests
+# Teleport integration tests
 
 Gathers all related repos (`./repos`) and runs a suite of integration tests using forked networks.
 
 ## Running
 
 ```sh
-git clone git@github.com:makerdao/wormhole-integration-tests.git # clone this repo
+git clone git@github.com:makerdao/teleport-integration-tests.git # clone this repo
 
 git submodule update --init --recursive # init submodules
 
@@ -21,36 +21,36 @@ yarn test
 If you wish to quickly test some changes in smart contract code, just tweak source in `repos` dir and re-run
 `./scripts/setup.sh`.
 
-# Wormhole test deployment
+# Teleport test deployment
 
 ## Arbitrum testnet
 
-1. Set the name of the new ilk in `deployment/rinkeby/deploy-wormhole.ts` then run
-   `npx hardhat run deployment/rinkeby/deploy-wormhole.ts` to deploy `dss-wormhole` and `arbitrum-dai-bridge` Wormhole
+1. Set the name of the new ilk in `deployment/rinkeby/deploy-teleport.ts` then run
+   `npx hardhat run deployment/rinkeby/deploy-teleport.ts` to deploy `dss-teleport` and `arbitrum-dai-bridge` Teleport
    contracts.
 
-2. Set the address of the newly deployed `wormholeBridge` (L2WormholeGateway) in
-   `contracts/deploy/rinkeby/L2RinkebyAddWormholeDomainSpell.sol` and deploy this L2 spell on arbitrum-testnet.
+2. Set the address of the newly deployed `teleportBridge` (L2TeleportGateway) in
+   `contracts/deploy/rinkeby/L2RinkebyAddTeleportDomainSpell.sol` and deploy this L2 spell on arbitrum-testnet.
 
 3. Run `npx hardhat run deployment/rinkeby/print-relay-params.ts` and copy the printed values into
-   `contracts/deploy/rinkeby/L1RinkebyAddWormholeDomainSpell.sol`.
+   `contracts/deploy/rinkeby/L1RinkebyAddTeleportDomainSpell.sol`.
 
-4. Set the addresses of the newly deployed `wormholeJoin`, `router` (WormholeRouter), `oracleAuth` (WormholeOracleAuth),
-   `constantFees` (TeleportConstantFees), `trustedRelay` (TrustedRelay), `slaveDomainBridge` (L1WormholeGateway) and
-   `l2ConfigureDomainSpell` (L2RinkebyAddWormholeDomainSpell) in
-   `contracts/deploy/rinkeby/L1RinkebyAddWormholeDomainSpell.sol`.
+4. Set the addresses of the newly deployed `teleportJoin`, `router` (TeleportRouter), `oracleAuth` (TeleportOracleAuth),
+   `constantFees` (TeleportConstantFees), `trustedRelay` (TrustedRelay), `slaveDomainBridge` (L1TeleportGateway) and
+   `l2ConfigureDomainSpell` (L2RinkebyAddTeleportDomainSpell) in
+   `contracts/deploy/rinkeby/L1RinkebyAddTeleportDomainSpell.sol`.
 
 5. Run `npx hardhat run deployment/rinkeby/cast-l1-spell.ts` to deploy and cast the L1 spell on rinkeby. Wait ~5 minutes
    for the execution of the L2 spell to be confirmed.
 
-6. To validate the resulting changes, copy the addresses of the newly deployed `oracleAuth` and `l2WormholeGateway` into
+6. To validate the resulting changes, copy the addresses of the newly deployed `oracleAuth` and `l2TeleportGateway` into
    `deployment/rinkeby/test-e2e.ts` and run `npx hardhat run deployment/rinkeby/test-e2e.ts`.
 
 ### Latest deployment
 
 ```
 {
-   "Wormhole": {
+   "Teleport": {
       "join": "0x894DB23D804c626f1aAA89a2Bc3280052e6c4750",
       "oracleAuth": "0x1E7722E502D3dCbB0704f99c75c99a5402598f13",
       "router": "0x26266ff35E2d69C6a2DC3fAE9FA71456043a0611",
@@ -59,9 +59,9 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
       "trustedRelay": "0xef4dF54E711e0d42754a12e85fD4186f8fF2c7A7",
    }
 
-   "Arbitrum wormhole gateways": {
-      "l2WormholeGateway": "0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3",
-      "l1WormholeGateway": "0x7b84fFac4A71fE09b14CfF4E0A6429dFfa78630D"
+   "Arbitrum teleport gateways": {
+      "l2TeleportGateway": "0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3",
+      "l1TeleportGateway": "0x7b84fFac4A71fE09b14CfF4E0A6429dFfa78630D"
    }
 
    "Legacy (slow) Dai withdrawal bridge": {
@@ -82,19 +82,19 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
 
 ### Instructions
 
-1. Set the name of the new ilk in `deployment/kovan/deploy-wormhole.ts` then run
-   `npx hardhat run deployment/kovan/deploy-wormhole.ts` to deploy `dss-wormhole` and `optimism-dai-bridge` Wormhole
+1. Set the name of the new ilk in `deployment/kovan/deploy-teleport.ts` then run
+   `npx hardhat run deployment/kovan/deploy-teleport.ts` to deploy `dss-teleport` and `optimism-dai-bridge` Teleport
    contracts.
 
-2. Set the address of the newly deployed `wormholeGateway` (L2WormholeGateway) in
-   `contracts/deploy/kovan/L2KovanAddWormholeDomainSpell.sol` and deploy this L2 spell on optimistic-kovan.
+2. Set the address of the newly deployed `teleportGateway` (L2TeleportGateway) in
+   `contracts/deploy/kovan/L2KovanAddTeleportDomainSpell.sol` and deploy this L2 spell on optimistic-kovan.
 
-3. Set the addresses of the newly deployed `wormholeJoin`, `router` (WormholeRouter), `oracleAuth` (WormholeOracleAuth),
-   `constantFees` (TeleportConstantFees), `trustedRelay` (TrustedRelay), `slaveDomainGateway` (L1WormholeGateway) and
-   `l2ConfigureDomainSpell` (L2RinkebyAddWormholeDomainSpell) in
-   `contracts/deploy/kovan/L1KovanAddWormholeDomainSpell.sol` and deploy this L1 spell on kovan.
+3. Set the addresses of the newly deployed `teleportJoin`, `router` (TeleportRouter), `oracleAuth` (TeleportOracleAuth),
+   `constantFees` (TeleportConstantFees), `trustedRelay` (TrustedRelay), `slaveDomainGateway` (L1TeleportGateway) and
+   `l2ConfigureDomainSpell` (L2RinkebyAddTeleportDomainSpell) in
+   `contracts/deploy/kovan/L1KovanAddTeleportDomainSpell.sol` and deploy this L1 spell on kovan.
 
-4. To test the L2 spell, copy the addresses of the newly deployed `l2Spell` and `l2WormholeGateway` into
+4. To test the L2 spell, copy the addresses of the newly deployed `l2Spell` and `l2TeleportGateway` into
    `deployment/kovan/test-l2-spell.ts`, spin up a local hardhark fork of optimistic-kovan and run
    `npx hardhat run deployment/kovan/test-l2-spell.ts --network localhost`
 
@@ -104,14 +104,14 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
 
 6. Cast the L1 spell
 
-7. To validate the resulting changes, copy the addresses of the newly deployed `oracleAuth` and `l2WormholeGateway` into
+7. To validate the resulting changes, copy the addresses of the newly deployed `oracleAuth` and `l2TeleportGateway` into
    `deployment/kovan/test-e2e.ts` and run `npx hardhat run deployment/kovan/test-e2e.ts`.
 
 ### Latest deployment
 
 ```
 {
-   "Wormhole": {
+   "Teleport": {
       "join": "0x556D9076A42Bba1892E3F4cA331daE587185Cef9",
       "oracleAuth": "0x0b0D629e294Af96A6cc245a89A5CEa92C8Be9da4",
       "router": "0xb15e4cfb29C587c924f547c4Fcbf440B195f3EF8",
@@ -120,9 +120,9 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
       "trustedRelay": "0xAAFa36901AdC6C03df8B935fFA129677D1D7Eb81"
    },
 
-   "Optimism wormhole gateways": {
-      "l2WormholeGateway": "0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0",
-      "l1WormholeGateway": "0xBD8605d11b8D3557b7399eFE1866992Eed6F9A7c"
+   "Optimism teleport gateways": {
+      "l2TeleportGateway": "0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0",
+      "l1TeleportGateway": "0xBD8605d11b8D3557b7399eFE1866992Eed6F9A7c"
    }
 
    "Spells": {

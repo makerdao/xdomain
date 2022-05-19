@@ -5,7 +5,7 @@ import { assert } from 'ts-essentials'
 import {
   BasicRelay,
   BasicRelay__factory,
-  L1ConfigureWormholeSpell__factory,
+  L1ConfigureTeleportSpell__factory,
   TrustedRelay,
   TrustedRelay__factory,
   TeleportConstantFee,
@@ -22,9 +22,9 @@ import { RelayTxToL2Function } from './messages'
 import { MakerSdk } from './setup'
 import { executeSpell } from './spell'
 
-export const OPTIMISTIC_ROLLUP_FLUSH_FINALIZATION_TIME = 60 * 60 * 24 * 8 // flush should happen more or less, 1 day after initWormhole, and should take 7 days to finalize
+export const OPTIMISTIC_ROLLUP_FLUSH_FINALIZATION_TIME = 60 * 60 * 24 * 8 // flush should happen more or less, 1 day after initTeleport, and should take 7 days to finalize
 
-export async function deployWormhole({
+export async function deployTeleport({
   defaultSigner,
   makerSdk,
   ilk,
@@ -111,43 +111,43 @@ export async function deployWormhole({
 
   return { join, oracleAuth, router, constantFee, basicRelay, trustedRelay }
 }
-export type WormholeSdk = Awaited<ReturnType<typeof deployWormhole>>
+export type TeleportSdk = Awaited<ReturnType<typeof deployTeleport>>
 
-export async function configureWormhole({
+export async function configureTeleport({
   makerSdk,
-  wormholeSdk,
+  teleportSdk,
   joinDomain,
   defaultSigner,
   domain,
   oracleAddresses,
   globalLine,
   relayTxToL2,
-  addWormholeDomainSpell,
+  addTeleportDomainSpell,
 }: {
   makerSdk: MakerSdk
-  wormholeSdk: WormholeSdk
+  teleportSdk: TeleportSdk
   joinDomain: string
   defaultSigner: Signer
   domain: string
   oracleAddresses: string[]
   globalLine: BigNumber
   relayTxToL2: RelayTxToL2Function
-  addWormholeDomainSpell: Contract
+  addTeleportDomainSpell: Contract
 }) {
   assert(oracleAddresses.length === 3, 'Expected exactly 3 oracles for tests')
-  const L1ConfigureWormholeSpellFactory = getContractFactory<L1ConfigureWormholeSpell__factory>(
-    'L1ConfigureWormholeSpell',
+  const L1ConfigureTeleportSpellFactory = getContractFactory<L1ConfigureTeleportSpell__factory>(
+    'L1ConfigureTeleportSpell',
     defaultSigner,
   )
-  console.log('Executing spell to configure wormhole')
-  const configureSpell = await L1ConfigureWormholeSpellFactory.deploy(
+  console.log('Executing spell to configure teleport')
+  const configureSpell = await L1ConfigureTeleportSpellFactory.deploy(
     joinDomain,
-    wormholeSdk.join.address,
+    teleportSdk.join.address,
     makerSdk.vow.address,
     makerSdk.vat.address,
     globalLine,
-    wormholeSdk.router.address,
-    wormholeSdk.oracleAuth.address,
+    teleportSdk.router.address,
+    teleportSdk.oracleAuth.address,
     oracleAddresses[0],
     oracleAddresses[1],
     oracleAddresses[2],
@@ -155,7 +155,7 @@ export async function configureWormhole({
   await executeSpell(defaultSigner, makerSdk, configureSpell)
 
   console.log(`Executing spell to add domain ${ethers.utils.parseBytes32String(domain)}...`)
-  const spellExecutionTx = await executeSpell(defaultSigner, makerSdk, addWormholeDomainSpell)
+  const spellExecutionTx = await executeSpell(defaultSigner, makerSdk, addTeleportDomainSpell)
 
   console.log('Waiting for xchain spell to execute')
   await relayTxToL2(spellExecutionTx)

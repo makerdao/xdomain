@@ -7,7 +7,7 @@ import {
   FileJoinLineSpell__factory,
   PushBadDebtSpell__factory,
   TeleportConstantFee__factory,
-} from '../../typechain/'
+} from '../../typechain'
 import { deployUsingFactory, getContractFactory, impersonateAccount, waitForTx } from '../helpers'
 import { MakerSdk } from '.'
 
