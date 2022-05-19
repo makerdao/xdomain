@@ -8,6 +8,7 @@
   "license": "AGPL-3.0",
   "main": "dist/index.js",
   "scripts": {
+    "postinstall": "yarn eth-sdk",
     "start": "node -r esbuild-register ./src",
     "format": "prettier --check \"./**/*.ts\"",
     "format:fix": "prettier --write \"./**/*.ts\"",
@@ -52,6 +53,7 @@
     "mocha": "^10.0.0",
     "prettier": "^2.5.1",
     "prisma": "^3.14.0",
+    "ts-node": "^10.7.0",
     "typescript": "^4.5.5",
     "wait-for-expect": "^3.0.2"
   }
