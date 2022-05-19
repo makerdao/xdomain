@@ -6,11 +6,11 @@ import { ethers } from 'hardhat'
 
 import {
   BasicRelay,
-  TrustedRelay,
   TeleportConstantFee,
   TeleportJoin,
   TeleportOracleAuth,
   TeleportRouter,
+  TrustedRelay,
 } from '../../typechain'
 import { BaseBridgeSdk, DaiLike, L1EscrowLike, TeleportBridgeSdk } from '.'
 import { performSanityChecks } from './checks'

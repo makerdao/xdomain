@@ -6,8 +6,6 @@ import {
   BasicRelay,
   BasicRelay__factory,
   L1ConfigureTeleportSpell__factory,
-  TrustedRelay,
-  TrustedRelay__factory,
   TeleportConstantFee,
   TeleportConstantFee__factory,
   TeleportJoin,
@@ -16,6 +14,8 @@ import {
   TeleportOracleAuth__factory,
   TeleportRouter,
   TeleportRouter__factory,
+  TrustedRelay,
+  TrustedRelay__factory,
 } from '../../typechain'
 import { deployUsingFactoryAndVerify, getContractFactory, waitForTx } from '../helpers'
 import { RelayTxToL2Function } from './messages'

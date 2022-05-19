@@ -3,12 +3,12 @@ import { constants, ethers, Signer } from 'ethers'
 
 import {
   OptimismDai__factory,
-  OptimismL1DAITokenBridge__factory,
   OptimismL1DaiTeleportGateway__factory,
+  OptimismL1DAITokenBridge__factory,
   OptimismL1Escrow__factory,
   OptimismL1GovernanceRelay__factory,
-  OptimismL2DAITokenBridge__factory,
   OptimismL2DaiTeleportGateway__factory,
+  OptimismL2DAITokenBridge__factory,
   OptimismL2GovernanceRelay__factory,
 } from '../../typechain'
 import { deployUsingFactoryAndVerify, getContractFactory, mintEther } from '../helpers'

@@ -4,7 +4,7 @@ import { Wallet } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
 import { ethers } from 'hardhat'
 
-import { BasicRelay, TrustedRelay, TeleportJoin, TeleportOracleAuth, TeleportRouter } from '../typechain'
+import { BasicRelay, TeleportJoin, TeleportOracleAuth, TeleportRouter, TrustedRelay } from '../typechain'
 import { toEthersBigNumber, toRad, toRay, toWad, waitForTx } from './helpers'
 import {
   callBasicRelay,
