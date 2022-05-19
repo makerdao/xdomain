@@ -3,9 +3,9 @@ import { BigNumber, ethers, providers } from 'ethers'
 
 import { onEveryFinalizedBlock } from './blockchain'
 import { bridgeInvariant } from './monitoring/bridgeInvariant'
-import { syncWormholeInits } from './monitoring/wormholeInits'
 import { monitorWormholeMints } from './monitoring/wormholeMints'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from './sdks'
+import { syncWormholeInits } from './sync/wormholeInits'
 import { Metrics, NetworkConfig } from './types'
 
 export async function monitor(network: NetworkConfig, l1Provider: providers.Provider, prisma: PrismaClient) {
