@@ -34,7 +34,7 @@ async function main() {
 }
 
 async function setupSigners() {
-  const l1Rpc = getRequiredEnv('RINKEBY_ARBITRUM_L1_RPC')
+  const l1Rpc = getRequiredEnv('RINKEBY_RPC_URL')
   const l2Rpc = getRequiredEnv('RINKEBY_ARBITRUM_L2_RPC')
   const deployerPrivKey = getRequiredEnv('RINKEBY_ARBITRUM_DEPLOYER_PRIV_KEY')
   const l1Provider = new ethers.providers.JsonRpcProvider(l1Rpc)

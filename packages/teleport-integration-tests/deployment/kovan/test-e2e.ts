@@ -85,7 +85,7 @@ async function main() {
 }
 
 async function setupSigners() {
-  const l1Rpc = getRequiredEnv('KOVAN_OPTIMISM_L1_RPC')
+  const l1Rpc = getRequiredEnv('KOVAN_RPC_URL')
   const l2Rpc = getRequiredEnv('KOVAN_OPTIMISM_L2_RPC')
   const deployerPrivKey = getRequiredEnv('KOVAN_OPTIMISM_DEPLOYER_PRIV_KEY')
   const l1Provider = new ethers.providers.JsonRpcProvider(l1Rpc)
