@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client'
 import { ethers } from 'ethers'
 
 import { idsToChains, networks } from './config'
@@ -14,7 +15,10 @@ export async function main(l1Rpc: string) {
     throw new Error(`Can't find config for network with id: ${chainId}`)
   }
 
+  const prisma = new PrismaClient()
+  await prisma.$connect()
+
   console.log(`Loaded config for ${networkName}`)
 
-  await monitor(network, l1Provider)
+  await monitor(network, l1Provider, prisma)
 }

@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client'
 import { BigNumber, ethers, providers } from 'ethers'
 
 import { onEveryFinalizedBlock } from './blockchain'
@@ -8,7 +9,7 @@ import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from './sdks'
 import { startServer } from './server'
 import { Metrics, NetworkConfig } from './types'
 
-export async function monitor(network: NetworkConfig, l1Provider: providers.Provider) {
+export async function monitor(network: NetworkConfig, l1Provider: providers.Provider, prisma: PrismaClient) {
   const metrics: Metrics = {}
 
   const l1Sdk = getL1SdkBasedOnNetworkName(network.sdkName, l1Provider)
@@ -19,17 +20,19 @@ export async function monitor(network: NetworkConfig, l1Provider: providers.Prov
     const l2Sdk = getL2SdkBasedOnNetworkName(domain.sdkName, l2Provider)
 
     const ctx = await syncWormholeInits({
+      domainName: domain.name,
       l2Provider,
       l2Sdk,
       blocksPerBatch: domain.syncBatchSize,
       startingBlock: domain.bridgeDeploymentBlock,
+      prisma,
     })
 
     await onEveryFinalizedBlock(async (blockNumber) => {
       console.log(`New block finalized: ${blockNumber}`)
 
       if (ctx.isSynced) {
-        const newBadDebt = await monitorWormholeMints(ctx.wormholes, blockNumber, l1Sdk)
+        const newBadDebt = await monitorWormholeMints(blockNumber, l1Sdk, prisma)
         const previousBadDebt = BigNumber.from(metrics[`${domain.name}_wormhole_bad_debt`] || 0)
 
         metrics[`${domain.name}_wormhole_bad_debt`] = previousBadDebt.add(newBadDebt).toString()

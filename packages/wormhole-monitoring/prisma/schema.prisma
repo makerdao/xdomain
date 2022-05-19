@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Wormhole {
+  id           Int    @id @default(autoincrement())
+  hash         String @unique
+  sourceDomain String
+  targetDomain String
+  receiver     String
+  operator     String
+  amount       String
+  nonce        String
+  timestamp    Int
+}
+
+model SyncStatus {
+  id     Int    @id @default(autoincrement())
+  domain String @unique
+  block  Int
+}
