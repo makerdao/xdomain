@@ -18,14 +18,14 @@ const config: HardhatUserConfig = {
       // prevents gas estimations problems
       gas: 'auto',
       forking: {
-        url: process.env.KOVAN_OPTIMISM_L1_RPC || '',
+        url: process.env.KOVAN_RPC_URL || '',
       },
     },
     kovan: {
-      url: process.env.KOVAN_OPTIMISM_L1_RPC || '',
+      url: process.env.KOVAN_RPC_URL || '',
     },
     rinkeby: {
-      url: process.env.RINKEBY_ARBITRUM_L1_RPC || '',
+      url: process.env.RINKEBY_RPC_URL || '',
     },
   },
   mocha: {
