@@ -1,0 +1,6 @@
+[submodule "packages/teleport-integration-tests/repos/optimism-monorepo"]
+	path = packages/teleport-integration-tests/repos/optimism-monorepo
+	url = https://github.com/ethereum-optimism/optimism.git
+[submodule "packages/teleport-integration-tests/repos/dss-teleport"]
+	path = packages/teleport-integration-tests/repos/dss-teleport
+	url = https://github.com/makerdao/dss-teleport.git
