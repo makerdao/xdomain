@@ -18,6 +18,13 @@ L1_RPC - rpc
 PRIV_KEY - priv key
 ```
 
+### Funding accounts
+
+As mentioned before, keeper requires funds on both on L1 and L2. To fund it you might need to use bridge ETH:
+
+- https://app.optimism.io/bridge
+- https://bridge.arbitrum.io/
+
 ### Timeout
 
 Docker container will automatically timeout after 10 minutes. This could happen if one of the tx got stuck due to a
