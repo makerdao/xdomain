@@ -1,8 +1,0 @@
-[submodule "repos/optimism-monorepo"]
-	path = repos/optimism-monorepo
-	url = https://github.com/ethereum-optimism/optimism.git
-	ignore = dirty
-
-[submodule "repos/dss-teleport"]
-	path = repos/dss-teleport
-	url = https://github.com/makerdao/dss-teleport.git

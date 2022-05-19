@@ -8,7 +8,7 @@ on:
 
 jobs:
   teleport-integration-tests:
-    name: Teleport integration tests
+    name: Tests
     defaults:
       run:
         working-directory: ./packages/teleport-integration-tests
