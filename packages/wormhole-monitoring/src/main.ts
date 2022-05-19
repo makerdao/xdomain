@@ -3,6 +3,7 @@ import { ethers } from 'ethers'
 
 import { idsToChains, networks } from './config'
 import { monitor } from './monitor'
+import { startServer } from './server'
 
 export async function main(l1Rpc: string) {
   const l1Provider = new ethers.providers.JsonRpcProvider(l1Rpc)
@@ -20,5 +21,7 @@ export async function main(l1Rpc: string) {
 
   console.log(`Loaded config for ${networkName}`)
 
-  await monitor(network, l1Provider, prisma)
+  const { metrics } = await monitor(network, l1Provider, prisma)
+
+  await Promise.all([startServer(metrics)])
 }

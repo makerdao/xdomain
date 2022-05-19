@@ -14,7 +14,9 @@
     "lint": "eslint --ext .ts src",
     "lint:fix": "yarn lint --fix",
     "typecheck": "tsc --noEmit",
-    "build": "rm -rf ./dist && tsc -p ./tsconfig.build.json"
+    "build": "rm -rf ./dist && tsc -p ./tsconfig.build.json",
+    "test": "mocha 'src/**/*.test.ts'",
+    "test:e2e": "mocha 'test-e2e/**/*.test.ts'"
   },
   "types": "dist/index.d.ts",
   "dependencies": {
@@ -29,6 +31,7 @@
   },
   "devDependencies": {
     "@dethcrypto/eth-sdk": "^0.3.2",
+    "@nomiclabs/hardhat-ethers": "^2.0.6",
     "@types/glob": "^7.2.0",
     "@types/lodash": "^4.14.181",
     "@types/mocha": "^9.1.1",
@@ -44,10 +47,12 @@
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "eslint-plugin-sonarjs": "^0.12.0",
     "eslint-plugin-unused-imports": "^2.0.0",
+    "hardhat": "^2.9.5",
     "lodash": "^4.17.21",
     "mocha": "^10.0.0",
     "prettier": "^2.5.1",
     "prisma": "^3.14.0",
-    "typescript": "^4.5.5"
+    "typescript": "^4.5.5",
+    "wait-for-expect": "^3.0.2"
   }
 }

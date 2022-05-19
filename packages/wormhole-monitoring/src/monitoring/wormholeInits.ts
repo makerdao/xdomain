@@ -31,8 +31,12 @@ export async function syncWormholeInits({
   blocksPerBatch: number
   prisma: PrismaClient
 }) {
+  let cancelled = false
   const ctx = {
     isSynced: false,
+    cancel: () => {
+      cancelled = true
+    },
   }
 
   const syncStatus = await prisma.syncStatus.findUnique({ where: { domain: domainName } })
@@ -41,7 +45,8 @@ export async function syncWormholeInits({
   const filter = l2Sdk.wormholeGateway.filters.WormholeInitialized()
 
   setImmediate(async () => {
-    while (true) {
+    //eslint-disable-next-line
+    while (!cancelled) {
       const currentBlock = (await l2Provider.getBlock('latest')).number // note: getting block number directly doesnt work b/c optimism doesnt support it
       const boundaryBlock = Math.min(syncBlock + blocksPerBatch, currentBlock)
       console.log(`Syncing ${syncBlock}...${boundaryBlock} (${(boundaryBlock - syncBlock).toLocaleString()} blocks)`)

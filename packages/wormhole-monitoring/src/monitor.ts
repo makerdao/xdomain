@@ -6,13 +6,14 @@ import { bridgeInvariant } from './monitoring/bridgeInvariant'
 import { syncWormholeInits } from './monitoring/wormholeInits'
 import { monitorWormholeMints } from './monitoring/wormholeMints'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from './sdks'
-import { startServer } from './server'
 import { Metrics, NetworkConfig } from './types'
 
 export async function monitor(network: NetworkConfig, l1Provider: providers.Provider, prisma: PrismaClient) {
   const metrics: Metrics = {}
 
   const l1Sdk = getL1SdkBasedOnNetworkName(network.sdkName, l1Provider)
+
+  const cancelFns: (() => void)[] = []
 
   for (const domain of network.slaves) {
     console.log(`Setting up monitoring for ${domain.name}`)
@@ -28,7 +29,7 @@ export async function monitor(network: NetworkConfig, l1Provider: providers.Prov
       prisma,
     })
 
-    await onEveryFinalizedBlock(async (blockNumber) => {
+    const { cancel } = await onEveryFinalizedBlock(async (blockNumber) => {
       console.log(`New block finalized: ${blockNumber}`)
 
       if (ctx.isSynced) {
@@ -43,7 +44,13 @@ export async function monitor(network: NetworkConfig, l1Provider: providers.Prov
       metrics[`${domain.name}_wormhole_l2_dai_balance`] = balances.l2Balance
       metrics[`${domain.name}_wormhole_l1_block`] = await l1Provider.getBlockNumber()
     }, l1Provider)
+    cancelFns.push(ctx.cancel, cancel)
   }
 
-  await Promise.all([startServer(metrics)])
+  return {
+    metrics,
+    cancel: () => {
+      cancelFns.forEach((c) => c())
+    },
+  }
 }
