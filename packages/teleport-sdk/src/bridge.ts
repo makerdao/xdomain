@@ -74,7 +74,7 @@ export class TeleportBridge {
       return await _optionallySendTx(
         shouldSendTx,
         l2Bridge,
-        'initiateTeleport(bytes32,address,uint128,address)',
+        'initiateWormhole(bytes32,address,uint128,address)',
         [dstDomainBytes32, receiverAddress, amount, operatorAddress],
         overrides,
       )
@@ -83,7 +83,7 @@ export class TeleportBridge {
     return await _optionallySendTx(
       shouldSendTx,
       l2Bridge,
-      'initiateTeleport(bytes32,address,uint128)',
+      'initiateWormhole(bytes32,address,uint128)',
       [dstDomainBytes32, receiverAddress, amount],
       overrides,
     )

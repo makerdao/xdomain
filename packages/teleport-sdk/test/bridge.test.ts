@@ -235,11 +235,11 @@ describe('TeleportBridge', () => {
       // this L2 contract can initiate two teleports
       const multiWorm = new Contract(
         '0xc905d0b8b1993d37e8a7058f24fb9a677caf1479',
-        ['function initiateTeleport(bytes32,address,uint128,uint256)'],
+        ['function initiateWormhole(bytes32,address,uint128,uint256)'],
         l2User,
       )
       await (await dai.approve(multiWorm.address, ethers.constants.MaxUint256)).wait()
-      const tx = await multiWorm.initiateTeleport(formatBytes32String(dstDomain), l2User.address, 1, 1)
+      const tx = await multiWorm.initiateWormhole(formatBytes32String(dstDomain), l2User.address, 1, 1)
       const txHash = tx.hash
       const txReceipt = await tx.wait()
       const guids = (txReceipt.logs as { topics: string[]; data: string }[])

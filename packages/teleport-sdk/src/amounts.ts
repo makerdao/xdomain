@@ -45,7 +45,7 @@ export async function getFeesAndMintableAmounts(
       },
       {
         target: join,
-        method: 'teleports',
+        method: 'wormholes',
         params: [guidHash],
         outputTypes: ['bool blessed', 'uint248 pending'],
       },
