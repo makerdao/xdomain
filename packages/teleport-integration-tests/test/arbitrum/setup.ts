@@ -58,15 +58,15 @@ export async function setupArbitrumTests({
   const userEthAmount = ethers.utils.parseEther('0.1')
   if ((await l1User.getBalance()).lt(userEthAmount)) {
     console.log('Funding l1User ETH balance...')
-    await l1Signer.sendTransaction({ to: l1User.address, value: userEthAmount })
+    await (await l1Signer.sendTransaction({ to: l1User.address, value: userEthAmount })).wait()
   }
   if ((await l2Provider.getBalance(l1User.address)).lt(userEthAmount)) {
     console.log('Funding l2User ETH balance...')
-    await l2Signer.sendTransaction({ to: l1User.address, value: userEthAmount })
+    await (await l2Signer.sendTransaction({ to: l1User.address, value: userEthAmount })).wait()
   }
   if ((await makerSdk.dai.balanceOf(l1User.address)).lt(l2DaiAmount)) {
     console.log('Funding l1User DAI balance...')
-    await makerSdk.dai.transfer(l1User.address, l2DaiAmount)
+    await (await makerSdk.dai.transfer(l1User.address, l2DaiAmount)).wait()
   }
 
   const teleportSdk = await deployTeleport({
