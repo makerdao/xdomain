@@ -7,12 +7,12 @@ on:
   pull_request:
 
 jobs:
-  lint-wormhole-sdk:
-    name: Run wormhole-sdk Linters
+  lint-teleport-sdk:
+    name: Run teleport-sdk Linters
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./packages/wormhole-sdk
+        working-directory: ./packages/teleport-sdk
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2

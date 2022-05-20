@@ -1,4 +1,4 @@
-name: Testnet Wormhole Flush Keepers
+name: Testnet Teleport Flush Keepers
 
 on:
   push:
@@ -7,31 +7,31 @@ on:
   pull_request:
 
 jobs:
-  arbitrum-rinkeby-wormhole-keeper:
-    name: Arbitrum Rinkeby Wormhole Keeper
+  arbitrum-rinkeby-teleport-keeper:
+    name: Arbitrum Rinkeby Teleport Keeper
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./packages/wormhole-keeper
+        working-directory: ./packages/teleport-keeper
 
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
       - name: Build keeper container
-        run: docker build -t wormhole-keeper .
+        run: docker build -t teleport-keeper .
       - name: Run keeper container
-        run: docker run -t wormhole-keeper ${{ secrets.RINKEBY_RPC_URL }} ${{ secrets.TEST_KEEPER_PRIV_KEY }}
+        run: docker run -t teleport-keeper ${{ secrets.RINKEBY_RPC_URL }} ${{ secrets.TEST_KEEPER_PRIV_KEY }}
 
-  optimism-kovan-wormhole-keeper:
-    name: Optimism Kovan Wormhole Keeper
+  optimism-kovan-teleport-keeper:
+    name: Optimism Kovan Teleport Keeper
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./packages/wormhole-keeper
+        working-directory: ./packages/teleport-keeper
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
       - name: Build keeper container
-        run: docker build -t wormhole-keeper .
+        run: docker build -t teleport-keeper .
       - name: Run keeper container
-        run: docker run -t wormhole-keeper ${{ secrets.KOVAN_RPC_URL }} ${{ secrets.TEST_KEEPER_PRIV_KEY }}
+        run: docker run -t teleport-keeper ${{ secrets.KOVAN_RPC_URL }} ${{ secrets.TEST_KEEPER_PRIV_KEY }}
