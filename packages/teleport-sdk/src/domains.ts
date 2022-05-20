@@ -7,11 +7,11 @@ import {
   BasicRelay,
   Faucet,
   Multicall,
-  TrustedRelay,
-  Vat,
   TeleportJoin,
   TeleportOracleAuth,
   TeleportOutboundGateway,
+  TrustedRelay,
+  Vat,
 } from './sdk/esm/types'
 
 export interface TeleportSdk {

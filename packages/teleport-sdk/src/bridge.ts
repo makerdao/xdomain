@@ -15,9 +15,9 @@ import {
   isArbitrumMessageInOutbox,
   Relay,
   relayArbitrumMessage,
+  TeleportGUID,
   waitForAttestations,
   waitForRelay,
-  TeleportGUID,
 } from '.'
 
 const bytes32 = ethers.utils.formatBytes32String
