@@ -1,0 +1,39 @@
+name: Slither
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  analyze-optimism-dai-bridge:
+    name: Slither for optimism-dai-bridge
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/optimism-dai-bridge
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run Slither
+        uses: crytic/slither-action@v0.1.1
+        working-directory: ./packages/optimism-dai-bridge
+        with:
+          node-version: 12
+  analyze-arbitrum-dai-bridge:
+    name: Slither for arbitrum-dai-bridge
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/arbitrum-dai-bridge
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run Slither
+        uses: crytic/slither-action@v0.1.1
+        working-directory: ./packages/arbitrum-dai-bridge
+        with:
+          node-version: 12
