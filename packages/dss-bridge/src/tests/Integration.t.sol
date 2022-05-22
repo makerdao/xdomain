@@ -97,6 +97,9 @@ contract IntegrationTest is DSSTest {
     Vat vat;
     Dai dai;
     DaiJoin daiJoin;
+    Spotter spot;
+    End end;
+    Cure cure;
 
     bytes32 constant ILK = "SOME-DOMAIN-A";
 
@@ -111,6 +114,21 @@ contract IntegrationTest is DSSTest {
         dai = new Dai();
         daiJoin = new DaiJoin(address(vat), address(dai));
         dai.rely(address(daiJoin));
+        spot = new Spotter(address(vat));
+        vat.rely(address(spot));
+        cure = new Cure();
+        end = new End();
+        end.file("vat", address(vat));
+        end.file("vow", address(guest));
+        end.file("pot", address(pot));
+        end.file("spot", address(spot));
+        end.file("cure", address(cure));
+        end.file("claim", address(claimToken));
+        end.file("wait", 1 hours);
+        vat.rely(address(end));
+        spot.rely(address(end));
+        pot.rely(address(end));
+        cure.rely(address(end));
 
         claimToken = new ClaimToken();
         host = new SimpleDomainHost(ILK, address(mcd.daiJoin()), address(escrow));
@@ -119,7 +137,7 @@ contract IntegrationTest is DSSTest {
         host.setGuest(address(guest));
         host.rely(address(guest));
         guest.rely(address(host));
-        //guest.file("end", address(end));  // TODO add this when end is merged
+        guest.file("end", address(end));
 
         mcd.vat().setWard(address(this), 1);
         mcd.vat().setWard(address(host), 1);
@@ -268,6 +286,99 @@ contract IntegrationTest is DSSTest {
         assertEq(mcd.vat().dai(address(mcd.vow())), vowDai);
         assertEq(mcd.vat().sin(address(mcd.vow())), vowSin + 30 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 130 ether);
+    }
+
+    function initCollateral(bytes32 name) internal {
+        DSValue pip = new DSValue();
+        spot.file(name, "pip", address(pip));
+        spot.file(name, "mat", ray(1 ether));
+        pip.poke(bytes32(1 * WAD));
+        spot.poke(name);
+
+        vat.init(name);
+        vat.file(name, "line", rad(1_000_000 ether));
+    }
+
+    function testGlobalShutdown() public {
+        bytes32 ilk = "test-ilk";
+        EndAbstract hostEnd = EndAbstract(mcd.chainlog().getAddress(MCD_END));
+
+        // Set up some debt in the guest instance
+        host.lift(100 ether);
+        initCollateral(ilk);
+        vat.slip(ilk, address(this), 40 ether);
+        vat.frob(ilk, address(this), address(this), address(this), 40 ether, 40 ether);
+
+        assertEq(mcd.vat().live(), 1);
+        assertEq(guest.live(), 1);
+        assertEq(host.live(), 1);
+        assertEq(vat.live(), 1);
+        assertEq(vat.debt(), 40 * RAD);
+        (uint256 ink, uint256 art) = vat.urns(ilk, address(this));
+        assertEq(ink, 40 ether);
+        assertEq(art, 40 ether);
+
+        hostEnd.cage();
+        host.deny(address(this));       // Confirm cage can be done permissionlessly
+        host.cage();
+
+        assertEq(mcd.vat().live(), 0);
+        assertEq(guest.live(), 0);
+        assertEq(host.live(), 0);
+        assertEq(vat.live(), 0);
+        assertEq(vat.debt(), 40 * RAD);
+        (ink, art) = vat.urns(ilk, address(this));
+        assertEq(ink, 40 ether);
+        assertEq(art, 40 ether);
+        assertEq(vat.gems(ilk, address(end)), 0);
+        assertEq(vat.sin(address(guest)), 0);
+
+        // --- Settle out the Guest instance ---
+
+        end.cage(ilk);
+        end.skim(ilk, address(this));
+
+        (ink, art) = vat.urns(ilk, address(this));
+        assertEq(ink, 0);
+        assertEq(art, 0);
+        assertEq(vat.gems(ilk, address(end)), 40 ether);
+        assertEq(vat.sin(address(guest)), 40 * RAD);
+
+        GodMode.vm().warp(block.timestamp + end.wait());
+
+        end.thaw();
+
+        assertEq(guest.grain(), 100 ether);
+        assertEq(host.cure(), 60 * RAD);    // 60 pre-mint dai is unused
+
+        end.flow(ilk);
+
+        // --- Settle out the Host instance ---
+
+        (ink, art) = mcd.vat().urns(ILK, address(host));
+        assertEq(ink, 100 ether);
+        assertEq(art, 100 ether);
+        assertEq(mcd.vat().gems(ILK, address(hostEnd)), 0);
+        uint256 vowSin = mcd.vat().sin(address(mcd.vow()));
+
+        hostEnd.cage(ILK);
+        hostEnd.skim(ILK, address(host));
+
+        (ink, art) = mcd.vat().urns(ILK, address(host));
+        assertEq(ink, 0);
+        assertEq(art, 0);
+        assertEq(mcd.vat().gems(ILK, address(hostEnd)), 100 ether);
+        assertEq(mcd.vat().sin(address(mcd.vow())), vowSin + 100 * RAD);
+
+        GodMode.vm().warp(block.timestamp + hostEnd.wait());
+
+        // Clear out any surplus if it exists
+        uint256 vowDai = vat.dai(address(mcd.vow()));
+        vat.suck(address(mcd.vow()), address(123), vowDai);
+        mcd.vow().heal(vowDai);
+        // TODO - need to take cure into account when it's live
+        hostEnd.thaw();
+        hostEnd.flow(ILK);
     }
 
 }
