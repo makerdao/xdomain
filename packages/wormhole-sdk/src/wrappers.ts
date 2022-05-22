@@ -16,19 +16,31 @@ export function getWormholeBridge(opts: DomainContext): WormholeBridge {
 }
 
 export interface InitWormholeOpts {
-  sender: Signer
   receiverAddress: string
   amount: BigNumberish
   operatorAddress?: string
+  sender?: Signer
   overrides?: Overrides
 }
 
 export function initWormhole(opts: InitWormholeOpts & DomainContext): ReturnType<WormholeBridge['initWormhole']> {
   return getWormholeBridge(opts).initWormhole(
-    opts.sender,
     opts.receiverAddress,
     opts.amount,
     opts.operatorAddress,
+    opts.sender,
+    opts.overrides,
+  )
+}
+
+export function initRelayedWormhole(
+  opts: Omit<InitWormholeOpts, 'operatorAddress'> & { relayAddress?: string } & DomainContext,
+): ReturnType<WormholeBridge['initWormhole']> {
+  return getWormholeBridge(opts).initRelayedWormhole(
+    opts.receiverAddress,
+    opts.amount,
+    opts.sender,
+    opts.relayAddress,
     opts.overrides,
   )
 }
@@ -38,6 +50,7 @@ export interface GetAttestationsOpts {
   newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void
   timeoutMs?: number
   pollingIntervalMs?: number
+  wormholeGUID?: WormholeGUID
 }
 
 export function getAttestations(
@@ -48,34 +61,87 @@ export function getAttestations(
     opts.newSignatureReceivedCallback,
     opts.timeoutMs,
     opts.pollingIntervalMs,
+    opts.wormholeGUID,
   )
 }
 
-export function getAmountMintable(
-  opts: { wormholeGUID: WormholeGUID } & DomainContext,
-): ReturnType<WormholeBridge['getAmountMintable']> {
-  return getWormholeBridge(opts).getAmountMintable(opts.wormholeGUID)
+export function getAmountsForWormholeGUID(
+  opts: {
+    wormholeGUID: WormholeGUID
+    isHighPriority?: boolean
+    relayParams?: {
+      receiver: Signer
+      wormholeGUID: WormholeGUID
+      signatures: string
+      maxFeePercentage?: BigNumberish
+      expiry?: BigNumberish
+      to?: string
+      data?: string
+    }
+    relayAddress?: string
+  } & DomainContext,
+): ReturnType<WormholeBridge['getAmountsForWormholeGUID']> {
+  return getWormholeBridge(opts).getAmountsForWormholeGUID(
+    opts.wormholeGUID,
+    opts.isHighPriority,
+    opts.relayParams,
+    opts.relayAddress,
+  )
 }
 
-export interface MintWithOracleOpts {
-  sender: Signer
+export function getAmounts(
+  opts: { withdrawn: BigNumberish; isHighPriority?: boolean; relayAddress?: string } & DomainContext,
+): ReturnType<WormholeBridge['getAmounts']> {
+  return getWormholeBridge(opts).getAmounts(opts.withdrawn, opts.isHighPriority, opts.relayAddress)
+}
+
+export interface MintWithOraclesOpts {
   wormholeGUID: WormholeGUID
   signatures: string
   maxFeePercentage?: BigNumberish
   operatorFee?: BigNumberish
+  sender?: Signer
   overrides?: Overrides
 }
 
 export function mintWithOracles(
-  opts: MintWithOracleOpts & DomainContext,
+  opts: MintWithOraclesOpts & DomainContext,
 ): ReturnType<WormholeBridge['mintWithOracles']> {
   return getWormholeBridge(opts).mintWithOracles(
-    opts.sender,
     opts.wormholeGUID,
     opts.signatures,
     opts.maxFeePercentage,
     opts.operatorFee,
+    opts.sender,
     opts.overrides,
+  )
+}
+
+export interface RelayMintWithOraclesOpts {
+  receiver: Signer
+  wormholeGUID: WormholeGUID
+  signatures: string
+  relayFee: BigNumberish
+  maxFeePercentage?: BigNumberish
+  expiry?: BigNumberish
+  to?: string
+  data?: string
+  relayAddress?: string
+}
+
+export function relayMintWithOracles(
+  opts: RelayMintWithOraclesOpts & DomainContext,
+): ReturnType<WormholeBridge['relayMintWithOracles']> {
+  return getWormholeBridge(opts).relayMintWithOracles(
+    opts.receiver,
+    opts.wormholeGUID,
+    opts.signatures,
+    opts.relayFee,
+    opts.maxFeePercentage,
+    opts.expiry,
+    opts.to,
+    opts.data,
+    opts.relayAddress,
   )
 }
 
@@ -93,6 +159,6 @@ export interface MintWithoutOracleOpts {
 
 export function mintWithoutOracles(
   opts: MintWithoutOracleOpts & DomainContext,
-): ReturnType<WormholeBridge['mintWithOracles']> {
+): ReturnType<WormholeBridge['mintWithoutOracles']> {
   return getWormholeBridge(opts).mintWithoutOracles(opts.sender, opts.txHash, opts.overrides)
 }

@@ -1,0 +1,106 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  test-optimism-dai-bridge:
+    name: Optimism Dai Bridge Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/optimism-dai-bridge
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 12.x
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Cache YARN dependencies
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-
+
+      - run: yarn --no-progress --non-interactive --frozen-lockfile
+
+      - run: yarn build
+      - run: REPORT_GAS=1 yarn test
+      - run: yarn codechecks # compares gas report
+        env: # Or as an environment variable
+          CC_SECRET: ${{ secrets.CC_SECRET }}
+      - run: yarn coverage
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v2
+        with:
+          name: code-coverage-artifacts
+          path: |
+            coverage
+            coverage.json
+  test-e2e-optimism-dai-bridge:
+    name: Tests E2E Optimism Dai Bridge
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/optimism-dai-bridge
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 12.x
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Cache YARN dependencies
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-
+
+      - name: Install Dependencies
+        run: yarn --no-progress --non-interactive --frozen-lockfile
+
+      - run: yarn build
+      - run: |
+          git clone https://github.com/ethereum-optimism/optimism.git
+          cd optimism
+          git checkout b9ee4fbbb5401a2f756821923e41ee1cee3698af
+
+      - name: Build the services
+        working-directory: ./packages/optimism-dai-bridge/optimism/ops
+        run: ./scripts/build-ci.sh
+
+      - name: Bring the stack up
+        working-directory: ./packages/optimism-dai-bridge/optimism/ops
+        run: |
+          ./scripts/stats.sh &
+          docker-compose up -d
+
+      - name: Wait for the Sequencer node
+        working-directory: ./packages/optimism-dai-bridge/optimism/ops
+        run: ./scripts/wait-for-sequencer.sh
+
+      - name: Run e2e Tests
+        run: |
+          ../../.github/workflows/wait-for-it.sh -h localhost -p 8080 -t 120
+          sleep 60 # we still need to wait for contracts to be deployed really
+          yarn test-e2e

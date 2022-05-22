@@ -1,21 +1,24 @@
 import { getL2Network, L2TransactionReceipt } from '@arbitrum/sdk'
 import { Provider } from '@ethersproject/abstract-provider'
 import { assert } from 'chai'
-import { ContractTransaction, Overrides, Signer, Wallet } from 'ethers'
+import { ContractTransaction, Overrides, Signer } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 import { Dictionary } from 'ts-essentials'
 
-import { getRinkebySdk } from '.dethcrypto/eth-sdk-client'
-import { FakeOutbox, Outbox } from '.dethcrypto/eth-sdk-client/esm/types'
+import { getRinkebySdk } from './sdk'
+import { FakeOutbox, Outbox } from './sdk/esm/types'
 
 export type ArbitrumDstDomainId = 'RINKEBY-MASTER-1' // | 'ETHEREUM-MASTER-1'
 
-function getArbitrumOutbox(sender: Signer, domain: ArbitrumDstDomainId): { outbox: Outbox; fakeOutbox: FakeOutbox } {
+function getArbitrumOutbox(
+  senderOrProvider: Signer | Provider,
+  domain: ArbitrumDstDomainId,
+): { outbox: Outbox; fakeOutbox: FakeOutbox } {
   const sdkProviders: Dictionary<Function, ArbitrumDstDomainId> = {
     'RINKEBY-MASTER-1': getRinkebySdk,
     // 'ETHEREUM-MASTER-1': getMainnetSdk
   }
-  const { Outbox, FakeOutbox } = sdkProviders[domain](sender)[domain]
+  const { Outbox, FakeOutbox } = sdkProviders[domain](senderOrProvider as any)[domain]
   return { outbox: Outbox, fakeOutbox: FakeOutbox }
 }
 
@@ -25,12 +28,11 @@ export async function isArbitrumMessageInOutbox(
   srcDomainProvider: Provider,
   dstDomainProvider: Provider,
 ): Promise<boolean> {
-  const sender = Wallet.createRandom().connect(dstDomainProvider)
-  const { outbox } = getArbitrumOutbox(sender, dstDomain)
+  const { outbox } = getArbitrumOutbox(dstDomainProvider, dstDomain)
   const receipt = await srcDomainProvider.getTransactionReceipt(txHash)
   const l2Network = await getL2Network(srcDomainProvider)
   const l2Receipt = new L2TransactionReceipt(receipt)
-  const messages = await l2Receipt.getL2ToL1Messages(outbox.signer, l2Network)
+  const messages = await l2Receipt.getL2ToL1Messages(dstDomainProvider, l2Network)
   const l2ToL1Msg = messages[0]
 
   return await outbox.outboxEntryExists(l2ToL1Msg.batchNumber)

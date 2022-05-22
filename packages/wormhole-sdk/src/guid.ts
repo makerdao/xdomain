@@ -11,14 +11,19 @@ export interface WormholeGUID {
 }
 
 export function decodeWormholeData(wormholeData: string): WormholeGUID {
+  const splitData =
+    wormholeData
+      .replace('0x', '')
+      .match(/.{64}/g)
+      ?.map((hex: string) => `0x${hex}`) || []
   const wormholeGUID = {
-    sourceDomain: wormholeData[0],
-    targetDomain: wormholeData[1],
-    receiver: wormholeData[2],
-    operator: wormholeData[3],
-    amount: wormholeData[4],
-    nonce: wormholeData[5],
-    timestamp: wormholeData[6],
+    sourceDomain: splitData[0],
+    targetDomain: splitData[1],
+    receiver: splitData[2],
+    operator: splitData[3],
+    amount: splitData[4],
+    nonce: splitData[5],
+    timestamp: splitData[6],
   }
   return wormholeGUID
 }

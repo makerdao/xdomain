@@ -7,13 +7,12 @@ on:
   pull_request:
 
 jobs:
-  test:
-    name: Unit Tests
+  test-wormhole-sdk:
+    name: Wormhole SDK Unit Tests
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./packages/wormhole-sdk
-
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
