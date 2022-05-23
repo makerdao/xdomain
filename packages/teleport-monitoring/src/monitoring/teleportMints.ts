@@ -14,7 +14,7 @@ export async function monitorTeleportMints(blockNumber: number, l1Sdk: L1Sdk, pr
 
     if (!(await prisma.teleport.findUnique({ where: { hash: hash } }))) {
       badDebt = badDebt.add(mint.args.amount)
-      console.warn('Detected uncolatterized teleport ', mint.args)
+      console.warn('Detected uncollateralized teleport ', mint.args)
     }
   }
 

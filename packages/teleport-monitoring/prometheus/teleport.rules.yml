@@ -2,7 +2,7 @@ groups:
   - name: teleport
     rules:
       - alert: BridgeInvariantBroken
-        expr: teleport_l1_dai_balance > teleport_l2_dai_balance
+        expr: teleport_l1_dai_balance >= teleport_l2_dai_balance
         for: 1s
         labels:
           severity: page

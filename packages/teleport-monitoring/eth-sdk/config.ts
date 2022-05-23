@@ -11,7 +11,7 @@ export default defineConfig({
     },
     optimismKovan: {
       dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
-      wormholeGateway: '0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0',
+      teleportGateway: '0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0',
     },
   },
   outputPath: join(__dirname, '../src/sdk'),

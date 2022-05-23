@@ -42,7 +42,7 @@ export async function syncTeleportInits({
   const syncStatus = await prisma.syncStatus.findUnique({ where: { domain: domainName } })
   let syncBlock = syncStatus?.block ?? startingBlock
 
-  const filter = l2Sdk.wormholeGateway.filters.WormholeInitialized()
+  const filter = l2Sdk.teleportGateway.filters.WormholeInitialized()
 
   setImmediate(async () => {
     //eslint-disable-next-line
@@ -51,7 +51,7 @@ export async function syncTeleportInits({
       const boundaryBlock = Math.min(syncBlock + blocksPerBatch, currentBlock)
       console.log(`Syncing ${syncBlock}...${boundaryBlock} (${(boundaryBlock - syncBlock).toLocaleString()} blocks)`)
 
-      const newTeleports = await l2Sdk.wormholeGateway.queryFilter(filter, syncBlock, boundaryBlock)
+      const newTeleports = await l2Sdk.teleportGateway.queryFilter(filter, syncBlock, boundaryBlock)
       console.log(`Found ${newTeleports.length} new teleports`)
       const modelsToCreate: Omit<Teleport, 'id'>[] = newTeleports.map((w) => {
         const hash = keccak256(w.data)
