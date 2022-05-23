@@ -1,7 +1,7 @@
 {
-  "name": "wormhole-monitoring",
+  "name": "teleport-monitoring",
   "version": "1.0.0",
-  "description": "Monitoring scripts for Maker Wormhole",
+  "description": "Monitoring scripts for Maker Teleport",
   "files": [
     "/dist"
   ],

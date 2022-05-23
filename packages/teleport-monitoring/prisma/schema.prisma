@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Wormhole {
+model Teleport {
   id           Int    @id @default(autoincrement())
   hash         String @unique
   sourceDomain String

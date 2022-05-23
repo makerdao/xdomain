@@ -3,9 +3,9 @@ import { BigNumber, ethers, providers } from 'ethers'
 
 import { onEveryFinalizedBlock } from './blockchain'
 import { bridgeInvariant } from './monitoring/bridgeInvariant'
-import { monitorWormholeMints } from './monitoring/wormholeMints'
+import { monitorTeleportMints } from './monitoring/teleportMints'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from './sdks'
-import { syncWormholeInits } from './sync/wormholeInits'
+import { syncTeleportInits } from './sync/teleportInits'
 import { Metrics, NetworkConfig } from './types'
 
 export async function monitor(network: NetworkConfig, l1Provider: providers.Provider, prisma: PrismaClient) {
@@ -20,7 +20,7 @@ export async function monitor(network: NetworkConfig, l1Provider: providers.Prov
     const l2Provider = new ethers.providers.JsonRpcProvider(domain.l2Rpc)
     const l2Sdk = getL2SdkBasedOnNetworkName(domain.sdkName, l2Provider)
 
-    const ctx = await syncWormholeInits({
+    const ctx = await syncTeleportInits({
       domainName: domain.name,
       l2Provider,
       l2Sdk,
@@ -33,16 +33,16 @@ export async function monitor(network: NetworkConfig, l1Provider: providers.Prov
       console.log(`New block finalized: ${blockNumber}`)
 
       if (ctx.isSynced) {
-        const newBadDebt = await monitorWormholeMints(blockNumber, l1Sdk, prisma)
-        const previousBadDebt = BigNumber.from(metrics[`${domain.name}_wormhole_bad_debt`] || 0)
+        const newBadDebt = await monitorTeleportMints(blockNumber, l1Sdk, prisma)
+        const previousBadDebt = BigNumber.from(metrics[`${domain.name}_teleport_bad_debt`] || 0)
 
-        metrics[`${domain.name}_wormhole_bad_debt`] = previousBadDebt.add(newBadDebt).toString()
+        metrics[`${domain.name}_teleport_bad_debt`] = previousBadDebt.add(newBadDebt).toString()
       }
 
       const balances = await bridgeInvariant(l1Sdk, l2Sdk)
-      metrics[`${domain.name}_wormhole_l1_dai_balance`] = balances.l1Balance
-      metrics[`${domain.name}_wormhole_l2_dai_balance`] = balances.l2Balance
-      metrics[`${domain.name}_wormhole_l1_block`] = await l1Provider.getBlockNumber()
+      metrics[`${domain.name}_teleport_l1_dai_balance`] = balances.l1Balance
+      metrics[`${domain.name}_teleport_l2_dai_balance`] = balances.l2Balance
+      metrics[`${domain.name}_teleport_l1_block`] = await l1Provider.getBlockNumber()
     }, l1Provider)
     cancelFns.push(ctx.cancel, cancel)
   }

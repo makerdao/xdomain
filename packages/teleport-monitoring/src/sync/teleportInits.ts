@@ -1,12 +1,12 @@
-import { PrismaClient, Wormhole } from '@prisma/client'
-// import { WormholeUncheckedCreateInput } from '@prisma/client/index'
+import { PrismaClient, Teleport } from '@prisma/client'
+// import { TeleportUncheckedCreateInput } from '@prisma/client/index'
 import { BigNumber, providers } from 'ethers/lib/ethers'
 import { keccak256 } from 'ethers/lib/utils'
 
 import { L2Sdk } from '../sdks'
 import { delay } from '../utils'
 
-export type OnChainWormhole = {
+export type OnChainTeleport = {
   sourceDomain: string
   targetDomain: string
   receiver: string
@@ -16,7 +16,7 @@ export type OnChainWormhole = {
   timestamp: number
 }
 
-export async function syncWormholeInits({
+export async function syncTeleportInits({
   domainName,
   l2Provider,
   l2Sdk,
@@ -51,9 +51,9 @@ export async function syncWormholeInits({
       const boundaryBlock = Math.min(syncBlock + blocksPerBatch, currentBlock)
       console.log(`Syncing ${syncBlock}...${boundaryBlock} (${(boundaryBlock - syncBlock).toLocaleString()} blocks)`)
 
-      const newWormholes = await l2Sdk.wormholeGateway.queryFilter(filter, syncBlock, boundaryBlock)
-      console.log(`Found ${newWormholes.length} new wormholes`)
-      const modelsToCreate: Omit<Wormhole, 'id'>[] = newWormholes.map((w) => {
+      const newTeleports = await l2Sdk.wormholeGateway.queryFilter(filter, syncBlock, boundaryBlock)
+      console.log(`Found ${newTeleports.length} new teleports`)
+      const modelsToCreate: Omit<Teleport, 'id'>[] = newTeleports.map((w) => {
         const hash = keccak256(w.data)
         return {
           hash,
@@ -69,7 +69,7 @@ export async function syncWormholeInits({
 
       // update sync block
       await prisma.$transaction([
-        prisma.wormhole.createMany({ data: modelsToCreate }),
+        prisma.teleport.createMany({ data: modelsToCreate }),
         prisma.syncStatus.upsert({
           create: { domain: domainName, block: boundaryBlock },
           update: { domain: domainName, block: boundaryBlock },

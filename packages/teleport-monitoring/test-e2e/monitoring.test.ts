@@ -27,7 +27,7 @@ describe('Monitoring', () => {
     const network = networks[chainIds.KOVAN]
     const l2Provider = new ethers.providers.JsonRpcProvider(network.slaves[0].l2Rpc)
     const prisma = new PrismaClient()
-    await prisma.$executeRaw`TRUNCATE "SyncStatus", "Wormhole";`
+    await prisma.$executeRaw`TRUNCATE "SyncStatus", "Teleport";`
     // tricks sync process into thinking that it's fully synced
     await prisma.syncStatus.create({
       data: { domain: sourceDomain, block: (await l2Provider.getBlock('latest')).number },
@@ -40,7 +40,7 @@ describe('Monitoring', () => {
     const impersonator = await impersonateAccount(kovanProxy, hhProvider)
     await mintEther(receiver.address, hhProvider)
     await sdk.oracleAuth.connect(impersonator).addSigners(signers.map((s) => s.address))
-    const wormhole = {
+    const teleport = {
       sourceDomain: ethers.utils.formatBytes32String(sourceDomain),
       targetDomain: ethers.utils.formatBytes32String(targetDomain),
       receiver: ethers.utils.hexZeroPad(receiver.address, 32),
@@ -49,14 +49,14 @@ describe('Monitoring', () => {
       nonce: '1',
       timestamp: '0',
     }
-    const { signatures } = await getAttestations(signers, wormhole)
-    await sdk.oracleAuth.connect(receiver).requestMint(wormhole, signatures, 0, 0)
+    const { signatures } = await getAttestations(signers, teleport)
+    await sdk.oracleAuth.connect(receiver).requestMint(teleport, signatures, 0, 0)
     console.log('Printing unbacked DAI done')
     await mineABunchOfBlocks(hhProvider)
 
     // assert
     await waitForExpect(() => {
-      expect(metrics['KOVAN-SLAVE-OPTIMISM-1_wormhole_bad_debt']).toEqual(daiToMint.toString())
+      expect(metrics['KOVAN-SLAVE-OPTIMISM-1_teleport_bad_debt']).toEqual(daiToMint.toString())
     })
   })
 
