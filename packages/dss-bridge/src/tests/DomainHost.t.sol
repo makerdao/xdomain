@@ -80,18 +80,6 @@ contract DomainHostTest is DSSTest {
         escrow.approve(address(dai), address(host), type(uint256).max);
     }
 
-    function _tryRely(address usr) internal returns (bool ok) {
-        (ok,) = address(host).call(abi.encodeWithSignature("rely(address)", usr));
-    }
-
-    function _tryDeny(address usr) internal returns (bool ok) {
-        (ok,) = address(host).call(abi.encodeWithSignature("deny(address)", usr));
-    }
-
-    function _tryFile(bytes32 what, address data) internal returns (bool ok) {
-        (ok,) = address(host).call(abi.encodeWithSignature("file(bytes32,address)", what, data));
-    }
-
     function testConstructor() public {
         assertEq(host.ilk(), ILK);
         assertEq(address(host.vat()), address(vat));
@@ -102,30 +90,11 @@ contract DomainHostTest is DSSTest {
     }
 
     function testRelyDeny() public {
-        assertEq(host.wards(address(456)), 0);
-        assertTrue(_tryRely(address(456)));
-        assertEq(host.wards(address(456)), 1);
-        assertTrue(_tryDeny(address(456)));
-        assertEq(host.wards(address(456)), 0);
-
-        host.deny(address(this));
-
-        assertTrue(!_tryRely(address(456)));
-        assertTrue(!_tryDeny(address(456)));
+        checkAuth(address(host), "DomainHost");
     }
 
     function testFile() public {
-        assertEq(host.vow(), address(123));
-        assertTrue(_tryFile("vow", address(888)));
-        assertEq(host.vow(), address(888));
-
-        host.deny(address(this));
-
-        assertTrue(!_tryFile("vow", address(888)));
-    }
-
-    function testInvalidWhat() public {
-       assertTrue(!_tryFile("meh", address(888)));
+        checkFileAddress(address(host), "DomainHost", ["vow"]);
     }
 
     function testLift() public {

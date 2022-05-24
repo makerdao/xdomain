@@ -74,18 +74,6 @@ contract DomainGuestTest is DSSTest {
         guest.file("end", address(end));
     }
 
-    function _tryRely(address usr) internal returns (bool ok) {
-        (ok,) = address(guest).call(abi.encodeWithSignature("rely(address)", usr));
-    }
-
-    function _tryDeny(address usr) internal returns (bool ok) {
-        (ok,) = address(guest).call(abi.encodeWithSignature("deny(address)", usr));
-    }
-
-    function _tryFile(bytes32 what, address data) internal returns (bool ok) {
-        (ok,) = address(guest).call(abi.encodeWithSignature("file(bytes32,address)", what, data));
-    }
-
     function testConstructor() public {
         assertEq(address(guest.vat()), address(vat));
         assertEq(address(guest.daiJoin()), address(daiJoin));
@@ -94,30 +82,11 @@ contract DomainGuestTest is DSSTest {
     }
 
     function testRelyDeny() public {
-        assertEq(guest.wards(address(456)), 0);
-        assertTrue(_tryRely(address(456)));
-        assertEq(guest.wards(address(456)), 1);
-        assertTrue(_tryDeny(address(456)));
-        assertEq(guest.wards(address(456)), 0);
-
-        guest.deny(address(this));
-
-        assertTrue(!_tryRely(address(456)));
-        assertTrue(!_tryDeny(address(456)));
+        checkAuth(address(guest), "DomainGuest");
     }
 
     function testFile() public {
-        assertEq(address(guest.end()), address(end));
-        assertTrue(_tryFile("end", address(888)));
-        assertEq(address(guest.end()), address(888));
-
-        guest.deny(address(this));
-
-        assertTrue(!_tryFile("end", address(888)));
-    }
-
-    function testInvalidWhat() public {
-       assertTrue(!_tryFile("meh", address(888)));
+        checkFileAddress(address(guest), "DomainGuest", ["end"]);
     }
 
     function testLift() public {

@@ -20,9 +20,16 @@
 pragma solidity ^0.8.13;
 
 import "dss-test/DSSTest.sol";
+import "ds-value/value.sol";
 
+import { EndAbstract } from "dss-interfaces/Interfaces.sol";
+
+import { Cure } from "xdomain-dss/Cure.sol";
 import { Dai } from "xdomain-dss/Dai.sol";
 import { DaiJoin } from "xdomain-dss/DaiJoin.sol";
+import { End } from "xdomain-dss/End.sol";
+import { Pot } from "xdomain-dss/Pot.sol";
+import { Spotter } from "xdomain-dss/Spotter.sol";
 import { Vat } from "xdomain-dss/Vat.sol";
 
 import { ClaimToken } from "../ClaimToken.sol";
@@ -98,6 +105,7 @@ contract IntegrationTest is DSSTest {
     Dai dai;
     DaiJoin daiJoin;
     Spotter spot;
+    Pot pot;
     End end;
     Cure cure;
 
@@ -291,17 +299,17 @@ contract IntegrationTest is DSSTest {
     function initCollateral(bytes32 name) internal {
         DSValue pip = new DSValue();
         spot.file(name, "pip", address(pip));
-        spot.file(name, "mat", ray(1 ether));
+        spot.file(name, "mat", RAY);
         pip.poke(bytes32(1 * WAD));
         spot.poke(name);
 
         vat.init(name);
-        vat.file(name, "line", rad(1_000_000 ether));
+        vat.file(name, "line", 1_000_000 * RAD);
     }
 
     function testGlobalShutdown() public {
         bytes32 ilk = "test-ilk";
-        EndAbstract hostEnd = EndAbstract(mcd.chainlog().getAddress(MCD_END));
+        EndAbstract hostEnd = EndAbstract(mcd.chainlog().getAddress("MCD_END"));
 
         // Set up some debt in the guest instance
         host.lift(100 ether);
@@ -330,7 +338,7 @@ contract IntegrationTest is DSSTest {
         (ink, art) = vat.urns(ilk, address(this));
         assertEq(ink, 40 ether);
         assertEq(art, 40 ether);
-        assertEq(vat.gems(ilk, address(end)), 0);
+        assertEq(vat.gem(ilk, address(end)), 0);
         assertEq(vat.sin(address(guest)), 0);
 
         // --- Settle out the Guest instance ---
@@ -341,7 +349,7 @@ contract IntegrationTest is DSSTest {
         (ink, art) = vat.urns(ilk, address(this));
         assertEq(ink, 0);
         assertEq(art, 0);
-        assertEq(vat.gems(ilk, address(end)), 40 ether);
+        assertEq(vat.gem(ilk, address(end)), 40 ether);
         assertEq(vat.sin(address(guest)), 40 * RAD);
 
         GodMode.vm().warp(block.timestamp + end.wait());
@@ -358,7 +366,7 @@ contract IntegrationTest is DSSTest {
         (ink, art) = mcd.vat().urns(ILK, address(host));
         assertEq(ink, 100 ether);
         assertEq(art, 100 ether);
-        assertEq(mcd.vat().gems(ILK, address(hostEnd)), 0);
+        assertEq(mcd.vat().gem(ILK, address(hostEnd)), 0);
         uint256 vowSin = mcd.vat().sin(address(mcd.vow()));
 
         hostEnd.cage(ILK);
@@ -367,7 +375,7 @@ contract IntegrationTest is DSSTest {
         (ink, art) = mcd.vat().urns(ILK, address(host));
         assertEq(ink, 0);
         assertEq(art, 0);
-        assertEq(mcd.vat().gems(ILK, address(hostEnd)), 100 ether);
+        assertEq(mcd.vat().gem(ILK, address(hostEnd)), 100 ether);
         assertEq(mcd.vat().sin(address(mcd.vow())), vowSin + 100 * RAD);
 
         GodMode.vm().warp(block.timestamp + hostEnd.wait());
