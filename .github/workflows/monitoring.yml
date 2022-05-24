@@ -71,9 +71,6 @@ jobs:
       - run: yarn --no-progress --non-interactive --frozen-lockfile
 
       - run: |
-          docker run -d --name=teleport_monitoring -p 5432:5432 -e POSTGRES_PASSWORD=password postgres
-          yarn prisma migrate dev
           yarn test:e2e
         env:
-          DATABASE_URL: postgresql://postgres:password@localhost:5432/local
           TEST_RPC: ${{ secrets.KOVAN_RPC_URL }}

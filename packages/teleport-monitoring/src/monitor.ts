@@ -1,14 +1,20 @@
-import { PrismaClient } from '@prisma/client'
 import { BigNumber, ethers, providers } from 'ethers'
 
 import { onEveryFinalizedBlock } from './blockchain'
+import { SyncStatusRepository } from './db/SyncStatusRepository'
+import { TeleportRepository } from './db/TeleportRepository'
 import { bridgeInvariant } from './monitoring/bridgeInvariant'
 import { monitorTeleportMints } from './monitoring/teleportMints'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from './sdks'
 import { syncTeleportInits } from './sync/teleportInits'
 import { Metrics, NetworkConfig } from './types'
 
-export async function monitor(network: NetworkConfig, l1Provider: providers.Provider, prisma: PrismaClient) {
+export async function monitor(
+  network: NetworkConfig,
+  l1Provider: providers.Provider,
+  teleportRepository: TeleportRepository,
+  syncStatusRepository: SyncStatusRepository,
+) {
   const metrics: Metrics = {}
 
   const l1Sdk = getL1SdkBasedOnNetworkName(network.sdkName, l1Provider)
@@ -26,14 +32,15 @@ export async function monitor(network: NetworkConfig, l1Provider: providers.Prov
       l2Sdk,
       blocksPerBatch: domain.syncBatchSize,
       startingBlock: domain.bridgeDeploymentBlock,
-      prisma,
+      teleportRepository,
+      syncStatusRepository,
     })
 
     const { cancel } = await onEveryFinalizedBlock(async (blockNumber) => {
       console.log(`New block finalized: ${blockNumber}`)
 
       if (ctx.isSynced) {
-        const newBadDebt = await monitorTeleportMints(blockNumber, l1Sdk, prisma)
+        const newBadDebt = await monitorTeleportMints(blockNumber, l1Sdk, teleportRepository)
         const previousBadDebt = BigNumber.from(metrics[`${domain.name}_teleport_bad_debt`] || 0)
 
         metrics[`teleport_bad_debt{domain="${domain.name}"}`] = previousBadDebt.add(newBadDebt).toString()

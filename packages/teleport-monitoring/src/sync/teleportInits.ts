@@ -1,8 +1,10 @@
-import { PrismaClient, Teleport } from '@prisma/client'
+import { Teleport } from '@prisma/client'
 // import { TeleportUncheckedCreateInput } from '@prisma/client/index'
 import { BigNumber, providers } from 'ethers/lib/ethers'
 import { keccak256 } from 'ethers/lib/utils'
 
+import { SyncStatusRepository } from '../db/SyncStatusRepository'
+import { TeleportRepository } from '../db/TeleportRepository'
 import { L2Sdk } from '../sdks'
 import { delay } from '../utils'
 
@@ -22,14 +24,16 @@ export async function syncTeleportInits({
   l2Sdk,
   startingBlock,
   blocksPerBatch,
-  prisma,
+  syncStatusRepository,
+  teleportRepository,
 }: {
   domainName: string
   l2Provider: providers.Provider
   l2Sdk: L2Sdk
   startingBlock: number
   blocksPerBatch: number
-  prisma: PrismaClient
+  syncStatusRepository: SyncStatusRepository
+  teleportRepository: TeleportRepository
 }) {
   let cancelled = false
   const ctx = {
@@ -39,7 +43,7 @@ export async function syncTeleportInits({
     },
   }
 
-  const syncStatus = await prisma.syncStatus.findUnique({ where: { domain: domainName } })
+  const syncStatus = await syncStatusRepository.findByDomainName(domainName)
   let syncBlock = syncStatus?.block ?? startingBlock
 
   const filter = l2Sdk.teleportGateway.filters.WormholeInitialized()
@@ -68,14 +72,10 @@ export async function syncTeleportInits({
       })
 
       // update sync block
-      await prisma.$transaction([
-        prisma.teleport.createMany({ data: modelsToCreate }),
-        prisma.syncStatus.upsert({
-          create: { domain: domainName, block: boundaryBlock },
-          update: { domain: domainName, block: boundaryBlock },
-          where: { domain: domainName },
-        }),
-      ])
+      await teleportRepository.transaction(async (tx) => {
+        await teleportRepository.createMany(modelsToCreate, tx)
+        await syncStatusRepository.upsert({ domain: domainName, block: boundaryBlock }, tx)
+      })
 
       syncBlock = boundaryBlock
       const onTip = boundaryBlock === currentBlock

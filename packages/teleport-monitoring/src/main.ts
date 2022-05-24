@@ -2,6 +2,8 @@ import { PrismaClient } from '@prisma/client'
 import { ethers } from 'ethers'
 
 import { idsToChains, networks } from './config'
+import { SyncStatusRepository } from './db/SyncStatusRepository'
+import { TeleportRepository } from './db/TeleportRepository'
 import { monitor } from './monitor'
 import { startServer } from './server'
 
@@ -21,7 +23,10 @@ export async function main(l1Rpc: string) {
 
   console.log(`Loaded config for ${networkName}`)
 
-  const { metrics } = await monitor(network, l1Provider, prisma)
+  const teleportRepository = new TeleportRepository(prisma)
+  const syncStatusRepository = new SyncStatusRepository(prisma)
+
+  const { metrics } = await monitor(network, l1Provider, teleportRepository, syncStatusRepository)
 
   await Promise.all([startServer(metrics)])
 }
