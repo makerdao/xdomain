@@ -8,3 +8,11 @@ groups:
           severity: page
         annotations:
           summary: Bridge invariant broken
+
+      - alert: BadDebtDetected
+        expr: teleport_bad_debt > 0
+        for: 1s
+        labels:
+          severity: page
+        annotations:
+          summary: Detected bad debt

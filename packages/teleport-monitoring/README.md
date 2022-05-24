@@ -11,6 +11,14 @@ These checks are run on _every new finalized block_:
 
 ## Running
 
+1. To run local database:
+
+```
+docker run -d --name=teleport_monitoring -p 5432:5432 -e POSTGRES_PASSWORD=password postgres
+```
+
+2. To start monitoring + http server exporting metrics run:
+
 ```sh
 yarn start <L1_RPC?>
 ```
@@ -22,8 +30,8 @@ L1_RPC - rpc
 DATABASE_URL -  db url with credentials
 ```
 
-### Database for local testing
+3. To run prometheus run local script:
 
-```sh
-docker run -d --name=teleport_monitoring -p 5432:5432 -e POSTGRES_PASSWORD=password postgres
+```
+./prom.sh
 ```

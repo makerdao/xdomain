@@ -36,13 +36,13 @@ export async function monitor(network: NetworkConfig, l1Provider: providers.Prov
         const newBadDebt = await monitorTeleportMints(blockNumber, l1Sdk, prisma)
         const previousBadDebt = BigNumber.from(metrics[`${domain.name}_teleport_bad_debt`] || 0)
 
-        metrics[`${domain.name}_teleport_bad_debt`] = previousBadDebt.add(newBadDebt).toString()
+        metrics[`teleport_bad_debt{domain="${domain.name}"}`] = previousBadDebt.add(newBadDebt).toString()
       }
 
       const balances = await bridgeInvariant(l1Sdk, l2Sdk)
-      metrics[`${domain.name}_teleport_l1_dai_balance`] = balances.l1Balance
-      metrics[`${domain.name}_teleport_l2_dai_balance`] = balances.l2Balance
-      metrics[`${domain.name}_teleport_l1_block`] = blockNumber
+      metrics[`teleport_l1_dai_balance{domain="${domain.name}"}`] = balances.l1Balance
+      metrics[`teleport_l2_dai_balance{domain="${domain.name}"}`] = balances.l2Balance
+      metrics[`teleport_l1_block{domain="${domain.name}"}`] = blockNumber
     }, l1Provider)
     cancelFns.push(ctx.cancel, cancel)
   }
