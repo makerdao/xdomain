@@ -123,11 +123,11 @@ contract IntegrationTest is DSSTest {
         daiJoin = new DaiJoin(address(vat), address(dai));
         dai.rely(address(daiJoin));
         spot = new Spotter(address(vat));
+        pot = new Pot(address(vat));
         vat.rely(address(spot));
         cure = new Cure();
         end = new End();
         end.file("vat", address(vat));
-        end.file("vow", address(guest));
         end.file("pot", address(pot));
         end.file("spot", address(spot));
         end.file("cure", address(cure));
@@ -146,15 +146,24 @@ contract IntegrationTest is DSSTest {
         host.rely(address(guest));
         guest.rely(address(host));
         guest.file("end", address(end));
+        end.file("vow", address(guest));
+        guest.rely(address(end));
 
         mcd.vat().setWard(address(this), 1);
+        address(mcd.spotter()).setWard(address(this), 1);
         mcd.vat().setWard(address(host), 1);
         address(escrow).setWard(address(this), 1);
         escrow.approve(address(mcd.dai()), address(host), type(uint256).max);
         mcd.vat().init(ILK);
         mcd.vat().file(ILK, "line", 1_000_000 * RAD);
         mcd.vat().file(ILK, "spot", RAY);
+        DSValue pip = new DSValue();
+        mcd.spotter().file(ILK, "pip", address(pip));
+        mcd.spotter().file(ILK, "mat", RAY);
+        pip.poke(bytes32(1 * WAD));
+        mcd.spotter().poke(ILK);
         vat.rely(address(guest));
+        end.rely(address(guest));
     }
 
     function testRaiseDebtCeiling() public {
@@ -326,6 +335,7 @@ contract IntegrationTest is DSSTest {
         assertEq(ink, 40 ether);
         assertEq(art, 40 ether);
 
+        address(hostEnd).setWard(address(this), 1);
         hostEnd.cage();
         host.deny(address(this));       // Confirm cage can be done permissionlessly
         host.cage();
