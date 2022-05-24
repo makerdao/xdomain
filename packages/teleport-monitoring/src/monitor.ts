@@ -42,7 +42,7 @@ export async function monitor(network: NetworkConfig, l1Provider: providers.Prov
       const balances = await bridgeInvariant(l1Sdk, l2Sdk)
       metrics[`${domain.name}_teleport_l1_dai_balance`] = balances.l1Balance
       metrics[`${domain.name}_teleport_l2_dai_balance`] = balances.l2Balance
-      metrics[`${domain.name}_teleport_l1_block`] = await l1Provider.getBlockNumber()
+      metrics[`${domain.name}_teleport_l1_block`] = blockNumber
     }, l1Provider)
     cancelFns.push(ctx.cancel, cancel)
   }

@@ -1,6 +1,6 @@
 import { invert } from 'lodash'
 
-import { NetworkConfig } from './types'
+import { NetworkConfig } from '../types'
 
 export const chainIds = {
   KOVAN: 42,
@@ -21,14 +21,16 @@ export const networks: { [id: number]: NetworkConfig } = {
       },
     ],
   },
-  // [chainIds.RINKEBY]: [
-  //   {
-  //     name: 'RINKEBY-SLAVE-ARBITRUM-1',
-  //     l2Rpc: 'https://rinkeby.arbitrum.io/rpc',
-  //     domainsToFlush: ['RINKEBY-MASTER-1'],
-  //     maxTtlForMessages: 9 * DAY,
-  //     teleportOutboundGateway: '0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3',
-  //     messageFinalizer: makeFinalizeMessageForArbitrum,
-  //   },
-  // ],
+  [chainIds.RINKEBY]: {
+    sdkName: 'Rinkeby',
+    slaves: [
+      {
+        name: 'RINKEBY-SLAVE-ARBITRUM-1',
+        l2Rpc: 'https://rinkeby.arbitrum.io/rpc',
+        sdkName: 'ArbitrumTestnet',
+        bridgeDeploymentBlock: 10860834,
+        syncBatchSize: 100_000,
+      },
+    ],
+  },
 }

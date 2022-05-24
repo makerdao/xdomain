@@ -13,6 +13,16 @@ export default defineConfig({
       dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
       teleportGateway: '0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0',
     },
+    rinkeby: {
+      dai: '0xd9e66A2f546880EA4d800F189d6F12Cc15Bff281',
+      escrow: '0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65',
+      join: '0x894DB23D804c626f1aAA89a2Bc3280052e6c4750',
+      oracleAuth: '0x1E7722E502D3dCbB0704f99c75c99a5402598f13',
+    },
+    arbitrumTestnet: {
+      dai: '0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15',
+      teleportGateway: '0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3',
+    },
   },
   outputPath: join(__dirname, '../src/sdk'),
 })
