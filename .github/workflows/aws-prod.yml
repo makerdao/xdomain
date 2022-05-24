@@ -16,6 +16,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+      with:
+        submodules: recursive
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -42,26 +44,3 @@ jobs:
         docker push $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG"        
       working-directory: ./packages/wormhole-keeper
-
-
-    - name: Download task definition
-      run: |
-        aws ecs describe-task-definition --task-definition ${SERVICE_NAME} --query taskDefinition > task-definition.json
- 
-    # At the moment we are always on "latest" tag anyway
-    # but going to render a new task definition anyway
-    - name: Render task definition
-      id: render
-      uses: aws-actions/amazon-ecs-render-task-definition@v1
-      with:
-        task-definition: task-definition.json
-        container-name: ${{ env.SERVICE_NAME }}
-        image: ${{ steps.build-image.outputs.image }}
-
-    - name: Deploy service
-      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      with:
-        task-definition: ${{ steps.render.outputs.task-definition }}
-        service: ${{ env.SERVICE_NAME }}
-        cluster: ${{ env.SERVICE_NAME }}
-        wait-for-service-stability: true
