@@ -1,6 +1,6 @@
 import { invert } from 'lodash'
 
-import { NetworkConfig } from '../types'
+import { NetworkConfig } from './types'
 
 export const chainIds = {
   KOVAN: 42,
