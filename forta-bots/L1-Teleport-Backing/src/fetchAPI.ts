@@ -53,8 +53,6 @@ const QUERY: string = `
           }
         }
         alerts {
-          name
-          protocol
           metadata
         }
       }
