@@ -260,10 +260,12 @@ contract DomainHostTest is DSSTest {
 
     function testTell() public {
         assertEq(host.cure(), 0);
+        assertTrue(!host.cureReported());
 
         host.tell(123);
 
         assertEq(host.cure(), 123);
+        assertTrue(host.cureReported());
     }
 
     function testExit() public {
