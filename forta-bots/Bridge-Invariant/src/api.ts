@@ -60,22 +60,26 @@ query pastAlerts($input: AlertsInput) {
   }
 }`;
 
+const formatDate = (date: Date) => {
+  const [yyyy, mm, dd] = [
+    date.getUTCFullYear().toString(), 
+    (date.getUTCMonth() + 1).toString().padStart(2, "0"), 
+    date.getUTCDay().toString().padStart(2, "0"),
+  ];
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+const ORIGIN: string = formatDate(new Date(0));
+
 const queryInput = (chainId: number, timestamp: number, after: any = undefined) => {
-  const date: Date = new Date(timestamp);
-  const [year, month, day] = [date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDay()];
-  const formatNumber = (num: number) => {
-    const str: string = num.toString();
-    if (str.length === 1) return `0${str}`;
-    return str;
-  };
-  const formatDate = `${year}-${formatNumber(month)}-${formatNumber(day)}`;
+  const date: string = formatDate(new Date(timestamp * 1000));
   return {
     input: {
       chainId,
       // bots: [L2-DAI-Monitor-Bot-Hash]
       blockDateRange: {
-        startDate: formatDate,
-        endDate: formatDate,
+        startDate: ORIGIN,
+        endDate: date,
       },
       ...after,
     },
