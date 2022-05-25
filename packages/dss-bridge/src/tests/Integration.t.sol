@@ -176,6 +176,7 @@ contract IntegrationTest is DSSTest {
         escrow.approve(address(mcd.dai()), address(host), type(uint256).max);
         mcd.initIlk(DOMAIN_ILK, address(host));
         mcd.vat().file(DOMAIN_ILK, "line", 1_000_000 * RAD);
+        mcd.cure().lift(address(host));
     }
 
     function testRaiseDebtCeiling() public {
@@ -319,7 +320,7 @@ contract IntegrationTest is DSSTest {
 
     function testGlobalShutdown() public {
         bytes32 ilk = REMOTE_COLL_ILK;
-        EndAbstract hostEnd = EndAbstract(mcd.chainlog().getAddress("MCD_END"));
+        mcd.vat().suck(address(123), address(this), 100 * RAD);
 
         // Set up some debt in the guest instance
         host.lift(100 ether);
@@ -337,8 +338,7 @@ contract IntegrationTest is DSSTest {
         assertEq(ink, 40 ether);
         assertEq(art, 40 ether);
 
-        address(hostEnd).setWard(address(this), 1);
-        hostEnd.cage();
+        mcd.end().cage();
         host.deny(address(this));       // Confirm cage can be done permissionlessly
         host.cage();
 
@@ -378,27 +378,34 @@ contract IntegrationTest is DSSTest {
         (ink, art) = mcd.vat().urns(DOMAIN_ILK, address(host));
         assertEq(ink, 100 ether);
         assertEq(art, 100 ether);
-        assertEq(mcd.vat().gem(DOMAIN_ILK, address(hostEnd)), 0);
+        assertEq(mcd.vat().gem(DOMAIN_ILK, address(mcd.end())), 0);
         uint256 vowSin = mcd.vat().sin(address(mcd.vow()));
 
-        hostEnd.cage(DOMAIN_ILK);
-        hostEnd.skim(DOMAIN_ILK, address(host));
+        mcd.end().cage(DOMAIN_ILK);
+        mcd.end().skim(DOMAIN_ILK, address(host));
 
         (ink, art) = mcd.vat().urns(DOMAIN_ILK, address(host));
         assertEq(ink, 0);
         assertEq(art, 0);
-        assertEq(mcd.vat().gem(DOMAIN_ILK, address(hostEnd)), 100 ether);
+        assertEq(mcd.vat().gem(DOMAIN_ILK, address(mcd.end())), 100 ether);
         assertEq(mcd.vat().sin(address(mcd.vow())), vowSin + 100 * RAD);
 
-        GodMode.vm().warp(block.timestamp + hostEnd.wait());
+        GodMode.vm().warp(block.timestamp + mcd.end().wait());
 
         // Clear out any surplus if it exists
-        uint256 vowDai = rmcd.vat().dai(address(mcd.vow()));
-        rmcd.vat().suck(address(mcd.vow()), address(123), vowDai);
+        uint256 vowDai = mcd.vat().dai(address(mcd.vow()));
+        mcd.vat().suck(address(mcd.vow()), address(123), vowDai);
         mcd.vow().heal(vowDai);
-        // TODO - need to take cure into account when it's live
-        hostEnd.thaw();
-        hostEnd.flow(DOMAIN_ILK);
+        
+        // Check debt is deducted properly
+        uint256 debt = mcd.vat().debt();
+        mcd.cure().load(address(host));
+        mcd.end().thaw();
+        assertEq(mcd.end().debt(), debt - 60 * RAD);
+        mcd.end().flow(DOMAIN_ILK);
+
+        // Get some gems
+        mcd.end().pack(100 * WAD);
     }
 
 }

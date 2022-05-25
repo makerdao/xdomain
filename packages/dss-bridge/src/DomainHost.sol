@@ -57,6 +57,7 @@ abstract contract DomainHost {
     uint256 public line;        // Remove domain global debt ceiling [RAD]
     uint256 public grain;       // Keep track of the pre-minted DAI in the escrow [WAD]
     uint256 public cure;        // The amount of unused debt [RAD]
+    bool public cureReported;   // Returns true if cure has been reported by the guest
     uint256 public live;
 
     uint256 constant RAY = 10 ** 27;
@@ -204,6 +205,9 @@ abstract contract DomainHost {
     /// @notice Set this domain's cure value
     /// @dev Should only be triggered by remote domain
     function tell(uint256 value) external auth {
+        require(!cureReported, "DomainHost/cure-reported");
+
+        cureReported = true;
         cure = value;
 
         emit Tell(value);
@@ -217,14 +221,10 @@ abstract contract DomainHost {
         require(vat.live() == 0, "DomainHost/vat-live");
         require(wad <= 2 ** 255, "DomainHost/overflow");
         vat.slip(ilk, msg.sender, -int256(wad));
-
-        // Convert to actual debt amount
-        // Round against the user
-        uint256 claim = wad * (grain - _divup(cure, RAY)) / grain;
         
-        _mintClaim(usr, claim);
+        _mintClaim(usr, wad);
 
-        emit Exit(usr, wad, claim);
+        emit Exit(usr, wad, wad);
     }
 
     // Bridge-specific functions
