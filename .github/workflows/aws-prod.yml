@@ -40,6 +40,5 @@ jobs:
         # push it to ECR so that it can
         # be deployed to ECS.
         docker build -t $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG
-        echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG"        
+        docker push $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG       
       working-directory: ./packages/teleport-keeper
