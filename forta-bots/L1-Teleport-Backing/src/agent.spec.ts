@@ -1,6 +1,5 @@
 import { Finding, FindingSeverity, FindingType, HandleTransaction, keccak256 } from "forta-agent";
 import { createAddress, TestTransactionEvent } from "forta-agent-tools/lib/tests";
-import { when } from "jest-when";
 import { provideHandleTransaction } from "./agent";
 import { Interface } from "@ethersproject/abi";
 import { MINT_IFACE } from "./utils";
@@ -13,7 +12,7 @@ const testCreateFinding = (txHash: string, guid: string, networkId: number): Fin
   return Finding.fromObject({
     name: "MakerDAO Teleport Backing Monitor",
     description: "Mint event emitted from TeleportJoin without corresponding WormholeInitialized event",
-    alertId: "MK-02-2",
+    alertId: "MK-02-02",
     protocol: "MakerDAO",
     severity: FindingSeverity.High,
     type: FindingType.Suspicious,
@@ -37,11 +36,9 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
 
   const handleTransaction: HandleTransaction = provideHandleTransaction(mockNetworkManager as any, mockFetcher as any);
 
-  it("handleTransaction", async () => {
-    const txEvent = new TestTransactionEvent().setBlock(1234);
-    when(mockFetcher.L2HashGUIDExists)
-      .calledWith(mockNetworkManager.networkId, txEvent.blockNumber)
-      .mockReturnValue([keccak256("guid1"), keccak256("guid2")]);
+  it("should ignore empty transactions", async () => {
+    const txEvent = new TestTransactionEvent();
+
     const findings: Finding[] = await handleTransaction(txEvent);
     expect(findings).toStrictEqual([]);
   });
