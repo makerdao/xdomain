@@ -4,7 +4,7 @@ import constants, { NetworkData } from "./constants";
 import SupplyFercher from "./api";
 import abi from "./abi";
 
-const provideHandleBlock = (
+export const provideHandleBlock = (
   provider: providers.JsonRpcProvider,
   l2Data: NetworkData[],
   fetcher: SupplyFercher,
@@ -16,7 +16,7 @@ const provideHandleBlock = (
     const findings: Finding[] = [];
 
     for (let data of l2Data) {
-      const escrowSupply: BigNumber = await daiContract.balance(data.escrow, { blockTag: blockEvent.blockNumber });
+      const escrowSupply: BigNumber = await daiContract.balanceOf(data.escrow, { blockTag: blockEvent.blockNumber });
       const l2Supply: BigNumber = BigNumber.from(
         await fetcher.getL2Supply(data.chainId, blockEvent.block.timestamp, escrowSupply)
       );
