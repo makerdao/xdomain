@@ -16,7 +16,10 @@ const L2_DATA: NetworkData[] = [
   },
 ];
 
+const L2_MONITOR_HASH: string = "";
+
 export default {
   L2_DATA,
   L1_DAI,
+  L2_MONITOR_HASH,
 };

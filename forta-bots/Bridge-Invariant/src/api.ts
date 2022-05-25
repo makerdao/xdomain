@@ -1,4 +1,5 @@
 import axios from "axios";
+import constants from "./constants";
 
 const FORTA_API: string = "https://api.forta.network/graphql";
 
@@ -78,7 +79,7 @@ export const queryInput = (chainId: number, timestamp: number, cursor: any = {})
   return {
     input: {
       chainId,
-      // bots: [L2-DAI-Monitor-Bot-Hash]
+      bots: [constants.L2_MONITOR_HASH],
       blockDateRange: {
         startDate: ORIGIN,
         endDate: date,
