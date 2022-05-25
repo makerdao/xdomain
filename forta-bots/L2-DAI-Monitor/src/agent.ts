@@ -1,10 +1,4 @@
-import {
-  BlockEvent,
-  Finding,
-  FindingSeverity,
-  FindingType,
-  getEthersProvider,
-} from "forta-agent";
+import { BlockEvent, Finding, FindingSeverity, FindingType, getEthersProvider } from "forta-agent";
 import abi from "./abi";
 import { ethers, BigNumber, Contract } from "ethers";
 
@@ -18,26 +12,28 @@ export const provideHandleBlock = (provider: ethers.providers.JsonRpcProvider, d
     const findings: Finding[] = [];
 
     const currentBalance: BigNumber = await daiContract.totalSupply({ blockTag: blockEvent.blockNumber });
-    if(!balance.eq(currentBalance)) {
-      findings.push(Finding.from({
-        alertId: "L2-DAI-MONITOR",
-        description: "Balance change detected",
-        name: "L2 DAI Balance Monitor",
-        severity: FindingSeverity.Info,
-        type: FindingType.Info,
-        metadata: {
-          supply: currentBalance.toString(),
-        },
-        // Finding fields omitted to avoid flood when alerts are filtered in the dashboard
-        // protocol: "MakerDAO", something else should be used to avoid default "ethereum"
-        // addresses: [dai],
-      }))
+    if (!balance.eq(currentBalance)) {
+      findings.push(
+        Finding.from({
+          alertId: "L2-DAI-MONITOR",
+          description: "Balance change detected",
+          name: "L2 DAI Balance Monitor",
+          severity: FindingSeverity.Info,
+          type: FindingType.Info,
+          metadata: {
+            supply: currentBalance.toString(),
+          },
+          // Finding fields omitted to avoid flood when alerts are filtered in the dashboard
+          // protocol: "MakerDAO", something else should be used to avoid default "ethereum"
+          // addresses: [dai],
+        })
+      );
     }
     balance = currentBalance;
 
     return findings;
   };
-}
+};
 
 export default {
   handleBlock: provideHandleBlock(getEthersProvider(), DAI),

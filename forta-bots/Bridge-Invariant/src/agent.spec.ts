@@ -1,14 +1,5 @@
-import {
-  FindingType,
-  FindingSeverity,
-  Finding,
-  HandleTransaction,
-  createTransactionEvent,
-  ethers,
-} from "forta-agent";
+import { FindingType, FindingSeverity, Finding, HandleTransaction, createTransactionEvent, ethers } from "forta-agent";
 
 describe("Bridge invariant tests", () => {
-  it("should do something", async () => {
-     
-  });
+  it("should do something", async () => {});
 });
