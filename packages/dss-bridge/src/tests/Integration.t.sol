@@ -91,6 +91,9 @@ contract SimpleDomainGuest is DomainGuest {
 
 // TODO use actual dog when ready
 contract DogMock {
+    function wards(address) external view returns (uint256) {
+        return 1;
+    }
     function file(bytes32,address) external {
         // Do nothing
     }
@@ -112,7 +115,7 @@ contract IntegrationTest is DSSTest {
     MCD rmcd;
 
     bytes32 constant DOMAIN_ILK = "SOME-DOMAIN-A";
-    bytes32 constant REMOTE_ILK = "XCHAIN-COLLATERAL-A";
+    bytes32 constant REMOTE_COLL_ILK = "XCHAIN-COLLATERAL-A";
 
     function setupEnv() internal virtual override returns (MCD) {
         return autoDetectEnv();
@@ -138,10 +141,11 @@ contract IntegrationTest is DSSTest {
             End end = new End();
 
             rmcd = new MCD();
+            // FIXME this is prone to supplying args in the wrong order - want to improve
             rmcd.loadCore(
                 address(vat),
-                address(dai),
                 address(daiJoin),
+                address(dai),
                 address(guest),
                 address(dog),
                 address(pot),
@@ -150,6 +154,7 @@ contract IntegrationTest is DSSTest {
                 address(end),
                 address(cure)
             );
+            rmcd.init();
         }
         rmcd.end().file("claim", address(claimToken));
         rmcd.end().file("wait", 1 hours);
@@ -312,23 +317,23 @@ contract IntegrationTest is DSSTest {
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 130 ether);
     }
 
-    /*function testGlobalShutdown() public {
-        bytes32 ilk = "test-ilk";
+    function testGlobalShutdown() public {
+        bytes32 ilk = REMOTE_COLL_ILK;
         EndAbstract hostEnd = EndAbstract(mcd.chainlog().getAddress("MCD_END"));
 
         // Set up some debt in the guest instance
         host.lift(100 ether);
         rmcd.initIlk(ilk);
         rmcd.vat().file(ilk, "line", 1_000_000 * RAD);
-        vat.slip(ilk, address(this), 40 ether);
-        vat.frob(ilk, address(this), address(this), address(this), 40 ether, 40 ether);
+        rmcd.vat().slip(ilk, address(this), 40 ether);
+        rmcd.vat().frob(ilk, address(this), address(this), address(this), 40 ether, 40 ether);
 
         assertEq(mcd.vat().live(), 1);
         assertEq(guest.live(), 1);
         assertEq(host.live(), 1);
-        assertEq(vat.live(), 1);
-        assertEq(vat.debt(), 40 * RAD);
-        (uint256 ink, uint256 art) = vat.urns(ilk, address(this));
+        assertEq(rmcd.vat().live(), 1);
+        assertEq(rmcd.vat().debt(), 40 * RAD);
+        (uint256 ink, uint256 art) = rmcd.vat().urns(ilk, address(this));
         assertEq(ink, 40 ether);
         assertEq(art, 40 ether);
 
@@ -340,33 +345,33 @@ contract IntegrationTest is DSSTest {
         assertEq(mcd.vat().live(), 0);
         assertEq(guest.live(), 0);
         assertEq(host.live(), 0);
-        assertEq(vat.live(), 0);
-        assertEq(vat.debt(), 40 * RAD);
-        (ink, art) = vat.urns(ilk, address(this));
+        assertEq(rmcd.vat().live(), 0);
+        assertEq(rmcd.vat().debt(), 40 * RAD);
+        (ink, art) = rmcd.vat().urns(ilk, address(this));
         assertEq(ink, 40 ether);
         assertEq(art, 40 ether);
-        assertEq(vat.gem(ilk, address(end)), 0);
-        assertEq(vat.sin(address(guest)), 0);
+        assertEq(rmcd.vat().gem(ilk, address(rmcd.end())), 0);
+        assertEq(rmcd.vat().sin(address(guest)), 0);
 
         // --- Settle out the Guest instance ---
 
-        end.cage(ilk);
-        end.skim(ilk, address(this));
+        rmcd.end().cage(ilk);
+        rmcd.end().skim(ilk, address(this));
 
-        (ink, art) = vat.urns(ilk, address(this));
+        (ink, art) = rmcd.vat().urns(ilk, address(this));
         assertEq(ink, 0);
         assertEq(art, 0);
-        assertEq(vat.gem(ilk, address(end)), 40 ether);
-        assertEq(vat.sin(address(guest)), 40 * RAD);
+        assertEq(rmcd.vat().gem(ilk, address(rmcd.end())), 40 ether);
+        assertEq(rmcd.vat().sin(address(guest)), 40 * RAD);
 
-        GodMode.vm().warp(block.timestamp + end.wait());
+        GodMode.vm().warp(block.timestamp + rmcd.end().wait());
 
-        end.thaw();
+        rmcd.end().thaw();
 
         assertEq(guest.grain(), 100 ether);
         assertEq(host.cure(), 60 * RAD);    // 60 pre-mint dai is unused
 
-        end.flow(ilk);
+        rmcd.end().flow(ilk);
 
         // --- Settle out the Host instance ---
 
@@ -388,12 +393,12 @@ contract IntegrationTest is DSSTest {
         GodMode.vm().warp(block.timestamp + hostEnd.wait());
 
         // Clear out any surplus if it exists
-        uint256 vowDai = vat.dai(address(mcd.vow()));
-        vat.suck(address(mcd.vow()), address(123), vowDai);
+        uint256 vowDai = rmcd.vat().dai(address(mcd.vow()));
+        rmcd.vat().suck(address(mcd.vow()), address(123), vowDai);
         mcd.vow().heal(vowDai);
         // TODO - need to take cure into account when it's live
         hostEnd.thaw();
         hostEnd.flow(DOMAIN_ILK);
-    }*/
+    }
 
 }
