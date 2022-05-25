@@ -1,26 +1,28 @@
-# Large Tether Transfer Agent
+# MakerDAO Teleport Backing
 
 ## Description
 
-This agent detects transactions with large Tether transfers
+This bot detects Mint events emitted from the TeleportJoin without the corresponding WormholeInitialized events from the L2DaiWormholeGateway contract.
 
 ## Supported Chains
 
-- Ethereum
-- List any other chains this agent can support e.g. BSC
+- Optimism Kovan
+- Arbitrum Testnet
+- Polygon (PoC)
 
 ## Alerts
 
-Describe each of the type of alerts fired by this agent
-
-- FORTA-1
-  - Fired when a transaction contains a Tether transfer over 10,000 USDT
-  - Severity is always set to "low" (mention any conditions where it could be something else)
-  - Type is always set to "info" (mention any conditions where it could be something else)
-  - Mention any other type of metadata fields included with this alert
+- MK-02-02
+  - Fired when a Mint event emission without a corresponding WormholeInitialized event is detected.
+  - Severity is always set to "High".
+  - Type is always set to "Suspicous".
+  - Metadata contains:
+    - `txHash`: The hash of the transaction.
+    - `hashGUID`: The teleport's GUID hash.
+    - `chainId`: The chain identifier.
 
 ## Test Data
 
-The agent behaviour can be verified with the following transactions:
+The bot behaviour can be verified with the following transaction:
 
-- 0x3a0f757030beec55c22cbc545dd8a844cbbb2e6019461769e1bc3f3a95d10826 (15,000 USDT)
+- 0xfe5e7d9ee4d91362049f93d151742e448102591761a62c36da55c176c7e8268d (`Polygon mainnet PoC`)

@@ -1,7 +1,7 @@
 {
-  "name": "forta-agent-starter",
+  "name": "mk-2-2",
   "version": "0.0.1",
-  "description": "Forta Agent Typescript starter project",
+  "description": "MakerDAO Teleport backing monitoring bot",
   "chainIds": [
     1
   ],
@@ -19,13 +19,12 @@
     "disable": "forta-agent disable",
     "enable": "forta-agent enable",
     "keyfile": "forta-agent keyfile",
-    "test": "jest",
+    "test": "jest --detectOpenHandles",
     "format": "prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
-    "@apollo/client": "^3.6.4",
-    "forta-agent": "^0.1.6",
-    "cross-fetch": "^3.1.5"
+    "axios": "^0.21.4",
+    "forta-agent": "^0.1.6"
   },
   "devDependencies": {
     "@types/jest": "^27.0.1",
