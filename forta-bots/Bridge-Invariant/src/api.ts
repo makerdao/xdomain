@@ -1,15 +1,19 @@
 import axios from "axios";
 
+const FORTA_API: string = "https://api.forta.network/graphql";
+
 export default class SupplyFercher {
-  readonly endpoint: string = "https://api.forta.network/graphql";
+  readonly endpoint: string;
   private post: any;
 
-  constructor(post: any = axios.post) {
+  constructor(endpoint: string = FORTA_API, post: any = axios.post) {
     this.post = post;
+    this.endpoint = endpoint;
   }
 
-  public async getL2Supply(chainId: number, timestamp: number, fallback: any) {
-    let offset: any = undefined;
+  public async getL2Supply(chainId: number, timestamp: number, fallback: any = undefined) {
+    let offset: any = {};
+    const miliseconds: number = timestamp * 1000;
     while (true) {
       const { data } = await this.post(
         this.endpoint,
@@ -27,18 +31,21 @@ export default class SupplyFercher {
 
       for (let alert of alerts.alerts) {
         const date: Date = new Date(alert.source.block.timestamp);
-        if (date.valueOf() <= timestamp) {
-          return alert.metadata.supply;
-        }
+        if (date.valueOf() <= miliseconds) return alert.metadata.supply;
       }
 
-      if (alerts.pageInfo.hasNextPage) offset = alerts.pageInfo.endCursor;
-      else return fallback;
+      if (alerts.pageInfo.hasNextPage) {
+        offset = {
+          after: {
+            ...alerts.pageInfo.endCursor,
+          },
+        };
+      } else return fallback;
     }
   }
 }
 
-const QUERY: string = `
+export const QUERY: string = `
 query pastAlerts($input: AlertsInput) {
   alerts(input: $input) {
     pageInfo {
@@ -61,17 +68,12 @@ query pastAlerts($input: AlertsInput) {
 }`;
 
 const formatDate = (date: Date) => {
-  const [yyyy, mm, dd] = [
-    date.getUTCFullYear().toString(), 
-    (date.getUTCMonth() + 1).toString().padStart(2, "0"), 
-    date.getUTCDay().toString().padStart(2, "0"),
-  ];
-  return `${yyyy}-${mm}-${dd}`;
-}
+  return date.toISOString().slice(0, 10);
+};
 
 const ORIGIN: string = formatDate(new Date(0));
 
-const queryInput = (chainId: number, timestamp: number, after: any = undefined) => {
+export const queryInput = (chainId: number, timestamp: number, cursor: any = {}) => {
   const date: string = formatDate(new Date(timestamp * 1000));
   return {
     input: {
@@ -81,7 +83,7 @@ const queryInput = (chainId: number, timestamp: number, after: any = undefined) 
         startDate: ORIGIN,
         endDate: date,
       },
-      ...after,
+      ...cursor,
     },
   };
 };
