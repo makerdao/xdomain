@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getEndDate } from "./utils";
+import { BOT_ID, getEndDate } from "./utils";
 
 const FORTA_API_ENDPOINT: string = "https://api.forta.network/graphql";
 
@@ -14,7 +14,6 @@ export default class Fetcher {
 
   public async L2HashGUIDExists(networkId: number, blockTimestamp: number, hash: string): Promise<boolean> {
     let offset: any = {};
-    let hashesArray: string[] = [];
 
     while (true) {
       const { data } = await this.post(
@@ -31,12 +30,9 @@ export default class Fetcher {
       );
 
       for (let alert of data.data.alerts.alerts) {
-        // @ts-ignore
-        hashesArray.push(...Object.values(alert.metadata));
-      }
-
-      if (hashesArray.includes(hash)) {
-        return true;
+        if (Object.values(alert.metadata).includes(hash)) {
+          return true;
+        }
       }
 
       if (data.data.alerts.pageInfo.hasNextPage) {
@@ -71,7 +67,7 @@ export const queryInput = (networkId: number, blockTimestamp: number, after: any
   return {
     input: {
       first: 10,
-      bots: ["0xa10d43a54a1b19346ba4ba117f3401d5931c14f161fa7d998b8c7d6d6b13a35e"],
+      bots: [BOT_ID],
       chainId: networkId,
       blockDateRange: {
         startDate: "2021-01-01",

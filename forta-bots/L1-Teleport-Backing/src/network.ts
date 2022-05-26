@@ -47,7 +47,7 @@ export default class NetworkManager implements NetworkData {
       this.TeleportJoin = TeleportJoin;
       this.TeleportOracleAuth = TeleportOracleAuth;
     } catch {
-      throw new Error("You are running the bot in a non supported network");
+      throw new Error("You are running the bot on a non supported network");
     }
   }
 

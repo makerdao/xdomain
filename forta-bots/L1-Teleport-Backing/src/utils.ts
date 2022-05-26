@@ -1,17 +1,14 @@
 import { Interface } from "@ethersproject/abi";
 import { Finding, FindingSeverity, FindingType } from "forta-agent";
 
+export const BOT_ID: string = "";
+
 export const MINT_EVENT: string =
   "event Mint(bytes32 indexed hashGUID, tuple(bytes32, bytes32, bytes32, bytes32, uint128, uint80, uint48) wormholeGUID, uint256 amount, uint256 maxFeePercentage, uint256 operatorFee, address originator)";
 export const MINT_IFACE: Interface = new Interface([MINT_EVENT]);
 
 export const getEndDate = (timestamp: number): string => {
-  let day = new Date(timestamp * 1000);
-  let dd = day.getUTCDate().toString().padStart(2, "0");
-  let mm = (day.getUTCMonth() + 1).toString().padStart(2, "0");
-  let yyyy = day.getUTCFullYear();
-  let endDate = yyyy + "-" + mm + "-" + dd;
-  return endDate;
+  return new Date(timestamp * 1000).toISOString().slice(0, 10);
 };
 
 export const createFinding = (txHash: string, hashGUID: string, networkId: number): Finding => {
@@ -19,7 +16,7 @@ export const createFinding = (txHash: string, hashGUID: string, networkId: numbe
     name: "MakerDAO Teleport Backing Monitor",
     description: "Mint event emitted from TeleportJoin without corresponding WormholeInitialized event",
     alertId: "MK-02-02",
-    protocol: "forta-bots-info",
+    protocol: "MakerDAO",
     severity: FindingSeverity.High,
     type: FindingType.Suspicious,
     metadata: {

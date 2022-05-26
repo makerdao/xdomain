@@ -3,8 +3,7 @@
   "version": "0.0.1",
   "description": "MakerDAO Teleport backing monitoring bot",
   "chainIds": [
-    69,
-    421611
+    1
   ],
   "scripts": {
     "build": "tsc",

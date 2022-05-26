@@ -35,7 +35,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
     setNetwork: jest.fn(),
   };
 
-  const handleBlock: HandleBlock = provideHandleBlock(mockNetworkManager, mockProvider as any);
+  const handleBlock: HandleBlock = provideHandleBlock(mockNetworkManager as any, mockProvider as any);
 
   beforeEach(() => {
     mockProvider.clear();
@@ -75,7 +75,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
     expect(findings).toStrictEqual([testCreateFinding(map)]);
   });
 
-  it("should return multiple findings if multiple WormholeInitialized events are emitted at the same block", async () => {
+  it("should return a finding containing multiple WormholeInitialized events when those are emitted at the same block", async () => {
     const blockEvent: BlockEvent = new TestBlockEvent().setNumber(999).setHash(keccak256("bH11"));
     filter = createFilter(blockEvent.blockHash);
 

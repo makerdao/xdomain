@@ -1,11 +1,10 @@
 import { BlockEvent, Finding, HandleBlock, getEthersProvider } from "forta-agent";
 import { providers, utils } from "ethers";
-import NetworkData from "./network";
+import NetworkData, { NETWORK_MAP } from "./network";
 import NetworkManager from "./network";
 import { EVENT_IFACE, createFinding } from "./utils";
 
-const networkManager: NetworkData = new NetworkManager();
-let logsMap: Map<string, string> = new Map<string, string>();
+const networkManager: NetworkData = new NetworkManager(NETWORK_MAP);
 
 export const initialize = (provider: providers.Provider) => async () => {
   const { chainId } = await provider.getNetwork();
@@ -29,11 +28,12 @@ export const provideHandleBlock =
       return findings;
     }
 
+    let logsMap: Map<string, string> = new Map<string, string>();
+
     wormholeInitializedLogs.forEach((log, i) => {
       logsMap.set(i.toString(), utils.keccak256(log.data));
     });
     findings.push(createFinding(logsMap));
-    logsMap.clear();
 
     return findings;
   };

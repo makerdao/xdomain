@@ -6,9 +6,8 @@ This bot detects `WormholeInitialized` emissions from the `L2DaiWormholeGateway`
 
 ## Supported Chains
 
-- Optimism Kovan
-- Arbitrum Testnet
-- Polygon (PoC)
+- Optimism 
+- Arbitrum 
 
 ## Alerts
 

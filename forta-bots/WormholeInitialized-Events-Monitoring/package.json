@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "description": "MakerDAO L2WormholeGateway's WormholeInitialized events detection bot",
   "chainIds": [
-    69,
-    421611
+    10,
+    42161
   ],
   "scripts": {
     "build": "tsc",

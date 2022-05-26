@@ -13,7 +13,7 @@ const testCreateFinding = (txHash: string, hashGUID: string, networkId: number):
     name: "MakerDAO Teleport Backing Monitor",
     description: "Mint event emitted from TeleportJoin without corresponding WormholeInitialized event",
     alertId: "MK-02-02",
-    protocol: "forta-bots-info",
+    protocol: "MakerDAO",
     severity: FindingSeverity.High,
     type: FindingType.Suspicious,
     metadata: {
@@ -36,6 +36,10 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
 
   const handleTransaction: HandleTransaction = provideHandleTransaction(mockNetworkManager as any, mockFetcher as any);
 
+  beforeEach(() => {
+    mockFetcher.L2HashGUIDExists.mockClear();
+  });
+
   it("should ignore empty transactions", async () => {
     const txEvent = new TestTransactionEvent();
 
@@ -44,7 +48,6 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
   });
 
   it("should ignore other events emitted from TeleportJoin contract", async () => {
-    mockFetcher.L2HashGUIDExists.mockReturnValue(false);
     const event = WRONG_IFACE.getEvent("WrongEvent");
     const log = WRONG_IFACE.encodeEventLog(event, [mockNetworkManager.TeleportOracleAuth, keccak256("guid1")]);
 
@@ -55,6 +58,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
     );
 
     const findings: Finding[] = await handleTransaction(txEvent);
+    expect(mockFetcher.L2HashGUIDExists).not.toHaveBeenCalled();
     expect(findings).toStrictEqual([]);
   });
 
@@ -70,18 +74,18 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
       mockNetworkManager.TeleportOracleAuth,
     ]);
 
-    const txEvent = new TestTransactionEvent().addAnonymousEventLog(
-      mockNetworkManager.TeleportJoin,
-      log.data,
-      ...log.topics
-    );
+    const txEvent = new TestTransactionEvent()
+      .setTimestamp(21234)
+      .addAnonymousEventLog(mockNetworkManager.TeleportJoin, log.data, ...log.topics);
 
     const findings: Finding[] = await handleTransaction(txEvent);
+    expect(mockFetcher.L2HashGUIDExists).toHaveBeenCalledWith(mockNetworkManager.networkId, 21234, keccak256("guid1"));
     expect(findings).toStrictEqual([]);
   });
 
   it("should return a finding when there is no corresponding WormholeInitialized event emitted from L2DaiGateway contract", async () => {
     mockFetcher.L2HashGUIDExists.mockReturnValue(false);
+
     const event = MINT_IFACE.getEvent("Mint");
     const log = MINT_IFACE.encodeEventLog(event, [
       keccak256("guid123"),
@@ -100,13 +104,14 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
       mockNetworkManager.TeleportOracleAuth,
     ]);
 
-    const txEvent = new TestTransactionEvent().addAnonymousEventLog(
-      mockNetworkManager.TeleportJoin,
-      log.data,
-      ...log.topics
-    );
+    const txEvent = new TestTransactionEvent()
+      .setTimestamp(2424)
+      .addAnonymousEventLog(mockNetworkManager.TeleportJoin, log.data, ...log.topics);
 
     const findings: Finding[] = await handleTransaction(txEvent);
+
+    expect(mockFetcher.L2HashGUIDExists).toBeCalledWith(mockNetworkManager.networkId, 2424, keccak256("guid123"));
+
     expect(findings).toStrictEqual([
       testCreateFinding(txEvent.hash, keccak256("guid123"), mockNetworkManager.networkId),
     ]);
@@ -149,10 +154,15 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
     ]);
 
     const txEvent = new TestTransactionEvent()
+      .setTimestamp(3322353)
       .addAnonymousEventLog(mockNetworkManager.TeleportJoin, log1.data, ...log1.topics)
       .addAnonymousEventLog(mockNetworkManager.TeleportJoin, log2.data, ...log2.topics);
 
     const findings: Finding[] = await handleTransaction(txEvent);
+
+    expect(mockFetcher.L2HashGUIDExists).toBeCalledWith(mockNetworkManager.networkId, 3322353, keccak256("guid123"));
+    expect(mockFetcher.L2HashGUIDExists).toBeCalledWith(mockNetworkManager.networkId, 3322353, keccak256("guid456"));
+
     expect(findings).toStrictEqual([
       testCreateFinding(txEvent.hash, keccak256("guid123"), mockNetworkManager.networkId),
       testCreateFinding(txEvent.hash, keccak256("guid456"), mockNetworkManager.networkId),
