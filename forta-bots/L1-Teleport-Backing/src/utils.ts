@@ -14,7 +14,7 @@ export const getEndDate = (timestamp: number): string => {
   return endDate;
 };
 
-export const createFinding = (txHash: string, guid: string, networkId: number): Finding => {
+export const createFinding = (txHash: string, hashGUID: string, networkId: number): Finding => {
   return Finding.fromObject({
     name: "MakerDAO Teleport Backing Monitor",
     description: "Mint event emitted from TeleportJoin without corresponding WormholeInitialized event",
@@ -23,8 +23,8 @@ export const createFinding = (txHash: string, guid: string, networkId: number): 
     severity: FindingSeverity.High,
     type: FindingType.Suspicious,
     metadata: {
-      txHash: txHash,
-      hashGUID: guid,
+      txHash,
+      hashGUID,
       chainId: networkId.toString(),
     },
   });

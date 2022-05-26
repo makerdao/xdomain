@@ -8,7 +8,7 @@ const WRONG_IFACE: Interface = new Interface([
   "event WrongEvent(address indexed originator, bytes32 indexed hashGUID)",
 ]);
 
-const testCreateFinding = (txHash: string, guid: string, networkId: number): Finding => {
+const testCreateFinding = (txHash: string, hashGUID: string, networkId: number): Finding => {
   return Finding.fromObject({
     name: "MakerDAO Teleport Backing Monitor",
     description: "Mint event emitted from TeleportJoin without corresponding WormholeInitialized event",
@@ -17,8 +17,8 @@ const testCreateFinding = (txHash: string, guid: string, networkId: number): Fin
     severity: FindingSeverity.High,
     type: FindingType.Suspicious,
     metadata: {
-      txHash: txHash,
-      hashGUID: guid,
+      txHash,
+      hashGUID,
       chainId: networkId.toString(),
     },
   });
