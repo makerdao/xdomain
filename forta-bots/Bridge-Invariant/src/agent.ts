@@ -29,6 +29,7 @@ export const provideHandleBlock = (
             name: "Maker bridge invariant monitor",
             severity: FindingSeverity.High,
             type: FindingType.Suspicious,
+            protocol: "MakerDAO",
             metadata: {
               chainId: data.chainId.toString(),
               escrow: data.escrow,

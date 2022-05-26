@@ -13,6 +13,7 @@ const createFinding = (chainId: number, escrow: string, escrowSupply: number, l2
     name: "Maker bridge invariant monitor",
     severity: FindingSeverity.High,
     type: FindingType.Suspicious,
+    protocol: "MakerDAO",
     metadata: {
       chainId: chainId.toString(),
       escrow,
