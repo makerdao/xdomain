@@ -1,18 +1,15 @@
 const hre = require('hardhat')
-import { PrismaClient } from '@prisma/client'
 import { expect } from 'earljs'
-import { BigNumber, BigNumberish, ethers, providers, Wallet } from 'ethers'
-import { formatEther, parseUnits } from 'ethers/lib/utils'
+import { ethers, Wallet } from 'ethers'
+import waitForExpect from 'wait-for-expect'
+
+import { monitor } from '../src/bin/monitor'
 import { chainIds, networks } from '../src/config'
-import { monitor } from '../src/monitor'
+import { SyncStatusRepositoryInMemory } from '../src/db/SyncStatusRepository'
+import { TeleportRepositoryInMemory } from '../src/db/TeleportRepository'
 import { getKovanSdk } from '../src/sdk'
-import { delay } from '../src/utils'
 import { impersonateAccount, mineABunchOfBlocks, mintEther } from './hardhat-utils'
 import { getAttestations } from './signing'
-import waitForExpect from 'wait-for-expect'
-import { sqltag } from '@prisma/client/runtime'
-import { TeleportRepositoryInMemory } from '../src/db/TeleportRepository'
-import { SyncStatusRepositoryInMemory } from '../src/db/SyncStatusRepository'
 
 describe('Monitoring', () => {
   const kovanProxy = '0x0e4725db88Bb038bBa4C4723e91Ba183BE11eDf3'
@@ -32,13 +29,13 @@ describe('Monitoring', () => {
     const syncStatusesRepository = new SyncStatusRepositoryInMemory()
     await syncStatusesRepository.upsert({ domain: sourceDomain, block: (await l2Provider.getBlock('latest')).number })
 
-    const { metrics, cancel: _cancel } = await monitor(
+    const { metrics, cancel: _cancel } = await monitor({
       network,
-      hhProvider,
+      l1Provider: hhProvider,
       // note: as any shouldn't be needed here but for some weird reason tsc requires it because of private properties???
-      teleportRepository as any,
-      syncStatusesRepository as any,
-    )
+      teleportRepository: teleportRepository as any,
+      syncStatusRepository: syncStatusesRepository as any,
+    })
     cancel = _cancel
 
     // print unbacked DAI

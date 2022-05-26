@@ -12,7 +12,7 @@
     "start": "node -r esbuild-register ./src",
     "format": "prettier --check \"./**/*.ts\"",
     "format:fix": "prettier --write \"./**/*.ts\"",
-    "lint": "eslint --ext .ts src",
+    "lint": "eslint --ext .ts src test-e2e",
     "lint:fix": "yarn lint --fix",
     "typecheck": "tsc --noEmit",
     "build": "rm -rf ./dist && tsc -p ./tsconfig.build.json",

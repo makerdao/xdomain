@@ -15,6 +15,7 @@ These checks are run on _every new finalized block_:
 
 ```
 docker run -d --name=teleport_monitoring -p 5432:5432 -e POSTGRES_PASSWORD=password postgres
+yarn prisma migrate dev # migrate db
 ```
 
 2. To start monitoring + http server exporting metrics run:

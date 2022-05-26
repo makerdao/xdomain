@@ -20,3 +20,15 @@ export async function delay(timeout: number): Promise<void> {
     setTimeout(resolve, timeout)
   })
 }
+
+// from & to inclusive
+export async function inChunks(
+  from: number,
+  to: number,
+  delta: number,
+  fn: (from: number, to: number) => Promise<void>, // from & to inclusive
+) {
+  for (let i = from; i <= to; i += delta + 1) {
+    await fn(Math.min(i, to), Math.min(i + delta, to))
+  }
+}
