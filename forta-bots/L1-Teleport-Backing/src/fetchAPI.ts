@@ -30,8 +30,6 @@ export default class Fetcher {
         }
       );
 
-      console.log(data.data.alerts);
-
       for (let alert of data.data.alerts.alerts) {
         // @ts-ignore
         hashesArray.push(...Object.values(alert.metadata));
