@@ -6,7 +6,7 @@ import { NetworkData } from "./constants";
 import { BigNumber } from "ethers";
 import { when, resetAllWhenMocks } from "jest-when";
 
-const createFinding = (chainId: number, escrow: string, escrowSupply: number, l2Supply: number) =>
+const createFinding = (dai: string, chainId: number, escrow: string, escrowSupply: number, l2Supply: number) =>
   Finding.from({
     alertId: "MAKER-BRIDGE-INVARIANT",
     description: "Escrow DAI balance is less than L2 DAI total supply",
@@ -20,6 +20,7 @@ const createFinding = (chainId: number, escrow: string, escrowSupply: number, l2
       escrowBalance: escrowSupply.toString(),
       totalSupply: l2Supply.toString(),
     },
+    addresses: [escrow, dai],
   });
 
 describe("Bridge invariant tests", () => {
@@ -72,7 +73,7 @@ describe("Bridge invariant tests", () => {
       const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(timestamp).setNumber(block);
       const findings: Finding[] = await handler(blockEvent);
       if (balance >= supply) expect(findings).toStrictEqual([]);
-      else expect(findings).toStrictEqual([createFinding(data.chainId, data.escrow, balance, supply)]);
+      else expect(findings).toStrictEqual([createFinding(dai, data.chainId, data.escrow, balance, supply)]);
     }
   });
 
@@ -98,7 +99,7 @@ describe("Bridge invariant tests", () => {
         .mockReturnValueOnce(supply);
 
       if (balance < supply)
-        expectedFindings.push(createFinding(multiL2Data[l2].chainId, multiL2Data[l2].escrow, balance, supply));
+        expectedFindings.push(createFinding(dai, multiL2Data[l2].chainId, multiL2Data[l2].escrow, balance, supply));
     }
 
     const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(timestamp).setNumber(block);

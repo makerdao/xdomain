@@ -36,6 +36,7 @@ export const provideHandleBlock = (
               escrowBalance: escrowSupply.toString(),
               totalSupply: l2Supply.toString(),
             },
+            addresses: [data.escrow, dai],
           })
         );
       }

@@ -28,3 +28,6 @@ L1DAI.balanceOf(escrow) ≥ L2DAI.totalSupply()
     - `escrow`: The address of the escrow
     - `escrowBalance`: The DAI balance of the escrow
     - `totalSupply`: The DAI total supply of the L2 network
+  - Addresses contains:
+    - Escrow addresss
+    - L1 Dai address
