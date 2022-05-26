@@ -1,9 +1,9 @@
 {
-  "name": "forta-agent-starter",
+  "name": "maker-l2-dai-monitor",
   "version": "0.0.1",
-  "description": "Forta Agent Typescript starter project",
+  "description": "Bot to monitor DAI supply across multiple L2 Networks",
   "chainIds": [
-    1
+    10, 42161
   ],
   "scripts": {
     "build": "tsc",
@@ -34,5 +34,6 @@
     "prettier": "^2.6.2",
     "ts-jest": "^27.0.3",
     "typescript": "^4.3.4"
-  }
+  },
+  "repository": "https://github.com/makerdao/xdomain/tree/master/forta-bots/L2-DAI-Monitor"
 }

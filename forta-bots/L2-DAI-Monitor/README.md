@@ -17,8 +17,3 @@ This agent detects DAI totalSupply changes on L2s
   - Type is always set to "Info"
   - Metadata contains:
     - `supply`: The DAI total supply
-
-## Test Data
-
-The agent behaviour can be verified with the following transactions:
-
