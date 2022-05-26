@@ -32,7 +32,7 @@ export const provideHandleBlock = (
             metadata: {
               chainId: data.chainId.toString(),
               escrow: data.escrow,
-              escrowSupply: escrowSupply.toString(),
+              escrowBalance: escrowSupply.toString(),
               totalSupply: l2Supply.toString(),
             },
           })

@@ -16,7 +16,7 @@ const createFinding = (chainId: number, escrow: string, escrowSupply: number, l2
     metadata: {
       chainId: chainId.toString(),
       escrow,
-      escrowSupply: escrowSupply.toString(),
+      escrowBalance: escrowSupply.toString(),
       totalSupply: l2Supply.toString(),
     },
   });
