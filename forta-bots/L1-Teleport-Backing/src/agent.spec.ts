@@ -13,7 +13,7 @@ const testCreateFinding = (txHash: string, guid: string, networkId: number): Fin
     name: "MakerDAO Teleport Backing Monitor",
     description: "Mint event emitted from TeleportJoin without corresponding WormholeInitialized event",
     alertId: "MK-02-02",
-    protocol: "forta-info",
+    protocol: "forta-bots-info",
     severity: FindingSeverity.High,
     type: FindingType.Suspicious,
     metadata: {
