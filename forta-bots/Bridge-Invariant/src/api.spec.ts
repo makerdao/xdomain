@@ -1,10 +1,10 @@
-import SupplyFercher, { QUERY, queryInput } from "./api";
+import SupplyFetcher, { QUERY, queryInput } from "./api";
 import { when, resetAllWhenMocks } from "jest-when";
 
 describe("SupplyFetcher tests", () => {
   const mockPost = jest.fn();
   const endpoint: string = "forta-test-endpoint";
-  const fetcher: SupplyFercher = new SupplyFercher(endpoint, mockPost);
+  const fetcher: SupplyFetcher = new SupplyFetcher(endpoint, mockPost);
 
   const buildResponse = (
     chainId: number,
@@ -67,7 +67,7 @@ describe("SupplyFetcher tests", () => {
 
   it("should set different endpoints", () => {
     for (let i = 0; i < 10; ++i) {
-      const supplyFetcher: SupplyFercher = new SupplyFercher(i.toString());
+      const supplyFetcher: SupplyFetcher = new SupplyFetcher(i.toString());
       expect(supplyFetcher.endpoint).toStrictEqual(i.toString());
     }
   });

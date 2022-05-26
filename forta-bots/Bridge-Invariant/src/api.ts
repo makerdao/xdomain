@@ -3,7 +3,7 @@ import constants from "./constants";
 
 const FORTA_API: string = "https://api.forta.network/graphql";
 
-export default class SupplyFercher {
+export default class SupplyFetcher {
   readonly endpoint: string;
   private post: any;
 

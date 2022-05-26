@@ -1,13 +1,13 @@
 import { BlockEvent, Finding, FindingSeverity, FindingType, getEthersProvider } from "forta-agent";
 import { BigNumber, Contract, providers } from "ethers";
 import constants, { NetworkData } from "./constants";
-import SupplyFercher from "./api";
+import SupplyFetcher from "./api";
 import abi from "./abi";
 
 export const provideHandleBlock = (
   provider: providers.JsonRpcProvider,
   l2Data: NetworkData[],
-  fetcher: SupplyFercher,
+  fetcher: SupplyFetcher,
   dai: string
 ) => {
   const daiContract: Contract = new Contract(dai, abi.DAI, provider);
@@ -47,5 +47,5 @@ export const provideHandleBlock = (
 };
 
 export default {
-  handleBlock: provideHandleBlock(getEthersProvider(), constants.L2_DATA, new SupplyFercher(), constants.L1_DAI),
+  handleBlock: provideHandleBlock(getEthersProvider(), constants.L2_DATA, new SupplyFetcher(), constants.L1_DAI),
 };
