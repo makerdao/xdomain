@@ -36,6 +36,7 @@ import { Vat } from "xdomain-dss/Vat.sol";
 import { ClaimToken } from "../ClaimToken.sol";
 import { DomainHost } from "../DomainHost.sol";
 import { DomainGuest } from "../DomainGuest.sol";
+import { BridgeOracle } from "../BridgeOracle.sol";
 
 interface EscrowLike {
     function approve(address token, address spender, uint256 value) external;
@@ -91,7 +92,7 @@ contract SimpleDomainGuest is DomainGuest {
 
 // TODO use actual dog when ready
 contract DogMock {
-    function wards(address) external view returns (uint256) {
+    function wards(address) external pure returns (uint256) {
         return 1;
     }
     function file(bytes32,address) external {
@@ -107,6 +108,7 @@ contract IntegrationTest is DSSTest {
     ClaimToken claimToken;
     SimpleDomainHost host;
     SimpleDomainGuest guest;
+    BridgeOracle pip;
 
     // Local contracts
     EscrowLike escrow;
@@ -130,6 +132,8 @@ contract IntegrationTest is DSSTest {
         Dai dai = new Dai();
         DaiJoin daiJoin = new DaiJoin(address(vat), address(dai));
         guest = new SimpleDomainGuest(address(daiJoin), address(claimToken), address(host));
+        pip = new BridgeOracle(address(host));
+        claimToken.rely(address(guest));
 
         // Setup remote instance
         {
@@ -174,7 +178,7 @@ contract IntegrationTest is DSSTest {
         mcd.vat().rely(address(host));
         address(escrow).setWard(address(this), 1);
         escrow.approve(address(mcd.dai()), address(host), type(uint256).max);
-        mcd.initIlk(DOMAIN_ILK, address(host));
+        mcd.initIlk(DOMAIN_ILK, address(host), address(pip));
         mcd.vat().file(DOMAIN_ILK, "line", 1_000_000 * RAD);
         mcd.cure().lift(address(host));
     }
@@ -319,59 +323,60 @@ contract IntegrationTest is DSSTest {
     }
 
     function testGlobalShutdown() public {
-        bytes32 ilk = REMOTE_COLL_ILK;
-        mcd.vat().suck(address(123), address(this), 100 * RAD);
-
         // Set up some debt in the guest instance
         host.lift(100 ether);
-        rmcd.initIlk(ilk);
-        rmcd.vat().file(ilk, "line", 1_000_000 * RAD);
-        rmcd.vat().slip(ilk, address(this), 40 ether);
-        rmcd.vat().frob(ilk, address(this), address(this), address(this), 40 ether, 40 ether);
+        rmcd.initIlk(REMOTE_COLL_ILK);
+        rmcd.vat().file(REMOTE_COLL_ILK, "line", 1_000_000 * RAD);
+        rmcd.vat().slip(REMOTE_COLL_ILK, address(this), 40 ether);
+        rmcd.vat().frob(REMOTE_COLL_ILK, address(this), address(this), address(this), 40 ether, 40 ether);
 
         assertEq(mcd.vat().live(), 1);
         assertEq(guest.live(), 1);
         assertEq(host.live(), 1);
         assertEq(rmcd.vat().live(), 1);
         assertEq(rmcd.vat().debt(), 40 * RAD);
-        (uint256 ink, uint256 art) = rmcd.vat().urns(ilk, address(this));
+        (uint256 ink, uint256 art) = rmcd.vat().urns(REMOTE_COLL_ILK, address(this));
         assertEq(ink, 40 ether);
         assertEq(art, 40 ether);
+        assertEq(pip.read(), bytes32(WAD));
 
         mcd.end().cage();
         host.deny(address(this));       // Confirm cage can be done permissionlessly
         host.cage();
+
+        // Verify cannot cage the host ilk until a final cure is reported
+        assertRevert(address(mcd.end()), abi.encodeWithSignature("cage(bytes32)", DOMAIN_ILK), "BridgeOracle/haz-not");
 
         assertEq(mcd.vat().live(), 0);
         assertEq(guest.live(), 0);
         assertEq(host.live(), 0);
         assertEq(rmcd.vat().live(), 0);
         assertEq(rmcd.vat().debt(), 40 * RAD);
-        (ink, art) = rmcd.vat().urns(ilk, address(this));
+        (ink, art) = rmcd.vat().urns(REMOTE_COLL_ILK, address(this));
         assertEq(ink, 40 ether);
         assertEq(art, 40 ether);
-        assertEq(rmcd.vat().gem(ilk, address(rmcd.end())), 0);
+        assertEq(rmcd.vat().gem(REMOTE_COLL_ILK, address(rmcd.end())), 0);
         assertEq(rmcd.vat().sin(address(guest)), 0);
 
         // --- Settle out the Guest instance ---
 
-        rmcd.end().cage(ilk);
-        rmcd.end().skim(ilk, address(this));
+        rmcd.end().cage(REMOTE_COLL_ILK);
+        rmcd.end().skim(REMOTE_COLL_ILK, address(this));
 
-        (ink, art) = rmcd.vat().urns(ilk, address(this));
+        (ink, art) = rmcd.vat().urns(REMOTE_COLL_ILK, address(this));
         assertEq(ink, 0);
         assertEq(art, 0);
-        assertEq(rmcd.vat().gem(ilk, address(rmcd.end())), 40 ether);
+        assertEq(rmcd.vat().gem(REMOTE_COLL_ILK, address(rmcd.end())), 40 ether);
         assertEq(rmcd.vat().sin(address(guest)), 40 * RAD);
 
-        GodMode.vm().warp(block.timestamp + rmcd.end().wait());
+        vm.warp(block.timestamp + rmcd.end().wait());
 
         rmcd.end().thaw();
 
         assertEq(guest.grain(), 100 ether);
         assertEq(host.cure(), 60 * RAD);    // 60 pre-mint dai is unused
 
-        rmcd.end().flow(ilk);
+        rmcd.end().flow(REMOTE_COLL_ILK);
 
         // --- Settle out the Host instance ---
 
@@ -382,15 +387,20 @@ contract IntegrationTest is DSSTest {
         uint256 vowSin = mcd.vat().sin(address(mcd.vow()));
 
         mcd.end().cage(DOMAIN_ILK);
+
+        assertEq(mcd.end().tag(DOMAIN_ILK), 25 * RAY / 10);   // Tag should be 2.5 (1 / $1 * 40% debt used)
+        assertEq(mcd.end().gap(DOMAIN_ILK), 0);
+
         mcd.end().skim(DOMAIN_ILK, address(host));
 
+        assertEq(mcd.end().gap(DOMAIN_ILK), 150 * WAD);
         (ink, art) = mcd.vat().urns(DOMAIN_ILK, address(host));
         assertEq(ink, 0);
         assertEq(art, 0);
         assertEq(mcd.vat().gem(DOMAIN_ILK, address(mcd.end())), 100 ether);
         assertEq(mcd.vat().sin(address(mcd.vow())), vowSin + 100 * RAD);
 
-        GodMode.vm().warp(block.timestamp + mcd.end().wait());
+        vm.warp(block.timestamp + mcd.end().wait());
 
         // Clear out any surplus if it exists
         uint256 vowDai = mcd.vat().dai(address(mcd.vow()));
@@ -401,11 +411,50 @@ contract IntegrationTest is DSSTest {
         uint256 debt = mcd.vat().debt();
         mcd.cure().load(address(host));
         mcd.end().thaw();
+
         assertEq(mcd.end().debt(), debt - 60 * RAD);
+
         mcd.end().flow(DOMAIN_ILK);
 
-        // Get some gems
-        mcd.end().pack(100 * WAD);
+        assertEq(mcd.end().fix(DOMAIN_ILK), (100 * RAD) / (mcd.end().debt() / RAY));
+
+        // --- Do user redemption for remote domain collateral ---
+
+        // Pretend you own 50% of all outstanding debt (should be a pro-rate claim on $20 for the remote domain)
+        uint256 myDai = (mcd.end().debt() / 2) / RAY;
+        mcd.vat().suck(address(123), address(this), myDai * RAY);
+        mcd.vat().hope(address(mcd.end()));
+
+        // Pack all your DAI
+        assertEq(mcd.end().bag(address(this)), 0);
+        mcd.end().pack(myDai);
+        assertEq(mcd.end().bag(address(this)), myDai);
+
+        // Should get 50 gems valued at $0.40 each
+        assertEq(mcd.vat().gem(DOMAIN_ILK, address(this)), 0);
+        mcd.end().cash(DOMAIN_ILK, myDai);
+        uint256 gems = mcd.vat().gem(DOMAIN_ILK, address(this));
+        assertApproxEqAbs(gems, 50 ether, 2);
+
+        // Exit to the remote domain
+        assertEq(claimToken.balanceOf(address(this)), 0);
+        host.exit(address(this), gems);
+        assertEq(mcd.vat().gem(DOMAIN_ILK, address(this)), 0);
+        uint256 tokens = claimToken.balanceOf(address(this));
+        assertApproxEqAbs(tokens, 20 ether, 2);
+
+        // Can now get some collateral on the remote domain
+        claimToken.approve(address(rmcd.end()), type(uint256).max);
+        assertEq(rmcd.end().bag(address(this)), 0);
+        rmcd.end().pack(tokens);
+        assertEq(rmcd.end().bag(address(this)), tokens);
+
+        // Should get some of the dummy collateral gems
+        assertEq(rmcd.vat().gem(REMOTE_COLL_ILK, address(this)), 0);
+        rmcd.end().cash(REMOTE_COLL_ILK, tokens);
+        assertEq(rmcd.vat().gem(REMOTE_COLL_ILK, address(this)), tokens);
+
+        // We can now exit through gem join or other standard exit function
     }
 
 }

@@ -32,8 +32,6 @@ interface DomainHostLike {
 contract BridgeOracle {
 
     // --- Data ---
-    mapping (address => uint256) public wards;
-
     VatLike public immutable vat;
     DomainHostLike public immutable host;
 
@@ -44,19 +42,14 @@ contract BridgeOracle {
     event Rely(address indexed usr);
     event Deny(address indexed usr);
 
-    modifier auth {
-        require(wards[msg.sender] == 1, "BridgeOracle/not-authorized");
-        _;
-    }
-
     constructor(address _host) {
         host = DomainHostLike(_host);
         vat = host.vat();
     }
 
     function peek() public view returns (bytes32, bool) {
-        uint256 grain = host.grain() * RAY;
-        if (grain == 0) return (bytes32(0), false);
+        uint256 grain = host.grain();
+        if (grain == 0) return (bytes32(WAD), true);
         return (
             bytes32(WAD - host.cure() / (grain * 10 ** 9)),
             vat.live() == 1 || host.cureReported()
@@ -65,7 +58,7 @@ contract BridgeOracle {
     function read() external view returns (bytes32) {
         bytes32 wut; bool haz;
         (wut, haz) = peek();
-        require(haz, "haz-not");
+        require(haz, "BridgeOracle/haz-not");
         return wut;
     }
 

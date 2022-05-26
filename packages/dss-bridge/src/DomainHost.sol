@@ -221,10 +221,14 @@ abstract contract DomainHost {
         require(vat.live() == 0, "DomainHost/vat-live");
         require(wad <= 2 ** 255, "DomainHost/overflow");
         vat.slip(ilk, msg.sender, -int256(wad));
-        
-        _mintClaim(usr, wad);
 
-        emit Exit(usr, wad, wad);
+        // Convert to actual debt amount
+        // Round against the user
+        uint256 claim = wad * (grain - _divup(cure, RAY)) / grain;
+        
+        _mintClaim(usr, claim);
+
+        emit Exit(usr, wad, claim);
     }
 
     // Bridge-specific functions
