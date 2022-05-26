@@ -18,7 +18,7 @@ export const provideHandleBlock =
     const findings: Finding[] = [];
 
     const filter = {
-      address: data.L2WormholeGateway,
+      address: data.L2DaiWormholeGateway,
       topics: [EVENT_IFACE.getEventTopic("WormholeInitialized")],
       blockHash: blockEvent.blockHash,
     };

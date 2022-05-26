@@ -31,7 +31,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
   let filter: any;
   let map: Map<string, string> = new Map<string, string>();
   const mockNetworkManager = {
-    L2WormholeGateway: TEST_L2_WORMHOLE_GATEWAY,
+    L2DaiWormholeGateway: TEST_L2_WORMHOLE_GATEWAY,
     setNetwork: jest.fn(),
   };
 
@@ -60,7 +60,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
         blockHash: blockEvent.blockHash,
         transactionIndex: 2,
         removed: false,
-        address: mockNetworkManager.L2WormholeGateway,
+        address: mockNetworkManager.L2DaiWormholeGateway,
         data: keccak256("dataData2"),
         topics: [WORMHOLE_INITIALIZED_EVENT_TOPIC],
         transactionHash: keccak256("tHash2"),
@@ -85,7 +85,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
         blockHash: blockEvent.blockHash,
         transactionIndex: 5,
         removed: false,
-        address: mockNetworkManager.L2WormholeGateway,
+        address: mockNetworkManager.L2DaiWormholeGateway,
         data: keccak256("dataData5"),
         topics: [WORMHOLE_INITIALIZED_EVENT_TOPIC],
         transactionHash: keccak256("tHash5"),
@@ -96,7 +96,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
         blockHash: blockEvent.blockHash,
         transactionIndex: 6,
         removed: false,
-        address: mockNetworkManager.L2WormholeGateway,
+        address: mockNetworkManager.L2DaiWormholeGateway,
         data: keccak256("dataData6"),
         topics: [WORMHOLE_INITIALIZED_EVENT_TOPIC],
         transactionHash: keccak256("tHash6"),
