@@ -2,7 +2,7 @@
 
 ## Description
 
-This agent detects DAI totalSupply changes on L2s
+This bot detects DAI totalSupply changes on L2s
 
 ## Supported Chains
 
