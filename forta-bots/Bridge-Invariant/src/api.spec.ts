@@ -72,7 +72,7 @@ describe("SupplyFetcher tests", () => {
     }
   });
 
-  it("should get the alerts on the first page", async () => {
+  it("should get the alerts on the first page of alerts", async () => {
     prepareMock(1, 3, [[2, "20"]]);
 
     const supply: string = await fetcher.getL2Supply(1, 3);
@@ -94,7 +94,7 @@ describe("SupplyFetcher tests", () => {
     expect(supply).toStrictEqual("0xfa11");
   });
 
-  it("should not find the alert inside the first page alerts", async () => {
+  it("should find the alert inside a page containing multiple alerts", async () => {
     prepareMock(10, 5, [
       [10, "1"],
       [9, "2"],
