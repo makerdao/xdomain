@@ -23,9 +23,7 @@ export const provideHandleBlock = (provider: ethers.providers.JsonRpcProvider, d
           metadata: {
             supply: currentBalance.toString(),
           },
-          // Finding fields omitted to avoid flood when alerts are filtered in the dashboard
-          // protocol: "MakerDAO", something else should be used to avoid default "ethereum"
-          // addresses: [dai],
+          protocol: "forta-bots-info",
         })
       );
     }
