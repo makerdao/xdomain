@@ -15,10 +15,11 @@ import abi from "./abi";
 const createFinding = (supply: number) =>
   Finding.from({
     alertId: "L2-DAI-MONITOR",
-    description: "Balance change detected",
-    name: "L2 DAI Balance Monitor",
+    description: "Total supply change detected",
+    name: "L2 DAI supply Monitor",
     severity: FindingSeverity.Info,
     type: FindingType.Info,
+    protocol: "forta-bots-info",
     metadata: {
       supply: supply.toString(),
     },

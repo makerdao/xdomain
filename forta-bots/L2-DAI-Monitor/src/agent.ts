@@ -5,29 +5,29 @@ import { ethers, BigNumber, Contract } from "ethers";
 const DAI: string = "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1";
 
 export const provideHandleBlock = (provider: ethers.providers.JsonRpcProvider, dai: string) => {
-  let balance: BigNumber = BigNumber.from(-1);
+  let supply: BigNumber = BigNumber.from(-1);
   const daiContract: Contract = new Contract(dai, abi.DAI, provider);
 
   return async (blockEvent: BlockEvent) => {
     const findings: Finding[] = [];
 
-    const currentBalance: BigNumber = await daiContract.totalSupply({ blockTag: blockEvent.blockNumber });
-    if (!balance.eq(currentBalance)) {
+    const currentSupply: BigNumber = await daiContract.totalSupply({ blockTag: blockEvent.blockNumber });
+    if (!supply.eq(currentSupply)) {
       findings.push(
         Finding.from({
           alertId: "L2-DAI-MONITOR",
-          description: "Balance change detected",
-          name: "L2 DAI Balance Monitor",
+          description: "Total supply change detected",
+          name: "L2 DAI supply Monitor",
           severity: FindingSeverity.Info,
           type: FindingType.Info,
           metadata: {
-            supply: currentBalance.toString(),
+            supply: currentSupply.toString(),
           },
           protocol: "forta-bots-info",
         })
       );
     }
-    balance = currentBalance;
+    supply = currentSupply;
 
     return findings;
   };
