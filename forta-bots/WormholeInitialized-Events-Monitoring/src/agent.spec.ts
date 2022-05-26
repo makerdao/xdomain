@@ -19,7 +19,7 @@ const testCreateFinding = (map: Map<string, string>): Finding => {
     name: "Wormhole Initialized",
     description: "WormholeInitialized event emitted from L2WormholeGateway contract",
     alertId: "MK-02",
-    protocol: "MakerDAO",
+    protocol: "forta-info",
     severity: FindingSeverity.Info,
     type: FindingType.Info,
     metadata: Object.fromEntries(map),
