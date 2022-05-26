@@ -18,7 +18,7 @@ const RINKEBY_TESTNET_DATA: NetworkData = {
 //PoC
 const POLYGON_MAINNET_DATA: NetworkData = {
   TeleportJoin: "0x60d1c5A9968Ee80a2456b552901089e1557c7Aba",
-  TeleportOracleAuth: "0x28235e7b8074dee59279f168d6dd4f44f1596cf0",
+  TeleportOracleAuth: "0x28235e7B8074dee59279f168d6Dd4F44f1596Cf0",
 };
 
 export const NETWORK_MAP: Record<number, NetworkData> = {

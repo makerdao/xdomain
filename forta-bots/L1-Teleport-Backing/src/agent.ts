@@ -21,7 +21,7 @@ export const provideHandleTransaction =
     await Promise.all(
       mintEvents.map(async (log) => {
         const { originator, hashGUID } = log.args;
-        if (originator.toLowerCase() === data.TeleportOracleAuth) {
+        if (originator === data.TeleportOracleAuth) {
           if (!(await fetcher.L2HashGUIDExists(data.networkId, txEvent.timestamp, hashGUID)))
             findings.push(createFinding(txEvent.hash, hashGUID, data.networkId));
         }
