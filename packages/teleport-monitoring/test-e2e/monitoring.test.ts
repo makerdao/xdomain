@@ -1,19 +1,19 @@
 const hre = require('hardhat')
 import { expect } from 'earljs'
-import { ethers, Wallet } from 'ethers'
+import { ethers, providers, Wallet } from 'ethers'
 import waitForExpect from 'wait-for-expect'
 
-import { monitor } from '../src/bin/monitor'
 import { chainIds, networks } from '../src/config'
 import { SyncStatusRepositoryInMemory } from '../src/db/SyncStatusRepository'
 import { TeleportRepositoryInMemory } from '../src/db/TeleportRepository'
 import { getKovanSdk } from '../src/sdk'
+import { monitor } from '../src/tasks/monitor'
 import { impersonateAccount, mineABunchOfBlocks, mintEther } from './hardhat-utils'
 import { getAttestations } from './signing'
 
 describe('Monitoring', () => {
   const kovanProxy = '0x0e4725db88Bb038bBa4C4723e91Ba183BE11eDf3'
-  const hhProvider = hre.ethers.provider
+  const hhProvider = hre.ethers.provider as providers.Provider
   const signers = [Wallet.createRandom()]
   const receiver = Wallet.createRandom().connect(hhProvider)
   let cancel: Function
@@ -54,13 +54,13 @@ describe('Monitoring', () => {
     }
     const { signatures } = await getAttestations(signers, teleport)
     await sdk.oracleAuth.connect(receiver).requestMint(teleport, signatures, 0, 0)
-    console.log('Printing unbacked DAI done')
+    console.log(`Printing unbacked DAI done at block ${await hhProvider.getBlockNumber()}`)
     await mineABunchOfBlocks(hhProvider)
 
     // assert
     await waitForExpect(() => {
-      expect(metrics['teleport_bad_debt{domain="KOVAN-SLAVE-OPTIMISM-1"}']).toEqual(daiToMint.toString())
-    })
+      expect(metrics['teleport_bad_debt{domain="KOVAN-MASTER-1"}']).toEqual(daiToMint.toString())
+    }, 10_000)
   })
 
   afterEach(() => {

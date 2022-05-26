@@ -7,7 +7,8 @@ Prometheus enabled monitoring service for Maker Teleport.
 These checks are run on _every new finalized block_:
 
 - _bridge invariant_ - compares amount of L1 escrowed DAI vs L2 DAI total supply
-- _bad debt_ - ensures that every new L1mint using oracle auth has a corresponding burn on L2
+- _bad debt_ - ensures that every new L1 mint using oracle auth has a corresponding burn on L2. **Note: This will only
+  monitor, new upcoming wormholes and will reset after restart! Use one of the scripts to calculate all bad debt**
 
 ## Running
 
@@ -36,3 +37,9 @@ DATABASE_URL -  db url with credentials
 ```
 ./prom.sh
 ```
+
+## Scripts
+
+### Bad Debt
+
+Use `yarn node -r esbuild-register ./src/bin/calc-bad-debt.ts L1_RPC` to run a script to calculate cumulative bad debt.
