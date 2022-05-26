@@ -2,10 +2,6 @@ import {
   FindingType,
   FindingSeverity,
   Finding,
-  HandleTransaction,
-  createTransactionEvent,
-  ethers,
-  Network,
   HandleBlock,
 } from "forta-agent";
 import { provideHandleBlock } from "./agent";
@@ -38,18 +34,18 @@ describe("L2 DAI Monitor tests", () => {
     mockProvider.clear();
   });
 
-  it("should emit no findings if balance remains the same", async () => {
+  it("should emit no findings if total supply remains the same", async () => {
     const supply: number = 123;
     const blockNumber: number = 40;
     const block: TestBlockEvent = new TestBlockEvent().setNumber(blockNumber);
 
     prepareBlock(blockNumber, supply);
 
-    // should report the initial balance
+    // should report the initial total supply
     let findings: Finding[] = await handler(block);
     expect(findings).toStrictEqual([createFinding(123)]);
 
-    // handle multiple blocks with the same balance
+    // handle multiple blocks with the same total supply
     for (let i = 1; i < 10; ++i) {
       // ensure that only the correct block has data on the mock
       mockProvider.clear();
@@ -60,7 +56,7 @@ describe("L2 DAI Monitor tests", () => {
     }
   });
 
-  it("should emit findings when balance change", async () => {
+  it("should emit findings when total supply changes", async () => {
     const TEST_DATA: [number, number, boolean][] = [
       // block, supply, findingReported
       [11, 234, true],

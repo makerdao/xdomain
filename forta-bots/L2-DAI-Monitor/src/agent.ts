@@ -26,8 +26,8 @@ export const provideHandleBlock = (provider: ethers.providers.JsonRpcProvider, d
           protocol: "forta-bots-info",
         })
       );
+      supply = currentSupply;
     }
-    supply = currentSupply;
 
     return findings;
   };

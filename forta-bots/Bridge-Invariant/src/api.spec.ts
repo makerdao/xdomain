@@ -79,14 +79,14 @@ describe("SupplyFetcher tests", () => {
     expect(supply).toStrictEqual("20");
   });
 
-  it("should not find the alert due to timestamp missmatch", async () => {
+  it("should not find the alert due to timestamp mismatch", async () => {
     prepareMock(3, 10, [[50, "42"]]);
 
     const supply: string = await fetcher.getL2Supply(3, 10, "failure");
     expect(supply).toStrictEqual("failure");
   });
 
-  it("should not find the alert due to network missmatch", async () => {
+  it("should not find the alert due to network mismatch", async () => {
     prepareMock(1, 1000, [[10, "1"]]);
     prepareMock(5, 1000, [[2000, "2"]]);
 

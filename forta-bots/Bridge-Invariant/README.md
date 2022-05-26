@@ -8,9 +8,9 @@ The invariant is:
 ```
 L1DAI.balanceOf(escrow) ≥ L2DAI.totalSupply()
 ```
-> The file `src/constants.ts` contains all the variables needed by the bot
-> - `L2_DATA`: Contains all the networks with the `chainId` number and the `escrow` address
-> - `L1_DAI`: Dai address
+> The file `src/constants.ts` contains all the variables needed by the bot.
+> - `L2_DATA`: Contains all the networks with the `chainId` number and the `escrow` address.
+> - `L1_DAI`: DAI address.
 > - `L2_MONITOR_HASH`: Hash of the bot monitoring the DAI supply in all the networks listed in `L2_DATA`.
 >
 > NOTE: `L2_MONITOR_HASH` is empty(`""`) by default so it is mandatory to set that variable before pushing/deploying the bot.
