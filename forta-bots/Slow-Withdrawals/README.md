@@ -21,6 +21,6 @@ This bot detects slow withdrawals from the TeleportJoin contract.
 
 ## Test Data
 
-The bot behaviour can be verified with the following transactions:
+The bot behaviour can be verified with the following transaction:
 
 - 0xfe5e7d9ee4d91362049f93d151742e448102591761a62c36da55c176c7e8268d (`Polygon mainnet PoC`)
