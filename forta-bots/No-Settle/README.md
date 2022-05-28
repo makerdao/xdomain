@@ -1,4 +1,4 @@
-# MakerDAO's Teleport No-Settle Monitoring Bot
+# MakerDAO's TeleportJoin No-Settle Monitoring Bot
 
 ## Description
 
