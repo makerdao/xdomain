@@ -1,9 +1,9 @@
-import { Finding, getEthersProvider, HandleBlock, BlockEvent, keccak256, Initialize } from "forta-agent";
-import { providers, utils } from "ethers";
+import { Finding, getEthersProvider, HandleBlock, BlockEvent, Initialize } from "forta-agent";
+import { providers } from "ethers";
 import { BigNumber } from "ethers";
 import NetworkManager, { NETWORK_MAP } from "./network";
 import NetworkData from "./network";
-import { createFinding, DAYS_THRESHOLD, SECONDS_THRESHOLD, SETTLE_IFACE } from "./utils";
+import { createFinding, DAYS_THRESHOLD, SETTLE_IFACE } from "./utils";
 
 const networkManager: NetworkManager = new NetworkManager(NETWORK_MAP);
 
