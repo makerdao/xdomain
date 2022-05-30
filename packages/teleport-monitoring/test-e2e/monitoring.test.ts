@@ -1,22 +1,19 @@
 const hre = require('hardhat')
-import { PrismaClient } from '@prisma/client'
 import { expect } from 'earljs'
-import { BigNumber, BigNumberish, ethers, providers, Wallet } from 'ethers'
-import { formatEther, parseUnits } from 'ethers/lib/utils'
+import { ethers, providers, Wallet } from 'ethers'
+import waitForExpect from 'wait-for-expect'
+
 import { chainIds, networks } from '../src/config'
-import { monitor } from '../src/monitor'
+import { SyncStatusRepositoryInMemory } from '../src/db/SyncStatusRepository'
+import { TeleportRepositoryInMemory } from '../src/db/TeleportRepository'
 import { getKovanSdk } from '../src/sdk'
-import { delay } from '../src/utils'
+import { monitor } from '../src/tasks/monitor'
 import { impersonateAccount, mineABunchOfBlocks, mintEther } from './hardhat-utils'
 import { getAttestations } from './signing'
-import waitForExpect from 'wait-for-expect'
-import { sqltag } from '@prisma/client/runtime'
-import { TeleportRepositoryInMemory } from '../src/db/TeleportRepository'
-import { SyncStatusRepositoryInMemory } from '../src/db/SyncStatusRepository'
 
 describe('Monitoring', () => {
   const kovanProxy = '0x0e4725db88Bb038bBa4C4723e91Ba183BE11eDf3'
-  const hhProvider = hre.ethers.provider
+  const hhProvider = hre.ethers.provider as providers.Provider
   const signers = [Wallet.createRandom()]
   const receiver = Wallet.createRandom().connect(hhProvider)
   let cancel: Function
@@ -32,13 +29,13 @@ describe('Monitoring', () => {
     const syncStatusesRepository = new SyncStatusRepositoryInMemory()
     await syncStatusesRepository.upsert({ domain: sourceDomain, block: (await l2Provider.getBlock('latest')).number })
 
-    const { metrics, cancel: _cancel } = await monitor(
+    const { metrics, cancel: _cancel } = await monitor({
       network,
-      hhProvider,
+      l1Provider: hhProvider,
       // note: as any shouldn't be needed here but for some weird reason tsc requires it because of private properties???
-      teleportRepository as any,
-      syncStatusesRepository as any,
-    )
+      teleportRepository: teleportRepository as any,
+      syncStatusRepository: syncStatusesRepository as any,
+    })
     cancel = _cancel
 
     // print unbacked DAI
@@ -57,13 +54,13 @@ describe('Monitoring', () => {
     }
     const { signatures } = await getAttestations(signers, teleport)
     await sdk.oracleAuth.connect(receiver).requestMint(teleport, signatures, 0, 0)
-    console.log('Printing unbacked DAI done')
+    console.log(`Printing unbacked DAI done at block ${await hhProvider.getBlockNumber()}`)
     await mineABunchOfBlocks(hhProvider)
 
     // assert
     await waitForExpect(() => {
-      expect(metrics['teleport_bad_debt{domain="KOVAN-SLAVE-OPTIMISM-1"}']).toEqual(daiToMint.toString())
-    })
+      expect(metrics['teleport_bad_debt{domain="KOVAN-MASTER-1"}']).toEqual(daiToMint.toString())
+    }, 10_000)
   })
 
   afterEach(() => {

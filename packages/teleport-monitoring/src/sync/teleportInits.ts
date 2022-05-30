@@ -18,6 +18,11 @@ export type OnChainTeleport = {
   timestamp: number
 }
 
+export type SyncContext = {
+  isSynced: boolean
+  cancel: () => void
+}
+
 export async function syncTeleportInits({
   domainName,
   l2Provider,
@@ -34,9 +39,9 @@ export async function syncTeleportInits({
   blocksPerBatch: number
   syncStatusRepository: SyncStatusRepository
   teleportRepository: TeleportRepository
-}) {
+}): Promise<SyncContext> {
   let cancelled = false
-  const ctx = {
+  const ctx: SyncContext = {
     isSynced: false,
     cancel: () => {
       cancelled = true

@@ -1,5 +1,5 @@
-import { BigNumber, ContractReceipt, ethers, Event, Wallet } from 'ethers'
-import { arrayify, hashMessage, Interface, keccak256 } from 'ethers/lib/utils'
+import { BigNumber, ethers, Wallet } from 'ethers'
+import { arrayify, hashMessage, keccak256 } from 'ethers/lib/utils'
 
 interface TeleportGUID {
   sourceDomain: string

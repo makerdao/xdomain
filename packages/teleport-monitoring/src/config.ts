@@ -10,6 +10,7 @@ export const idsToChains = invert(chainIds)
 
 export const networks: { [id: number]: NetworkConfig } = {
   [chainIds.KOVAN]: {
+    name: 'KOVAN-MASTER-1',
     sdkName: 'Kovan',
     slaves: [
       {
@@ -20,8 +21,11 @@ export const networks: { [id: number]: NetworkConfig } = {
         syncBatchSize: 100_000,
       },
     ],
+    joinDeploymentBlock: 30732729,
+    syncBatchSize: 100_000,
   },
   [chainIds.RINKEBY]: {
+    name: 'RINKEBY-MASTER-1',
     sdkName: 'Rinkeby',
     slaves: [
       {
@@ -32,5 +36,7 @@ export const networks: { [id: number]: NetworkConfig } = {
         syncBatchSize: 100_000,
       },
     ],
+    joinDeploymentBlock: 10468580,
+    syncBatchSize: 100_000,
   },
 }
