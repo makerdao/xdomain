@@ -3,17 +3,18 @@
   "version": "0.0.1",
   "description": "Bot to monitor DAI supply across multiple L2 Networks",
   "chainIds": [
-    10, 42161
+    10,
+    42161
   ],
   "scripts": {
     "build": "tsc",
-    "start": "npm run start:dev",
-    "start:dev": "nodemon --watch src --watch forta.config.json -e js,ts,json  --exec \"npm run build && forta-agent run\"",
+    "start": "yarn run start:dev",
+    "start:dev": "nodemon --watch src --watch forta.config.json -e js,ts,json  --exec \"yarn run build && forta-agent run\"",
     "start:prod": "forta-agent run --prod",
-    "tx": "npm run build && forta-agent run --tx",
-    "block": "npm run build && forta-agent run --block",
-    "range": "npm run build && forta-agent run --range",
-    "file": "npm run build && forta-agent run --file",
+    "tx": "yarn run build && forta-agent run --tx",
+    "block": "yarn run build && forta-agent run --block",
+    "range": "yarn run build && forta-agent run --range",
+    "file": "yarn run build && forta-agent run --file",
     "publish": "forta-agent publish",
     "push": "forta-agent push",
     "disable": "forta-agent disable",
