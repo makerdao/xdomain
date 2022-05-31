@@ -13,12 +13,12 @@ export const testCreateFinding = (txHash: string, originator: string, chainId: n
     name: "Slow TeleportJoin Withdrawal",
     description: "Mint event emitted from the TeleportJoin without the TeleportOracleAuth as originator",
     alertId: "MK-03",
-    protocol: "forta-bots-info",
+    protocol: "MakerDAO",
     severity: FindingSeverity.Info,
     type: FindingType.Info,
     metadata: {
-      txHash: txHash,
-      originatorAddress: originator,
+      txHash,
+      originator,
       chainId: chainId.toString(),
     },
   });
