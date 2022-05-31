@@ -55,7 +55,7 @@ export class InitEventsSynchronizer extends BaseSynchronizer {
           nonce: w.args[0].nonce.toString(),
           operator: w.args[0].operator,
           receiver: w.args[0].receiver,
-          timestamp: new Date(w.args[0].timestamp),
+          timestamp: new Date(w.args[0].timestamp * 1000),
         }
       })
 

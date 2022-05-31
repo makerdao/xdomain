@@ -43,7 +43,7 @@ export class FlushEventsSynchronizer extends BaseSynchronizer {
           return {
             targetDomain: w.args.targetDomain,
             amount: w.args.dai.toString(),
-            timestamp: new Date((await w.getBlock()).timestamp),
+            timestamp: new Date((await w.getBlock()).timestamp * 1000),
           }
         }),
       )
