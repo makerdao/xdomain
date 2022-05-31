@@ -1,11 +1,14 @@
 import { BigNumber, ethers, providers } from 'ethers'
 
 import { onEveryFinalizedBlock } from '../blockchain'
+import { FlushRepository } from '../db/FlushRepository'
 import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
 import { TeleportRepository } from '../db/TeleportRepository'
 import { bridgeInvariant } from '../monitoring/bridgeInvariant'
 import { monitorTeleportMints } from '../monitoring/teleportMints'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from '../sdks'
+import { BaseSynchronizer } from '../synchronizers/BaseSynchronizer'
+import { FlushEventsSynchronizer } from '../synchronizers/FlushEventsSynchronizer'
 import { InitEventsSynchronizer } from '../synchronizers/InitEventsSynchronizer'
 import { Metrics, NetworkConfig } from '../types'
 
@@ -13,11 +16,13 @@ export async function monitor({
   network,
   l1Provider,
   teleportRepository,
+  flushRepository,
   synchronizerStatusRepository,
 }: {
   network: NetworkConfig
   l1Provider: providers.Provider
   teleportRepository: TeleportRepository
+  flushRepository: FlushRepository
   synchronizerStatusRepository: SynchronizerStatusRepository
 }) {
   const metrics: Metrics = {}
@@ -25,12 +30,12 @@ export async function monitor({
   const l1Sdk = getL1SdkBasedOnNetworkName(network.sdkName, l1Provider)
 
   // sync data from slaves
-  const synchronizers: InitEventsSynchronizer[] = []
+  const synchronizers: BaseSynchronizer[] = []
   for (const slave of network.slaves) {
     const l2Provider = new ethers.providers.JsonRpcProvider(slave.l2Rpc)
     const l2Sdk = getL2SdkBasedOnNetworkName(slave.sdkName, l2Provider)
 
-    const synchronizer = new InitEventsSynchronizer(
+    const initEventsSynchronizer = new InitEventsSynchronizer(
       l2Provider,
       synchronizerStatusRepository,
       teleportRepository,
@@ -39,8 +44,20 @@ export async function monitor({
       slave.bridgeDeploymentBlock,
       slave.syncBatchSize,
     )
-    void synchronizer.run()
-    synchronizers.push(synchronizer)
+    void initEventsSynchronizer.run()
+    synchronizers.push(initEventsSynchronizer)
+
+    const flushEventsSynchronizer = new FlushEventsSynchronizer(
+      l2Provider,
+      synchronizerStatusRepository,
+      flushRepository,
+      l2Sdk,
+      slave.name,
+      slave.bridgeDeploymentBlock,
+      slave.syncBatchSize,
+    )
+    void flushEventsSynchronizer.run()
+    synchronizers.push(flushEventsSynchronizer)
   }
 
   // monitor

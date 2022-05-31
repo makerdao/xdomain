@@ -28,11 +28,11 @@ export class InitEventsSynchronizer extends BaseSynchronizer {
     private readonly startingBlock: number,
     private readonly blocksPerBatch: number,
   ) {
-    super('InitTeleportEvents')
+    super()
   }
 
   async run(): Promise<void> {
-    const syncStatus = await this.synchronizerStatusRepository.findByDomainName(this.domainName)
+    const syncStatus = await this.synchronizerStatusRepository.findByName(this.name, this.domainName)
     let syncBlock = syncStatus?.block ?? this.startingBlock
 
     const filter = this.l2Sdk.teleportGateway.filters.WormholeInitialized()
@@ -44,7 +44,7 @@ export class InitEventsSynchronizer extends BaseSynchronizer {
       console.log(`Syncing ${syncBlock}...${boundaryBlock} (${(boundaryBlock - syncBlock).toLocaleString()} blocks)`)
 
       const newTeleports = await this.l2Sdk.teleportGateway.queryFilter(filter, syncBlock, boundaryBlock)
-      console.log(`Found ${newTeleports.length} new teleports`)
+      console.log(`[${this.name}] Found ${newTeleports.length} new teleports`)
       const modelsToCreate: Omit<Teleport, 'id'>[] = newTeleports.map((w) => {
         const hash = keccak256(w.data)
         return {
@@ -55,7 +55,7 @@ export class InitEventsSynchronizer extends BaseSynchronizer {
           nonce: w.args[0].nonce.toString(),
           operator: w.args[0].operator,
           receiver: w.args[0].receiver,
-          timestamp: w.args[0].timestamp,
+          timestamp: new Date(w.args[0].timestamp),
         }
       })
 

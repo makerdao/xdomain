@@ -3,13 +3,14 @@ import { expect } from 'earljs'
 import { ethers, providers, Wallet } from 'ethers'
 import waitForExpect from 'wait-for-expect'
 
-import { chainIds, networks } from '../src/config'
-import { SyncStatusRepositoryInMemory } from '../src/db/SynchronizerStatusRepository'
-import { TeleportRepositoryInMemory } from '../src/db/TeleportRepository'
-import { getKovanSdk } from '../src/sdk'
-import { monitor } from '../src/tasks/monitor'
-import { impersonateAccount, mineABunchOfBlocks, mintEther } from './hardhat-utils'
-import { getAttestations } from './signing'
+import { impersonateAccount, mineABunchOfBlocks, mintEther } from '../../test-e2e/hardhat-utils'
+import { getAttestations } from '../../test-e2e/signing'
+import { chainIds, networks } from '../config'
+import { FlushRepositoryInMemory } from '../db/FlushRepository'
+import { SyncStatusRepositoryInMemory } from '../db/SynchronizerStatusRepository'
+import { TeleportRepositoryInMemory } from '../db/TeleportRepository'
+import { getKovanSdk } from '../sdk'
+import { monitor } from './monitor'
 
 describe('Monitoring', () => {
   const kovanProxy = '0x0e4725db88Bb038bBa4C4723e91Ba183BE11eDf3'
@@ -27,10 +28,16 @@ describe('Monitoring', () => {
     const l2Provider = new ethers.providers.JsonRpcProvider(network.slaves[0].l2Rpc)
     const teleportRepository = new TeleportRepositoryInMemory()
     const syncStatusesRepository = new SyncStatusRepositoryInMemory()
+    const flushRepository = new FlushRepositoryInMemory()
     await syncStatusesRepository.upsert({
       domain: sourceDomain,
       block: (await l2Provider.getBlock('latest')).number,
-      name: 'InitTeleportEvents',
+      name: 'InitEventsSynchronizer',
+    })
+    await syncStatusesRepository.upsert({
+      domain: sourceDomain,
+      block: (await l2Provider.getBlock('latest')).number,
+      name: 'FlushEventsSynchronizer',
     })
 
     const { metrics, cancel: _cancel } = await monitor({
@@ -38,6 +45,7 @@ describe('Monitoring', () => {
       l1Provider: hhProvider,
       teleportRepository: teleportRepository as any,
       synchronizerStatusRepository: syncStatusesRepository as any,
+      flushRepository: flushRepository as any,
     })
     cancel = _cancel
 
