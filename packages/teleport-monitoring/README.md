@@ -15,6 +15,8 @@ These checks are run on _every new finalized block_:
 1. To run local database:
 
 ```
+./scripts/db.sh
+# ... or manually run these commands
 docker run -d --name=teleport_monitoring -p 5432:5432 -e POSTGRES_PASSWORD=password postgres
 yarn prisma migrate dev # migrate db
 ```
