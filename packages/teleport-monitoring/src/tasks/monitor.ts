@@ -6,7 +6,7 @@ import { TeleportRepository } from '../db/TeleportRepository'
 import { bridgeInvariant } from '../monitoring/bridgeInvariant'
 import { monitorTeleportMints } from '../monitoring/teleportMints'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from '../sdks'
-import { SyncContext, syncTeleportInits } from '../sync/teleportInits'
+import { InitEventsSynchronizer } from '../synchronizers/InitEventsSynchronizer'
 import { Metrics, NetworkConfig } from '../types'
 
 export async function monitor({
@@ -25,29 +25,29 @@ export async function monitor({
   const l1Sdk = getL1SdkBasedOnNetworkName(network.sdkName, l1Provider)
 
   // sync data from slaves
-  const syncContexts: SyncContext[] = []
+  const synchronizers: InitEventsSynchronizer[] = []
   for (const slave of network.slaves) {
     const l2Provider = new ethers.providers.JsonRpcProvider(slave.l2Rpc)
     const l2Sdk = getL2SdkBasedOnNetworkName(slave.sdkName, l2Provider)
 
-    syncContexts.push(
-      await syncTeleportInits({
-        domainName: slave.name,
-        l2Provider,
-        l2Sdk,
-        blocksPerBatch: slave.syncBatchSize,
-        startingBlock: slave.bridgeDeploymentBlock,
-        teleportRepository,
-        syncStatusRepository,
-      }),
+    const synchronizer = new InitEventsSynchronizer(
+      l2Provider,
+      syncStatusRepository,
+      teleportRepository,
+      l2Sdk,
+      slave.name,
+      slave.bridgeDeploymentBlock,
+      slave.syncBatchSize,
     )
+    void synchronizer.run()
+    synchronizers.push(synchronizer)
   }
 
   // monitor
   const { cancel: cancelBlockWatcher } = await onEveryFinalizedBlock(async (blockNumber) => {
     console.log(`New block finalized: ${blockNumber}`)
 
-    const allSynced = syncContexts.every((sc) => sc.isSynced)
+    const allSynced = synchronizers.every((sc) => sc.state === 'synced')
 
     if (allSynced) {
       const newBadDebt = await monitorTeleportMints(l1Sdk, teleportRepository, blockNumber)
@@ -71,7 +71,7 @@ export async function monitor({
     metrics,
     cancel: () => {
       cancelBlockWatcher()
-      syncContexts.forEach((sc) => sc.cancel())
+      synchronizers.forEach((sc) => sc.stop())
     },
   }
 }

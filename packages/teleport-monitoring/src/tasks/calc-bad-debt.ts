@@ -4,9 +4,9 @@ import { SyncStatusRepository } from '../db/SyncStatusRepository'
 import { TeleportRepository } from '../db/TeleportRepository'
 import { monitorTeleportMints } from '../monitoring/teleportMints'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from '../sdks'
-import { SyncContext, syncTeleportInits } from '../sync/teleportInits'
+import { InitEventsSynchronizer } from '../synchronizers/InitEventsSynchronizer'
 import { NetworkConfig } from '../types'
-import { delay, inChunks } from '../utils'
+import { inChunks } from '../utils'
 
 export async function calcBadDebt({
   network,
@@ -29,17 +29,17 @@ export async function calcBadDebt({
     const l2Provider = new ethers.providers.JsonRpcProvider(slave.l2Rpc)
     const l2Sdk = getL2SdkBasedOnNetworkName(slave.sdkName, l2Provider)
 
-    await waitTillSynced(
-      await syncTeleportInits({
-        domainName: slave.name,
-        l2Provider,
-        l2Sdk,
-        blocksPerBatch: slave.syncBatchSize,
-        startingBlock: slave.bridgeDeploymentBlock,
-        teleportRepository,
-        syncStatusRepository,
-      }),
+    const synchronizer = new InitEventsSynchronizer(
+      l2Provider,
+      syncStatusRepository,
+      teleportRepository,
+      l2Sdk,
+      slave.name,
+      slave.bridgeDeploymentBlock,
+      slave.syncBatchSize,
     )
+
+    await synchronizer.syncOnce()
   }
 
   let cumulativeBadDebt = BigNumber.from(0)
@@ -48,11 +48,4 @@ export async function calcBadDebt({
   })
 
   console.log(`Cumulative bad debt for ${network.name}: ${cumulativeBadDebt}`)
-}
-
-async function waitTillSynced(ctx: SyncContext) {
-  while (!ctx.isSynced) {
-    await delay(1000)
-  }
-  ctx.cancel()
 }
