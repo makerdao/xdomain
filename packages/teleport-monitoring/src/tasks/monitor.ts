@@ -1,7 +1,7 @@
 import { BigNumber, ethers, providers } from 'ethers'
 
 import { onEveryFinalizedBlock } from '../blockchain'
-import { SyncStatusRepository } from '../db/SyncStatusRepository'
+import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
 import { TeleportRepository } from '../db/TeleportRepository'
 import { bridgeInvariant } from '../monitoring/bridgeInvariant'
 import { monitorTeleportMints } from '../monitoring/teleportMints'
@@ -13,12 +13,12 @@ export async function monitor({
   network,
   l1Provider,
   teleportRepository,
-  syncStatusRepository,
+  synchronizerStatusRepository,
 }: {
   network: NetworkConfig
   l1Provider: providers.Provider
   teleportRepository: TeleportRepository
-  syncStatusRepository: SyncStatusRepository
+  synchronizerStatusRepository: SynchronizerStatusRepository
 }) {
   const metrics: Metrics = {}
 
@@ -32,7 +32,7 @@ export async function monitor({
 
     const synchronizer = new InitEventsSynchronizer(
       l2Provider,
-      syncStatusRepository,
+      synchronizerStatusRepository,
       teleportRepository,
       l2Sdk,
       slave.name,

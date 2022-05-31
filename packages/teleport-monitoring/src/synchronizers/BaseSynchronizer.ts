@@ -3,6 +3,8 @@ import { delay } from '../utils'
 export type SynchronizerState = 'stopped' | 'syncing' | 'synced'
 
 export abstract class BaseSynchronizer {
+  constructor(public readonly name: string) {}
+
   protected _state: SynchronizerState = 'stopped'
   get state(): SynchronizerState {
     return this._state

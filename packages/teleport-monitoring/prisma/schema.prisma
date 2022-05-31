@@ -20,8 +20,11 @@ model Teleport {
   timestamp    Int
 }
 
-model SyncStatus {
+model SynchronizerStatus {
   id     Int    @id @default(autoincrement())
-  domain String @unique
+  domain String
+  name   String
   block  Int
+
+  @@unique([domain, name])
 }

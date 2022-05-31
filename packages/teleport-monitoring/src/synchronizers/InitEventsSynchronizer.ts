@@ -2,7 +2,7 @@ import { Teleport } from '@prisma/client'
 import { BigNumber, providers } from 'ethers/lib/ethers'
 import { keccak256 } from 'ethers/lib/utils'
 
-import { SyncStatusRepository } from '../db/SyncStatusRepository'
+import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
 import { TeleportRepository } from '../db/TeleportRepository'
 import { L2Sdk } from '../sdks'
 import { delay } from '../utils'
@@ -21,18 +21,18 @@ export type OnChainTeleport = {
 export class InitEventsSynchronizer extends BaseSynchronizer {
   constructor(
     private readonly l2Provider: providers.Provider,
-    private readonly syncStatusRepository: SyncStatusRepository,
+    private readonly synchronizerStatusRepository: SynchronizerStatusRepository,
     private readonly teleportRepository: TeleportRepository,
     private readonly l2Sdk: L2Sdk,
     private readonly domainName: string,
     private readonly startingBlock: number,
     private readonly blocksPerBatch: number,
   ) {
-    super()
+    super('InitTeleportEvents')
   }
 
   async run(): Promise<void> {
-    const syncStatus = await this.syncStatusRepository.findByDomainName(this.domainName)
+    const syncStatus = await this.synchronizerStatusRepository.findByDomainName(this.domainName)
     let syncBlock = syncStatus?.block ?? this.startingBlock
 
     const filter = this.l2Sdk.teleportGateway.filters.WormholeInitialized()
@@ -62,7 +62,10 @@ export class InitEventsSynchronizer extends BaseSynchronizer {
       // update sync block
       await this.teleportRepository.transaction(async (tx) => {
         await this.teleportRepository.createMany(modelsToCreate, tx)
-        await this.syncStatusRepository.upsert({ domain: this.domainName, block: boundaryBlock }, tx)
+        await this.synchronizerStatusRepository.upsert(
+          { domain: this.domainName, block: boundaryBlock, name: this.name },
+          tx,
+        )
       })
 
       syncBlock = boundaryBlock

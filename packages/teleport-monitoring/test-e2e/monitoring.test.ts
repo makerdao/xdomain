@@ -4,7 +4,7 @@ import { ethers, providers, Wallet } from 'ethers'
 import waitForExpect from 'wait-for-expect'
 
 import { chainIds, networks } from '../src/config'
-import { SyncStatusRepositoryInMemory } from '../src/db/SyncStatusRepository'
+import { SyncStatusRepositoryInMemory } from '../src/db/SynchronizerStatusRepository'
 import { TeleportRepositoryInMemory } from '../src/db/TeleportRepository'
 import { getKovanSdk } from '../src/sdk'
 import { monitor } from '../src/tasks/monitor'
@@ -27,14 +27,17 @@ describe('Monitoring', () => {
     const l2Provider = new ethers.providers.JsonRpcProvider(network.slaves[0].l2Rpc)
     const teleportRepository = new TeleportRepositoryInMemory()
     const syncStatusesRepository = new SyncStatusRepositoryInMemory()
-    await syncStatusesRepository.upsert({ domain: sourceDomain, block: (await l2Provider.getBlock('latest')).number })
+    await syncStatusesRepository.upsert({
+      domain: sourceDomain,
+      block: (await l2Provider.getBlock('latest')).number,
+      name: 'InitTeleportEvents',
+    })
 
     const { metrics, cancel: _cancel } = await monitor({
       network,
       l1Provider: hhProvider,
-      // note: as any shouldn't be needed here but for some weird reason tsc requires it because of private properties???
       teleportRepository: teleportRepository as any,
-      syncStatusRepository: syncStatusesRepository as any,
+      synchronizerStatusRepository: syncStatusesRepository as any,
     })
     cancel = _cancel
 

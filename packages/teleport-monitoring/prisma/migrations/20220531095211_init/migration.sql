@@ -14,16 +14,17 @@ CREATE TABLE "Teleport" (
 );
 
 -- CreateTable
-CREATE TABLE "SyncStatus" (
+CREATE TABLE "SynchronizerStatus" (
     "id" SERIAL NOT NULL,
     "domain" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
     "block" INTEGER NOT NULL,
 
-    CONSTRAINT "SyncStatus_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "SynchronizerStatus_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Teleport_hash_key" ON "Teleport"("hash");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "SyncStatus_domain_key" ON "SyncStatus"("domain");
+CREATE UNIQUE INDEX "SynchronizerStatus_domain_name_key" ON "SynchronizerStatus"("domain", "name");
