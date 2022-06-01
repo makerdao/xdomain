@@ -112,6 +112,9 @@ abstract contract DomainHost {
         dai.approve(address(daiJoin), type(uint256).max);
 
         live = 1;
+
+        // Approve the router to pull DAI from this contract during settle() (after the DAI has been pulled by this contract from the escrow)
+        dai.approve(_router, type(uint256).max);
     }
 
     // --- Math ---
@@ -259,7 +262,7 @@ abstract contract DomainHost {
         router.requestMint(teleport, 0, 0);
     }
 
-    /// @notice Set this domain's cure value
+    /// @notice Flush any accumulated DAI
     function flush(bytes32 targetDomain, uint256 daiToFlush) external guestOnly {
         // Pull DAI from the escrow to this contract
         dai.transferFrom(escrow, address(this), daiToFlush);
