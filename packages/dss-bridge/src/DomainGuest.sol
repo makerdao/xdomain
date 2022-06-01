@@ -19,6 +19,8 @@
 
 pragma solidity ^0.8.13;
 
+import "./TeleportGUID.sol";
+
 interface VatLike {
     function hope(address usr) external;
     function debt() external view returns (uint256);
@@ -48,20 +50,25 @@ interface EndLike {
     function cage() external;
 }
 
-/// @title Keeps track of local guest instance dss values and relays messages to DomainHost
+/// @title Support for xchain MCD, canonical DAI and Maker Teleport - remote instance
+/// @dev This is just the business logic which needs concrete message-passing implementation
 abstract contract DomainGuest {
     
     // --- Data ---
     mapping (address => uint256) public wards;
-
-    VatLike     public immutable vat;
-    DaiJoinLike public immutable daiJoin;
-    TokenLike   public immutable dai;
-    TokenLike   public immutable claimToken;
+    mapping (bytes32 => uint256) public validDomains;
+    mapping (bytes32 => uint256) public batchedDaiToFlush;
 
     EndLike public end;
     uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow [WAD]
     uint256 public live;
+    uint80  public nonce;
+
+    bytes32     public immutable domain;
+    VatLike     public immutable vat;
+    DaiJoinLike public immutable daiJoin;
+    TokenLike   public immutable dai;
+    TokenLike   public immutable claimToken;
 
     uint256 constant RAY = 10 ** 27;
 
@@ -69,6 +76,7 @@ abstract contract DomainGuest {
     event Rely(address indexed usr);
     event Deny(address indexed usr);
     event File(bytes32 indexed what, address data);
+    event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
     event Lift(uint256 line, uint256 minted);
     event Release(uint256 burned);
     event Push(int256 surplus);
@@ -76,16 +84,24 @@ abstract contract DomainGuest {
     event Cage();
     event Tell(uint256 value);
     event MintClaim(address indexed usr, uint256 claim);
+    event TeleportInitialized(TeleportGUID teleport);
+    event Flushed(bytes32 indexed targetDomain, uint256 dai);
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainGuest/not-authorized");
         _;
     }
 
-    constructor(address _daiJoin, address _claimToken) {
+    modifier hostOnly {
+        require(_isHost(msg.sender), "DomainGuest/not-host");
+        _;
+    }
+
+    constructor(bytes32 _domain, address _daiJoin, address _claimToken) {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
 
+        domain = _domain;
         daiJoin = DaiJoinLike(_daiJoin);
         vat = daiJoin.vat();
         dai = daiJoin.dai();
@@ -127,11 +143,23 @@ abstract contract DomainGuest {
         emit File(what, data);
     }
 
+    function file(bytes32 what, bytes32 _domain, uint256 data) external auth {
+        if (what == "validDomains") {
+            require(data <= 1, "DomainGuest/invalid-data");
+
+            validDomains[_domain] = data;
+        } else {
+            revert("DomainGuest/file-unrecognized-param");
+        }
+        emit File(what, _domain, data);
+    }
+
+    // --- MCD Support ---
+
     /// @notice Set the global debt ceiling for the local dss
-    /// @dev Should only be triggered from the DomainHost
     /// @param line The new global debt ceiling [RAD]
     /// @param minted The amount of DAI minted into the remote escrow
-    function lift(uint256 line, uint256 minted) external auth {
+    function lift(uint256 line, uint256 minted) external hostOnly {
         require(live == 1, "DomainGuest/not-live");
         
         vat.file("Line", line);
@@ -190,8 +218,7 @@ abstract contract DomainGuest {
     }
 
     /// @notice Merge DAI into surplus
-    /// @dev Should only be triggered by remote domain
-    function rectify(uint256 wad) external auth {
+    function rectify(uint256 wad) external hostOnly {
         uint256 rad = wad * RAY;
         require(rad < 2 ** 255, "DomainGuest/overflow");
         vat.swell(address(this), int256(rad));
@@ -200,8 +227,7 @@ abstract contract DomainGuest {
     }
 
     /// @notice Trigger the end module
-    /// @dev Should only be triggered by remote domain
-    function cage() external auth {
+    function cage() external hostOnly {
         require(live == 1, "DomainGuest/not-live");
 
         live = 0;
@@ -220,11 +246,10 @@ abstract contract DomainGuest {
     }
 
     /// @notice Mint a claim token for the given user
-    /// @dev    Should only be triggered by remote domain.
-    ///         Claim amount is in units of local debt.
+    /// @dev    Claim amount is in units of local debt.
     /// @param usr The destination to send the claim tokens to
     /// @param claim The amount of claim tokens to mint
-    function mintClaim(address usr, uint256 claim) external auth {
+    function mintClaim(address usr, uint256 claim) external hostOnly {
         claimToken.mint(usr, claim);
 
         emit MintClaim(usr, claim);
@@ -237,10 +262,95 @@ abstract contract DomainGuest {
         vat.heal(_min(vat.dai(address(this)), vat.sin(address(this))));
     }
 
+    // --- Canonical DAI Support ---
+
+
+
+    // --- Maker Teleport Support ---
+    function initiateTeleport(
+        bytes32 targetDomain,
+        address receiver,
+        uint128 amount
+    ) external {
+        return
+            _initiateTeleport(targetDomain, TeleportGUIDHelper.addressToBytes32(receiver), amount, 0);
+    }
+    function initiateTeleport(
+        bytes32 targetDomain,
+        address receiver,
+        uint128 amount,
+        address operator
+    ) external {
+        return
+            _initiateTeleport(
+                targetDomain,
+                TeleportGUIDHelper.addressToBytes32(receiver),
+                amount,
+                TeleportGUIDHelper.addressToBytes32(operator)
+            );
+    }
+    function initiateTeleport(
+        bytes32 targetDomain,
+        bytes32 receiver,
+        uint128 amount,
+        bytes32 operator
+    ) external {
+        return _initiateTeleport(targetDomain, receiver, amount, operator);
+    }
+    function _initiateTeleport(
+        bytes32 targetDomain,
+        bytes32 receiver,
+        uint128 amount,
+        bytes32 operator
+    ) private {
+        // TODO - need to discuss if a global "closed" flag is still necessary
+        // Disallow initiating new teleport transfer if bridge is closed
+        //require(isOpen == 1, "DomainGuest/closed");
+
+        // Disallow initiating new teleport transfer if targetDomain has not been whitelisted
+        require(validDomains[targetDomain] == 1, "DomainGuest/invalid-domain");
+
+        TeleportGUID memory teleport = TeleportGUID({
+            sourceDomain: domain,
+            targetDomain: targetDomain,
+            receiver: receiver,
+            operator: operator,
+            amount: amount,
+            nonce: nonce++,
+            timestamp: uint48(block.timestamp)
+        });
+
+        batchedDaiToFlush[targetDomain] += amount;
+        dai.transferFrom(msg.sender, address(this), amount);
+        daiJoin.join(address(this), amount);
+        uint256 rad = amount * RAY;
+        require(rad < 2 ** 255, "DomainGuest/overflow");
+        vat.swell(address(this), -int256(rad));
+
+        _initiateTeleport(teleport);
+
+        emit TeleportInitialized(teleport);
+    }
+
+    function flush(bytes32 targetDomain) external {
+        // We do not check for valid domain because previously valid domains still need their DAI flushed
+        uint256 daiToFlush = batchedDaiToFlush[targetDomain];
+        require(daiToFlush > 0, "DomainGuest/zero-dai-flush");
+
+        batchedDaiToFlush[targetDomain] = 0;
+
+        _flush(targetDomain, daiToFlush);
+
+        emit Flushed(targetDomain, daiToFlush);
+    }
+
     // Bridge-specific functions
+    function _isHost(address usr) internal virtual view returns (bool);
     function _release(uint256 burned) internal virtual;
     function _surplus(uint256 wad) internal virtual;
     function _deficit(uint256 wad) internal virtual;
     function _tell(uint256 value) internal virtual;
+    function _initiateTeleport(TeleportGUID memory teleport) internal virtual;
+    function _flush(bytes32 targetDomain, uint256 daiToFlush) internal virtual;
     
 }

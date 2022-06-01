@@ -36,8 +36,11 @@ contract EmptyDomainHost is DomainHost {
     address public claimUsr;
     uint256 public claimAmount;
 
-    constructor(bytes32 _ilk, address _daiJoin, address _escrow) DomainHost(_ilk, _daiJoin, _escrow) {}
+    constructor(bytes32 _ilk, address _daiJoin, address _escrow, address _router) DomainHost(_ilk, _daiJoin, _escrow, _router) {}
 
+    function _isGuest(address) internal override view returns (bool) {
+        return true;
+    }
     function _lift(uint256 _line, uint256 _minted) internal override {
         liftLine = _line;
         liftMinted = _minted;
@@ -74,7 +77,8 @@ contract DomainHostTest is DSSTest {
         escrow = new EscrowMock();
         vow = address(123);
 
-        host = new EmptyDomainHost(ILK, address(daiJoin), address(escrow));
+        // TODO - add mock router
+        host = new EmptyDomainHost(ILK, address(daiJoin), address(escrow), address(0));
         host.file("vow", vow);
 
         escrow.approve(address(dai), address(host), type(uint256).max);

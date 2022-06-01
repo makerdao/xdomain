@@ -34,7 +34,7 @@ import { Spotter } from "xdomain-dss/Spotter.sol";
 import { Vat } from "xdomain-dss/Vat.sol";
 
 import { ClaimToken } from "../ClaimToken.sol";
-import { DomainHost } from "../DomainHost.sol";
+import { DomainHost, TeleportGUID } from "../DomainHost.sol";
 import { DomainGuest } from "../DomainGuest.sol";
 import { BridgeOracle } from "../BridgeOracle.sol";
 
@@ -46,12 +46,15 @@ contract SimpleDomainHost is DomainHost {
 
     DomainGuest guest;
 
-    constructor(bytes32 _ilk, address _daiJoin, address _escrow) DomainHost(_ilk, _daiJoin, _escrow) {}
+    constructor(bytes32 _ilk, address _daiJoin, address _escrow, address _router) DomainHost(_ilk, _daiJoin, _escrow, _router) {}
 
     function setGuest(address _guest) external {
         guest = DomainGuest(_guest);
     }
 
+    function _isGuest(address usr) internal override view returns (bool) {
+        return usr == address(guest);
+    }
     function _lift(uint256 _line, uint256 _minted) internal override {
         guest.lift(_line, _minted);
     }
@@ -71,10 +74,13 @@ contract SimpleDomainGuest is DomainGuest {
 
     DomainHost host;
 
-    constructor(address _daiJoin, address _claimToken, address _host) DomainGuest(_daiJoin, _claimToken) {
+    constructor(bytes32 _domain, address _daiJoin, address _claimToken, address _host) DomainGuest(_domain, _daiJoin, _claimToken) {
         host = DomainHost(_host);
     }
 
+    function _isHost(address usr) internal override view returns (bool) {
+        return usr == address(usr);
+    }
     function _release(uint256 burned) internal override {
         host.release(burned);
     }
@@ -86,6 +92,12 @@ contract SimpleDomainGuest is DomainGuest {
     }
     function _tell(uint256 value) internal virtual override {
        host.tell(value);
+    }
+    function _initiateTeleport(TeleportGUID memory teleport) internal virtual override {
+        host.initiateTeleport(teleport);
+    }
+    function _flush(bytes32 targetDomain, uint256 daiToFlush) internal virtual override {
+        host.flush(targetDomain, daiToFlush);
     }
 
 }
@@ -127,11 +139,12 @@ contract IntegrationTest is DSSTest {
         escrow = EscrowLike(mcd.chainlog().getAddress("OPTIMISM_ESCROW"));
 
         claimToken = new ClaimToken();
-        host = new SimpleDomainHost(DOMAIN_ILK, address(mcd.daiJoin()), address(escrow));
+        // TODO add support for Teleport router when it's available
+        host = new SimpleDomainHost(DOMAIN_ILK, address(mcd.daiJoin()), address(escrow), address(0));
         Vat vat = new Vat();
         Dai dai = new Dai();
         DaiJoin daiJoin = new DaiJoin(address(vat), address(dai));
-        guest = new SimpleDomainGuest(address(daiJoin), address(claimToken), address(host));
+        guest = new SimpleDomainGuest(DOMAIN_ILK, address(daiJoin), address(claimToken), address(host));
         pip = new BridgeOracle(address(host));
         claimToken.rely(address(guest));
 
@@ -434,14 +447,14 @@ contract IntegrationTest is DSSTest {
         assertEq(mcd.vat().gem(DOMAIN_ILK, address(this)), 0);
         mcd.end().cash(DOMAIN_ILK, myDai);
         uint256 gems = mcd.vat().gem(DOMAIN_ILK, address(this));
-        assertApproxEqAbs(gems, 50 ether, 2);
+        assertApproxEqRel(gems, 50 ether, WAD / 10000);
 
         // Exit to the remote domain
         assertEq(claimToken.balanceOf(address(this)), 0);
         host.exit(address(this), gems);
         assertEq(mcd.vat().gem(DOMAIN_ILK, address(this)), 0);
         uint256 tokens = claimToken.balanceOf(address(this));
-        assertApproxEqAbs(tokens, 20 ether, 2);
+        assertApproxEqAbs(tokens, 20 ether, WAD / 10000);
 
         // Can now get some collateral on the remote domain
         claimToken.approve(address(rmcd.end()), type(uint256).max);

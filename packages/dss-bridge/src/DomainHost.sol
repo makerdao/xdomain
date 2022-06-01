@@ -19,6 +19,8 @@
 
 pragma solidity ^0.8.13;
 
+import "./TeleportGUID.sol";
+
 interface VatLike {
     function live() external view returns (uint256);
     function hope(address usr) external;
@@ -41,7 +43,17 @@ interface DaiLike {
     function approve(address usr, uint wad) external returns (bool);
 }
 
-/// @title Extend a line of credit to a domain
+interface RouterLike {
+    function requestMint(
+        TeleportGUID calldata teleportGUID,
+        uint256 maxFeePercentage,
+        uint256 operatorFee
+    ) external returns (uint256 postFeeAmount, uint256 totalFee);
+    function settle(bytes32 targetDomain, uint256 batchedDaiToFlush) external;
+}
+
+/// @title Support for xchain MCD, canonical DAI and Maker Teleport
+/// @dev This is just the business logic which needs concrete message-passing implementation
 abstract contract DomainHost {
 
     // --- Data ---
@@ -52,6 +64,7 @@ abstract contract DomainHost {
     DaiJoinLike public immutable daiJoin;
     DaiLike     public immutable dai;
     address     public immutable escrow;
+    RouterLike  public immutable router;
 
     address public vow;
     uint256 public line;        // Remove domain global debt ceiling [RAD]
@@ -79,7 +92,12 @@ abstract contract DomainHost {
         _;
     }
 
-    constructor(bytes32 _ilk, address _daiJoin, address _escrow) {
+    modifier guestOnly {
+        require(_isGuest(msg.sender), "DomainHost/not-guest");
+        _;
+    }
+
+    constructor(bytes32 _ilk, address _daiJoin, address _escrow, address _router) {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
         
@@ -88,6 +106,7 @@ abstract contract DomainHost {
         vat = daiJoin.vat();
         dai = daiJoin.dai();
         escrow = _escrow;
+        router = RouterLike(_router);
         
         vat.hope(address(daiJoin));
         dai.approve(address(daiJoin), type(uint256).max);
@@ -120,6 +139,8 @@ abstract contract DomainHost {
         emit File(what, data);
     }
 
+    // --- MCD Support ---
+
     /// @notice Set the global debt ceiling for the remote domain
     /// @dev Please note that pre-mint DAI cannot be removed from the remote domain
     /// until the remote domain signals that it is safe to do so
@@ -148,8 +169,7 @@ abstract contract DomainHost {
     }
 
     /// @notice Withdraw pre-mint DAI from the remote domain
-    /// @dev    Should only be triggered by remote domain when it is safe to do so.
-    function release(uint256 wad) external auth {
+    function release(uint256 wad) external guestOnly {
         // Amounts are locked in during global shutdown
         require(vat.live() == 1, "DomainHost/vat-not-live");
         
@@ -166,8 +186,7 @@ abstract contract DomainHost {
     }
 
     /// @notice Merge DAI into surplus
-    /// @dev Should only be triggered by remote domain
-    function surplus(uint256 wad) external auth {
+    function surplus(uint256 wad) external guestOnly {
         dai.transferFrom(address(escrow), address(this), wad);
         daiJoin.join(address(vow), wad);
 
@@ -175,8 +194,7 @@ abstract contract DomainHost {
     }
 
     /// @notice Cover the remote domain's deficit by pulling debt from the surplus buffer
-    /// @dev Should only be triggered by remote domain
-    function deficit(uint256 wad) external auth {
+    function deficit(uint256 wad) external guestOnly {
         // Amounts are locked in during global shutdown
         require(vat.live() == 1, "DomainHost/vat-not-live");
         
@@ -203,8 +221,7 @@ abstract contract DomainHost {
     }
 
     /// @notice Set this domain's cure value
-    /// @dev Should only be triggered by remote domain
-    function tell(uint256 value) external auth {
+    function tell(uint256 value) external guestOnly {
         require(!cureReported, "DomainHost/cure-reported");
 
         cureReported = true;
@@ -231,7 +248,27 @@ abstract contract DomainHost {
         emit Exit(usr, wad, claim);
     }
 
+    // --- Canonical DAI Support ---
+
+
+
+    // --- Maker Teleport Support ---
+
+    /// @notice Finalize a teleport registration
+    function initiateTeleport(TeleportGUID calldata teleport) external guestOnly {
+        router.requestMint(teleport, 0, 0);
+    }
+
+    /// @notice Set this domain's cure value
+    function flush(bytes32 targetDomain, uint256 daiToFlush) external guestOnly {
+        // Pull DAI from the escrow to this contract
+        dai.transferFrom(escrow, address(this), daiToFlush);
+        // The router will pull the DAI from this contract
+        router.settle(targetDomain, daiToFlush);
+    }
+
     // Bridge-specific functions
+    function _isGuest(address usr) internal virtual view returns (bool);
     function _lift(uint256 line, uint256 minted) internal virtual;
     function _rectify(uint256 wad) internal virtual;
     function _cage() internal virtual;

@@ -27,7 +27,7 @@ import { EndMock } from "./mocks/EndMock.sol";
 import { EscrowMock } from "./mocks/EscrowMock.sol";
 import { VatMock } from "./mocks/VatMock.sol";
 import { ClaimToken } from "../ClaimToken.sol";
-import { DomainGuest } from "../DomainGuest.sol";
+import { DomainGuest, TeleportGUID } from "../DomainGuest.sol";
 
 contract EmptyDomainGuest is DomainGuest {
 
@@ -35,9 +35,15 @@ contract EmptyDomainGuest is DomainGuest {
     uint256 public surplus;
     uint256 public deficit;
     uint256 public tellValue;
+    TeleportGUID public teleport;
+    bytes32 public flushTargetDomain;
+    uint256 public flushDaiToFlush;
 
-    constructor(address _daiJoin, address _claimToken) DomainGuest(_daiJoin, _claimToken) {}
+    constructor(bytes32 _domain, address _daiJoin, address _claimToken) DomainGuest(_domain, _daiJoin, _claimToken) {}
 
+    function _isHost(address) internal override view returns (bool) {
+        return true;
+    }
     function _release(uint256 burned) internal override {
         releaseBurned = burned;
     }
@@ -49,6 +55,13 @@ contract EmptyDomainGuest is DomainGuest {
     }
     function _tell(uint256 value) internal virtual override {
        tellValue = value;
+    }
+    function _initiateTeleport(TeleportGUID memory _teleport) internal virtual override {
+        teleport = _teleport;
+    }
+    function _flush(bytes32 targetDomain, uint256 daiToFlush) internal virtual override {
+        flushTargetDomain = targetDomain;
+        flushDaiToFlush = daiToFlush;
     }
 
 }
@@ -70,7 +83,7 @@ contract DomainGuestTest is DSSTest {
         end = new EndMock(address(vat));
 
         claimToken = new ClaimToken();
-        guest = new EmptyDomainGuest(address(daiJoin), address(claimToken));
+        guest = new EmptyDomainGuest("SOME-DOMAIN-A", address(daiJoin), address(claimToken));
         guest.file("end", address(end));
     }
 
