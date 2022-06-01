@@ -2,7 +2,7 @@
 
 ## Description
 
-This bot detects when the `Debt Ceiling` utilization threshold is exceeded in `TelepertJoin` contract.
+This bot detects when the `Debt Ceiling` utilization threshold is exceeded in `TeleportJoin` contract.
 
 > The `threshold` can be configured in **src/utils.ts**, L5.
 
