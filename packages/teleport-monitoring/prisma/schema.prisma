@@ -31,6 +31,7 @@ model Teleport {
 
 model Flush {
   id           Int      @id @default(autoincrement())
+  sourceDomain String
   targetDomain String
   amount       String
   timestamp    DateTime

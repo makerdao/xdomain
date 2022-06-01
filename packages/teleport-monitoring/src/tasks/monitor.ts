@@ -5,6 +5,7 @@ import { FlushRepository } from '../db/FlushRepository'
 import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
 import { TeleportRepository } from '../db/TeleportRepository'
 import { bridgeInvariant } from '../monitoring/bridgeInvariant'
+import { monitorTeleportFlush } from '../monitoring/teleportFlush'
 import { monitorTeleportMints } from '../monitoring/teleportMints'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from '../sdks'
 import { BaseSynchronizer } from '../synchronizers/BaseSynchronizer'
@@ -81,6 +82,17 @@ export async function monitor({
       metrics[`teleport_l1_dai_balance{domain="${slave.name}"}`] = balances.l1Balance
       metrics[`teleport_l2_dai_balance{domain="${slave.name}"}`] = balances.l2Balance
       metrics[`teleport_l1_block{domain="${slave.name}"}`] = blockNumber
+
+      if (allSynced) {
+        const { sinceLastFlush, debtToFlush } = await monitorTeleportFlush(
+          l2Sdk,
+          flushRepository,
+          slave.name,
+          network.name,
+        )
+        metrics[`teleport_last_flush_ms{domain="${slave.name}"}`] = sinceLastFlush
+        metrics[`teleport_debt_to_flush{domain="${slave.name}"}`] = debtToFlush
+      }
     }
   }, l1Provider)
 

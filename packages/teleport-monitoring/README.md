@@ -37,7 +37,7 @@ DATABASE_URL -  db url with credentials
 3. To run prometheus run local script:
 
 ```
-./prom.sh
+./scripts/prom.sh
 ```
 
 ## Scripts

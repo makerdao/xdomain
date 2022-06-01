@@ -26,6 +26,7 @@ CREATE TABLE "Teleport" (
 -- CreateTable
 CREATE TABLE "Flush" (
     "id" SERIAL NOT NULL,
+    "sourceDomain" TEXT NOT NULL,
     "targetDomain" TEXT NOT NULL,
     "amount" TEXT NOT NULL,
     "timestamp" TIMESTAMP(3) NOT NULL,

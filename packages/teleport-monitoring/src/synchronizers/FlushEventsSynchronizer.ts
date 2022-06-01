@@ -1,5 +1,6 @@
 import { Flush } from '@prisma/client'
 import { providers } from 'ethers/lib/ethers'
+import { parseBytes32String } from 'ethers/lib/utils'
 
 import { FlushRepository } from '../db/FlushRepository'
 import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
@@ -41,7 +42,8 @@ export class FlushEventsSynchronizer extends BaseSynchronizer {
       const modelsToCreate: Omit<Flush, 'id'>[] = await Promise.all(
         newFlushes.map(async (w) => {
           return {
-            targetDomain: w.args.targetDomain,
+            sourceDomain: this.domainName,
+            targetDomain: parseBytes32String(w.args.targetDomain),
             amount: w.args.dai.toString(),
             timestamp: new Date((await w.getBlock()).timestamp * 1000),
           }

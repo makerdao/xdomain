@@ -1,6 +1,6 @@
 import { Teleport } from '@prisma/client'
 import { BigNumber, providers } from 'ethers/lib/ethers'
-import { keccak256 } from 'ethers/lib/utils'
+import { keccak256, parseBytes32String } from 'ethers/lib/utils'
 
 import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
 import { TeleportRepository } from '../db/TeleportRepository'
@@ -49,8 +49,8 @@ export class InitEventsSynchronizer extends BaseSynchronizer {
         const hash = keccak256(w.data)
         return {
           hash,
-          sourceDomain: w.args[0].sourceDomain,
-          targetDomain: w.args[0].targetDomain,
+          sourceDomain: parseBytes32String(w.args[0].sourceDomain),
+          targetDomain: parseBytes32String(w.args[0].targetDomain),
           amount: w.args[0].amount.toString(),
           nonce: w.args[0].nonce.toString(),
           operator: w.args[0].operator,
