@@ -30,7 +30,7 @@ export default class NetworkManager implements NetworkData {
   networkMap: Record<number, NetworkData>;
 
   constructor(networkMap: Record<number, NetworkData>) {
-    this.L2DaiTeleportGateway = "";
+    this.L2DaiTeleportGateway = "0x0000000000000000000000000000000000000000";
     this.deploymentBlock = 0;
     this.networkMap = networkMap;
   }
