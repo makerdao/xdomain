@@ -17,7 +17,7 @@ export const provideInitialize =
       address: data.L2DaiTeleportGateway,
       topics: [EVENT_IFACE.getEventTopic("WormholeInitialized")],
       fromBlock: data.deploymentBlock,
-      toBlock: blockNumber - 1,
+      toBlock: blockNumber,
     };
 
     const teleportInitializedLogs = await provider.getLogs(filter);

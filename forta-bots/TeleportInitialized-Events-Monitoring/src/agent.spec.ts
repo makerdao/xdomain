@@ -64,7 +64,7 @@ describe("TeleportInitialized events monitoring bot test suite", () => {
       address: mockNetworkManager.L2DaiTeleportGateway,
       topics: [TELEPORT_INITIALIZED_EVENT_TOPIC],
       fromBlock: mockNetworkManager.deploymentBlock,
-      toBlock: 4355,
+      toBlock: 4356,
     };
     const logs = [
       {
