@@ -1,6 +1,15 @@
-import { Finding, HandleBlock, BlockEvent, keccak256, FindingSeverity, FindingType, ethers } from "forta-agent";
+import {
+  Finding,
+  HandleBlock,
+  Initialize,
+  BlockEvent,
+  keccak256,
+  FindingSeverity,
+  FindingType,
+  ethers,
+} from "forta-agent";
 import { MockEthersProvider, createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests";
-import { provideHandleBlock } from "./agent";
+import agent, { provideHandleBlock, provideInitialize } from "./agent";
 import { when } from "jest-when";
 
 const TEST_TELEPORT_JOIN = createAddress("0xaaee");
@@ -9,7 +18,7 @@ const TEST_DAYS_THRESHOLD: number = 5;
 
 const testCreateFinding = (
   threshold: number,
-  blockTimestamp: string,
+  currentBlockTimestamp: string,
   latestSettleTimestamp: string | any = undefined
 ): Finding => {
   return Finding.fromObject({
@@ -20,172 +29,192 @@ const testCreateFinding = (
     severity: FindingSeverity.Info,
     type: FindingType.Info,
     metadata: {
-      blockTimestamp,
+      currentBlockTimestamp,
       latestSettleTimestamp,
     },
   });
 };
 
+function createMockProvider(): MockEthersProvider {
+  const mockProvider = new MockEthersProvider();
+
+  // @ts-ignore
+  mockProvider.getNetwork = jest.fn().mockImplementation(() => ({ chainId: 42 }));
+
+  return mockProvider;
+}
+
 describe("No-settle monitoring bot test suite", () => {
+  let mockProvider = createMockProvider() as any;
   let handleBlock: HandleBlock;
+  let initialize: Initialize;
   const mockNetworkManager = {
     TeleportJoin: TEST_TELEPORT_JOIN,
+    setNetwork: jest.fn(),
   };
-  const mockProvider: MockEthersProvider = new MockEthersProvider();
 
-  it("should return no findings when there is a recent past Settle event on the first run", async () => {
-    handleBlock = provideHandleBlock(
-      mockNetworkManager as any,
-      mockProvider as any as ethers.providers.Provider,
-      TEST_DAYS_THRESHOLD,
-      false //first run
-    );
-    const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(123422).setNumber(56553456);
-
-    const filter0 = {
-      address: TEST_TELEPORT_JOIN,
-      topics: [SETTLE_EVENT_TOPIC],
-      fromBlock: blockEvent.block.number - TEST_DAYS_THRESHOLD * 6050,
-      toBlock: blockEvent.block.number,
-    };
-
-    const logs0 = [
-      {
-        blockNumber: 56553000,
-        blockHash: blockEvent.blockHash,
-        transactionIndex: 2,
-        removed: false,
-        address: mockNetworkManager.TeleportJoin,
-        data: keccak256("dataData2"),
-        topics: [SETTLE_EVENT_TOPIC],
-        transactionHash: keccak256("tHash2"),
-        logIndex: 3,
-      },
-    ];
-
-    when(mockProvider.getBlock).calledWith(56553000).mockReturnValue({ timestamp: 123 });
-    mockProvider.addFilteredLogs(filter0, logs0);
-    const findings: Finding[] = await handleBlock(blockEvent);
-
-    expect(findings).toStrictEqual([]);
+  beforeEach(() => {
+    mockProvider.clear();
   });
 
-  it("should return a finding when there was no recent past Settle event on the first run", async () => {
-    handleBlock = provideHandleBlock(
-      mockNetworkManager as any,
-      mockProvider as any as ethers.providers.Provider,
-      TEST_DAYS_THRESHOLD,
-      false //first run
-    );
-    const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(123422).setNumber(3456);
+  describe("initialize", () => {
+    it("should fetch past logs correctly", async () => {
+      initialize = provideInitialize(
+        mockNetworkManager as any,
+        mockProvider as any as ethers.providers.Provider,
+        TEST_DAYS_THRESHOLD
+      );
+      const blockNumber = 1234354353;
+      when(mockProvider.getBlock).calledWith("latest").mockReturnValue({ number: blockNumber });
 
-    const filter0 = {
-      address: TEST_TELEPORT_JOIN,
-      topics: [SETTLE_EVENT_TOPIC],
-      fromBlock: blockEvent.block.number - TEST_DAYS_THRESHOLD * 6050,
-      toBlock: blockEvent.block.number,
-    };
+      const filter = {
+        address: mockNetworkManager.TeleportJoin,
+        topics: [SETTLE_EVENT_TOPIC],
+        fromBlock: blockNumber - TEST_DAYS_THRESHOLD * 6050,
+        toBlock: blockNumber,
+      };
+      const logs = [
+        {
+          blockNumber: blockNumber - 1,
+          blockHash: keccak256("w43e23"),
+          transactionIndex: 2,
+          removed: false,
+          address: mockNetworkManager.TeleportJoin,
+          data: keccak256("dataData2"),
+          topics: [SETTLE_EVENT_TOPIC],
+          transactionHash: keccak256("tHash2"),
+          logIndex: 3,
+        },
+      ];
+      mockProvider.addFilteredLogs(filter, logs);
 
-    mockProvider.addFilteredLogs(filter0, []);
-    const findings: Finding[] = await handleBlock(blockEvent);
+      when(mockProvider.getBlock)
+        .calledWith(blockNumber - 1)
+        .mockReturnValue({ timestamp: 3242334 });
 
-    expect(findings).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "123422")]);
+      await initialize();
+
+      console.log(mockProvider.getLogs());
+      expect(mockProvider.getNetwork).toHaveBeenCalled();
+      expect(mockProvider.getBlock).toHaveBeenCalledWith(blockNumber - 1);
+    });
   });
 
-  it("should return a finding when the threshold has been exceeded", async () => {
-    handleBlock = provideHandleBlock(
-      mockNetworkManager as any,
-      mockProvider as any as ethers.providers.Provider,
-      TEST_DAYS_THRESHOLD,
-      true
-    );
+  describe("handleBlock", () => {
+    //   it("should return a finding when there was no recent past Settle event on the first run", async () => {
+    //     initialize = provideInitialize(mockProvider, TEST_DAYS_THRESHOLD);
+    //     when(mockProvider.getBlock).calledWith("latest").mockReturnValue({ number: 3455 });
+    //     await initialize();
+    //     handleBlock = provideHandleBlock(mockNetworkManager as any, mockProvider2 as any, TEST_DAYS_THRESHOLD);
+    //     const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(123422).setNumber(3456);
 
-    const blockEvent1: BlockEvent = new TestBlockEvent()
-      .setHash(keccak256("hash3"))
-      .setTimestamp(4464123422)
-      .setNumber(3456);
+    //     const filter0 = {
+    //       address: TEST_TELEPORT_JOIN,
+    //       topics: [SETTLE_EVENT_TOPIC],
+    //       fromBlock: blockEvent.block.number - TEST_DAYS_THRESHOLD * 6050,
+    //       toBlock: blockEvent.block.number,
+    //     };
 
-    const filter = {
-      address: TEST_TELEPORT_JOIN,
-      topics: [SETTLE_EVENT_TOPIC],
-      blockHash: keccak256("hash3"),
-    };
+    //     mockProvider.addFilteredLogs(filter0, []);
+    //     const findings: Finding[] = await handleBlock(blockEvent);
 
-    const logs = [
-      {
-        blockNumber: 3456,
-        blockHash: blockEvent1.blockHash,
-        transactionIndex: 2,
-        removed: false,
-        address: mockNetworkManager.TeleportJoin,
-        data: keccak256("dataData2"),
+    //     expect(findings).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "123422")]);
+    //   });
+
+    it("should return a finding when the threshold has been exceeded", async () => {
+      handleBlock = provideHandleBlock(
+        mockNetworkManager as any,
+        mockProvider as any as ethers.providers.Provider,
+        TEST_DAYS_THRESHOLD
+      );
+
+      const blockEvent1: BlockEvent = new TestBlockEvent()
+        .setHash(keccak256("hash3"))
+        .setTimestamp(4464123422)
+        .setNumber(3456);
+
+      const filter = {
+        address: TEST_TELEPORT_JOIN,
         topics: [SETTLE_EVENT_TOPIC],
-        transactionHash: keccak256("tHash3"),
-        logIndex: 3,
-      },
-    ];
+        blockHash: keccak256("hash3"),
+      };
 
-    const blockEvent2: BlockEvent = new TestBlockEvent()
-      .setHash(keccak256("hash5"))
-      .setTimestamp(5564123422) //exceeded
-      .setNumber(13456);
+      const logs = [
+        {
+          blockNumber: 3456,
+          blockHash: blockEvent1.blockHash,
+          transactionIndex: 2,
+          removed: false,
+          address: mockNetworkManager.TeleportJoin,
+          data: keccak256("dataData2"),
+          topics: [SETTLE_EVENT_TOPIC],
+          transactionHash: keccak256("tHash3"),
+          logIndex: 3,
+        },
+      ];
 
-    const filter2 = {
-      address: TEST_TELEPORT_JOIN,
-      topics: [SETTLE_EVENT_TOPIC],
-      blockHash: keccak256("hash5"),
-    };
+      const blockEvent2: BlockEvent = new TestBlockEvent()
+        .setHash(keccak256("hash5"))
+        .setTimestamp(5564123422) //exceeded
+        .setNumber(13456);
 
-    mockProvider.addFilteredLogs(filter, logs).addFilteredLogs(filter2, []);
-
-    await handleBlock(blockEvent1);
-    const findings3 = await handleBlock(blockEvent2);
-    expect(findings3).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "5564123422", "4464123422")]);
-  });
-
-  it("should return no findings when the threshold has not been exceeded", async () => {
-    handleBlock = provideHandleBlock(mockNetworkManager as any, mockProvider as any, TEST_DAYS_THRESHOLD, true);
-
-    const blockEvent1: BlockEvent = new TestBlockEvent()
-      .setHash(keccak256("hash3"))
-      .setTimestamp(4464123422)
-      .setNumber(43456);
-
-    const filter = {
-      address: TEST_TELEPORT_JOIN,
-      topics: [SETTLE_EVENT_TOPIC],
-      blockHash: keccak256("hash3"),
-    };
-
-    const logs = [
-      {
-        blockNumber: 43456,
-        blockHash: blockEvent1.blockHash,
-        transactionIndex: 2,
-        removed: false,
-        address: mockNetworkManager.TeleportJoin,
-        data: keccak256("dataData2"),
+      const filter2 = {
+        address: TEST_TELEPORT_JOIN,
         topics: [SETTLE_EVENT_TOPIC],
-        transactionHash: keccak256("tHash21"),
-        logIndex: 3,
-      },
-    ];
+        blockHash: keccak256("hash5"),
+      };
 
-    const blockEvent2: BlockEvent = new TestBlockEvent()
-      .setHash(keccak256("hash5"))
-      .setTimestamp(4464123431) //not exceeded
-      .setNumber(13456);
+      mockProvider.addFilteredLogs(filter, logs).addFilteredLogs(filter2, []);
 
-    const filter2 = {
-      address: TEST_TELEPORT_JOIN,
-      topics: [SETTLE_EVENT_TOPIC],
-      blockHash: keccak256("hash5"),
-    };
+      await handleBlock(blockEvent1);
+      const findings3 = await handleBlock(blockEvent2);
+      expect(findings3).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "5564123422", "4464123422")]);
+    });
 
-    mockProvider.addFilteredLogs(filter, logs).addFilteredLogs(filter2, []);
+    it("should return no findings when the threshold has not been exceeded", async () => {
+      handleBlock = provideHandleBlock(mockNetworkManager as any, mockProvider as any, TEST_DAYS_THRESHOLD);
 
-    await handleBlock(blockEvent1);
-    const findings3 = await handleBlock(blockEvent2);
-    expect(findings3).toStrictEqual([]);
+      const blockEvent1: BlockEvent = new TestBlockEvent()
+        .setHash(keccak256("hash3"))
+        .setTimestamp(4464123422)
+        .setNumber(43456);
+
+      const filter = {
+        address: TEST_TELEPORT_JOIN,
+        topics: [SETTLE_EVENT_TOPIC],
+        blockHash: keccak256("hash3"),
+      };
+
+      const logs = [
+        {
+          blockNumber: 43456,
+          blockHash: blockEvent1.blockHash,
+          transactionIndex: 2,
+          removed: false,
+          address: mockNetworkManager.TeleportJoin,
+          data: keccak256("dataData2"),
+          topics: [SETTLE_EVENT_TOPIC],
+          transactionHash: keccak256("tHash21"),
+          logIndex: 3,
+        },
+      ];
+
+      const blockEvent2: BlockEvent = new TestBlockEvent()
+        .setHash(keccak256("hash5"))
+        .setTimestamp(4464123431) //not exceeded
+        .setNumber(13456);
+
+      const filter2 = {
+        address: TEST_TELEPORT_JOIN,
+        topics: [SETTLE_EVENT_TOPIC],
+        blockHash: keccak256("hash5"),
+      };
+
+      mockProvider.addFilteredLogs(filter, logs).addFilteredLogs(filter2, []);
+
+      await handleBlock(blockEvent1);
+      const findings3 = await handleBlock(blockEvent2);
+      expect(findings3).toStrictEqual([]);
+    });
   });
 });

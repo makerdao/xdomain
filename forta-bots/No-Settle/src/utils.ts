@@ -10,7 +10,7 @@ export const SETTLE_IFACE: Interface = new Interface([SETTLE_EVENT]);
 
 export const createFinding = (
   threshold: number,
-  blockTimestamp: string,
+  currentBlockTimestamp: string,
   latestSettleTimestamp: string | any = undefined
 ): Finding => {
   return Finding.fromObject({
@@ -21,7 +21,7 @@ export const createFinding = (
     severity: FindingSeverity.Info,
     type: FindingType.Info,
     metadata: {
-      blockTimestamp,
+      currentBlockTimestamp,
       latestSettleTimestamp,
     },
   });

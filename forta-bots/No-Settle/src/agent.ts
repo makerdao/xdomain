@@ -6,56 +6,41 @@ import NetworkData from "./network";
 import { createFinding, DAYS_THRESHOLD, SETTLE_IFACE } from "./utils";
 
 const networkManager: NetworkManager = new NetworkManager(NETWORK_MAP);
+let latestSettleTimestamp: BigNumber = BigNumber.from(0);
 
 export const provideInitialize =
-  (provider: providers.Provider): Initialize =>
+  (data: NetworkManager, provider: providers.Provider, daysThreshold: number): Initialize =>
   async () => {
     const { chainId } = await provider.getNetwork();
-    networkManager.setNetwork(chainId);
+    data.setNetwork(chainId);
+    const blockNumber = (await provider.getBlock("latest")).number;
+
+    const filter = {
+      address: data.TeleportJoin,
+      topics: [SETTLE_IFACE.getEventTopic("Settle")],
+      fromBlock: blockNumber - daysThreshold * 6050, // 6050 blocks/day on average
+      toBlock: blockNumber,
+    };
+
+    const settleEvents: providers.Log[] = await provider.getLogs(filter);
+
+    if (settleEvents.length) {
+      latestSettleTimestamp = BigNumber.from(
+        (await provider.getBlock(settleEvents[settleEvents.length - 1].blockNumber)).timestamp
+      );
+      console.log(latestSettleTimestamp.toString());
+    }
   };
 
 export const provideHandleBlock = (
   data: NetworkData,
   provider: providers.Provider,
-  daysThreshold: number,
-  init: boolean
+  daysThreshold: number
 ): HandleBlock => {
   let latestAlertedSettleTimestamp: BigNumber = BigNumber.from(-1);
-  let latestSettleTimestamp: BigNumber = BigNumber.from(-1);
   return async (blockEvent: BlockEvent) => {
     const findings: Finding[] = [];
     const currentTimestamp: BigNumber = BigNumber.from(blockEvent.block.timestamp);
-
-    //Get past events on first run
-    if (!init) {
-      init = true;
-      const filter = {
-        address: data.TeleportJoin,
-        topics: [SETTLE_IFACE.getEventTopic("Settle")],
-        fromBlock: blockEvent.block.number - daysThreshold * 6050, // 6050 blocks/day on average
-        toBlock: blockEvent.block.number,
-      };
-
-      const settleEvents: providers.Log[] = await provider.getLogs(filter);
-
-      if (settleEvents.length) {
-        latestSettleTimestamp = BigNumber.from(
-          (await provider.getBlock(settleEvents[settleEvents.length - 1].blockNumber)).timestamp
-        );
-      } else {
-        findings.push(createFinding(daysThreshold, currentTimestamp.toString()));
-      }
-      return findings;
-    }
-    const filter = {
-      address: data.TeleportJoin,
-      topics: [SETTLE_IFACE.getEventTopic("Settle")],
-      blockHash: blockEvent.blockHash,
-    };
-    const settleEvents: providers.Log[] = await provider.getLogs(filter);
-    if (settleEvents.length) {
-      latestSettleTimestamp = BigNumber.from(blockEvent.block.timestamp);
-    }
 
     // Check if:
     // 1) Alert has not already been created for this settle timestamp
@@ -64,14 +49,31 @@ export const provideHandleBlock = (
       !latestAlertedSettleTimestamp.eq(latestSettleTimestamp) &&
       currentTimestamp.sub(latestSettleTimestamp).gt(BigNumber.from(daysThreshold).mul(86400))
     ) {
-      findings.push(createFinding(daysThreshold, currentTimestamp.toString(), latestSettleTimestamp.toString()));
+      findings.push(
+        createFinding(
+          daysThreshold,
+          currentTimestamp.toString(),
+          !latestSettleTimestamp.eq(0) ? latestSettleTimestamp.toString() : undefined
+        )
+      );
       latestAlertedSettleTimestamp = latestSettleTimestamp;
     }
+    const filter = {
+      address: data.TeleportJoin,
+      topics: [SETTLE_IFACE.getEventTopic("Settle")],
+      blockHash: blockEvent.blockHash,
+    };
+    const settleEvents: providers.Log[] = await provider.getLogs(filter);
+
+    if (settleEvents.length) {
+      latestSettleTimestamp = BigNumber.from(blockEvent.block.timestamp);
+    }
+
     return findings;
   };
 };
 
 export default {
-  initialize: provideInitialize(getEthersProvider()),
-  handleBlock: provideHandleBlock(networkManager, getEthersProvider(), DAYS_THRESHOLD, false),
+  initialize: provideInitialize(networkManager, getEthersProvider(), DAYS_THRESHOLD),
+  handleBlock: provideHandleBlock(networkManager, getEthersProvider(), DAYS_THRESHOLD),
 };
