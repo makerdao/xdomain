@@ -1,6 +1,5 @@
 import { Finding, getEthersProvider, HandleBlock, BlockEvent, Initialize } from "forta-agent";
-import { providers } from "ethers";
-import { BigNumber } from "ethers";
+import { providers, BigNumber } from "ethers";
 import NetworkManager, { NETWORK_MAP } from "./network";
 import NetworkData from "./network";
 import { createFinding, DAYS_THRESHOLD, SETTLE_IFACE } from "./utils";
@@ -13,12 +12,12 @@ export const provideInitialize =
   async () => {
     const { chainId } = await provider.getNetwork();
     data.setNetwork(chainId);
-    const blockNumber = (await provider.getBlock("latest")).number;
+    const blockNumber: number = await provider.getBlockNumber();
 
     const filter = {
       address: data.TeleportJoin,
       topics: [SETTLE_IFACE.getEventTopic("Settle")],
-      fromBlock: blockNumber - daysThreshold * 6050, // 6050 blocks/day on average
+      fromBlock: blockNumber - daysThreshold * 6100, // 6100 blocks/day on average
       toBlock: blockNumber,
     };
 
@@ -28,7 +27,6 @@ export const provideInitialize =
       latestSettleTimestamp = BigNumber.from(
         (await provider.getBlock(settleEvents[settleEvents.length - 1].blockNumber)).timestamp
       );
-      console.log(latestSettleTimestamp.toString());
     }
   };
 
