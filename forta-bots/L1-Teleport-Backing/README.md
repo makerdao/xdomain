@@ -2,7 +2,7 @@
 
 ## Description
 
-This bot detects Mint events emitted from the TeleportJoin without the corresponding WormholeInitialized events from the L2DaiWormholeGateway contract.
+This bot detects Mint events emitted from the TeleportJoin without the corresponding TeleportInitialized events from the L2DaiTeleportGateway contract.
 
 > The `BOT_ID` must be set in **src/utils.ts**, L4, in order for the bot to be pushed/deployed.
 
@@ -13,7 +13,7 @@ This bot detects Mint events emitted from the TeleportJoin without the correspon
 ## Alerts
 
 - MK-02-02
-  - Fired when a Mint event emission without a corresponding WormholeInitialized event is detected.
+  - Fired when a Mint event emission without a corresponding TeleportInitialized event is detected.
   - Severity is always set to "High".
   - Type is always set to "Suspicious".
   - Metadata contains:

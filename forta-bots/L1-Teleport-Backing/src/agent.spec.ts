@@ -11,7 +11,7 @@ const WRONG_IFACE: Interface = new Interface([
 const testCreateFinding = (txHash: string, hashGUID: string, networkId: number): Finding => {
   return Finding.fromObject({
     name: "MakerDAO Teleport Backing Monitor",
-    description: "Mint event emitted from TeleportJoin without corresponding WormholeInitialized event",
+    description: "Mint event emitted from TeleportJoin without corresponding TeleportInitialized event",
     alertId: "MK-02-02",
     protocol: "MakerDAO",
     severity: FindingSeverity.High,
@@ -24,7 +24,7 @@ const testCreateFinding = (txHash: string, hashGUID: string, networkId: number):
   });
 };
 
-describe("WormholeInitialized events monitoring bot test suite", () => {
+describe("Teleport Backing monitoring bot test suite", () => {
   const mockNetworkManager = {
     TeleportJoin: createAddress("0x0a"),
     TeleportOracleAuth: createAddress("0x0b"),
@@ -62,7 +62,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
     expect(findings).toStrictEqual([]);
   });
 
-  it("should return no findings when there is a corresponding WormholeInitialized event emitted from L2DaiGateway contract", async () => {
+  it("should return no findings when there is a corresponding TeleportInitialized event emitted from L2DaiGateway contract", async () => {
     mockFetcher.L2HashGUIDExists.mockReturnValue(true);
     const event = MINT_IFACE.getEvent("Mint");
     const log = MINT_IFACE.encodeEventLog(event, [
@@ -83,7 +83,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
     expect(findings).toStrictEqual([]);
   });
 
-  it("should return a finding when there is no corresponding WormholeInitialized event emitted from L2DaiGateway contract", async () => {
+  it("should return a finding when there is no corresponding TeleportInitialized event emitted from L2DaiGateway contract", async () => {
     mockFetcher.L2HashGUIDExists.mockReturnValue(false);
 
     const event = MINT_IFACE.getEvent("Mint");
@@ -117,7 +117,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
     ]);
   });
 
-  it("should return multiple findings when there are no corresponding WormholeInitialized events emitted", async () => {
+  it("should return multiple findings when there are no corresponding TeleportInitialized events emitted", async () => {
     mockFetcher.L2HashGUIDExists.mockReturnValue(false).mockReturnValue(false);
     const event = MINT_IFACE.getEvent("Mint");
     const log1 = MINT_IFACE.encodeEventLog(event, [
