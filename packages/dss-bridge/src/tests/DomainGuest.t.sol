@@ -41,7 +41,7 @@ contract EmptyDomainGuest is DomainGuest {
 
     constructor(bytes32 _domain, address _daiJoin, address _claimToken) DomainGuest(_domain, _daiJoin, _claimToken) {}
 
-    function _isHost(address) internal override view returns (bool) {
+    function _isHost(address) internal override pure returns (bool) {
         return true;
     }
     function _release(uint256 burned) internal override {
@@ -76,6 +76,9 @@ contract DomainGuestTest is DSSTest {
     ClaimToken claimToken;
     EmptyDomainGuest guest;
 
+    bytes32 constant SOURCE_DOMAIN = "SOME-DOMAIN-A";
+    bytes32 constant TARGET_DOMAIN = "SOME-DOMAIN-B";
+
     function postSetup() internal virtual override {
         vat = new VatMock();
         dai = new DaiMock();
@@ -83,15 +86,20 @@ contract DomainGuestTest is DSSTest {
         end = new EndMock(address(vat));
 
         claimToken = new ClaimToken();
-        guest = new EmptyDomainGuest("SOME-DOMAIN-A", address(daiJoin), address(claimToken));
+        guest = new EmptyDomainGuest(SOURCE_DOMAIN, address(daiJoin), address(claimToken));
         guest.file("end", address(end));
     }
 
     function testConstructor() public {
+        assertEq(guest.domain(), SOURCE_DOMAIN);
         assertEq(address(guest.vat()), address(vat));
         assertEq(address(guest.daiJoin()), address(daiJoin));
         assertEq(address(guest.dai()), address(dai));
+
+        assertEq(vat.can(address(guest), address(daiJoin)), 1);
+        assertEq(dai.allowance(address(guest), address(daiJoin)), type(uint256).max);
         assertEq(guest.wards(address(this)), 1);
+        assertEq(guest.live(), 1);
     }
 
     function testRelyDeny() public {
@@ -273,6 +281,43 @@ contract DomainGuestTest is DSSTest {
         claimToken.mint(address(123), 100 ether);
 
         assertEq(claimToken.balanceOf(address(123)), 100 ether);
+    }
+
+    function testInitiateTeleport() public {
+        vat.suck(address(123), address(this), 100 * RAD);
+        vat.hope(address(daiJoin));
+        daiJoin.exit(address(this), 100 ether);
+        dai.approve(address(guest), 100 ether);
+        guest.file("validDomains", TARGET_DOMAIN, 1);
+
+        assertEq(dai.balanceOf(address(this)), 100 ether);
+        assertEq(guest.batchedDaiToFlush(TARGET_DOMAIN), 0);
+        assertEq(guest.nonce(), 0);
+        assertEq(vat.surf(), 0);
+
+        guest.initiateTeleport(TARGET_DOMAIN, address(123), 100 ether);
+        
+        (
+            bytes32 sourceDomain,
+            bytes32 targetDomain,
+            bytes32 receiver,
+            bytes32 operator,
+            uint128 amount,
+            uint80 nonce,
+            uint48 timestamp
+        ) = guest.teleport();
+
+        assertEq(dai.balanceOf(address(this)), 0);
+        assertEq(guest.batchedDaiToFlush(TARGET_DOMAIN), 100 ether);
+        assertEq(vat.surf(), -int256(100 * RAD));
+        assertEq(guest.nonce(), 1);
+        assertEq(sourceDomain, SOURCE_DOMAIN);
+        assertEq(targetDomain, TARGET_DOMAIN);
+        assertEq(receiver, bytes32(uint256(123)));
+        assertEq(operator, bytes32(uint256(0)));
+        assertEq(uint256(amount), 100 ether);
+        assertEq(uint256(nonce), 0);
+        assertEq(uint256(timestamp), block.timestamp);
     }
 
 }

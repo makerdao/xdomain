@@ -24,6 +24,7 @@ import "dss-test/DSSTest.sol";
 import { DaiJoinMock } from "./mocks/DaiJoinMock.sol";
 import { DaiMock } from "./mocks/DaiMock.sol";
 import { EscrowMock } from "./mocks/EscrowMock.sol";
+import { RouterMock } from "./mocks/RouterMock.sol";
 import { VatMock } from "./mocks/VatMock.sol";
 import { DomainHost } from "../DomainHost.sol";
 
@@ -38,7 +39,7 @@ contract EmptyDomainHost is DomainHost {
 
     constructor(bytes32 _ilk, address _daiJoin, address _escrow, address _router) DomainHost(_ilk, _daiJoin, _escrow, _router) {}
 
-    function _isGuest(address) internal override view returns (bool) {
+    function _isGuest(address) internal override pure returns (bool) {
         return true;
     }
     function _lift(uint256 _line, uint256 _minted) internal override {
@@ -64,6 +65,7 @@ contract DomainHostTest is DSSTest {
     DaiJoinMock daiJoin;
     DaiMock dai;
     EscrowMock escrow;
+    RouterMock router;
     address vow;
 
     EmptyDomainHost host;
@@ -77,8 +79,7 @@ contract DomainHostTest is DSSTest {
         escrow = new EscrowMock();
         vow = address(123);
 
-        // TODO - add mock router
-        host = new EmptyDomainHost(ILK, address(daiJoin), address(escrow), address(0));
+        host = new EmptyDomainHost(ILK, address(daiJoin), address(escrow), address(router));
         host.file("vow", vow);
 
         escrow.approve(address(dai), address(host), type(uint256).max);
@@ -90,7 +91,13 @@ contract DomainHostTest is DSSTest {
         assertEq(address(host.daiJoin()), address(daiJoin));
         assertEq(address(host.dai()), address(dai));
         assertEq(address(host.escrow()), address(escrow));
+        assertEq(address(host.router()), address(router));
+
+
+        assertEq(vat.can(address(host), address(daiJoin)), 1);
+        assertEq(dai.allowance(address(host), address(daiJoin)), type(uint256).max);
         assertEq(host.wards(address(this)), 1);
+        assertEq(host.live(), 1);
     }
 
     function testRelyDeny() public {
