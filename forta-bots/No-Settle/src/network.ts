@@ -22,7 +22,7 @@ export default class NetworkManager implements NetworkData {
   networkMap: Record<number, NetworkData>;
 
   constructor(networkMap: Record<number, NetworkData>) {
-    this.TeleportJoin = "";
+    this.TeleportJoin = "0x0000000000000000000000000000000000000000";
     this.networkMap = networkMap;
   }
 
