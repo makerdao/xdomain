@@ -14,7 +14,7 @@ export const getEndDate = (timestamp: number): string => {
 export const createFinding = (txHash: string, hashGUID: string, networkId: number): Finding => {
   return Finding.fromObject({
     name: "MakerDAO Teleport Backing Monitor",
-    description: "Mint event emitted from TeleportJoin without corresponding WormholeInitialized event",
+    description: "Mint event emitted from TeleportJoin without corresponding TeleportInitialized event",
     alertId: "MK-02-02",
     protocol: "MakerDAO",
     severity: FindingSeverity.High,

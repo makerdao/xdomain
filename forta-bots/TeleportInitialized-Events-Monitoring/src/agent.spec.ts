@@ -4,15 +4,15 @@ import { provideInitialize, provideHandleBlock } from "./agent";
 import { utils } from "ethers";
 import { when } from "jest-when";
 
-const TEST_L2_WORMHOLE_GATEWAY = createAddress("0xaaee");
+const TEST_L2_TELEPORT_GATEWAY = createAddress("0xaaee");
 const TEST_DEPLOYMENT_BLOCK = 423;
-const WORMHOLE_INITIALIZED_EVENT_TOPIC: string = "0x46d7dfb96bf7f7e8bb35ab641ff4632753a1411e3c8b30bec93e045e22f576de";
+const TELEPORT_INITIALIZED_EVENT_TOPIC: string = "0x46d7dfb96bf7f7e8bb35ab641ff4632753a1411e3c8b30bec93e045e22f576de";
 let mockLogsMap: Map<string, string> = new Map<string, string>();
 
 const createFilter = (blockHash: string) => {
   return {
-    address: TEST_L2_WORMHOLE_GATEWAY,
-    topics: [WORMHOLE_INITIALIZED_EVENT_TOPIC],
+    address: TEST_L2_TELEPORT_GATEWAY,
+    topics: [TELEPORT_INITIALIZED_EVENT_TOPIC],
     blockHash: blockHash,
   };
 };
@@ -28,8 +28,8 @@ function createMockProvider(): MockEthersProvider {
 
 const testCreateFinding = (map: Map<string, string>): Finding => {
   return Finding.fromObject({
-    name: "Wormhole Initialized",
-    description: "WormholeInitialized event emitted from L2WormholeGateway contract",
+    name: "Teleport Initialized",
+    description: "TeleportInitialized event emitted from L2TeleportGateway contract",
     alertId: "MK-02",
     protocol: "forta-bots-info",
     severity: FindingSeverity.Info,
@@ -38,14 +38,14 @@ const testCreateFinding = (map: Map<string, string>): Finding => {
   });
 };
 
-describe("WormholeInitialized events monitoring bot test suite", () => {
+describe("TeleportInitialized events monitoring bot test suite", () => {
   const mockProvider = createMockProvider();
   let filter: any;
   let initialize: Initialize;
   let handleBlock: HandleBlock;
   let map: Map<string, string> = new Map<string, string>();
   const mockNetworkManager = {
-    L2DaiWormholeGateway: TEST_L2_WORMHOLE_GATEWAY,
+    L2DaiTeleportGateway: TEST_L2_TELEPORT_GATEWAY,
     deploymentBlock: TEST_DEPLOYMENT_BLOCK,
     setNetwork: jest.fn(),
   };
@@ -61,8 +61,8 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
 
     when(mockProvider.getBlockNumber).calledWith().mockReturnValue(4356);
     const filter = {
-      address: mockNetworkManager.L2DaiWormholeGateway,
-      topics: [WORMHOLE_INITIALIZED_EVENT_TOPIC],
+      address: mockNetworkManager.L2DaiTeleportGateway,
+      topics: [TELEPORT_INITIALIZED_EVENT_TOPIC],
       fromBlock: mockNetworkManager.deploymentBlock,
       toBlock: 4355,
     };
@@ -72,9 +72,9 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
         blockHash: keccak256("w43e23"),
         transactionIndex: 2,
         removed: false,
-        address: mockNetworkManager.L2DaiWormholeGateway,
+        address: mockNetworkManager.L2DaiTeleportGateway,
         data: keccak256("dataData2"),
-        topics: [WORMHOLE_INITIALIZED_EVENT_TOPIC],
+        topics: [TELEPORT_INITIALIZED_EVENT_TOPIC],
         transactionHash: keccak256("tHash2"),
         logIndex: 3,
       },
@@ -100,7 +100,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
     expect(findings).toStrictEqual([testCreateFinding(map)]);
   });
 
-  it("should return no findings if no WormholeInitialized event is emitted", async () => {
+  it("should return no findings if no TeleportInitialized event is emitted", async () => {
     handleBlock = provideHandleBlock(mockNetworkManager as any, mockProvider as any, mockLogsMap);
 
     const blockEvent: BlockEvent = new TestBlockEvent().setHash(keccak256("bH0"));
@@ -112,7 +112,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
     expect(findings).toStrictEqual([]);
   });
 
-  it("should return a finding if a WormholeInitialized event is emitted", async () => {
+  it("should return a finding if a TeleportInitialized event is emitted", async () => {
     handleBlock = provideHandleBlock(mockNetworkManager as any, mockProvider as any, mockLogsMap);
     const blockEvent: BlockEvent = new TestBlockEvent().setNumber(3456).setHash(keccak256("bH21"));
     filter = createFilter(blockEvent.blockHash);
@@ -123,9 +123,9 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
         blockHash: blockEvent.blockHash,
         transactionIndex: 2,
         removed: false,
-        address: mockNetworkManager.L2DaiWormholeGateway,
+        address: mockNetworkManager.L2DaiTeleportGateway,
         data: keccak256("dataData2"),
-        topics: [WORMHOLE_INITIALIZED_EVENT_TOPIC],
+        topics: [TELEPORT_INITIALIZED_EVENT_TOPIC],
         transactionHash: keccak256("tHash2"),
         logIndex: 3,
       },
@@ -138,7 +138,7 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
     expect(findings).toStrictEqual([testCreateFinding(map)]);
   });
 
-  it("should return two findings, one from past logs and one containing multiple WormholeInitialized events when those are emitted at the same block", async () => {
+  it("should return two findings, one from past logs and one containing multiple TeleportInitialized events when those are emitted at the same block", async () => {
     mockLogsMap.set("0", keccak256("testData"));
     handleBlock = provideHandleBlock(mockNetworkManager as any, mockProvider as any, mockLogsMap);
     const blockEvent: BlockEvent = new TestBlockEvent().setNumber(999).setHash(keccak256("bH11"));
@@ -150,9 +150,9 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
         blockHash: blockEvent.blockHash,
         transactionIndex: 5,
         removed: false,
-        address: mockNetworkManager.L2DaiWormholeGateway,
+        address: mockNetworkManager.L2DaiTeleportGateway,
         data: keccak256("dataData5"),
-        topics: [WORMHOLE_INITIALIZED_EVENT_TOPIC],
+        topics: [TELEPORT_INITIALIZED_EVENT_TOPIC],
         transactionHash: keccak256("tHash5"),
         logIndex: 8,
       },
@@ -161,9 +161,9 @@ describe("WormholeInitialized events monitoring bot test suite", () => {
         blockHash: blockEvent.blockHash,
         transactionIndex: 6,
         removed: false,
-        address: mockNetworkManager.L2DaiWormholeGateway,
+        address: mockNetworkManager.L2DaiTeleportGateway,
         data: keccak256("dataData6"),
-        topics: [WORMHOLE_INITIALIZED_EVENT_TOPIC],
+        topics: [TELEPORT_INITIALIZED_EVENT_TOPIC],
         transactionHash: keccak256("tHash6"),
         logIndex: 9,
       },

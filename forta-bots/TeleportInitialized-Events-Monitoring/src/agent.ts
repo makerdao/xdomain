@@ -14,15 +14,15 @@ export const provideInitialize =
 
     const blockNumber = await provider.getBlockNumber();
     const filter = {
-      address: data.L2DaiWormholeGateway,
+      address: data.L2DaiTeleportGateway,
       topics: [EVENT_IFACE.getEventTopic("WormholeInitialized")],
       fromBlock: data.deploymentBlock,
       toBlock: blockNumber - 1,
     };
 
-    const wormholeInitializedLogs = await provider.getLogs(filter);
+    const teleportInitializedLogs = await provider.getLogs(filter);
 
-    wormholeInitializedLogs.forEach((log, i) => {
+    teleportInitializedLogs.forEach((log, i) => {
       logsMap.set(i.toString(), utils.keccak256(log.data));
     });
   };
@@ -38,17 +38,17 @@ export const provideHandleBlock =
     }
 
     const filter = {
-      address: data.L2DaiWormholeGateway,
+      address: data.L2DaiTeleportGateway,
       topics: [EVENT_IFACE.getEventTopic("WormholeInitialized")],
       blockHash: blockEvent.blockHash,
     };
 
-    const wormholeInitializedLogs = await provider.getLogs(filter);
-    if (!wormholeInitializedLogs.length) {
+    const teleportInitializedLogs = await provider.getLogs(filter);
+    if (!teleportInitializedLogs.length) {
       return findings;
     }
 
-    wormholeInitializedLogs.forEach((log, i) => {
+    teleportInitializedLogs.forEach((log, i) => {
       logsMap.set(i.toString(), utils.keccak256(log.data));
     });
     findings.push(createFinding(logsMap));

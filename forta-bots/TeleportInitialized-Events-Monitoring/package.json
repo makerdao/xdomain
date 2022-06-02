@@ -1,7 +1,7 @@
 {
   "name": "mk-2",
   "version": "0.0.1",
-  "description": "MakerDAO L2WormholeGateway's WormholeInitialized events detection bot",
+  "description": "MakerDAO L2TeleportGateway's TeleportInitialized events detection bot",
   "chainIds": [
     10,
     42161
@@ -37,5 +37,5 @@
     "ts-jest": "^27.0.3",
     "typescript": "^4.3.4"
   },
-  "repository": "https://github.com/makerdao/xdomain/tree/master/forta-bots/WormholeInitialized-Events-Monitoring"
+  "repository": "https://github.com/makerdao/xdomain/tree/master/forta-bots/TeleportInitialized-Events-Monitoring"
 }
