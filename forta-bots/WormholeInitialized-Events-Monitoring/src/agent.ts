@@ -5,16 +5,37 @@ import NetworkManager from "./network";
 import { EVENT_IFACE, createFinding } from "./utils";
 
 const networkManager: NetworkData = new NetworkManager(NETWORK_MAP);
+let LOGS_MAP: Map<string, string> = new Map<string, string>();
 
-export const initialize = (provider: providers.Provider) => async () => {
-  const { chainId } = await provider.getNetwork();
-  networkManager.setNetwork(chainId);
-};
+export const provideInitialize =
+  (data: NetworkManager, provider: providers.Provider, logsMap: Map<string, string>) => async () => {
+    const { chainId } = await provider.getNetwork();
+    data.setNetwork(chainId);
+
+    const blockNumber = await provider.getBlockNumber();
+    const filter = {
+      address: data.L2DaiWormholeGateway,
+      topics: [EVENT_IFACE.getEventTopic("WormholeInitialized")],
+      fromBlock: data.deploymentBlock,
+      toBlock: blockNumber - 1,
+    };
+
+    const wormholeInitializedLogs = await provider.getLogs(filter);
+
+    wormholeInitializedLogs.forEach((log, i) => {
+      logsMap.set(i.toString(), utils.keccak256(log.data));
+    });
+  };
 
 export const provideHandleBlock =
-  (data: NetworkData, provider: providers.Provider): HandleBlock =>
+  (data: NetworkData, provider: providers.Provider, logsMap: Map<string, string>): HandleBlock =>
   async (blockEvent: BlockEvent) => {
     const findings: Finding[] = [];
+
+    if (logsMap.size) {
+      findings.push(createFinding(logsMap));
+      logsMap.clear();
+    }
 
     const filter = {
       address: data.L2DaiWormholeGateway,
@@ -23,12 +44,9 @@ export const provideHandleBlock =
     };
 
     const wormholeInitializedLogs = await provider.getLogs(filter);
-
     if (!wormholeInitializedLogs.length) {
       return findings;
     }
-
-    let logsMap: Map<string, string> = new Map<string, string>();
 
     wormholeInitializedLogs.forEach((log, i) => {
       logsMap.set(i.toString(), utils.keccak256(log.data));
@@ -39,6 +57,6 @@ export const provideHandleBlock =
   };
 
 export default {
-  initialize: initialize(getEthersProvider()),
-  handleBlock: provideHandleBlock(networkManager, getEthersProvider()),
+  initialize: provideInitialize(networkManager, getEthersProvider(), LOGS_MAP),
+  handleBlock: provideHandleBlock(networkManager, getEthersProvider(), LOGS_MAP),
 };

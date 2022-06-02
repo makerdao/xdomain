@@ -1375,13 +1375,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:*, @types/jest@npm:^27.0.1":
-  version: 27.5.1
-  resolution: "@types/jest@npm:27.5.1"
+"@types/jest@npm:*":
+  version: 28.1.0
+  resolution: "@types/jest@npm:28.1.0"
   dependencies:
     jest-matcher-utils: ^27.0.0
     pretty-format: ^27.0.0
-  checksum: be20e39f7aaf17179109c0060d0a0489cec2034d4e2e28a631284c7ecd13c5ae52f62697a33a0e89b03b6cfe54e9d5e8c2bd387ab2bd90d6071d68c63b86d1e3
+  checksum: be4d887b2452e8c1367cd19b23906ba4b64af95e22ca871f81c7af5e945bd39b370e124086356aa9380c4543123b1387448bc2c00a604c6f0a92bc3e4a24e9ce
+  languageName: node
+  linkType: hard
+
+"@types/jest@npm:^27.0.1":
+  version: 27.5.2
+  resolution: "@types/jest@npm:27.5.2"
+  dependencies:
+    jest-matcher-utils: ^27.0.0
+    pretty-format: ^27.0.0
+  checksum: 7e11c6826aa429ad990dc262e4e4b54aa36573287fddf15773e4137f07d11d3105f0dd9f1baff73252160a057df23f5529bb83b1bf83cd3f45f9460a5ca5c22e
   languageName: node
   linkType: hard
 
@@ -1402,16 +1412,16 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*, @types/node@npm:>=12.12.47, @types/node@npm:>=13.7.0":
-  version: 17.0.36
-  resolution: "@types/node@npm:17.0.36"
-  checksum: 11055fde0a1e1421113849b5e32c7022911efc0be670729947bf0162970e79962d804b1eb8a9afb291380cac97cf0e684511415d586ae5fe1560322c940fe188
+  version: 17.0.38
+  resolution: "@types/node@npm:17.0.38"
+  checksum: 9db1c39d603850ced665ab60b8f8ebce674ff9d762dfff0f776d520e71e4d73fdcd4c7f69213b804d878cf3e726911b09cae4ee66e35ae2724538de9f4838681
   languageName: node
   linkType: hard
 
 "@types/node@npm:^12.12.6":
-  version: 12.20.52
-  resolution: "@types/node@npm:12.20.52"
-  checksum: b720ee939a43f1427baf1606deee97e50892ff482bf3d64ab8a1eda3a50802a80866a232aeab337621f6ea4fdc4515147d7829337653e9e99d97c3aaeec3615d
+  version: 12.20.54
+  resolution: "@types/node@npm:12.20.54"
+  checksum: 7522e98053e2242be4b54eb463270e4279c578f62caa9aa5ac794bd3d9fa4723abc7ffc8f2b5e7c15b2f20a476ae30f0d10d86ff5bf42d2f19e51b28f15e6b70
   languageName: node
   linkType: hard
 
@@ -2265,9 +2275,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.30001332":
-  version: 1.0.30001344
-  resolution: "caniuse-lite@npm:1.0.30001344"
-  checksum: 9dba66f796dc98632dced4c5d487d0fad219e137a27c634eec68520f2e598a613e3371b9207e15a078689a629128eca898793e37fc98841821ab481bddad51b9
+  version: 1.0.30001346
+  resolution: "caniuse-lite@npm:1.0.30001346"
+  checksum: 951590454ffa4e2e7b772558dc593cd08604b44c83741e1188166298f54c34387f4bf34f5141a35de4a43028c012484240ad15c896e48bf4eac70dd7076a4449
   languageName: node
   linkType: hard
 
@@ -2944,9 +2954,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.4.118":
-  version: 1.4.141
-  resolution: "electron-to-chromium@npm:1.4.141"
-  checksum: 7b87de52a9a2bbcb35a3c6a91e6eb7afea8f44a419a7f709b4739ab3d873d052d86b9a987fef55568626aa13616db4cafd3e50c6e2880a73455e2b2e26c02cb9
+  version: 1.4.144
+  resolution: "electron-to-chromium@npm:1.4.144"
+  checksum: a321bfc92485d37a16c1db84647dc9c376b47ff53136a32102d8599086118f5805ab3713f86f85936b627544b653d7d8c3f1acf9638c5bf0c3f8e6ae1ab4c395
   languageName: node
   linkType: hard
 
@@ -5825,6 +5835,7 @@ __metadata:
     forta-agent: ^0.1.6
     forta-agent-tools: ^2.0.6
     jest: ^27.0.6
+    jest-when: ^3.5.1
     nodemon: ^2.0.8
     prettier: ^2.6.0
     ts-jest: ^27.0.3
@@ -7183,13 +7194,13 @@ __metadata:
   linkType: hard
 
 "socks-proxy-agent@npm:^6.1.1":
-  version: 6.2.0
-  resolution: "socks-proxy-agent@npm:6.2.0"
+  version: 6.2.1
+  resolution: "socks-proxy-agent@npm:6.2.1"
   dependencies:
     agent-base: ^6.0.2
     debug: ^4.3.3
     socks: ^2.6.2
-  checksum: 6723fd64fb50334e2b340fd0a80fd8488ffc5bc43d85b7cf1d25612044f814dd7d6ea417fd47602159941236f7f4bd15669fa5d7e1f852598a31288e1a43967b
+  checksum: 9ca089d489e5ee84af06741135c4b0d2022977dad27ac8d649478a114cdce87849e8d82b7c22b51501a4116e231241592946fc7fae0afc93b65030ee57084f58
   languageName: node
   linkType: hard
 
