@@ -9,7 +9,7 @@ import {
   ethers,
 } from "forta-agent";
 import { MockEthersProvider, createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests";
-import agent, { provideHandleBlock, provideInitialize } from "./agent";
+import { provideHandleBlock, provideInitialize } from "./agent";
 import { resetAllWhenMocks, when } from "jest-when";
 
 const TEST_TELEPORT_JOIN = createAddress("0xaaee");
