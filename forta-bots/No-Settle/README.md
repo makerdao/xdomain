@@ -2,7 +2,7 @@
 
 ## Description
 
-This bot detects when there are no `Settle` events emitted from the `TeleportJoin` contract and for more than `DAYS_THRESHOLD` days.
+This bot detects when there are no `Settle` events emitted from the `TeleportJoin` contract for more than `DAYS_THRESHOLD` days.
 
 > The threshold can be configured in **src/utils.ts**, L5.
 
