@@ -18,7 +18,7 @@ export const provideHandleTransaction =
     const mintEvents: LogDescription[] = txEvent.filterLog(MINT_EVENT, data.TeleportJoin);
 
     mintEvents.forEach((log) => {
-      if (log.args.originator !== data.TeleportOracleAuth) {
+      if (log.args.originator.toLowerCase() !== data.TeleportOracleAuth.toLowerCase()) {
         findings.push(createFinding(txEvent.hash, log.args.originator, data.networkId));
       }
     });

@@ -34,8 +34,8 @@ export default class NetworkManager implements NetworkData {
   public networkId: number;
 
   constructor(networkMap: Record<number, NetworkData>) {
-    this.TeleportJoin = "";
-    this.TeleportOracleAuth = "";
+    this.TeleportJoin = "0x0000000000000000000000000000000000000000";
+    this.TeleportOracleAuth = "0x0000000000000000000000000000000000000000";
     this.networkId = 0;
     this.networkMap = networkMap;
   }
