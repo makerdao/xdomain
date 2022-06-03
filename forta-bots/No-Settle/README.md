@@ -17,5 +17,5 @@ This bot detects when there are no `Settle` events emitted from the `TeleportJoi
   - Severity is always set to "Info".
   - Type is always set to "Info".
   - Metadata contains:
-    - `blockTimestamp`: The current block's timestamp.
+    - `currentBlockTimestamp`: The current block's timestamp.
     - `latestSettleTimestamp`: The timestamp of the latest Settle event emitted (if it is known).
