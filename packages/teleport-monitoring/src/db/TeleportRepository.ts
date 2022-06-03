@@ -1,6 +1,6 @@
 import { PrismaClient, Teleport } from '@prisma/client'
 
-import { null2Undefined, TxHandle } from './utils'
+import { null2Undefined, PublicInterface, TxHandle } from './utils'
 
 export class TeleportRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -18,7 +18,7 @@ export class TeleportRepository {
   }
 }
 
-export class TeleportRepositoryInMemory {
+export class TeleportRepositoryInMemory implements PublicInterface<TeleportRepository> {
   private teleports: { [hash: string]: Teleport } = {}
   private counter = 0
 

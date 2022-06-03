@@ -2,9 +2,11 @@ FROM node:16
 WORKDIR /usr/src/app
 
 COPY package.json yarn.lock ./
-RUN yarn --no-progress --non-interactive --frozen-lockfile
+RUN yarn --no-progress --non-interactive --frozen-lockfile --ignore-scripts
 
 COPY . .
+
+RUN yarn eth-sdk
 
 # will timeout after 10 minutes
 ENTRYPOINT ["yarn", "start" ]
