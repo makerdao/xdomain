@@ -96,7 +96,7 @@ describe("No-settle monitoring bot test suite", () => {
     expect(botData.latestSettleTimestamp).toEqual(BigNumber.from(3242334));
   });
 
-  it("should return a finding when there was no recent past Settle events", async () => {
+  it("should return a finding when there were no recent past Settle events", async () => {
     expect(botData.latestSettleTimestamp).toStrictEqual(BigNumber.from(0));
     handleBlock = provideHandleBlock(mockNetworkManager as any, mockProvider as any, TEST_DAYS_THRESHOLD, botData);
     const blockEvent: BlockEvent = new TestBlockEvent()
