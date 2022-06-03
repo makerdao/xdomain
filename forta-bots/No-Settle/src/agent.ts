@@ -5,10 +5,13 @@ import NetworkData from "./network";
 import { createFinding, DAYS_THRESHOLD, SETTLE_IFACE } from "./utils";
 
 const networkManager: NetworkManager = new NetworkManager(NETWORK_MAP);
-let latestSettleTimestamp: BigNumber = BigNumber.from(0);
+
+const botData = {
+  latestSettleTimestamp: BigNumber.from(0),
+};
 
 export const provideInitialize =
-  (data: NetworkManager, provider: providers.Provider, daysThreshold: number): Initialize =>
+  (data: NetworkManager, provider: providers.Provider, daysThreshold: number, bData: any): Initialize =>
   async () => {
     const { chainId } = await provider.getNetwork();
     data.setNetwork(chainId);
@@ -24,7 +27,7 @@ export const provideInitialize =
     const settleEvents: providers.Log[] = await provider.getLogs(filter);
 
     if (settleEvents.length) {
-      latestSettleTimestamp = BigNumber.from(
+      bData.latestSettleTimestamp = BigNumber.from(
         (await provider.getBlock(settleEvents[settleEvents.length - 1].blockNumber)).timestamp
       );
     }
@@ -33,9 +36,12 @@ export const provideInitialize =
 export const provideHandleBlock = (
   data: NetworkData,
   provider: providers.Provider,
-  daysThreshold: number
+  daysThreshold: number,
+  bData: any
 ): HandleBlock => {
   let latestAlertedSettleTimestamp: BigNumber = BigNumber.from(-1);
+  const secondsThreshold: BigNumber = BigNumber.from(daysThreshold).mul(86400);
+
   return async (blockEvent: BlockEvent) => {
     const findings: Finding[] = [];
     const currentTimestamp: BigNumber = BigNumber.from(blockEvent.block.timestamp);
@@ -44,17 +50,17 @@ export const provideHandleBlock = (
     // 1) Alert has not already been created for this settle timestamp
     // 2) Threshold has been exceeded
     if (
-      !latestAlertedSettleTimestamp.eq(latestSettleTimestamp) &&
-      currentTimestamp.sub(latestSettleTimestamp).gt(BigNumber.from(daysThreshold).mul(86400))
+      !latestAlertedSettleTimestamp.eq(bData.latestSettleTimestamp) &&
+      currentTimestamp.sub(bData.latestSettleTimestamp).gt(secondsThreshold)
     ) {
       findings.push(
         createFinding(
           daysThreshold,
           currentTimestamp.toString(),
-          !latestSettleTimestamp.eq(0) ? latestSettleTimestamp.toString() : undefined
+          !bData.latestSettleTimestamp.eq(0) ? bData.latestSettleTimestamp.toString() : undefined
         )
       );
-      latestAlertedSettleTimestamp = latestSettleTimestamp;
+      latestAlertedSettleTimestamp = bData.latestSettleTimestamp;
     }
     const filter = {
       address: data.TeleportJoin,
@@ -64,7 +70,7 @@ export const provideHandleBlock = (
     const settleEvents: providers.Log[] = await provider.getLogs(filter);
 
     if (settleEvents.length) {
-      latestSettleTimestamp = BigNumber.from(blockEvent.block.timestamp);
+      bData.latestSettleTimestamp = BigNumber.from(blockEvent.block.timestamp);
     }
 
     return findings;
@@ -72,6 +78,6 @@ export const provideHandleBlock = (
 };
 
 export default {
-  initialize: provideInitialize(networkManager, getEthersProvider(), DAYS_THRESHOLD),
-  handleBlock: provideHandleBlock(networkManager, getEthersProvider(), DAYS_THRESHOLD),
+  initialize: provideInitialize(networkManager, getEthersProvider(), DAYS_THRESHOLD, botData),
+  handleBlock: provideHandleBlock(networkManager, getEthersProvider(), DAYS_THRESHOLD, botData),
 };
