@@ -25,7 +25,7 @@ export const calculateUniswapPrice = (sqrtPriceX96: ethersBn, networkId: number)
     networkId == 10
       ? new BigNumber(sqrtPriceX96.toString())
           .pow(2)
-          .div(new BigNumber(2).pow(192))
+          .dividedBy(new BigNumber(2).pow(192))
           .dividedBy(new BigNumber(10).pow(12)) //decimals
       : new BigNumber(sqrtPriceX96.toString())
           .pow(2)
@@ -50,7 +50,6 @@ export const createFinding = (
   price: BigNumber,
   spreadThreshold: BigNumber,
   pool: string,
-  network: string,
   pair: string,
   isUniswap: boolean
 ): Finding => {
@@ -65,7 +64,6 @@ export const createFinding = (
       metadata: {
         price: price.toString().slice(0, 6),
         spreadThreshold: spreadThreshold.toString(),
-        network,
       },
       addresses: [pool],
     });
@@ -80,7 +78,6 @@ export const createFinding = (
       metadata: {
         price: price.toString().slice(0, 6),
         spreadThreshold: spreadThreshold.toString(),
-        network,
       },
       addresses: [pool],
     });

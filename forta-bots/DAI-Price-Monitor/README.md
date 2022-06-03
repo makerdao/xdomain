@@ -20,7 +20,6 @@ This bot detects when DAI price exceeds `SPREAD_THRESHOLD` in UniswapV3 and Curv
   - Metadata contains:
     - `price`: DAI price that triggered the alert.
     - `spreadThreshold`: Configured spread threshold.
-    - `network`: Current network name.
   - Addresses contains:
     - The `pool` address.
 

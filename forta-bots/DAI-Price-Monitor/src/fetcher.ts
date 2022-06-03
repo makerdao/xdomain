@@ -11,20 +11,16 @@ export default class Fetcher {
     this.cache = new LRU<string, any>({ max: 10000 });
   }
 
-  public async getPoolData(block: number, poolAddress: string): Promise<[boolean, string, string, BigNumber]> {
+  public async getPoolFee(block: number, poolAddress: string): Promise<[boolean, BigNumber]> {
     const key: string = `pool-${poolAddress}-${block}`;
-    if (this.cache.has(key)) return this.cache.get(key) as [boolean, string, string, BigNumber];
+    if (this.cache.has(key)) return this.cache.get(key) as [boolean, BigNumber];
     const pool = new Contract(poolAddress, POOL_TOKENS_ABI, this.provider);
-    let output: [boolean, string, string, BigNumber];
+    let output: [boolean, BigNumber];
     try {
-      const [token0, token1, fee]: [string, string, BigNumber] = await Promise.all([
-        pool.token0({ blockTag: block }),
-        pool.token1({ blockTag: block }),
-        pool.fee({ blockTag: block }),
-      ]);
-      output = [true, token0.toLowerCase(), token1.toLowerCase(), fee];
+      const fee: BigNumber = await pool.fee({ blockTag: block });
+      output = [true, fee];
     } catch {
-      output = [false, "", "", BigNumber.from(0)];
+      output = [false, BigNumber.from(0)];
     }
     this.cache.set(key, output);
     return output;
