@@ -2,7 +2,7 @@
 
 ## Description
 
-This bot detects when DAI PRICE exceeds `SPREAD_THRESHOLD` in UniswapV3 and Curve pools.
+This bot detects when DAI price exceeds `SPREAD_THRESHOLD` in UniswapV3 and Curve pools.
 
 > The `SPREAD_THRESHOLD` can be configured in **src/utils.ts**, L5.
 
