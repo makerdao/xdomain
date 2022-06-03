@@ -1755,7 +1755,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^0.21.1, axios@npm:^0.21.4":
+"axios@npm:^0.21.1":
   version: 0.21.4
   resolution: "axios@npm:0.21.4"
   dependencies:
@@ -5822,7 +5822,6 @@ __metadata:
   dependencies:
     "@types/jest": ^27.0.1
     "@types/nodemon": ^1.19.0
-    axios: ^0.21.4
     forta-agent: ^0.1.6
     forta-agent-tools: ^2.0.7
     jest: ^27.0.6
