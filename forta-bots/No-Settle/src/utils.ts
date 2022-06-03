@@ -1,9 +1,7 @@
 import { Interface } from "@ethersproject/abi";
-import { BigNumber } from "ethers";
 import { Finding, FindingSeverity, FindingType } from "forta-agent";
 
 export const DAYS_THRESHOLD: number = 5;
-export const SECONDS_THRESHOLD: BigNumber = BigNumber.from(60 * 60 * 24).mul(DAYS_THRESHOLD);
 
 const SETTLE_EVENT: string = "event Settle(bytes32 indexed sourceDomain, uint256 batchedDaiToFlush)";
 export const SETTLE_IFACE: Interface = new Interface([SETTLE_EVENT]);
