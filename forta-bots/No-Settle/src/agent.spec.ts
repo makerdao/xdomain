@@ -135,7 +135,7 @@ describe("No-settle monitoring bot test suite", () => {
 
     const logs = [
       {
-        blockNumber: 3456,
+        blockNumber: 34,
         blockHash: blockEvent1.blockHash,
         transactionIndex: 2,
         removed: false,
@@ -197,7 +197,7 @@ describe("No-settle monitoring bot test suite", () => {
 
     const blockEvent2: BlockEvent = new TestBlockEvent()
       .setHash(keccak256("hash5"))
-      .setTimestamp(21412444641) //not exceeded
+      .setTimestamp(21412444888) //not exceeded
       .setNumber(13456);
 
     const filter2 = {
