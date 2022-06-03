@@ -13,7 +13,7 @@ export const FUNCTIONS_IFACE: Interface = new Interface(FUNCTIONS_ABI);
 export const createFinding = (debt: BigNumber, line: BigNumber, threshold: BigNumber): Finding => {
   return Finding.fromObject({
     name: "Debt Ceiling utilization threshold exceeded",
-    description: `Debt Ceiling utilization is over ${threshold.toString()}% in TeleportJoin contract`,
+    description: "Debt Ceiling utilization threshold exceeded in TeleportJoin contract",
     alertId: "MK-07",
     protocol: "MakerDAO",
     severity: FindingSeverity.Info,
@@ -21,6 +21,7 @@ export const createFinding = (debt: BigNumber, line: BigNumber, threshold: BigNu
     metadata: {
       debt: debt.toString(),
       line: line.toString(),
+      threshold: threshold.toString(),
     },
   });
 };

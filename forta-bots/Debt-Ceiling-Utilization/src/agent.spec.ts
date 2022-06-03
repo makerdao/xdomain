@@ -1,9 +1,8 @@
-import { Finding, HandleBlock, BlockEvent, keccak256, FindingSeverity, FindingType } from "forta-agent";
+import { Finding, HandleBlock, BlockEvent, keccak256 } from "forta-agent";
 import { MockEthersProvider, createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests";
 import { provideHandleBlock } from "./agent";
-import { utils, BigNumber } from "ethers";
+import { BigNumber } from "ethers";
 import { createFinding } from "./utils";
-
 import { when, resetAllWhenMocks } from "jest-when";
 
 const TEST_THRESHOLD = BigNumber.from(1);
@@ -13,7 +12,7 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
 
   const mockNetworkManager = {
     TeleportJoin: createAddress("0x5432"),
-    domain: keccak256("testDomain"),
+    domains: [keccak256("testDomain")],
   };
 
   const mockGetDebt = jest.fn();
@@ -43,10 +42,10 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
 
     for (let [line, debt, blockNumber] of TEST_CASES) {
       when(mockFetcher.getLine)
-        .calledWith(mockNetworkManager.TeleportJoin, mockNetworkManager.domain, blockNumber)
+        .calledWith(mockNetworkManager.TeleportJoin, mockNetworkManager.domains[0], blockNumber)
         .mockReturnValueOnce(line);
       when(mockFetcher.getDebt)
-        .calledWith(mockNetworkManager.TeleportJoin, mockNetworkManager.domain, blockNumber)
+        .calledWith(mockNetworkManager.TeleportJoin, mockNetworkManager.domains[0], blockNumber)
         .mockReturnValueOnce(debt);
 
       const blockEvent: BlockEvent = new TestBlockEvent().setNumber(blockNumber);
@@ -65,10 +64,10 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
 
     for (let [line, debt, blockNumber] of TEST_CASES) {
       when(mockFetcher.getLine)
-        .calledWith(mockNetworkManager.TeleportJoin, mockNetworkManager.domain, blockNumber)
+        .calledWith(mockNetworkManager.TeleportJoin, mockNetworkManager.domains[0], blockNumber)
         .mockReturnValueOnce(line);
       when(mockFetcher.getDebt)
-        .calledWith(mockNetworkManager.TeleportJoin, mockNetworkManager.domain, blockNumber)
+        .calledWith(mockNetworkManager.TeleportJoin, mockNetworkManager.domains[0], blockNumber)
         .mockReturnValueOnce(debt);
 
       const blockEvent: BlockEvent = new TestBlockEvent().setNumber(blockNumber);
