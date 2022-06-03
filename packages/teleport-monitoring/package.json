@@ -16,8 +16,7 @@
     "lint:fix": "yarn lint --fix",
     "typecheck": "tsc --noEmit",
     "build": "rm -rf ./dist && tsc -p ./tsconfig.build.json",
-    "test": "mocha 'src/**/*.test.ts'",
-    "test:e2e": "mocha 'test-e2e/**/*.test.ts'"
+    "test": "mocha 'src/**/*.test.ts'"
   },
   "types": "dist/index.d.ts",
   "dependencies": {
