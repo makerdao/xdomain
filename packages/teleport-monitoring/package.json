@@ -9,7 +9,8 @@
   "main": "dist/index.js",
   "scripts": {
     "postinstall": "yarn eth-sdk",
-    "start": "node -r esbuild-register ./src/bin/monitor",
+    "migrate": "prisma migrate deploy",
+    "start": "yarn migrate && node -r esbuild-register ./src/bin/monitor",
     "format": "prettier --check \"./**/*.ts\"",
     "format:fix": "prettier --write \"./**/*.ts\"",
     "lint": "eslint --ext .ts src test-e2e",
