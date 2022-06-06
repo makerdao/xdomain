@@ -115,58 +115,7 @@ describe("No-flushed monitoring bot test suite", () => {
     expect(findings).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "523423422")]);
   });
 
-  it("should return findings correctly", async () => {
-    handleBlock = provideHandleBlock(
-      mockNetworkManager as any,
-      mockProvider as any as ethers.providers.Provider,
-      TEST_DAYS_THRESHOLD,
-      botData
-    );
-
-    //threshold not exceeded
-    const blockEvent1: BlockEvent = new TestBlockEvent().setHash(keccak256("hash13")).setTimestamp(332).setNumber(12);
-
-    const filter = {
-      address: TEST_L2DAITELEPORTGATEWAY,
-      topics: [FLUSHED_EVENT_TOPIC],
-      blockHash: keccak256("hash13"),
-    };
-
-    const logs = [
-      {
-        blockNumber: 12,
-        blockHash: blockEvent1.blockHash,
-        transactionIndex: 2,
-        removed: false,
-        address: mockNetworkManager.L2DaiTeleportGateway,
-        data: keccak256("dataData12"),
-        topics: [FLUSHED_EVENT_TOPIC],
-        transactionHash: keccak256("tHash13"),
-        logIndex: 3,
-      },
-    ];
-
-    //threshold exceeded
-    const blockEvent2: BlockEvent = new TestBlockEvent()
-      .setHash(keccak256("hash15"))
-      .setTimestamp(7564123422)
-      .setNumber(23456);
-
-    const filter2 = {
-      address: TEST_L2DAITELEPORTGATEWAY,
-      topics: [FLUSHED_EVENT_TOPIC],
-      blockHash: keccak256("hash15"),
-    };
-
-    mockProvider.addFilteredLogs(filter, logs).addFilteredLogs(filter2, []);
-
-    const findings = await handleBlock(blockEvent1);
-    expect(findings).toStrictEqual([]);
-    const findings2 = await handleBlock(blockEvent2);
-    expect(findings2).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "7564123422", "332")]);
-  });
-
-  it("should return findings correctly", async () => {
+  it("should return findings only if threshold is exceeded", async () => {
     botData = {
       latestFlushedTimestamp: BigNumber.from(3342),
     };
