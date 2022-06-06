@@ -3,7 +3,7 @@ on:
     branches:
       - master
     paths:
-      - ./packages/teleport-keeper
+      - packages/teleport-keeper/**
 
 name: Deploy Teleport Keeper into Production ECS
 

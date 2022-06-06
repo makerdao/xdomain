@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths:
-      - ./packages/teleport-monitoring
+      - packages/teleport-monitoring/**
   pull_request:
 
 jobs:

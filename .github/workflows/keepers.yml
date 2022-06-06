@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths:
-      - ./packages/teleport-keeper
+      - packages/teleport-keeper/**
   pull_request:
 
 jobs:
