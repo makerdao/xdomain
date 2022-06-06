@@ -2,19 +2,28 @@
 pragma solidity >=0.8.0;
 
 import "../../TeleportGUID.sol";
+import "./DaiMock.sol";
 
 contract RouterMock {
 
-    function requestMint(
-        TeleportGUID calldata,
-        uint256,
-        uint256
-    ) external returns (uint256, uint256) {
+    DaiMock dai;
 
+    constructor(address _dai) {
+        dai = DaiMock(_dai);
     }
 
-    function settle(bytes32, uint256) external {
+    function requestMint(
+        TeleportGUID calldata teleport,
+        uint256,
+        uint256
+    ) external returns (uint256 postFeeAmount, uint256 totalFee) {
+        dai.mint(address(uint160(uint256(teleport.receiver))), teleport.amount);
+        postFeeAmount = teleport.amount;
+        totalFee = 0;
+    }
 
+    function settle(bytes32, uint256 batchedDaiToFlush) external {
+        dai.transferFrom(msg.sender, address(this), batchedDaiToFlush);
     }
 
 }

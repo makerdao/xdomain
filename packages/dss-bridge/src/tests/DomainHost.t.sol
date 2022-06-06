@@ -27,6 +27,7 @@ import { EscrowMock } from "./mocks/EscrowMock.sol";
 import { RouterMock } from "./mocks/RouterMock.sol";
 import { VatMock } from "./mocks/VatMock.sol";
 import { DomainHost } from "../DomainHost.sol";
+import "../TeleportGUID.sol";
 
 contract EmptyDomainHost is DomainHost {
 
@@ -78,6 +79,7 @@ contract DomainHostTest is DSSTest {
         daiJoin = new DaiJoinMock(address(vat), address(dai));
         escrow = new EscrowMock();
         vow = address(123);
+        router = new RouterMock(address(dai));
 
         host = new EmptyDomainHost(ILK, address(daiJoin), address(escrow), address(router));
         host.file("vow", vow);
@@ -96,6 +98,7 @@ contract DomainHostTest is DSSTest {
 
         assertEq(vat.can(address(host), address(daiJoin)), 1);
         assertEq(dai.allowance(address(host), address(daiJoin)), type(uint256).max);
+        assertEq(dai.allowance(address(host), address(router)), type(uint256).max);
         assertEq(host.wards(address(this)), 1);
         assertEq(host.live(), 1);
     }
@@ -292,6 +295,39 @@ contract DomainHostTest is DSSTest {
 
         assertEq(host.claimUsr(), address(123));
         assertEq(host.claimAmount(), 15 ether);     // 50% of 30 debt is 15
+    }
+
+    function testInitiateTeleport() public {
+        TeleportGUID memory guid = TeleportGUID({
+            sourceDomain: "l2network",
+            targetDomain: "ethereum",
+            receiver: TeleportGUIDHelper.addressToBytes32(address(123)),
+            operator: TeleportGUIDHelper.addressToBytes32(address(this)),
+            amount: 100 ether,
+            nonce: 5,
+            timestamp: uint48(block.timestamp)
+        });
+
+        assertEq(dai.balanceOf(address(123)), 0);
+
+        host.initiateTeleport(guid);
+
+        assertEq(dai.balanceOf(address(123)), 100 ether);
+    }
+
+    function testFlush() public {
+        uint256 balance = dai.balanceOf(address(escrow));
+        vat.hope(address(daiJoin));
+        vat.suck(address(123), address(this), 100 * RAD);
+        daiJoin.exit(address(escrow), 100 ether);
+
+        assertEq(dai.balanceOf(address(router)), 0);
+        assertEq(dai.balanceOf(address(escrow)), balance + 100 ether);
+
+        host.flush("ethereum", 100 ether);
+
+        assertEq(dai.balanceOf(address(router)), 100 ether);
+        assertEq(dai.balanceOf(address(escrow)), balance);
     }
 
 }
