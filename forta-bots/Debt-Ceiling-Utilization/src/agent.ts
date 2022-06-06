@@ -18,13 +18,17 @@ export const provideHandleBlock = (data: NetworkData, fetcher: Fetcher, threshol
   return async (blockEvent: BlockEvent) => {
     const findings: Finding[] = [];
 
-    const line: BigNumber = await fetcher.getLine(data.TeleportJoin, data.domains[0], blockEvent.blockNumber);
-    const debt: BigNumber = await fetcher.getDebt(data.TeleportJoin, data.domains[0], blockEvent.blockNumber);
+    await Promise.all(
+      data.domains.map(async (domain) => {
+        const line: BigNumber = await fetcher.getLine(data.TeleportJoin, domain, blockEvent.blockNumber);
+        const debt: BigNumber = await fetcher.getDebt(data.TeleportJoin, domain, blockEvent.blockNumber);
 
-    // Debt/Line > threshold%
-    if (debt.mul(BigNumber.from(100)).gt(line.mul(threshold))) {
-      findings.push(createFinding(debt, line, threshold));
-    }
+        // Debt/Line > threshold%
+        if (debt.mul(BigNumber.from(100)).gt(line.mul(threshold))) {
+          findings.push(createFinding(domain, debt, line, threshold));
+        }
+      })
+    );
 
     return findings;
   };

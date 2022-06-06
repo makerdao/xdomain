@@ -17,6 +17,7 @@ This bot detects when the `Debt Ceiling` utilization threshold is exceeded in `T
   - Severity is always set to "Info".
   - Type is always set to "Info".
   - Metadata contains:
+    - `domain`: The domain in which the threshold is exceeded.
     - `debt`: Current TeleportJoin's debt.
     - `line`: Current TeleportJoin's line.
     - `threshold`: Configured threshold.

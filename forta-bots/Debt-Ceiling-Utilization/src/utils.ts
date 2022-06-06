@@ -10,7 +10,7 @@ export const FUNCTIONS_ABI: string[] = [
 ];
 export const FUNCTIONS_IFACE: Interface = new Interface(FUNCTIONS_ABI);
 
-export const createFinding = (debt: BigNumber, line: BigNumber, threshold: BigNumber): Finding => {
+export const createFinding = (domain: string, debt: BigNumber, line: BigNumber, threshold: BigNumber): Finding => {
   return Finding.fromObject({
     name: "Debt Ceiling utilization threshold exceeded",
     description: "Debt Ceiling utilization threshold exceeded in TeleportJoin contract",
@@ -19,6 +19,7 @@ export const createFinding = (debt: BigNumber, line: BigNumber, threshold: BigNu
     severity: FindingSeverity.Info,
     type: FindingType.Info,
     metadata: {
+      domain,
       debt: debt.toString(),
       line: line.toString(),
       threshold: threshold.toString(),
