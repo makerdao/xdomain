@@ -6,7 +6,7 @@ import NetworkData from "./network";
 import { keccak256 } from "@ethersproject/keccak256";
 import { defaultAbiCoder } from "@ethersproject/abi";
 
-export const SPREAD_THRESHOLD: BigNumber = new BigNumber(0.00002); //2%
+export const SPREAD_THRESHOLD: BigNumber = new BigNumber(0.02); //2%
 
 const init: string = "0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54";
 
@@ -56,12 +56,13 @@ export const createFinding = (
   if (isUniswap) {
     return Finding.fromObject({
       name: "DAI Price Alert",
-      description: `Spread threshold exceeded in ${pair} UniswapV3 pool`,
+      description: "Spread threshold exceeded in UniswapV3 pool",
       alertId: "MK-06",
       protocol: "MakerDAO",
       severity: FindingSeverity.Info,
       type: FindingType.Info,
       metadata: {
+        pair,
         price: price.toString().slice(0, 6),
         spreadThreshold: spreadThreshold.toString(),
       },
@@ -70,12 +71,13 @@ export const createFinding = (
   } else {
     return Finding.fromObject({
       name: "DAI Price Alert",
-      description: `Spread threshold exceeded in Curve's 3pool ${pair} pair`,
+      description: "Spread threshold exceeded in Curve's 3pool",
       alertId: "MK-06",
       protocol: "MakerDAO",
       severity: FindingSeverity.Info,
       type: FindingType.Info,
       metadata: {
+        pair,
         price: price.toString().slice(0, 6),
         spreadThreshold: spreadThreshold.toString(),
       },

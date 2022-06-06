@@ -1,6 +1,5 @@
 import { Finding, FindingSeverity, FindingType, HandleTransaction } from "forta-agent";
 import { provideBotHandleTransaction } from "./agent";
-import { Interface } from "@ethersproject/abi";
 import { createAddress, TestTransactionEvent } from "forta-agent-tools/lib/tests";
 import { BigNumber as ethersBn } from "ethers";
 import BigNumber from "bignumber.js";
@@ -35,7 +34,7 @@ const SWAP_CASES: [string, string, ethersBn, ethersBn, ethersBn, ethersBn, ether
 //buyer, sold_id, tokens_sold, bought_id, tokens_bought
 const EXCHANGE_CASES: [string, number, ethersBn, number, ethersBn][] = [
   [createAddress("0xccc"), 0, ethersBn.from(3), 1, ethersBn.from(825523523345999).mul(ethersBn.from(10).pow(12))], //exceeding
-  [createAddress("0xddd"), 2, ethersBn.from(4), 0, ethersBn.from(725523523345999).mul(ethersBn.from(10).pow(12))], //exceeding
+  [createAddress("0xddd"), 1, ethersBn.from(4), 0, ethersBn.from(725523523345999).mul(ethersBn.from(10).pow(12))], //exceeding
 ];
 
 const testCreateFinding = (
@@ -48,12 +47,13 @@ const testCreateFinding = (
   if (isUniswap) {
     return Finding.fromObject({
       name: "DAI Price Alert",
-      description: `Spread threshold exceeded in ${pair} UniswapV3 pool`,
+      description: "Spread threshold exceeded in UniswapV3 pool",
       alertId: "MK-06",
       protocol: "MakerDAO",
       severity: FindingSeverity.Info,
       type: FindingType.Info,
       metadata: {
+        pair,
         price: price.toString().slice(0, 6),
         spreadThreshold: spreadThreshold.toString(),
       },
@@ -62,12 +62,13 @@ const testCreateFinding = (
   } else {
     return Finding.fromObject({
       name: "DAI Price Alert",
-      description: `Spread threshold exceeded in Curve's 3pool ${pair} pair`,
+      description: "Spread threshold exceeded in Curve's 3pool",
       alertId: "MK-06",
       protocol: "MakerDAO",
       severity: FindingSeverity.Info,
       type: FindingType.Info,
       metadata: {
+        pair,
         price: price.toString().slice(0, 6),
         spreadThreshold: spreadThreshold.toString(),
       },
@@ -91,7 +92,7 @@ describe("Apeswap Large LP Deposit/Withdrawal bot test suite", () => {
     networkId: 10,
   };
 
-  //token0, token1, fee, valid
+  //fee, valid
   const POOL_CASES: [ethersBn, boolean] = [ethersBn.from(100), true];
   const handleTransaction: HandleTransaction = provideBotHandleTransaction(
     mockNetworkManager as any,
@@ -156,7 +157,7 @@ describe("Apeswap Large LP Deposit/Withdrawal bot test suite", () => {
         calculateCurvePrice(EXCHANGE_CASES[1][2], EXCHANGE_CASES[1][3], EXCHANGE_CASES[1][4]),
         TEST_SPREAD_THRESHOLD,
         mockNetworkManager.curve3Pool,
-        "USDT/DAI",
+        "USDC/DAI",
         false
       ),
     ]);

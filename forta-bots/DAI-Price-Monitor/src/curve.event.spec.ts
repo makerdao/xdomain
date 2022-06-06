@@ -20,21 +20,23 @@ const EXCHANGE_CASES: [string, number, ethersBn, number, ethersBn][] = [
     0,
     ethersBn.from(325523523345999).mul(ethersBn.from(10).pow(12)),
   ], //not exceeding
-  [createAddress("0xaaa"), 0, ethersBn.from(1), 2, ethersBn.from(925523523345999).mul(ethersBn.from(10).pow(12))], //exceeding
-  [createAddress("0xbbb"), 1, ethersBn.from(2), 2, ethersBn.from(925523523345999).mul(ethersBn.from(10).pow(12))], //not DAI
+  [createAddress("0xaaa"), 0, ethersBn.from(1), 2, ethersBn.from(925523523345999).mul(ethersBn.from(10).pow(12))], // not USDC/DAI
+  [createAddress("0xbbb"), 1, ethersBn.from(2), 2, ethersBn.from(925523523345999).mul(ethersBn.from(10).pow(12))], //not USDC/DAI
   [createAddress("0xccc"), 0, ethersBn.from(3), 1, ethersBn.from(825523523345999).mul(ethersBn.from(10).pow(12))], //exceeding
-  [createAddress("0xddd"), 2, ethersBn.from(4), 0, ethersBn.from(725523523345999).mul(ethersBn.from(10).pow(12))], //exceeding
+  [createAddress("0xcddc"), 0, ethersBn.from(65), 1, ethersBn.from(889523523345999).mul(ethersBn.from(10).pow(12))], //exceeding
+  [createAddress("0xddd"), 1, ethersBn.from(4), 0, ethersBn.from(725523523345999).mul(ethersBn.from(10).pow(12))], //exceeding
 ];
 
 const testCreateFinding = (price: BigNumber, spreadThreshold: BigNumber, pool: string, pair: string): Finding => {
   return Finding.fromObject({
     name: "DAI Price Alert",
-    description: `Spread threshold exceeded in Curve's 3pool ${pair} pair`,
+    description: "Spread threshold exceeded in Curve's 3pool",
     alertId: "MK-06",
     protocol: "MakerDAO",
     severity: FindingSeverity.Info,
     type: FindingType.Info,
     metadata: {
+      pair,
       price: price.toString().slice(0, 6),
       spreadThreshold: spreadThreshold.toString(),
     },
@@ -88,13 +90,11 @@ describe("Apeswap Large LP Deposit/Withdrawal bot test suite", () => {
     expect(findings).toStrictEqual([]);
   });
 
-  it("should return no findings Curve 3pool's USDT/USDC exhanges", async () => {
+  it("should return no findings on Curve 3pool's USDT/USDC, USDT/DAI exchanges", async () => {
     const event = TOKEN_EXCHANGE_IFACE.getEvent("TokenExchange");
-    const txEvent: TestTransactionEvent = new TestTransactionEvent().addInterfaceEventLog(
-      event,
-      mockNetworkManager.curve3Pool,
-      [...EXCHANGE_CASES[2]]
-    );
+    const txEvent: TestTransactionEvent = new TestTransactionEvent()
+      .addInterfaceEventLog(event, mockNetworkManager.curve3Pool, [...EXCHANGE_CASES[1]])
+      .addInterfaceEventLog(event, mockNetworkManager.curve3Pool, [...EXCHANGE_CASES[2]]);
 
     const findings: Finding[] = await handleTransaction(txEvent);
     expect(findings).toStrictEqual([]);
@@ -105,26 +105,8 @@ describe("Apeswap Large LP Deposit/Withdrawal bot test suite", () => {
     const txEvent: TestTransactionEvent = new TestTransactionEvent().addInterfaceEventLog(
       event,
       mockNetworkManager.curve3Pool,
-      [...EXCHANGE_CASES[1]]
+      [...EXCHANGE_CASES[3]]
     );
-
-    const findings: Finding[] = await handleTransaction(txEvent);
-    expect(findings).toStrictEqual([
-      testCreateFinding(
-        calculateCurvePrice(EXCHANGE_CASES[1][2], EXCHANGE_CASES[1][3], EXCHANGE_CASES[1][4]),
-        TEST_SPREAD_THRESHOLD,
-        mockNetworkManager.curve3Pool,
-        "USDT/DAI"
-      ),
-    ]);
-  });
-
-  it("should return multiple findings", async () => {
-    const event = TOKEN_EXCHANGE_IFACE.getEvent("TokenExchange");
-    const txEvent: TestTransactionEvent = new TestTransactionEvent()
-      .setBlock(224105)
-      .addInterfaceEventLog(event, mockNetworkManager.curve3Pool, [...EXCHANGE_CASES[3]])
-      .addInterfaceEventLog(event, mockNetworkManager.curve3Pool, [...EXCHANGE_CASES[4]]);
 
     const findings: Finding[] = await handleTransaction(txEvent);
     expect(findings).toStrictEqual([
@@ -134,11 +116,29 @@ describe("Apeswap Large LP Deposit/Withdrawal bot test suite", () => {
         mockNetworkManager.curve3Pool,
         "USDC/DAI"
       ),
+    ]);
+  });
+
+  it("should return multiple findings", async () => {
+    const event = TOKEN_EXCHANGE_IFACE.getEvent("TokenExchange");
+    const txEvent: TestTransactionEvent = new TestTransactionEvent()
+      .setBlock(224105)
+      .addInterfaceEventLog(event, mockNetworkManager.curve3Pool, [...EXCHANGE_CASES[4]])
+      .addInterfaceEventLog(event, mockNetworkManager.curve3Pool, [...EXCHANGE_CASES[5]]);
+
+    const findings: Finding[] = await handleTransaction(txEvent);
+    expect(findings).toStrictEqual([
       testCreateFinding(
         calculateCurvePrice(EXCHANGE_CASES[4][2], EXCHANGE_CASES[4][3], EXCHANGE_CASES[4][4]),
         TEST_SPREAD_THRESHOLD,
         mockNetworkManager.curve3Pool,
-        "USDT/DAI"
+        "USDC/DAI"
+      ),
+      testCreateFinding(
+        calculateCurvePrice(EXCHANGE_CASES[5][2], EXCHANGE_CASES[5][3], EXCHANGE_CASES[5][4]),
+        TEST_SPREAD_THRESHOLD,
+        mockNetworkManager.curve3Pool,
+        "USDC/DAI"
       ),
     ]);
   });

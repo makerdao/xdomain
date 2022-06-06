@@ -22,13 +22,12 @@ export const provideBotHandleTransaction = (
   fetcher: Fetcher,
   spreadThreshold: BigNumber
 ): HandleTransaction => {
-  const uniswapEventHandler: HandleTransaction = provideUniswapHandleTransaction(data, fetcher, spreadThreshold);
-  const curveEventHandler: HandleTransaction = provideCurveHandleTransaction(data, spreadThreshold);
-  return async (txEvent: TransactionEvent): Promise<Finding[]> => {
-    let findings: Finding[] = [];
-    findings = [...(await uniswapEventHandler(txEvent)), ...(await curveEventHandler(txEvent))];
-    return findings;
-  };
+  const handlers: HandleTransaction[] = [
+    provideUniswapHandleTransaction(data, fetcher, spreadThreshold),
+    provideCurveHandleTransaction(data, spreadThreshold),
+  ];
+  return async (txEvent: TransactionEvent): Promise<Finding[]> =>
+    (await Promise.all(handlers.map((handler) => handler(txEvent)))).flat();
 };
 
 export default {

@@ -55,12 +55,13 @@ const SWAP_CASES: [string, string, ethersBn, ethersBn, ethersBn, ethersBn, ether
 const testCreateFinding = (price: BigNumber, spreadThreshold: BigNumber, pool: string, pair: string): Finding => {
   return Finding.fromObject({
     name: "DAI Price Alert",
-    description: `Spread threshold exceeded in ${pair} UniswapV3 pool`,
+    description: "Spread threshold exceeded in UniswapV3 pool",
     alertId: "MK-06",
     protocol: "MakerDAO",
     severity: FindingSeverity.Info,
     type: FindingType.Info,
     metadata: {
+      pair,
       price: price.toString().slice(0, 6),
       spreadThreshold: spreadThreshold.toString(),
     },
@@ -83,7 +84,7 @@ describe("Apeswap Large LP Deposit/Withdrawal bot test suite", () => {
     networkId: 10,
   };
 
-  //token0, token1, fee, valid
+  //fee, valid
   const POOL_CASES: [ethersBn, boolean] = [ethersBn.from(100), true];
 
   const handleTransaction: HandleTransaction = provideUniswapHandleTransaction(
