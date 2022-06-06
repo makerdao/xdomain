@@ -84,6 +84,8 @@ abstract contract DomainGuest {
     event Cage();
     event Tell(uint256 value);
     event MintClaim(address indexed usr, uint256 claim);
+    event Deposit(address indexed to, uint256 amount);
+    event Withdraw(address indexed to, uint256 amount);
     event TeleportInitialized(TeleportGUID teleport);
     event Flushed(bytes32 indexed targetDomain, uint256 dai);
 
@@ -264,7 +266,32 @@ abstract contract DomainGuest {
 
     // --- Canonical DAI Support ---
 
+    /// @notice Mint DAI and send to user
+    /// @param to The address to send the DAI to on the local domain
+    /// @param amount The amount of DAI to send [WAD]
+    function deposit(address to, uint256 amount) external hostOnly {
+        uint256 rad = amount * RAY;
+        require(rad < 2 ** 255, "DomainGuest/overflow");
+        vat.swell(address(this), int256(rad));
+        daiJoin.exit(to, amount);
 
+        emit Deposit(to, amount);
+    }
+
+    /// @notice Withdraw local DAI by burning local canonical DAI
+    /// @param to The address to send the DAI to on the remote domain
+    /// @param amount The amount of DAI to withdraw [WAD]
+    function withdraw(address to, uint256 amount) external {
+        require(dai.transferFrom(msg.sender, address(this), amount), "DomainHost/transfer-failed");
+        daiJoin.join(address(this), amount);
+        uint256 rad = amount * RAY;
+        require(rad < 2 ** 255, "DomainGuest/overflow");
+        vat.swell(address(this), -int256(rad));
+
+        _withdraw(to, amount);
+
+        emit Withdraw(to, amount);
+    }
 
     // --- Maker Teleport Support ---
     function initiateTeleport(
@@ -321,7 +348,7 @@ abstract contract DomainGuest {
         });
 
         batchedDaiToFlush[targetDomain] += amount;
-        dai.transferFrom(msg.sender, address(this), amount);
+        require(dai.transferFrom(msg.sender, address(this), amount), "DomainHost/transfer-failed");
         daiJoin.join(address(this), amount);
         uint256 rad = amount * RAY;
         require(rad < 2 ** 255, "DomainGuest/overflow");
@@ -352,5 +379,6 @@ abstract contract DomainGuest {
     function _tell(uint256 value) internal virtual;
     function _initiateTeleport(TeleportGUID memory teleport) internal virtual;
     function _flush(bytes32 targetDomain, uint256 daiToFlush) internal virtual;
+    function _withdraw(address to, uint256 amount) internal virtual;
     
 }

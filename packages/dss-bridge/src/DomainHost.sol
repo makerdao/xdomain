@@ -86,6 +86,10 @@ abstract contract DomainHost {
     event Cage();
     event Tell(uint256 value);
     event Exit(address indexed usr, uint256 wad, uint256 claim);
+    event Deposit(address indexed to, uint256 amount);
+    event Withdraw(address indexed to, uint256 amount);
+    event FinalizeTeleport(TeleportGUID teleport);
+    event Flush(bytes32 targetDomain, uint256 daiToFlush);
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainHost/not-authorized");
@@ -253,13 +257,33 @@ abstract contract DomainHost {
 
     // --- Canonical DAI Support ---
 
+    /// @notice Deposit local DAI to mint remote canonical DAI
+    /// @param to The address to send the DAI to on the remote domain
+    /// @param amount The amount of DAI to deposit [WAD]
+    function deposit(address to, uint256 amount) external {
+        require(dai.transferFrom(msg.sender, escrow, amount), "DomainHost/transfer-failed");
 
+        _deposit(to, amount);
+
+        emit Deposit(to, amount);
+    }
+
+    /// @notice Withdraw local DAI by burning remote canonical DAI
+    /// @param to The address to send the DAI to on the local domain
+    /// @param amount The amount of DAI to withdraw [WAD]
+    function withdraw(address to, uint256 amount) external guestOnly {
+        require(dai.transferFrom(escrow, to, amount), "DomainHost/transfer-failed");
+
+        emit Withdraw(to, amount);
+    }
 
     // --- Maker Teleport Support ---
 
     /// @notice Finalize a teleport registration
-    function initiateTeleport(TeleportGUID calldata teleport) external guestOnly {
+    function finalizeTeleport(TeleportGUID calldata teleport) external guestOnly {
         router.requestMint(teleport, 0, 0);
+
+        emit FinalizeTeleport(teleport);
     }
 
     /// @notice Flush any accumulated DAI
@@ -268,6 +292,8 @@ abstract contract DomainHost {
         dai.transferFrom(escrow, address(this), daiToFlush);
         // The router will pull the DAI from this contract
         router.settle(targetDomain, daiToFlush);
+
+        emit Flush(targetDomain, daiToFlush);
     }
 
     // Bridge-specific functions
@@ -276,5 +302,6 @@ abstract contract DomainHost {
     function _rectify(uint256 wad) internal virtual;
     function _cage() internal virtual;
     function _mintClaim(address usr, uint256 claim) internal virtual;
+    function _deposit(address to, uint256 amount) internal virtual;
 
 }

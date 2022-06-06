@@ -94,7 +94,7 @@ contract SimpleDomainGuest is DomainGuest {
        host.tell(value);
     }
     function _initiateTeleport(TeleportGUID memory teleport) internal virtual override {
-        host.initiateTeleport(teleport);
+        host.finalizeTeleport(teleport);
     }
     function _flush(bytes32 targetDomain, uint256 daiToFlush) internal virtual override {
         host.flush(targetDomain, daiToFlush);
