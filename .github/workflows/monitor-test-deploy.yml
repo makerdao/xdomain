@@ -52,6 +52,7 @@ jobs:
       REGION: us-east-1
       SERVICE_NAME: teleport-monitor-prod
       CLUSTER_NAME: teleport-monitor-prod
+      ECR_REPO_NAME: teleport-monitor-prod
 
     steps:
       - name: Checkout
@@ -91,7 +92,7 @@ jobs:
                         -t $ECR_REGISTRY/$ECR_REPO_NAME:$ENVIRONMENT_TAG \
                         .
           docker push $ECR_REGISTRY/$ECR_REPO_NAME --all-tags
-        working-directory: ./packages/teleport-keeper
+        working-directory: ./packages/teleport-monitoring
 
       - name: Update ECS service
         id: service-update
