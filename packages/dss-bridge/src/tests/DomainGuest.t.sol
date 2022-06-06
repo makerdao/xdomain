@@ -38,6 +38,8 @@ contract EmptyDomainGuest is DomainGuest {
     TeleportGUID public teleport;
     bytes32 public flushTargetDomain;
     uint256 public flushDaiToFlush;
+    address public withdrawTo;
+    uint256 public withdrawAmount;
 
     constructor(bytes32 _domain, address _daiJoin, address _claimToken) DomainGuest(_domain, _daiJoin, _claimToken) {}
 
@@ -62,6 +64,10 @@ contract EmptyDomainGuest is DomainGuest {
     function _flush(bytes32 targetDomain, uint256 daiToFlush) internal virtual override {
         flushTargetDomain = targetDomain;
         flushDaiToFlush = daiToFlush;
+    }
+    function _withdraw(address to, uint256 amount) internal virtual override {
+        withdrawTo = to;
+        withdrawAmount = amount;
     }
 
 }

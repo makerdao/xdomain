@@ -271,7 +271,7 @@ abstract contract DomainGuest {
     /// @param amount The amount of DAI to send [WAD]
     function deposit(address to, uint256 amount) external hostOnly {
         uint256 rad = amount * RAY;
-        require(rad < 2 ** 255, "DomainGuest/overflow");
+        require(rad < 2 ** 255, "DomainHost/overflow");
         vat.swell(address(this), int256(rad));
         daiJoin.exit(to, amount);
 
@@ -285,7 +285,7 @@ abstract contract DomainGuest {
         require(dai.transferFrom(msg.sender, address(this), amount), "DomainHost/transfer-failed");
         daiJoin.join(address(this), amount);
         uint256 rad = amount * RAY;
-        require(rad < 2 ** 255, "DomainGuest/overflow");
+        require(rad < 2 ** 255, "DomainHost/overflow");
         vat.swell(address(this), -int256(rad));
 
         _withdraw(to, amount);

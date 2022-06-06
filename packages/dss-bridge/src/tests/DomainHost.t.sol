@@ -37,6 +37,8 @@ contract EmptyDomainHost is DomainHost {
     bool public caged;
     address public claimUsr;
     uint256 public claimAmount;
+    address public depositTo;
+    uint256 public depositAmount;
 
     constructor(bytes32 _ilk, address _daiJoin, address _escrow, address _router) DomainHost(_ilk, _daiJoin, _escrow, _router) {}
 
@@ -56,6 +58,10 @@ contract EmptyDomainHost is DomainHost {
     function _mintClaim(address usr, uint256 claim) internal virtual override {
         claimUsr = usr;
         claimAmount = claim;
+    }
+    function _deposit(address to, uint256 amount) internal virtual override {
+        depositTo = to;
+        depositAmount = amount;
     }
 
 }
@@ -297,7 +303,7 @@ contract DomainHostTest is DSSTest {
         assertEq(host.claimAmount(), 15 ether);     // 50% of 30 debt is 15
     }
 
-    function testInitiateTeleport() public {
+    function testFinalizeTeleport() public {
         TeleportGUID memory guid = TeleportGUID({
             sourceDomain: "l2network",
             targetDomain: "ethereum",
@@ -310,7 +316,7 @@ contract DomainHostTest is DSSTest {
 
         assertEq(dai.balanceOf(address(123)), 0);
 
-        host.initiateTeleport(guid);
+        host.finalizeTeleport(guid);
 
         assertEq(dai.balanceOf(address(123)), 100 ether);
     }

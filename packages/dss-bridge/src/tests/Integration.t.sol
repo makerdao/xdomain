@@ -67,6 +67,9 @@ contract SimpleDomainHost is DomainHost {
     function _mintClaim(address usr, uint256 claim) internal virtual override {
         guest.mintClaim(usr, claim);
     }
+    function _deposit(address to, uint256 amount) internal virtual override {
+        guest.deposit(to, amount);
+    }
 
 }
 
@@ -98,6 +101,9 @@ contract SimpleDomainGuest is DomainGuest {
     }
     function _flush(bytes32 targetDomain, uint256 daiToFlush) internal virtual override {
         host.flush(targetDomain, daiToFlush);
+    }
+    function _withdraw(address to, uint256 amount) internal virtual override {
+        host.withdraw(to, amount);
     }
 
 }
