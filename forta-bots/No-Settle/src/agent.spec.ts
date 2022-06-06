@@ -115,57 +115,7 @@ describe("No-settle monitoring bot test suite", () => {
     expect(findings).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "1423423422")]);
   });
 
-  it("should return findings correctly", async () => {
-    handleBlock = provideHandleBlock(
-      mockNetworkManager as any,
-      mockProvider as any as ethers.providers.Provider,
-      TEST_DAYS_THRESHOLD,
-      botData
-    );
-    // threshold not exceeded
-    const blockEvent1: BlockEvent = new TestBlockEvent().setHash(keccak256("hash3")).setTimestamp(446).setNumber(34);
-
-    const filter = {
-      address: TEST_TELEPORT_JOIN,
-      topics: [SETTLE_EVENT_TOPIC],
-      blockHash: keccak256("hash3"),
-    };
-
-    const logs = [
-      {
-        blockNumber: 34,
-        blockHash: blockEvent1.blockHash,
-        transactionIndex: 2,
-        removed: false,
-        address: mockNetworkManager.TeleportJoin,
-        data: keccak256("dataData2"),
-        topics: [SETTLE_EVENT_TOPIC],
-        transactionHash: keccak256("tHash3"),
-        logIndex: 3,
-      },
-    ];
-
-    // threshold exceeded
-    const blockEvent2: BlockEvent = new TestBlockEvent()
-      .setHash(keccak256("hash5"))
-      .setTimestamp(5564123422)
-      .setNumber(13456);
-
-    const filter2 = {
-      address: TEST_TELEPORT_JOIN,
-      topics: [SETTLE_EVENT_TOPIC],
-      blockHash: keccak256("hash5"),
-    };
-
-    mockProvider.addFilteredLogs(filter, logs).addFilteredLogs(filter2, []);
-
-    const findings = await handleBlock(blockEvent1);
-    expect(findings).toStrictEqual([]);
-    const findings2 = await handleBlock(blockEvent2);
-    expect(findings2).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "5564123422", "446")]);
-  });
-
-  it("should return findings correctly", async () => {
+  it("should return findings only if the threshold is exceeded", async () => {
     botData = {
       latestSettleTimestamp: BigNumber.from(123124),
     };
