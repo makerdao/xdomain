@@ -97,7 +97,6 @@ describe("No-flushed monitoring bot test suite", () => {
   });
 
   it("should return a finding when there were no recent past Flushed events", async () => {
-    expect(botData.latestFlushedTimestamp).toStrictEqual(BigNumber.from(0));
     handleBlock = provideHandleBlock(mockNetworkManager as any, mockProvider as any, TEST_DAYS_THRESHOLD, botData);
     const blockEvent: BlockEvent = new TestBlockEvent()
       .setTimestamp(523423422)
@@ -116,8 +115,7 @@ describe("No-flushed monitoring bot test suite", () => {
     expect(findings).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "523423422")]);
   });
 
-  it("should return findings correctly (blockEvent1: not exceeded, blockEvent2: exceeded)", async () => {
-    expect(botData.latestFlushedTimestamp).toStrictEqual(BigNumber.from(0));
+  it("should return findings correctly", async () => {
     handleBlock = provideHandleBlock(
       mockNetworkManager as any,
       mockProvider as any as ethers.providers.Provider,
@@ -125,6 +123,7 @@ describe("No-flushed monitoring bot test suite", () => {
       botData
     );
 
+    //threshold not exceeded
     const blockEvent1: BlockEvent = new TestBlockEvent().setHash(keccak256("hash13")).setTimestamp(332).setNumber(12);
 
     const filter = {
@@ -147,9 +146,10 @@ describe("No-flushed monitoring bot test suite", () => {
       },
     ];
 
+    //threshold exceeded
     const blockEvent2: BlockEvent = new TestBlockEvent()
       .setHash(keccak256("hash15"))
-      .setTimestamp(7564123422) //exceeded
+      .setTimestamp(7564123422)
       .setNumber(23456);
 
     const filter2 = {
@@ -166,9 +166,13 @@ describe("No-flushed monitoring bot test suite", () => {
     expect(findings2).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "7564123422", "332")]);
   });
 
-  it("should return findings correctly (blockEvent1: exceeded, blockEvent2: not exceeded)", async () => {
+  it("should return findings correctly", async () => {
+    botData = {
+      latestFlushedTimestamp: BigNumber.from(3342),
+    };
     handleBlock = provideHandleBlock(mockNetworkManager as any, mockProvider as any, TEST_DAYS_THRESHOLD, botData);
 
+    //threshold exceeded
     const blockEvent1: BlockEvent = new TestBlockEvent()
       .setHash(keccak256("hash9"))
       .setTimestamp(6464123422)
@@ -194,9 +198,10 @@ describe("No-flushed monitoring bot test suite", () => {
       },
     ];
 
+    //threshold not exceeded
     const blockEvent2: BlockEvent = new TestBlockEvent()
       .setHash(keccak256("hash7655"))
-      .setTimestamp(4464123999) //not exceeded
+      .setTimestamp(4464123999)
       .setNumber(13456);
 
     const filter2 = {
@@ -208,7 +213,7 @@ describe("No-flushed monitoring bot test suite", () => {
     mockProvider.addFilteredLogs(filter, logs).addFilteredLogs(filter2, []);
 
     const findings = await handleBlock(blockEvent1);
-    expect(findings).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "6464123422")]);
+    expect(findings).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "6464123422", "3342")]);
     const findings2 = await handleBlock(blockEvent2);
     expect(findings2).toStrictEqual([]);
   });
