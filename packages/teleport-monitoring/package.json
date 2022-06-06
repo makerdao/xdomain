@@ -9,7 +9,7 @@
   "main": "dist/index.js",
   "scripts": {
     "postinstall": "yarn eth-sdk",
-    "migrate": "prisma migrate deploy",
+    "migrate": "prisma migrate deploy && prisma generate",
     "start": "yarn migrate && node -r esbuild-register ./src/bin/monitor",
     "format": "prettier --check \"./**/*.ts\"",
     "format:fix": "prettier --write \"./**/*.ts\"",
