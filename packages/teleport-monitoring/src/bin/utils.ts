@@ -2,7 +2,8 @@ import { PrismaClient } from '@prisma/client'
 import { ethers, providers } from 'ethers'
 
 import { idsToChains, networks } from '../config'
-import { SyncStatusRepository } from '../db/SyncStatusRepository'
+import { FlushRepository } from '../db/FlushRepository'
+import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
 import { TeleportRepository } from '../db/TeleportRepository'
 import { NetworkConfig } from '../types'
 
@@ -10,7 +11,8 @@ type InitFunction = (args: {
   network: NetworkConfig
   l1Provider: providers.Provider
   teleportRepository: TeleportRepository
-  syncStatusRepository: SyncStatusRepository
+  flushRepository: FlushRepository
+  synchronizerStatusRepository: SynchronizerStatusRepository
 }) => Promise<void>
 
 export async function run(fn: InitFunction): Promise<void> {
@@ -37,9 +39,10 @@ export async function run(fn: InitFunction): Promise<void> {
     console.log(`Loaded config for ${networkName}`)
 
     const teleportRepository = new TeleportRepository(prisma)
-    const syncStatusRepository = new SyncStatusRepository(prisma)
+    const flushRepository = new FlushRepository(prisma)
+    const synchronizerStatusRepository = new SynchronizerStatusRepository(prisma)
 
-    await fn({ l1Provider, network, syncStatusRepository, teleportRepository })
+    await fn({ l1Provider, network, synchronizerStatusRepository, teleportRepository, flushRepository })
   } catch (e) {
     console.error('Error occured: ', e)
     process.exit(1)

@@ -8,20 +8,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model SynchronizerStatus {
+  id     Int    @id @default(autoincrement())
+  domain String
+  name   String
+  block  Int
+
+  @@unique([domain, name])
+}
+
 model Teleport {
-  id           Int    @id @default(autoincrement())
-  hash         String @unique
+  id           Int      @id @default(autoincrement())
+  hash         String   @unique
   sourceDomain String
   targetDomain String
   receiver     String
   operator     String
   amount       String
   nonce        String
-  timestamp    Int
+  timestamp    DateTime
 }
 
-model SyncStatus {
-  id     Int    @id @default(autoincrement())
-  domain String @unique
-  block  Int
+model Flush {
+  id           Int      @id @default(autoincrement())
+  sourceDomain String
+  targetDomain String
+  amount       String
+  timestamp    DateTime
 }

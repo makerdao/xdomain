@@ -22,5 +22,5 @@ module.exports = {
   require: ['esbuild-register'],
   extension: ['ts'],
   watchExtensions: ['ts'],
-  timeout: 10000,
+  timeout: 30000,
 }
