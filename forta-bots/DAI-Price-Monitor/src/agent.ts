@@ -27,7 +27,7 @@ export const provideBotHandleTransaction = (
     provideCurveHandleTransaction(data, spreadThreshold),
   ];
   return async (txEvent: TransactionEvent): Promise<Finding[]> =>
-    (await Promise.all(handlers.map((handler) => handler(txEvent)))).flat();
+    (await Promise.all(handlers.map(async (handler) => await handler(txEvent)))).flat();
 };
 
 export default {
