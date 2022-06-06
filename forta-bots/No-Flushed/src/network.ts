@@ -10,15 +10,9 @@ const ARBITRUM_TESTNET_DATA: NetworkData = {
   L2DaiTeleportGateway: "0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3",
 };
 
-//PoC
-const POLYGON_MAINNET_DATA: NetworkData = {
-  L2DaiTeleportGateway: "0xf2C033D935BfFd5a4408BeF126BC6eb9317D6327",
-};
-
 export const NETWORK_MAP: Record<number, NetworkData> = {
   69: OPTIMISM_TESTNET_DATA,
   421611: ARBITRUM_TESTNET_DATA,
-  137: POLYGON_MAINNET_DATA,
 };
 
 export default class NetworkManager implements NetworkData {
