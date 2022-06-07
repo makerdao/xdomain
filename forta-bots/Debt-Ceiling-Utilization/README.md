@@ -21,3 +21,7 @@ This bot detects when the `Debt Ceiling` utilization threshold is exceeded in `T
     - `debt`: Current TeleportJoin's debt.
     - `line`: Current TeleportJoin's line.
     - `threshold`: Configured threshold.
+
+## Test Data
+
+The bot behaviour can be verified on Polygon Mumbai Testnet (PoC).

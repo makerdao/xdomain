@@ -1,6 +1,6 @@
 import { Interface } from "@ethersproject/abi";
-import { BigNumber, utils } from "ethers";
-import { Finding, FindingSeverity, FindingType, LogDescription } from "forta-agent";
+import { BigNumber } from "ethers";
+import { Finding, FindingSeverity, FindingType } from "forta-agent";
 
 export const UTILIZATION_THRESHOLD = BigNumber.from(70); //70%
 
@@ -22,7 +22,7 @@ export const createFinding = (domain: string, debt: BigNumber, line: BigNumber, 
       domain,
       debt: debt.toString(),
       line: line.toString(),
-      threshold: threshold.toString(),
+      threshold: threshold.toString().concat("%"),
     },
   });
 };

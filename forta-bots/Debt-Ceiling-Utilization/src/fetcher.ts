@@ -1,4 +1,4 @@
-import { Contract, BigNumber, FixedNumber, providers, utils } from "ethers";
+import { Contract, BigNumber, providers } from "ethers";
 import LRU from "lru-cache";
 import { FUNCTIONS_ABI } from "./utils";
 

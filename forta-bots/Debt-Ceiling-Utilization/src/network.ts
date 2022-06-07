@@ -15,9 +15,16 @@ const ETH_RINKEBY_TESTNET_DATA: NetworkData = {
   domains: ["0x52494e4b4542592d534c4156452d415242495452554d2d310000000000000000"],
 };
 
+//PoC
+const POlYGON_TESTNET_DATA: NetworkData = {
+  TeleportJoin: "0x0e4f1BD8d0fc5F3b0F1D77d454134Da4dee66dcf",
+  domains: ["0x0000000000000000000000000000000000000000000000000000000000000002"],
+};
+
 export const NETWORK_MAP: Record<number, NetworkData> = {
   42: ETH_KOVAN_TESTNET_DATA,
   4: ETH_RINKEBY_TESTNET_DATA,
+  80001: POlYGON_TESTNET_DATA,
 };
 
 export default class NetworkManager implements NetworkData {
