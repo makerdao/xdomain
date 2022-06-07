@@ -97,6 +97,7 @@ contract DomainGuestTest is DSSTest {
 
         vat.hope(address(daiJoin));
         dai.approve(address(guest), type(uint256).max);
+        guest.file("validDomains", TARGET_DOMAIN, 1);
     }
 
     function testConstructor() public {
@@ -320,7 +321,6 @@ contract DomainGuestTest is DSSTest {
     function testInitiateTeleport() public {
         vat.suck(address(123), address(this), 100 * RAD);
         daiJoin.exit(address(this), 100 ether);
-        guest.file("validDomains", TARGET_DOMAIN, 1);
 
         assertEq(dai.balanceOf(address(this)), 100 ether);
         assertEq(guest.batchedDaiToFlush(TARGET_DOMAIN), 0);
@@ -350,6 +350,35 @@ contract DomainGuestTest is DSSTest {
         assertEq(uint256(amount), 100 ether);
         assertEq(uint256(nonce), 0);
         assertEq(uint256(timestamp), block.timestamp);
+    }
+
+    function testInitiateTeleportInvalidDomain() public {
+        vat.suck(address(123), address(this), 100 * RAD);
+        daiJoin.exit(address(this), 100 ether);
+        guest.file("validDomains", TARGET_DOMAIN, 0);
+
+        vm.expectRevert("DomainGuest/invalid-domain");
+        guest.initiateTeleport(TARGET_DOMAIN, address(123), 100 ether);
+    }
+
+    function testFlush() public {
+        // To batch some DAI
+        vat.suck(address(123), address(this), 100 * RAD);
+        daiJoin.exit(address(this), 100 ether);
+        guest.initiateTeleport(TARGET_DOMAIN, address(123), 100 ether);
+
+        assertEq(guest.batchedDaiToFlush(TARGET_DOMAIN), 100 ether);
+
+        guest.flush(TARGET_DOMAIN);
+
+        assertEq(guest.batchedDaiToFlush(TARGET_DOMAIN), 0);
+        assertEq(guest.flushTargetDomain(), TARGET_DOMAIN);
+        assertEq(guest.flushDaiToFlush(), 100 ether);
+    }
+
+    function testFlushNoDaiToFlush() public {
+        vm.expectRevert("DomainGuest/zero-dai-flush");
+        guest.flush(TARGET_DOMAIN);
     }
 
 }
