@@ -91,6 +91,7 @@ contract DomainHostTest is DSSTest {
         host.file("vow", vow);
 
         escrow.approve(address(dai), address(host), type(uint256).max);
+        vat.hope(address(daiJoin));
     }
 
     function testConstructor() public {
@@ -237,18 +238,16 @@ contract DomainHostTest is DSSTest {
     }
 
     function testSurplus() public {
-        uint256 balance = dai.balanceOf(address(escrow));
-        vat.hope(address(daiJoin));
         vat.suck(address(123), address(this), 100 * RAD);
         daiJoin.exit(address(escrow), 100 ether);
 
         assertEq(vat.dai(vow), 0);
-        assertEq(dai.balanceOf(address(escrow)), balance + 100 ether);
+        assertEq(dai.balanceOf(address(escrow)), 100 ether);
 
         host.surplus(100 ether);
 
         assertEq(vat.dai(vow), 100 * RAD);
-        assertEq(dai.balanceOf(address(escrow)), balance);
+        assertEq(dai.balanceOf(address(escrow)), 0);
     }
 
     function testDeficit() public {
@@ -303,6 +302,35 @@ contract DomainHostTest is DSSTest {
         assertEq(host.claimAmount(), 15 ether);     // 50% of 30 debt is 15
     }
 
+    function testDeposit() public {
+        vat.suck(address(123), address(this), 100 * RAD);
+        daiJoin.exit(address(this), 100 ether);
+        dai.approve(address(host), 100 ether);
+
+        assertEq(dai.balanceOf(address(this)), 100 ether);
+        assertEq(dai.balanceOf(address(escrow)), 0);
+
+        host.deposit(address(123), 100 ether);
+
+        assertEq(dai.balanceOf(address(this)), 0);
+        assertEq(dai.balanceOf(address(escrow)), 100 ether);
+        assertEq(host.depositTo(), address(123));
+        assertEq(host.depositAmount(), 100 ether);
+    }
+
+    function testWithdraw() public {
+        vat.suck(address(123), address(this), 100 * RAD);
+        daiJoin.exit(address(escrow), 100 ether);
+
+        assertEq(dai.balanceOf(address(123)), 0);
+        assertEq(dai.balanceOf(address(escrow)), 100 ether);
+
+        host.withdraw(address(123), 100 ether);
+
+        assertEq(dai.balanceOf(address(123)), 100 ether);
+        assertEq(dai.balanceOf(address(escrow)), 0);
+    }
+
     function testFinalizeTeleport() public {
         TeleportGUID memory guid = TeleportGUID({
             sourceDomain: "l2network",
@@ -322,18 +350,16 @@ contract DomainHostTest is DSSTest {
     }
 
     function testFlush() public {
-        uint256 balance = dai.balanceOf(address(escrow));
-        vat.hope(address(daiJoin));
         vat.suck(address(123), address(this), 100 * RAD);
         daiJoin.exit(address(escrow), 100 ether);
 
         assertEq(dai.balanceOf(address(router)), 0);
-        assertEq(dai.balanceOf(address(escrow)), balance + 100 ether);
+        assertEq(dai.balanceOf(address(escrow)), 100 ether);
 
         host.flush("ethereum", 100 ether);
 
         assertEq(dai.balanceOf(address(router)), 100 ether);
-        assertEq(dai.balanceOf(address(escrow)), balance);
+        assertEq(dai.balanceOf(address(escrow)), 0);
     }
 
 }

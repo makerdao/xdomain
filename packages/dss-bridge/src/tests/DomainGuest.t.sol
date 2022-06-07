@@ -94,6 +94,9 @@ contract DomainGuestTest is DSSTest {
         claimToken = new ClaimToken();
         guest = new EmptyDomainGuest(SOURCE_DOMAIN, address(daiJoin), address(claimToken));
         guest.file("end", address(end));
+
+        vat.hope(address(daiJoin));
+        dai.approve(address(guest), type(uint256).max);
     }
 
     function testConstructor() public {
@@ -289,11 +292,34 @@ contract DomainGuestTest is DSSTest {
         assertEq(claimToken.balanceOf(address(123)), 100 ether);
     }
 
+    function testDeposit() public {
+        assertEq(dai.balanceOf(address(123)), 0);
+        assertEq(vat.surf(), 0);
+
+        guest.deposit(address(123), 100 ether);
+
+        assertEq(dai.balanceOf(address(123)), 100 ether);
+        assertEq(vat.surf(), int256(100 * RAD));
+    }
+
+    function testWithdraw() public {
+        vat.suck(address(123), address(this), 100 * RAD);
+        daiJoin.exit(address(this), 100 ether);
+
+        assertEq(dai.balanceOf(address(this)), 100 ether);
+        assertEq(vat.surf(), 0);
+
+        guest.withdraw(address(123), 100 ether);
+
+        assertEq(dai.balanceOf(address(this)), 0);
+        assertEq(vat.surf(), -int256(100 * RAD));
+        assertEq(guest.withdrawTo(), address(123));
+        assertEq(guest.withdrawAmount(), 100 ether);
+    }
+
     function testInitiateTeleport() public {
         vat.suck(address(123), address(this), 100 * RAD);
-        vat.hope(address(daiJoin));
         daiJoin.exit(address(this), 100 ether);
-        dai.approve(address(guest), 100 ether);
         guest.file("validDomains", TARGET_DOMAIN, 1);
 
         assertEq(dai.balanceOf(address(this)), 100 ether);
