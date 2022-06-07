@@ -112,13 +112,11 @@ abstract contract DomainHost {
         escrow = _escrow;
         router = RouterLike(_router);
         
-        vat.hope(address(daiJoin));
-        dai.approve(address(daiJoin), type(uint256).max);
+        vat.hope(_daiJoin);
+        dai.approve(_daiJoin, type(uint256).max);
+        dai.approve(_router, type(uint256).max);
 
         live = 1;
-
-        // Approve the router to pull DAI from this contract during settle() (after the DAI has been pulled by this contract from the escrow)
-        dai.approve(_router, type(uint256).max);
     }
 
     // --- Math ---

@@ -31,6 +31,7 @@ import "../TeleportGUID.sol";
 
 contract EmptyDomainHost is DomainHost {
 
+    bool forceIsGuest = true;
     uint256 public liftLine;
     uint256 public liftMinted;
     uint256 public rectify;
@@ -42,8 +43,11 @@ contract EmptyDomainHost is DomainHost {
 
     constructor(bytes32 _ilk, address _daiJoin, address _escrow, address _router) DomainHost(_ilk, _daiJoin, _escrow, _router) {}
 
-    function _isGuest(address) internal override pure returns (bool) {
-        return true;
+    function setIsGuest(bool v) external {
+        forceIsGuest = v;
+    }
+    function _isGuest(address) internal override view returns (bool) {
+        return forceIsGuest;
     }
     function _lift(uint256 _line, uint256 _minted) internal override {
         liftLine = _line;
@@ -79,6 +83,18 @@ contract DomainHostTest is DSSTest {
 
     bytes32 constant ILK = "SOME-DOMAIN-A";
 
+    event Lift(uint256 wad);
+    event Release(uint256 wad);
+    event Surplus(uint256 wad);
+    event Deficit(uint256 wad);
+    event Cage();
+    event Tell(uint256 value);
+    event Exit(address indexed usr, uint256 wad, uint256 claim);
+    event Deposit(address indexed to, uint256 amount);
+    event Withdraw(address indexed to, uint256 amount);
+    event FinalizeTeleport(TeleportGUID teleport);
+    event Flush(bytes32 targetDomain, uint256 daiToFlush);
+
     function postSetup() internal virtual override {
         vat = new VatMock();
         dai = new DaiMock();
@@ -102,7 +118,6 @@ contract DomainHostTest is DSSTest {
         assertEq(address(host.escrow()), address(escrow));
         assertEq(address(host.router()), address(router));
 
-
         assertEq(vat.can(address(host), address(daiJoin)), 1);
         assertEq(dai.allowance(address(host), address(daiJoin)), type(uint256).max);
         assertEq(dai.allowance(address(host), address(router)), type(uint256).max);
@@ -118,8 +133,47 @@ contract DomainHostTest is DSSTest {
         checkFileAddress(address(host), "DomainHost", ["vow"]);
     }
 
+    function testAuth() public {
+        host.deny(address(this));
+
+        bytes[] memory funcs = new bytes[](1);
+        funcs[0] = abi.encodeWithSelector(DomainHost.lift.selector, 0);
+
+        for (uint256 i = 0; i < funcs.length; i++) {
+            assertRevert(address(host), funcs[i], "DomainHost/not-authorized");
+        }
+    }
+
+    function testGuestOnly() public {
+        host.setIsGuest(false);
+
+        bytes[] memory funcs = new bytes[](7);
+        funcs[0] = abi.encodeWithSelector(DomainHost.release.selector, 0);
+        funcs[1] = abi.encodeWithSelector(DomainHost.surplus.selector, 0);
+        funcs[2] = abi.encodeWithSelector(DomainHost.deficit.selector, 0);
+        funcs[3] = abi.encodeWithSelector(DomainHost.tell.selector, 0);
+        funcs[4] = abi.encodeWithSelector(DomainHost.withdraw.selector, address(0), 0);
+        TeleportGUID memory teleport = TeleportGUID({
+            sourceDomain: "l2network",
+            targetDomain: "ethereum",
+            receiver: TeleportGUIDHelper.addressToBytes32(address(123)),
+            operator: TeleportGUIDHelper.addressToBytes32(address(this)),
+            amount: 100 ether,
+            nonce: 5,
+            timestamp: uint48(block.timestamp)
+        });
+        funcs[5] = abi.encodeWithSelector(DomainHost.finalizeTeleport.selector, teleport);
+        funcs[6] = abi.encodeWithSelector(DomainHost.flush.selector, bytes32(0), 0);
+
+        for (uint256 i = 0; i < funcs.length; i++) {
+            assertRevert(address(host), funcs[i], "DomainHost/not-guest");
+        }
+    }
+
     function testLift() public {
         // Set DC to 100
+        emit Lift(100 ether);
+        vm.expectEmit(false, false, false, true);
         host.lift(100 ether);
 
         (uint256 ink, uint256 art) = vat.urns(ILK, address(host));
@@ -154,6 +208,13 @@ contract DomainHostTest is DSSTest {
         assertEq(host.grain(), 200 ether);
         assertEq(host.liftLine(), 100 * RAD);
         assertEq(host.liftMinted(), 0);
+    }
+
+    function testLiftVatNotLive() public {
+        vat.cage();
+
+        vm.expectRevert("DomainHost/vat-not-live");
+        host.lift(100 ether);
     }
 
     function testRelease() public {

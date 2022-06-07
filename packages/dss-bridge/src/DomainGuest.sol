@@ -109,8 +109,8 @@ abstract contract DomainGuest {
         dai = daiJoin.dai();
         claimToken = TokenLike(_claimToken);
 
-        vat.hope(address(daiJoin));
-        dai.approve(address(daiJoin), type(uint256).max);
+        vat.hope(_daiJoin);
+        dai.approve(_daiJoin, type(uint256).max);
 
         live = 1;
     }
@@ -321,10 +321,6 @@ abstract contract DomainGuest {
         uint128 amount,
         bytes32 operator
     ) private {
-        // TODO - need to discuss if a global "closed" flag is still necessary
-        // Disallow initiating new teleport transfer if bridge is closed
-        //require(isOpen == 1, "DomainGuest/closed");
-
         // Disallow initiating new teleport transfer if targetDomain has not been whitelisted
         require(validDomains[targetDomain] == 1, "DomainGuest/invalid-domain");
 
