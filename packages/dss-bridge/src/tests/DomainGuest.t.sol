@@ -31,6 +31,7 @@ import { DomainGuest, TeleportGUID } from "../DomainGuest.sol";
 
 contract EmptyDomainGuest is DomainGuest {
 
+    bool forceIsHost = true;
     uint256 public releaseBurned;
     uint256 public surplus;
     uint256 public deficit;
@@ -43,8 +44,11 @@ contract EmptyDomainGuest is DomainGuest {
 
     constructor(bytes32 _domain, address _daiJoin, address _claimToken) DomainGuest(_domain, _daiJoin, _claimToken) {}
 
-    function _isHost(address) internal override pure returns (bool) {
-        return true;
+    function setIsHost(bool v) external {
+        forceIsHost = v;
+    }
+    function _isHost(address) internal override view returns (bool) {
+        return forceIsHost;
     }
     function _release(uint256 burned) internal override {
         releaseBurned = burned;
@@ -85,6 +89,18 @@ contract DomainGuestTest is DSSTest {
     bytes32 constant SOURCE_DOMAIN = "SOME-DOMAIN-A";
     bytes32 constant TARGET_DOMAIN = "SOME-DOMAIN-B";
 
+    event Lift(uint256 line, uint256 minted);
+    event Release(uint256 burned);
+    event Push(int256 surplus);
+    event Rectify(uint256 wad);
+    event Cage();
+    event Tell(uint256 value);
+    event MintClaim(address indexed usr, uint256 claim);
+    event Deposit(address indexed to, uint256 amount);
+    event Withdraw(address indexed to, uint256 amount);
+    event TeleportInitialized(TeleportGUID teleport);
+    event Flushed(bytes32 indexed targetDomain, uint256 dai);
+
     function postSetup() internal virtual override {
         vat = new VatMock();
         dai = new DaiMock();
@@ -118,6 +134,32 @@ contract DomainGuestTest is DSSTest {
 
     function testFile() public {
         checkFileAddress(address(guest), "DomainGuest", ["end"]);
+    }
+
+    function testAuth() public {
+        guest.deny(address(this));
+
+        bytes[] memory funcs = new bytes[](1);
+        funcs[0] = abi.encodeWithSelector(DomainGuest.tell.selector, 0);
+
+        for (uint256 i = 0; i < funcs.length; i++) {
+            assertRevert(address(guest), funcs[i], "DomainGuest/not-authorized");
+        }
+    }
+
+    function testHostOnly() public {
+        guest.setIsHost(false);
+
+        bytes[] memory funcs = new bytes[](5);
+        funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0);
+        funcs[1] = abi.encodeWithSelector(DomainGuest.rectify.selector, 0);
+        funcs[2] = abi.encodeWithSelector(DomainGuest.cage.selector);
+        funcs[3] = abi.encodeWithSelector(DomainGuest.mintClaim.selector, 0, 0);
+        funcs[4] = abi.encodeWithSelector(DomainGuest.deposit.selector, address(0), 0);
+
+        for (uint256 i = 0; i < funcs.length; i++) {
+            assertRevert(address(guest), funcs[i], "DomainGuest/not-host");
+        }
     }
 
     function testLift() public {
