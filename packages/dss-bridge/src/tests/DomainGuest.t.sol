@@ -89,6 +89,7 @@ contract DomainGuestTest is DSSTest {
     bytes32 constant SOURCE_DOMAIN = "SOME-DOMAIN-A";
     bytes32 constant TARGET_DOMAIN = "SOME-DOMAIN-B";
 
+    event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
     event Lift(uint256 line, uint256 minted);
     event Release(uint256 burned);
     event Push(int256 surplus);
@@ -134,6 +135,28 @@ contract DomainGuestTest is DSSTest {
 
     function testFile() public {
         checkFileAddress(address(guest), "DomainGuest", ["end"]);
+
+        // Also check the validDomains
+        guest.file("validDomains", TARGET_DOMAIN, 0);
+        assertEq(guest.validDomains(TARGET_DOMAIN), 0);
+
+        vm.expectEmit(true, false, false, true);
+        emit File("validDomains", TARGET_DOMAIN, 1);
+        guest.file("validDomains", TARGET_DOMAIN, 1);
+        assertEq(guest.validDomains(TARGET_DOMAIN), 1);
+
+        // Invalid name
+        vm.expectRevert("DomainGuest/file-unrecognized-param");
+        guest.file("badWhat", TARGET_DOMAIN, 1);
+
+        // Invalid value
+        vm.expectRevert("DomainGuest/invalid-data");
+        guest.file("validDomains", TARGET_DOMAIN, 2);
+
+        // Not authed
+        guest.deny(address(this));
+        vm.expectRevert("DomainGuest/not-authorized");
+        guest.file("validDomains", TARGET_DOMAIN, 1);
     }
 
     function testAuth() public {
