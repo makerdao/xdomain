@@ -116,14 +116,15 @@ abstract contract DomainGuest {
     }
 
     // --- Math ---
+    function _int256(uint256 x) internal pure returns (int256 y) {
+        require((y = int256(x)) >= 0, "DomainGuest/overflow");
+    }
     function _min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x <= y ? x : y;
     }
-
     function _max(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x >= y ? x : y;
     }
-
     function _divup(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = (x + y - 1) / y;
     }
@@ -198,12 +199,9 @@ abstract contract DomainGuest {
             if (_sin > 0) vat.heal(_sin);
 
             uint256 wad = (_dai - _sin) / RAY;    // Leave the dust
-            uint256 rad = wad * RAY;
-
-            require(rad < 2 ** 255, "DomainGuest/overflow");
 
             // Burn the DAI and unload on the other side
-            vat.swell(address(this), -int256(rad));
+            vat.swell(address(this), -_int256(wad * RAY));
             _surplus(wad);
 
             emit Push(int256(wad));
@@ -214,16 +212,13 @@ abstract contract DomainGuest {
             uint256 deficit = _divup(_sin - _dai, RAY);
             _deficit(deficit);   // Round up to overcharge for deficit
 
-            require(deficit < 2 ** 255, "DomainGuest/overflow");
-            emit Push(-int256(deficit));
+            emit Push(-_int256(deficit));
         }
     }
 
     /// @notice Merge DAI into surplus
     function rectify(uint256 wad) external hostOnly {
-        uint256 rad = wad * RAY;
-        require(rad < 2 ** 255, "DomainGuest/overflow");
-        vat.swell(address(this), int256(rad));
+        vat.swell(address(this), _int256(wad * RAY));
 
         emit Rectify(wad);
     }
@@ -270,9 +265,7 @@ abstract contract DomainGuest {
     /// @param to The address to send the DAI to on the local domain
     /// @param amount The amount of DAI to send [WAD]
     function deposit(address to, uint256 amount) external hostOnly {
-        uint256 rad = amount * RAY;
-        require(rad < 2 ** 255, "DomainHost/overflow");
-        vat.swell(address(this), int256(rad));
+        vat.swell(address(this), _int256(amount * RAY));
         daiJoin.exit(to, amount);
 
         emit Deposit(to, amount);
@@ -282,11 +275,9 @@ abstract contract DomainGuest {
     /// @param to The address to send the DAI to on the remote domain
     /// @param amount The amount of DAI to withdraw [WAD]
     function withdraw(address to, uint256 amount) external {
-        require(dai.transferFrom(msg.sender, address(this), amount), "DomainHost/transfer-failed");
+        require(dai.transferFrom(msg.sender, address(this), amount), "DomainGuest/transfer-failed");
         daiJoin.join(address(this), amount);
-        uint256 rad = amount * RAY;
-        require(rad < 2 ** 255, "DomainHost/overflow");
-        vat.swell(address(this), -int256(rad));
+        vat.swell(address(this), -_int256(amount * RAY));
 
         _withdraw(to, amount);
 
@@ -350,9 +341,7 @@ abstract contract DomainGuest {
         batchedDaiToFlush[targetDomain] += amount;
         require(dai.transferFrom(msg.sender, address(this), amount), "DomainHost/transfer-failed");
         daiJoin.join(address(this), amount);
-        uint256 rad = amount * RAY;
-        require(rad < 2 ** 255, "DomainGuest/overflow");
-        vat.swell(address(this), -int256(rad));
+        vat.swell(address(this), -_int256(amount * RAY));
 
         _initiateTeleport(teleport);
 

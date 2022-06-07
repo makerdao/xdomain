@@ -123,7 +123,7 @@ abstract contract DomainHost {
 
     // --- Math ---
     function _int256(uint256 x) internal pure returns (int256 y) {
-        require((y = int256(x)) >= 0);
+        require((y = int256(x)) >= 0, "DomainHost/overflow");
     }
     function _divup(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = (x + y - 1) / y;
@@ -243,8 +243,7 @@ abstract contract DomainHost {
     ///         `usr` is the address for the mint on the remote domain.
     function exit(address usr, uint256 wad) external {
         require(vat.live() == 0, "DomainHost/vat-live");
-        require(wad <= 2 ** 255, "DomainHost/overflow");
-        vat.slip(ilk, msg.sender, -int256(wad));
+        vat.slip(ilk, msg.sender, -_int256(wad));
 
         // Convert to actual debt amount
         // Round against the user
