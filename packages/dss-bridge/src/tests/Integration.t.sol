@@ -476,4 +476,41 @@ contract IntegrationTest is DSSTest {
         // We can now exit through gem join or other standard exit function
     }
 
+    function testDeposit() public {
+        mcd.dai().mint(address(this), 100 ether);
+        mcd.dai().approve(address(host), 100 ether);
+        uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
+
+        assertEq(Vat(address(rmcd.vat())).surf(), 0);
+        assertEq(rmcd.dai().balanceOf(address(123)), 0);
+
+        host.deposit(address(123), 100 ether);
+
+        assertEq(Vat(address(rmcd.vat())).surf(), int256(100 * RAD));
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
+        assertEq(rmcd.dai().balanceOf(address(123)), 100 ether);
+    }
+
+    function testWithdraw() public {
+        uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
+
+        mcd.dai().mint(address(this), 100 ether);
+        mcd.dai().approve(address(host), 100 ether);
+        host.deposit(address(this), 100 ether);
+        rmcd.vat().hope(address(rmcd.daiJoin()));
+        rmcd.dai().approve(address(guest), 100 ether);
+
+        assertEq(Vat(address(rmcd.vat())).surf(), int256(100 * RAD));
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
+        assertEq(mcd.dai().balanceOf(address(123)), 0);
+        assertEq(rmcd.dai().balanceOf(address(this)), 100 ether);
+
+        guest.withdraw(address(123), 100 ether);
+
+        assertEq(Vat(address(rmcd.vat())).surf(), 0);
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai);
+        assertEq(mcd.dai().balanceOf(address(123)), 100 ether);
+        assertEq(rmcd.dai().balanceOf(address(this)), 0);
+    }
+
 }
