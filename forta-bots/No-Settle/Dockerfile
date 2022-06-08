@@ -14,5 +14,5 @@ WORKDIR /app
 COPY --from=builder /app/dist ./src
 COPY package.json ./
 COPY yarn.lock ./
-RUN yarn run --frozen-lockfile
+RUN yarn install --production
 CMD [ "yarn", "run", "start:prod" ]
