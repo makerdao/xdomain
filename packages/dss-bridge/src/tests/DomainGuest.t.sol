@@ -97,6 +97,7 @@ contract DomainGuestTest is DSSTest {
     event Cage();
     event Tell(uint256 value);
     event MintClaim(address indexed usr, uint256 claim);
+    event Transfer(address indexed from, address indexed to, uint256 value);
     event Deposit(address indexed to, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
     event InitiateTeleport(TeleportGUID teleport);
@@ -381,8 +382,9 @@ contract DomainGuestTest is DSSTest {
     function testMintClaim() public {
         assertEq(claimToken.balanceOf(address(123)), 0);
 
-        vm.expectEmit(true, false, false, true);
-        emit MintClaim(address(123), 100 ether);
+        // This also fires a MintClaim, but the Transfer comes first
+        vm.expectEmit(true, true, false, true);
+        emit Transfer(address(0), address(123), 100 ether);
         claimToken.mint(address(123), 100 ether);
 
         assertEq(claimToken.balanceOf(address(123)), 100 ether);
