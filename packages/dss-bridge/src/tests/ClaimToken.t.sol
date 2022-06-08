@@ -39,6 +39,13 @@ contract ERC20Test is DSSTest {
         assertEq(token.balanceOf(address(0xBEEF)), 1e18);
     }
 
+    function testMintBadAddress() public {
+        vm.expectRevert("ClaimToken/invalid-address");
+        token.mint(address(0), 1e18);
+        vm.expectRevert("ClaimToken/invalid-address");
+        token.mint(address(token), 1e18);
+    }
+
     function testBurn() public {
         token.mint(address(0xBEEF), 1e18);
 
@@ -70,6 +77,15 @@ contract ERC20Test is DSSTest {
         assertEq(token.balanceOf(address(0xBEEF)), 1e18);
     }
 
+    function testTransferBadAddress() public {
+        token.mint(address(this), 1e18);
+
+        vm.expectRevert("ClaimToken/invalid-address");
+        token.transfer(address(0), 1e18);
+        vm.expectRevert("ClaimToken/invalid-address");
+        token.transfer(address(token), 1e18);
+    }
+
     function testTransferFrom() public {
         address from = address(0xABCD);
 
@@ -87,6 +103,15 @@ contract ERC20Test is DSSTest {
 
         assertEq(token.balanceOf(from), 0);
         assertEq(token.balanceOf(address(0xBEEF)), 1e18);
+    }
+
+    function testTransferFromBadAddress() public {
+        token.mint(address(this), 1e18);
+        
+        vm.expectRevert("ClaimToken/invalid-address");
+        token.transferFrom(address(this), address(0), 1e18);
+        vm.expectRevert("ClaimToken/invalid-address");
+        token.transferFrom(address(this), address(token), 1e18);
     }
 
     function testInfiniteApproveTransferFrom() public {
