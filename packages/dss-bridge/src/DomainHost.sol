@@ -75,6 +75,8 @@ abstract contract DomainHost {
 
     uint256 constant RAY = 10 ** 27;
 
+    string constant ARITHMETIC_ERROR = string(abi.encodeWithSignature("Panic(uint256)", 0x11));
+
     // --- Events ---
     event Rely(address indexed usr);
     event Deny(address indexed usr);
@@ -126,7 +128,7 @@ abstract contract DomainHost {
 
     // --- Math ---
     function _int256(uint256 x) internal pure returns (int256 y) {
-        require((y = int256(x)) >= 0, "DomainHost/overflow");
+        require((y = int256(x)) >= 0, ARITHMETIC_ERROR);
     }
     function _divup(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = (x + y - 1) / y;
