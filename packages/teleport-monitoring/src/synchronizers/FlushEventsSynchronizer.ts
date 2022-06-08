@@ -23,7 +23,7 @@ export class FlushEventsSynchronizer extends BaseSynchronizer {
 
   async run(): Promise<void> {
     const syncStatus = await this.synchronizerStatusRepository.findByName(this.name, this.domainName)
-    let syncBlock = syncStatus?.block ?? this.startingBlock
+    let syncBlock = syncStatus?.block ?? this.startingBlock - 1
 
     const filter = this.l2Sdk.teleportGateway.filters.Flushed()
 
@@ -37,7 +37,8 @@ export class FlushEventsSynchronizer extends BaseSynchronizer {
         ).toLocaleString()} blocks)`,
       )
 
-      const newFlushes = await this.l2Sdk.teleportGateway.queryFilter(filter, syncBlock, boundaryBlock)
+      // ranges are inclusive here so we + 1 to avoid checking the same block twice
+      const newFlushes = await this.l2Sdk.teleportGateway.queryFilter(filter, syncBlock + 1, boundaryBlock)
       console.log(`Found ${newFlushes.length} new flushes`)
       const modelsToCreate: Omit<Flush, 'id'>[] = await Promise.all(
         newFlushes.map(async (w) => {
