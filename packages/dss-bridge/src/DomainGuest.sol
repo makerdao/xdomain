@@ -83,11 +83,10 @@ abstract contract DomainGuest {
     event Rectify(uint256 wad);
     event Cage();
     event Tell(uint256 value);
-    event MintClaim(address indexed usr, uint256 claim);
     event Deposit(address indexed to, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
-    event TeleportInitialized(TeleportGUID teleport);
-    event Flushed(bytes32 indexed targetDomain, uint256 dai);
+    event InitiateTeleport(TeleportGUID teleport);
+    event Flush(bytes32 indexed targetDomain, uint256 dai);
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainGuest/not-authorized");
@@ -247,9 +246,8 @@ abstract contract DomainGuest {
     /// @param usr The destination to send the claim tokens to
     /// @param claim The amount of claim tokens to mint
     function mintClaim(address usr, uint256 claim) external hostOnly {
+        // Don't need event - it's in the mint function
         claimToken.mint(usr, claim);
-
-        emit MintClaim(usr, claim);
     }
 
     function heal(uint256 amount) external {
@@ -341,7 +339,7 @@ abstract contract DomainGuest {
 
         _initiateTeleport(teleport);
 
-        emit TeleportInitialized(teleport);
+        emit InitiateTeleport(teleport);
     }
 
     function flush(bytes32 targetDomain) external {
@@ -353,7 +351,7 @@ abstract contract DomainGuest {
 
         _flush(targetDomain, daiToFlush);
 
-        emit Flushed(targetDomain, daiToFlush);
+        emit Flush(targetDomain, daiToFlush);
     }
 
     // Bridge-specific functions
