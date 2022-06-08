@@ -1,13 +1,4 @@
-import {
-  Finding,
-  HandleBlock,
-  Initialize,
-  BlockEvent,
-  keccak256,
-  FindingSeverity,
-  FindingType,
-  ethers,
-} from "forta-agent";
+import { Finding, HandleBlock, Initialize, BlockEvent, keccak256, FindingSeverity, FindingType } from "forta-agent";
 import { MockEthersProvider, createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests";
 import { provideHandleBlock, provideInitialize } from "./agent";
 import { BigNumber } from "ethers";
