@@ -170,6 +170,19 @@ contract DomainHostTest is DSSTest {
         }
     }
 
+    function testVatLive() public {
+        vat.cage();
+
+        bytes[] memory funcs = new bytes[](3);
+        funcs[0] = abi.encodeWithSelector(DomainHost.lift.selector, 0);
+        funcs[1] = abi.encodeWithSelector(DomainHost.release.selector, 0);
+        funcs[2] = abi.encodeWithSelector(DomainHost.deficit.selector, 0);
+
+        for (uint256 i = 0; i < funcs.length; i++) {
+            assertRevert(address(host), funcs[i], "DomainHost/vat-not-live");
+        }
+    }
+
     function testLift() public {
         // Set DC to 100
         vm.expectEmit(false, false, false, true);
@@ -210,13 +223,6 @@ contract DomainHostTest is DSSTest {
         assertEq(host.liftMinted(), 0);
     }
 
-    function testLiftVatNotLive() public {
-        vat.cage();
-
-        vm.expectRevert("DomainHost/vat-not-live");
-        host.lift(100 ether);
-    }
-
     function testRelease() public {
         // Set DC to 100
         host.lift(100 ether);
@@ -255,13 +261,6 @@ contract DomainHostTest is DSSTest {
         assertEq(host.grain(), 50 ether);
         assertEq(host.liftLine(), 50 * RAD);
         assertEq(host.liftMinted(), 0);
-    }
-
-    function testReleaseVatNotLive() public {
-        vat.cage();
-
-        vm.expectRevert("DomainHost/vat-not-live");
-        host.release(100 ether);
     }
 
     function testAsyncReordering() public {
@@ -334,8 +333,21 @@ contract DomainHostTest is DSSTest {
     function testCage() public {
         assertTrue(!host.caged());
 
+        // Can cage now
+        vm.expectEmit(false, false, false, true);
+        emit Cage();
+        host.cage();
+
+        assertTrue(host.caged());
+    }
+
+    function testCagePermissionlessly() public {
+        host.deny(address(this));
+
+        assertTrue(!host.caged());
+
         // Cannot cage when vat is live
-        vm.expectRevert("DomainHost/vat-live");
+        vm.expectRevert("DomainHost/not-authorized");
         host.cage();
 
         // Cage the vat
@@ -347,32 +359,59 @@ contract DomainHostTest is DSSTest {
         host.cage();
 
         assertTrue(host.caged());
+    }
 
-        // Cannot cage twice
+    function testCageTwice() public {
+        host.cage();
+
         vm.expectRevert("DomainHost/not-live");
         host.cage();
     }
 
     function testTell() public {
+        host.lift(100 ether);
+        host.cage();
+
         assertEq(host.cure(), 0);
         assertTrue(!host.cureReported());
 
         vm.expectEmit(false, false, false, true);
-        emit Tell(123);
-        host.tell(123);
+        emit Tell(100 * RAD);
+        host.tell(100 * RAD);
 
-        assertEq(host.cure(), 123);
+        assertEq(host.cure(), 100 * RAD);
         assertTrue(host.cureReported());
+    }
 
-        // Cannot tell twice
+    function testTellNotCaged() public {
+        host.lift(100 ether);
+
+        vm.expectRevert("DomainHost/live");
+        host.tell(100 * RAD);
+    }
+
+    function testTellCureBadValue() public {
+        host.lift(50 ether);
+        host.cage();
+
+        vm.expectRevert("DomainHost/cure-bad-value");
+        host.tell(100 * RAD);
+    }
+
+    function testTellTwice() public {
+        host.lift(100 ether);
+        host.cage();
+        host.tell(100 * RAD);
+
         vm.expectRevert("DomainHost/cure-reported");
-        host.tell(456);
+        host.tell(50 * RAD);
     }
 
     function testExit() public {
         // Setup initial conditions
         host.lift(100 ether);       // DC raised to 100
         vat.cage();
+        host.cage();
         host.tell(70 * RAD);        // Guest later reports on 30 debt is actually used
 
         // Simulate user getting some gems for this ilk (normally handled by end)

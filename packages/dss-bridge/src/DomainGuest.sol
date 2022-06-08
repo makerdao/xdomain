@@ -83,6 +83,7 @@ abstract contract DomainGuest {
     event Rectify(uint256 wad);
     event Cage();
     event Tell(uint256 value);
+    event MintClaim(address indexed usr, uint256 claim);
     event Deposit(address indexed to, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
     event InitiateTeleport(TeleportGUID teleport);
@@ -95,6 +96,11 @@ abstract contract DomainGuest {
 
     modifier hostOnly {
         require(_isHost(msg.sender), "DomainGuest/not-host");
+        _;
+    }
+
+    modifier isLive {
+        require(live == 1, "DomainGuest/not-live");
         _;
     }
 
@@ -161,9 +167,7 @@ abstract contract DomainGuest {
     /// @notice Set the global debt ceiling for the local dss
     /// @param line The new global debt ceiling [RAD]
     /// @param minted The amount of DAI minted into the remote escrow
-    function lift(uint256 line, uint256 minted) external hostOnly {
-        require(live == 1, "DomainGuest/not-live");
-        
+    function lift(uint256 line, uint256 minted) external hostOnly isLive {
         vat.file("Line", line);
         grain += minted;
 
@@ -173,9 +177,7 @@ abstract contract DomainGuest {
     /// @notice Will release remote DAI from the escrow when it is safe to do so
     /// @dev    Should be run by keeper on a regular schedule.
     ///         This will also push the vat debt for informational purposes.
-    function release() external {
-        require(live == 1, "DomainGuest/not-live");
-        
+    function release() external isLive {
         uint256 limit = _max(vat.Line() / RAY, _divup(vat.debt(), RAY));
         require(grain > limit, "DomainGuest/limit-too-high");
         uint256 burned = grain - limit;
@@ -188,9 +190,7 @@ abstract contract DomainGuest {
 
     /// @notice Push surplus (or deficit) to the host dss
     /// @dev Should be run by keeper on a regular schedule
-    function push() external {
-        require(live == 1, "DomainGuest/not-live");
-
+    function push() external isLive {
         uint256 _dai = vat.dai(address(this));
         uint256 _sin = vat.sin(address(this));
         if (_dai > _sin) {
@@ -223,9 +223,7 @@ abstract contract DomainGuest {
     }
 
     /// @notice Trigger the end module
-    function cage() external hostOnly {
-        require(live == 1, "DomainGuest/not-live");
-
+    function cage() external hostOnly isLive {
         live = 0;
         end.cage();
 
@@ -246,8 +244,9 @@ abstract contract DomainGuest {
     /// @param usr The destination to send the claim tokens to
     /// @param claim The amount of claim tokens to mint
     function mintClaim(address usr, uint256 claim) external hostOnly {
-        // Don't need event - it's in the mint function
         claimToken.mint(usr, claim);
+
+        emit MintClaim(usr, claim);
     }
 
     function heal(uint256 amount) external {

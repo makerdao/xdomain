@@ -101,6 +101,11 @@ abstract contract DomainHost {
         _;
     }
 
+    modifier vatLive {
+        require(vat.live() == 1, "DomainHost/vat-not-live");
+        _;
+    }
+
     constructor(bytes32 _ilk, address _daiJoin, address _escrow, address _router) {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
@@ -150,9 +155,7 @@ abstract contract DomainHost {
     /// @dev Please note that pre-mint DAI cannot be removed from the remote domain
     /// until the remote domain signals that it is safe to do so
     /// @param wad The new debt ceiling [WAD]
-    function lift(uint256 wad) external auth {
-        require(vat.live() == 1, "DomainHost/vat-not-live");
-        
+    function lift(uint256 wad) external auth vatLive {
         uint256 rad = wad * RAY;
         uint256 minted;
 
@@ -174,10 +177,7 @@ abstract contract DomainHost {
     }
 
     /// @notice Withdraw pre-mint DAI from the remote domain
-    function release(uint256 wad) external guestOnly {
-        // Amounts are locked in during global shutdown
-        require(vat.live() == 1, "DomainHost/vat-not-live");
-        
+    function release(uint256 wad) external guestOnly vatLive {
         int256 amt = -_int256(wad);
 
         require(dai.transferFrom(escrow, address(this), wad), "DomainHost/transfer-failed");
@@ -199,10 +199,7 @@ abstract contract DomainHost {
     }
 
     /// @notice Cover the remote domain's deficit by pulling debt from the surplus buffer
-    function deficit(uint256 wad) external guestOnly {
-        // Amounts are locked in during global shutdown
-        require(vat.live() == 1, "DomainHost/vat-not-live");
-        
+    function deficit(uint256 wad) external guestOnly vatLive {
         vat.suck(vow, address(this), wad * RAY);
         daiJoin.exit(address(escrow), wad);
         
@@ -215,7 +212,7 @@ abstract contract DomainHost {
     /// @notice Initiate shutdown for this domain
     /// @dev This will trigger the end module on the remote domain
     function cage() external {
-        require(vat.live() == 0, "DomainHost/vat-live");
+        require(vat.live() == 0 || wards[msg.sender] == 1, "DomainHost/not-authorized");
         require(live == 1, "DomainHost/not-live");
 
         live = 0;
@@ -227,7 +224,9 @@ abstract contract DomainHost {
 
     /// @notice Set this domain's cure value
     function tell(uint256 value) external guestOnly {
+        require(live == 0, "DomainHost/live");
         require(!cureReported, "DomainHost/cure-reported");
+        require(_divup(value, RAY) <= grain, "DomainHost/cure-bad-value");
 
         cureReported = true;
         cure = value;
