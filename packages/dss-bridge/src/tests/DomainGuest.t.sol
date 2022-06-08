@@ -76,6 +76,13 @@ contract EmptyDomainGuest is DomainGuest {
 
 }
 
+contract ClaimTokenMock {
+    mapping (address => uint256) public balanceOf;
+    function mint(address usr, uint256 amount) external {
+        balanceOf[usr] += amount;
+    }
+}
+
 contract DomainGuestTest is DSSTest {
 
     VatMock vat;
@@ -97,7 +104,6 @@ contract DomainGuestTest is DSSTest {
     event Cage();
     event Tell(uint256 value);
     event MintClaim(address indexed usr, uint256 claim);
-    event Transfer(address indexed from, address indexed to, uint256 value);
     event Deposit(address indexed to, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
     event InitiateTeleport(TeleportGUID teleport);
@@ -116,6 +122,7 @@ contract DomainGuestTest is DSSTest {
         vat.hope(address(daiJoin));
         dai.approve(address(guest), type(uint256).max);
         guest.file("validDomains", TARGET_DOMAIN, 1);
+        claimToken.rely(address(guest));
     }
 
     function testConstructor() public {
@@ -141,7 +148,7 @@ contract DomainGuestTest is DSSTest {
         guest.file("validDomains", TARGET_DOMAIN, 0);
         assertEq(guest.validDomains(TARGET_DOMAIN), 0);
 
-        vm.expectEmit(true, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit File("validDomains", TARGET_DOMAIN, 1);
         guest.file("validDomains", TARGET_DOMAIN, 1);
         assertEq(guest.validDomains(TARGET_DOMAIN), 1);
@@ -204,7 +211,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.grain(), 0);
         assertEq(vat.Line(), 0);
 
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Lift(100 * RAD, 100 ether);
         guest.lift(100 * RAD, 100 ether);
 
@@ -228,7 +235,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.releaseBurned(), 0);
 
         // Should release 50 DAI because nothing has been minted
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Release(50 ether);
         guest.release();
 
@@ -276,7 +283,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.deficit(), 0);
 
         // Will push out a surplus of 100 DAI
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Push(int256(100 ether));
         guest.push();
 
@@ -317,7 +324,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.deficit(), 0);
 
         // Will push out a deficit of 100 DAI
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Push(-int256(100 ether));
         guest.push();
 
@@ -349,7 +356,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.dai(address(guest)), 0);
         assertEq(vat.surf(), 0);
 
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Rectify(100 ether);
         guest.rectify(100 ether);
 
@@ -361,7 +368,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(end.live(), 1);
         assertEq(vat.live(), 1);
 
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Cage();
         guest.cage();
 
@@ -372,7 +379,7 @@ contract DomainGuestTest is DSSTest {
     function testTell() public {
         assertEq(guest.tellValue(), 0);
 
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Tell(123);
         guest.tell(123);
 
@@ -382,10 +389,9 @@ contract DomainGuestTest is DSSTest {
     function testMintClaim() public {
         assertEq(claimToken.balanceOf(address(123)), 0);
 
-        // This also fires a MintClaim, but the Transfer comes first
-        vm.expectEmit(true, true, false, true);
-        emit Transfer(address(0), address(123), 100 ether);
-        claimToken.mint(address(123), 100 ether);
+        vm.expectEmit(true, true, true, true);
+        emit MintClaim(address(123), 100 ether);
+        guest.mintClaim(address(123), 100 ether);
 
         assertEq(claimToken.balanceOf(address(123)), 100 ether);
     }
@@ -394,7 +400,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(dai.balanceOf(address(123)), 0);
         assertEq(vat.surf(), 0);
 
-        vm.expectEmit(true, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Deposit(address(123), 100 ether);
         guest.deposit(address(123), 100 ether);
 
@@ -409,7 +415,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(dai.balanceOf(address(this)), 100 ether);
         assertEq(vat.surf(), 0);
 
-        vm.expectEmit(true, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Withdraw(address(123), 100 ether);
         guest.withdraw(address(123), 100 ether);
 
@@ -438,7 +444,7 @@ contract DomainGuestTest is DSSTest {
             timestamp: uint48(block.timestamp)
         });
 
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit InitiateTeleport(teleport);
         guest.initiateTeleport(TARGET_DOMAIN, address(123), 100 ether);
         
@@ -482,7 +488,7 @@ contract DomainGuestTest is DSSTest {
 
         assertEq(guest.batchedDaiToFlush(TARGET_DOMAIN), 100 ether);
 
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Flush(TARGET_DOMAIN, 100 ether);
         guest.flush(TARGET_DOMAIN);
 

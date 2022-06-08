@@ -185,7 +185,7 @@ contract DomainHostTest is DSSTest {
 
     function testLift() public {
         // Set DC to 100
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Lift(100 ether);
         host.lift(100 ether);
 
@@ -249,7 +249,7 @@ contract DomainHostTest is DSSTest {
         assertEq(host.liftMinted(), 0);
 
         // Remote domain triggers release at a later time
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Release(50 ether);
         host.release(50 ether);
 
@@ -308,7 +308,7 @@ contract DomainHostTest is DSSTest {
         assertEq(vat.dai(vow), 0);
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
 
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Surplus(100 ether);
         host.surplus(100 ether);
 
@@ -321,7 +321,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(host)), 0);
         assertEq(host.rectify(), 0);
 
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Deficit(100 ether);
         host.deficit(100 ether);
 
@@ -334,7 +334,7 @@ contract DomainHostTest is DSSTest {
         assertTrue(!host.caged());
 
         // Can cage now
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Cage();
         host.cage();
 
@@ -354,7 +354,7 @@ contract DomainHostTest is DSSTest {
         vat.cage();
 
         // Can cage now
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Cage();
         host.cage();
 
@@ -375,7 +375,7 @@ contract DomainHostTest is DSSTest {
         assertEq(host.cure(), 0);
         assertTrue(!host.cureReported());
 
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Tell(100 * RAD);
         host.tell(100 * RAD);
 
@@ -417,7 +417,7 @@ contract DomainHostTest is DSSTest {
         // Simulate user getting some gems for this ilk (normally handled by end)
         vat.slip(ILK, address(this), 50 ether);
 
-        vm.expectEmit(true, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Exit(address(123), 50 ether, 15 ether);
         host.exit(address(123), 50 ether);
 
@@ -433,7 +433,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(this)), 100 ether);
         assertEq(dai.balanceOf(address(escrow)), 0);
 
-        vm.expectEmit(true, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Deposit(address(123), 100 ether);
         host.deposit(address(123), 100 ether);
 
@@ -450,7 +450,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(123)), 0);
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
 
-        vm.expectEmit(true, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Withdraw(address(123), 100 ether);
         host.withdraw(address(123), 100 ether);
 
@@ -471,7 +471,7 @@ contract DomainHostTest is DSSTest {
 
         assertEq(dai.balanceOf(address(123)), 0);
 
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit FinalizeTeleport(guid);
         host.finalizeTeleport(guid);
 
@@ -485,7 +485,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(router)), 0);
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
 
-        vm.expectEmit(true, false, false, true);
+        vm.expectEmit(true, true, true, true);
         emit Flush("ethereum", 100 ether);
         host.flush("ethereum", 100 ether);
 
