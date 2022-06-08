@@ -24,7 +24,7 @@ export const testCreateFinding = (txHash: string, originator: string, chainId: n
   });
 };
 
-describe("WormholeInitialized events monitoring bot test suite", () => {
+describe("Slow TeleportJoin withdrawals monitoring bot test suite", () => {
   const mockNetworkManager = {
     TeleportJoin: createAddress("0x0a"),
     TeleportOracleAuth: createAddress("0x0b"),
