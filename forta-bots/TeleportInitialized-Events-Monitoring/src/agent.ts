@@ -5,36 +5,36 @@ import NetworkManager from "./network";
 import { EVENT_IFACE, createFinding } from "./utils";
 
 const networkManager: NetworkData = new NetworkManager(NETWORK_MAP);
-let LOGS_MAP: Map<string, string> = new Map<string, string>();
 
-export const provideInitialize =
-  (data: NetworkManager, provider: providers.Provider, logsMap: Map<string, string>) => async () => {
-    const { chainId } = await provider.getNetwork();
-    data.setNetwork(chainId);
-
-    const blockNumber = await provider.getBlockNumber();
-    const filter = {
-      address: data.L2DaiTeleportGateway,
-      topics: [EVENT_IFACE.getEventTopic("WormholeInitialized")],
-      fromBlock: data.deploymentBlock,
-      toBlock: blockNumber,
-    };
-
-    const teleportInitializedLogs = await provider.getLogs(filter);
-
-    teleportInitializedLogs.forEach((log, i) => {
-      logsMap.set(i.toString(), utils.keccak256(log.data));
-    });
-  };
+export const provideInitialize = (data: NetworkManager, provider: providers.Provider) => async () => {
+  const { chainId } = await provider.getNetwork();
+  data.setNetwork(chainId);
+};
 
 export const provideHandleBlock =
-  (data: NetworkData, provider: providers.Provider, logsMap: Map<string, string>): HandleBlock =>
+  (data: NetworkData, provider: providers.Provider, init: boolean): HandleBlock =>
   async (blockEvent: BlockEvent) => {
     const findings: Finding[] = [];
 
-    if (logsMap.size) {
-      findings.push(createFinding(logsMap));
-      logsMap.clear();
+    if (!init) {
+      init = true;
+      const filter = {
+        address: data.L2DaiTeleportGateway,
+        topics: [EVENT_IFACE.getEventTopic("WormholeInitialized")],
+        fromBlock: data.deploymentBlock,
+        toBlock: blockEvent.block.number - 1,
+      };
+
+      const teleportInitializedLogs = await provider.getLogs(filter);
+
+      if (teleportInitializedLogs.length) {
+        let logsMapInit: Map<string, string> = new Map<string, string>();
+
+        teleportInitializedLogs.forEach((log, i) => {
+          logsMapInit.set(i.toString(), utils.keccak256(log.data));
+        });
+        findings.push(createFinding(logsMapInit));
+      }
     }
 
     const filter = {
@@ -48,15 +48,17 @@ export const provideHandleBlock =
       return findings;
     }
 
+    let logsMap: Map<string, string> = new Map<string, string>();
     teleportInitializedLogs.forEach((log, i) => {
       logsMap.set(i.toString(), utils.keccak256(log.data));
     });
+
     findings.push(createFinding(logsMap));
 
     return findings;
   };
 
 export default {
-  initialize: provideInitialize(networkManager, getEthersProvider(), LOGS_MAP),
-  handleBlock: provideHandleBlock(networkManager, getEthersProvider(), LOGS_MAP),
+  initialize: provideInitialize(networkManager, getEthersProvider()),
+  handleBlock: provideHandleBlock(networkManager, getEthersProvider(), false),
 };
