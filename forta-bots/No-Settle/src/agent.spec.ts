@@ -26,17 +26,8 @@ const testCreateFinding = (
   });
 };
 
-function createMockProvider(): MockEthersProvider {
-  const mockProvider = new MockEthersProvider();
-
-  // @ts-ignore
-  mockProvider.getNetwork = jest.fn().mockImplementation(() => ({ chainId: 42 }));
-
-  return mockProvider;
-}
-
 describe("No-settle monitoring bot test suite", () => {
-  let mockProvider = createMockProvider() as any;
+  let mockProvider = new MockEthersProvider();
   let handleBlock: HandleBlock;
   const mockNetworkManager = {
     TeleportJoin: TEST_TELEPORT_JOIN,
@@ -102,7 +93,7 @@ describe("No-settle monitoring bot test suite", () => {
       },
     ];
 
-    when(mockProvider.getBlock).calledWith(198).mockReturnValue({ timestamp: 2550 });
+    when(mockProvider.getBlock).calledWith(198).mockReturnValue({ timestamp: 2450 });
     mockProvider.addFilteredLogs(filter0, logs0);
 
     const filter1 = {
