@@ -1,7 +1,6 @@
-import { Finding, HandleBlock, Initialize, BlockEvent, keccak256, FindingSeverity, FindingType } from "forta-agent";
+import { Finding, HandleBlock, BlockEvent, keccak256, FindingSeverity, FindingType } from "forta-agent";
 import { MockEthersProvider, createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests";
-import { provideHandleBlock, provideInitialize } from "./agent";
-import { BigNumber } from "ethers";
+import { provideHandleBlock } from "./agent";
 import { resetAllWhenMocks, when } from "jest-when";
 
 const TEST_L2DAITELEPORTGATEWAY = createAddress("0xaaee");
@@ -27,17 +26,8 @@ const testCreateFinding = (
   });
 };
 
-function createMockProvider(): MockEthersProvider {
-  const mockProvider = new MockEthersProvider();
-
-  // @ts-ignore
-  mockProvider.getNetwork = jest.fn().mockImplementation(() => ({ chainId: 42 }));
-
-  return mockProvider;
-}
-
 describe("No-flushed monitoring bot test suite", () => {
-  let mockProvider = createMockProvider() as any;
+  let mockProvider = new MockEthersProvider();
   let handleBlock: HandleBlock;
   const mockNetworkManager = {
     L2DaiTeleportGateway: TEST_L2DAITELEPORTGATEWAY,
