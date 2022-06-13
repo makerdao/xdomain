@@ -67,7 +67,7 @@ abstract contract DomainHost {
     RouterLike  public immutable router;
 
     address public vow;
-    uint256 public line;        // Remove domain global debt ceiling [RAD]
+    uint256 public line;        // Remote domain global debt ceiling [RAD]
     uint256 public grain;       // Keep track of the pre-minted DAI in the escrow [WAD]
     uint256 public cure;        // The amount of unused debt [RAD]
     bool public cureReported;   // Returns true if cure has been reported by the guest
