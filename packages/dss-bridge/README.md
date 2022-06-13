@@ -66,4 +66,4 @@ Standard withdrawal mechanism. Burns local canonical DAI and unlocks the escrowe
 
 ### Teleport Functions
 
-See the [dss-teleport respoitory](https://github.com/makerdao/dss-teleport).
+See the [dss-teleport respoitory](https://github.com/makerdao/dss-teleport) for more detailed information.
