@@ -44,3 +44,4 @@ jobs:
         docker build -t $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG       
       working-directory: ./packages/teleport-keeper
+
