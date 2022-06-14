@@ -92,7 +92,7 @@ contract DomainHostTest is DSSTest {
     event Exit(address indexed usr, uint256 wad, uint256 claim);
     event Deposit(address indexed to, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
-    event FinalizeTeleport(TeleportGUID teleport);
+    event TeleportSlowPath(TeleportGUID teleport);
     event Flush(bytes32 targetDomain, uint256 daiToFlush);
 
     function postSetup() internal virtual override {
@@ -162,7 +162,7 @@ contract DomainHostTest is DSSTest {
             nonce: 5,
             timestamp: uint48(block.timestamp)
         });
-        funcs[5] = abi.encodeWithSelector(DomainHost.finalizeTeleport.selector, teleport);
+        funcs[5] = abi.encodeWithSelector(DomainHost.teleportSlowPath.selector, teleport);
         funcs[6] = abi.encodeWithSelector(DomainHost.flush.selector, bytes32(0), 0);
 
         for (uint256 i = 0; i < funcs.length; i++) {
@@ -458,7 +458,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 0);
     }
 
-    function testFinalizeTeleport() public {
+    function testTeleportSlowPath() public {
         TeleportGUID memory guid = TeleportGUID({
             sourceDomain: "l2network",
             targetDomain: "ethereum",
@@ -472,8 +472,8 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(123)), 0);
 
         vm.expectEmit(true, true, true, true);
-        emit FinalizeTeleport(guid);
-        host.finalizeTeleport(guid);
+        emit TeleportSlowPath(guid);
+        host.teleportSlowPath(guid);
 
         assertEq(dai.balanceOf(address(123)), 100 ether);
     }

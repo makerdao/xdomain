@@ -90,7 +90,7 @@ abstract contract DomainHost {
     event Exit(address indexed usr, uint256 wad, uint256 claim);
     event Deposit(address indexed to, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
-    event FinalizeTeleport(TeleportGUID teleport);
+    event TeleportSlowPath(TeleportGUID teleport);
     event Flush(bytes32 targetDomain, uint256 daiToFlush);
 
     modifier auth {
@@ -277,11 +277,11 @@ abstract contract DomainHost {
 
     // --- Maker Teleport Support ---
 
-    /// @notice Finalize a teleport registration
-    function finalizeTeleport(TeleportGUID calldata teleport) external guestOnly {
+    /// @notice Finalize a teleport registration via the slow path
+    function teleportSlowPath(TeleportGUID calldata teleport) external guestOnly {
         router.requestMint(teleport, 0, 0);
 
-        emit FinalizeTeleport(teleport);
+        emit TeleportSlowPath(teleport);
     }
 
     /// @notice Flush any accumulated DAI
