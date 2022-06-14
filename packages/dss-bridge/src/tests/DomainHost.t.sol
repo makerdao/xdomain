@@ -32,6 +32,7 @@ import "../TeleportGUID.sol";
 contract EmptyDomainHost is DomainHost {
 
     bool forceIsGuest = true;
+    uint256 public liftIdEmpty;
     uint256 public liftLine;
     uint256 public liftMinted;
     uint256 public rectify;
@@ -49,7 +50,8 @@ contract EmptyDomainHost is DomainHost {
     function _isGuest(address) internal override view returns (bool) {
         return forceIsGuest;
     }
-    function _lift(uint256 _line, uint256 _minted) internal override {
+    function _lift(uint256 _id, uint256 _line, uint256 _minted) internal override {
+        liftIdEmpty = _id;
         liftLine = _line;
         liftMinted = _minted;
     }
@@ -195,6 +197,8 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.line(), 100 * RAD);
         assertEq(host.grain(), 100 ether);
+        assertEq(host.liftId(), 1);
+        assertEq(host.liftIdEmpty(), 1);
         assertEq(host.liftLine(), 100 * RAD);
         assertEq(host.liftMinted(), 100 ether);
 
@@ -207,6 +211,8 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 200 ether);
         assertEq(host.line(), 200 * RAD);
         assertEq(host.grain(), 200 ether);
+        assertEq(host.liftId(), 2);
+        assertEq(host.liftIdEmpty(), 2);
         assertEq(host.liftLine(), 200 * RAD);
         assertEq(host.liftMinted(), 100 ether);
 
@@ -219,6 +225,8 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 200 ether);
         assertEq(host.line(), 100 * RAD);
         assertEq(host.grain(), 200 ether);
+        assertEq(host.liftId(), 3);
+        assertEq(host.liftIdEmpty(), 3);
         assertEq(host.liftLine(), 100 * RAD);
         assertEq(host.liftMinted(), 0);
     }
@@ -233,6 +241,8 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.line(), 100 * RAD);
         assertEq(host.grain(), 100 ether);
+        assertEq(host.liftId(), 1);
+        assertEq(host.liftIdEmpty(), 1);
         assertEq(host.liftLine(), 100 * RAD);
         assertEq(host.liftMinted(), 100 ether);
 
@@ -245,6 +255,8 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(host.grain(), 100 ether);
+        assertEq(host.liftId(), 2);
+        assertEq(host.liftIdEmpty(), 2);
         assertEq(host.liftLine(), 50 * RAD);
         assertEq(host.liftMinted(), 0);
 
@@ -259,6 +271,8 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 50 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(host.grain(), 50 ether);
+        assertEq(host.liftId(), 2);
+        assertEq(host.liftIdEmpty(), 2);
         assertEq(host.liftLine(), 50 * RAD);
         assertEq(host.liftMinted(), 0);
     }
