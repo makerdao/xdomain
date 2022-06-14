@@ -1,0 +1,28 @@
+groups:
+  - name: teleport
+    rules:
+      - alert: BridgeInvariantBroken
+        expr: teleport_l1_dai_balance < teleport_l2_dai_balance
+        for: 1s
+        labels:
+          severity: page
+        annotations:
+          summary: Bridge invariant broken
+
+      - alert: BadDebtDetected
+        expr: teleport_bad_debt > 0
+        for: 1s
+        labels:
+          severity: page
+        annotations:
+          summary: Detected bad debt
+
+      - alert: NoFlush
+        # 1 DAI for 1 day
+        # expr: teleport_debt_to_flush > 1000000000000000000 and teleport_last_flush_ms > 60*60*24*1000
+        expr: teleport_debt_to_flush > 0 and teleport_last_flush_ms > 60*60*24*1000
+        for: 1s
+        labels:
+          severity: page
+        annotations:
+          summary: No flush for one day

@@ -1,0 +1,109 @@
+name: Teleport Monitoring
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - packages/teleport-monitoring/**
+  pull_request:
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/teleport-monitoring
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Cache YARN dependencies
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-
+
+      - run: yarn --no-progress --non-interactive --frozen-lockfile
+
+      - run: yarn lint
+      - run: yarn format
+      - run: yarn test
+        env:
+          TEST_RPC: ${{ secrets.KOVAN_RPC_URL }}
+      - run: yarn typecheck
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    env:
+      REGION: us-east-1
+      SERVICE_NAME: teleport-monitor-prod
+      CLUSTER_NAME: teleport-monitor-prod
+      ECR_REPO_NAME: teleport-monitor-prod
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.MONITOR_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.MONITOR_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.REGION }}
+
+      - name: Login to container registry
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Extract commit hash
+        id: hash
+        shell: bash
+        run: |
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+      - name: Build, tag, and push image to container registry
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          SHA_TAG: ${{ steps.hash.outputs.sha_short }}
+          LATEST_TAG: latest
+          ENVIRONMENT_TAG: prod
+        run: |
+          # Build a docker container and push it to ECR so that it can
+          # be deployed to ECS.
+          docker build -t $ECR_REGISTRY/$ECR_REPO_NAME:$SHA_TAG \
+                        -t $ECR_REGISTRY/$ECR_REPO_NAME:$LATEST_TAG \
+                        -t $ECR_REGISTRY/$ECR_REPO_NAME:$ENVIRONMENT_TAG \
+                        .
+          docker push $ECR_REGISTRY/$ECR_REPO_NAME --all-tags
+        working-directory: ./packages/teleport-monitoring
+
+      - name: Update ECS service
+        id: service-update
+        run: |
+          aws ecs update-service --cluster ${{ env.CLUSTER_NAME }} \
+                                --service ${{ env.SERVICE_NAME }} \
+                                --force-new-deployment \
+                                --region ${{ env.REGION }}
+
+      - name: Wait for all services to become stable
+        run: |
+          aws ecs wait services-stable \
+                    --cluster ${{ env.CLUSTER_NAME }} \
+                    --services '[ "${{ env.SERVICE_NAME }}" ]'

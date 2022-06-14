@@ -1,0 +1,38 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SynchronizerStatus {
+  id     Int    @id @default(autoincrement())
+  domain String
+  name   String
+  block  Int
+
+  @@unique([domain, name])
+}
+
+model Teleport {
+  id           Int      @id @default(autoincrement())
+  hash         String   @unique
+  sourceDomain String
+  targetDomain String
+  receiver     String
+  operator     String
+  amount       String
+  nonce        String
+  timestamp    DateTime
+}
+
+model Flush {
+  id           Int      @id @default(autoincrement())
+  sourceDomain String
+  targetDomain String
+  amount       String
+  timestamp    DateTime
+}

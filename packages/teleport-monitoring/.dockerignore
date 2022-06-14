@@ -1,0 +1,9 @@
+*
+# ignore everything
+
+# ...other than
+!/src
+!/eth-sdk
+!/prisma
+!/package.json
+!/yarn.lock
