@@ -14,8 +14,8 @@ export default defineConfig({
       teleportGateway: '0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0',
     },
     rinkeby: {
-      dai: '0xd9e66A2f546880EA4d800F189d6F12Cc15Bff281',
-      escrow: '0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65',
+      dai: '0x17b729a6ac1f265090cbb4aecbdd53e34664c00e',
+      escrow: '0x3128d6ffeb4cdd14dc47e4e6a70022f4bf8e7751',
       join: '0x894DB23D804c626f1aAA89a2Bc3280052e6c4750',
       oracleAuth: '0x1E7722E502D3dCbB0704f99c75c99a5402598f13',
     },
