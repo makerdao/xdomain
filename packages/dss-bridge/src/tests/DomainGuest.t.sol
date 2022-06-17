@@ -97,7 +97,7 @@ contract DomainGuestTest is DSSTest {
     bytes32 constant TARGET_DOMAIN = "SOME-DOMAIN-B";
 
     event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
-    event Lift(uint256 id, uint256 line, uint256 minted);
+    event Lift(uint256 line, uint256 minted);
     event Release(uint256 burned);
     event Push(int256 surplus);
     event Rectify(uint256 wad);
@@ -182,7 +182,7 @@ contract DomainGuestTest is DSSTest {
         guest.setIsHost(false);
 
         bytes[] memory funcs = new bytes[](5);
-        funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0, 0);
+        funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0);
         funcs[1] = abi.encodeWithSelector(DomainGuest.rectify.selector, 0);
         funcs[2] = abi.encodeWithSelector(DomainGuest.cage.selector);
         funcs[3] = abi.encodeWithSelector(DomainGuest.mintClaim.selector, 0, 0);
@@ -197,7 +197,7 @@ contract DomainGuestTest is DSSTest {
         guest.cage();
 
         bytes[] memory funcs = new bytes[](4);
-        funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0, 0);
+        funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0);
         funcs[1] = abi.encodeWithSelector(DomainGuest.release.selector);
         funcs[2] = abi.encodeWithSelector(DomainGuest.push.selector);
         funcs[3] = abi.encodeWithSelector(DomainGuest.cage.selector, 0, 0);
@@ -207,60 +207,43 @@ contract DomainGuestTest is DSSTest {
         }
     }
 
+    function testEnqueue() public {
+        bytes memory data = abi.encodeWithSelector(DomainGuest.lift.selector, 100, 100);
+
+        assertEq(guest.queue(0), "");
+
+        guest.enqueue(0, data);
+
+        assertEq(guest.queue(0), data);
+
+        guest.next();
+
+        assertEq(guest.nextId(), 1);
+        assertEq(guest.grain(), 100);
+    }
+
     function testLift() public {
         assertEq(guest.grain(), 0);
-        assertEq(guest.liftId(), 0);
         assertEq(vat.Line(), 0);
 
         vm.expectEmit(true, true, true, true);
-        emit Lift(1, 100 * RAD, 100 ether);
-        guest.lift(1, 100 * RAD, 100 ether);
+        emit Lift(100 * RAD, 100 ether);
+        guest.lift(100 * RAD, 100 ether);
 
         assertEq(guest.grain(), 100 ether);
-        assertEq(guest.liftId(), 1);
-        assertEq(vat.Line(), 100 * RAD);
-    }
-
-    function testLiftSkipId() public {
-        assertEq(guest.grain(), 0);
-        assertEq(guest.liftId(), 0);
-        assertEq(vat.Line(), 0);
-
-        guest.lift(2, 100 * RAD, 100 ether);
-
-        assertEq(guest.grain(), 100 ether);
-        assertEq(guest.liftId(), 2);
-        assertEq(vat.Line(), 100 * RAD);
-    }
-
-    function testLiftOutOfOrder() public {
-        assertEq(guest.grain(), 0);
-        assertEq(guest.liftId(), 0);
-        assertEq(vat.Line(), 0);
-
-        guest.lift(2, 100 * RAD, 50 ether);
-
-        assertEq(guest.grain(), 50 ether);
-        assertEq(guest.liftId(), 2);
-        assertEq(vat.Line(), 100 * RAD);
-
-        guest.lift(1, 50 * RAD, 50 ether);
-
-        assertEq(guest.grain(), 100 ether);
-        assertEq(guest.liftId(), 2);
         assertEq(vat.Line(), 100 * RAD);
     }
 
     function testRelease() public {
         // Set debt ceiling to 100 DAI
-        guest.lift(1, 100 * RAD, 100 ether);
+        guest.lift(100 * RAD, 100 ether);
 
         assertEq(guest.grain(), 100 ether);
         assertEq(vat.Line(), 100 * RAD);
         assertEq(guest.releaseBurned(), 0);
 
         // Lower debt ceiling to 50 DAI
-        guest.lift(2, 50 * RAD, 0);
+        guest.lift(50 * RAD, 0);
 
         assertEq(guest.grain(), 100 ether);
         assertEq(vat.Line(), 50 * RAD);
@@ -278,9 +261,9 @@ contract DomainGuestTest is DSSTest {
 
     function testReleaseDebtTaken() public {
         // Set so that debt is larger than the global DC
-        guest.lift(1, 100 * RAD, 100 ether);
+        guest.lift(100 * RAD, 100 ether);
         vat.suck(address(this), address(this), 50 * RAD);
-        guest.lift(2, 0, 0);
+        guest.lift(0, 0);
 
         assertEq(vat.Line(), 0);
         assertEq(vat.debt(), 50 * RAD);

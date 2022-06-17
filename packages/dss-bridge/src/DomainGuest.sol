@@ -58,12 +58,13 @@ abstract contract DomainGuest {
     mapping (address => uint256) public wards;
     mapping (bytes32 => uint256) public validDomains;
     mapping (bytes32 => uint256) public batchedDaiToFlush;
+    mapping (uint256 => bytes)   public queue;  // Hold ordered messages
 
     EndLike public end;
-    uint256 public liftId;      // To track the ordering on lift
     uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow [WAD]
     uint256 public live;
     uint80  public nonce;
+    uint256 public nextId;      // The next message to process
 
     bytes32     public immutable domain;
     VatLike     public immutable vat;
@@ -80,7 +81,7 @@ abstract contract DomainGuest {
     event Deny(address indexed usr);
     event File(bytes32 indexed what, address data);
     event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
-    event Lift(uint256 id, uint256 line, uint256 minted);
+    event Lift(uint256 line, uint256 minted);
     event Release(uint256 burned);
     event Push(int256 surplus);
     event Rectify(uint256 wad);
@@ -98,7 +99,7 @@ abstract contract DomainGuest {
     }
 
     modifier hostOnly {
-        require(_isHost(msg.sender), "DomainGuest/not-host");
+        require(msg.sender == address(this) || _isHost(msg.sender), "DomainGuest/not-host");
         _;
     }
 
@@ -167,19 +168,30 @@ abstract contract DomainGuest {
 
     // --- MCD Support ---
 
+    function enqueue(uint256 id, bytes calldata data) external hostOnly {
+        queue[id] = data;
+    }
+
+    function next() external {
+        uint256 _nextId = nextId;
+        require(queue[_nextId].length > 0, "DomainGuest/message-unavailable");
+
+        (bool success, bytes memory response) = address(this).call(queue[_nextId]);
+        if (success) {
+            nextId++;
+        } else {
+            revert(string(response));
+        }
+    }
+
     /// @notice Set the global debt ceiling for the local dss
-    /// @param id An incrementing ID to prevent earlier updates from overwriting later ones
     /// @param line The new global debt ceiling [RAD]
     /// @param minted The amount of DAI minted into the remote escrow
-    function lift(uint256 id, uint256 line, uint256 minted) external hostOnly isLive {
-        // Need to ensure out of order updates do not incorrectly set the debt ceiling
-        if (id > liftId) {
-            vat.file("Line", line);
-            liftId = id;
-        }
+    function lift(uint256 line, uint256 minted) external hostOnly isLive {
+        vat.file("Line", line);
         grain += minted;
 
-        emit Lift(id, line, minted);
+        emit Lift(line, minted);
     }
 
     /// @notice Will release remote DAI from the escrow when it is safe to do so
