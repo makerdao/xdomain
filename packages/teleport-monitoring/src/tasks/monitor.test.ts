@@ -1,4 +1,5 @@
 const hre = require('hardhat')
+import { PrismaClient } from '@prisma/client'
 import { expect } from 'earljs'
 import { ethers, providers, Wallet } from 'ethers'
 import waitForExpect from 'wait-for-expect'
@@ -6,9 +7,9 @@ import waitForExpect from 'wait-for-expect'
 import { impersonateAccount, mineABunchOfBlocks, mintEther } from '../../test-e2e/hardhat-utils'
 import { getAttestations } from '../../test-e2e/signing'
 import { chainIds, networks } from '../config'
-import { FlushRepositoryInMemory } from '../db/FlushRepository'
-import { SyncStatusRepositoryInMemory } from '../db/SynchronizerStatusRepository'
-import { TeleportRepositoryInMemory } from '../db/TeleportRepository'
+import { FlushRepository } from '../db/FlushRepository'
+import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
+import { TeleportRepository } from '../db/TeleportRepository'
 import { getKovanSdk } from '../sdk'
 import { monitor } from './monitor'
 
@@ -18,17 +19,22 @@ describe('Monitoring', () => {
   const signers = [Wallet.createRandom()]
   const receiver = Wallet.createRandom().connect(hhProvider)
   let cancel: Function
+  let prisma: PrismaClient
 
   it('detects bad debt', async () => {
     const sourceDomain = 'KOVAN-SLAVE-OPTIMISM-1'
     const targetDomain = 'KOVAN-MASTER-1'
     const daiToMint = 2137
+
+    prisma = new PrismaClient()
+    await prisma.$connect()
+
     // start monitoring
     const network = networks[chainIds.KOVAN]
     const l2Provider = new ethers.providers.JsonRpcProvider(network.slaves[0].l2Rpc)
-    const teleportRepository = new TeleportRepositoryInMemory()
-    const syncStatusesRepository = new SyncStatusRepositoryInMemory()
-    const flushRepository = new FlushRepositoryInMemory()
+    const teleportRepository = new TeleportRepository(prisma)
+    const syncStatusesRepository = new SynchronizerStatusRepository(prisma)
+    const flushRepository = new FlushRepository(prisma)
     await syncStatusesRepository.upsert({
       domain: sourceDomain,
       block: (await l2Provider.getBlock('latest')).number,
@@ -43,9 +49,9 @@ describe('Monitoring', () => {
     const { metrics, cancel: _cancel } = await monitor({
       network,
       l1Provider: hhProvider,
-      teleportRepository: teleportRepository as any,
-      synchronizerStatusRepository: syncStatusesRepository as any,
-      flushRepository: flushRepository as any,
+      teleportRepository: teleportRepository,
+      synchronizerStatusRepository: syncStatusesRepository,
+      flushRepository: flushRepository,
     })
     cancel = _cancel
 
@@ -74,9 +80,15 @@ describe('Monitoring', () => {
     }, 10_000)
   })
 
-  afterEach(() => {
+  afterEach(async () => {
     if (cancel) {
       cancel()
+    }
+
+    if (prisma) {
+      await prisma.flush.deleteMany()
+      await prisma.synchronizerStatus.deleteMany()
+      await prisma.teleport.deleteMany()
     }
   })
 })

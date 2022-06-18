@@ -8,5 +8,3 @@ export function null2Undefined<T>(val: T | null): T | undefined {
 }
 
 export type TxHandle = PrismaClient
-
-export type PublicInterface<T> = { [K in keyof T]: T[K] }
