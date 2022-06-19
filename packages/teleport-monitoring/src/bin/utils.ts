@@ -3,6 +3,7 @@ import { ethers, providers } from 'ethers'
 
 import { idsToChains, networks } from '../config'
 import { FlushRepository } from '../db/FlushRepository'
+import { SettleRepository } from '../db/SettleRepository'
 import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
 import { TeleportRepository } from '../db/TeleportRepository'
 import { NetworkConfig } from '../types'
@@ -13,6 +14,7 @@ type InitFunction = (args: {
   teleportRepository: TeleportRepository
   flushRepository: FlushRepository
   synchronizerStatusRepository: SynchronizerStatusRepository
+  settleRepository: SettleRepository
 }) => Promise<void>
 
 export async function run(fn: InitFunction): Promise<void> {
@@ -41,8 +43,16 @@ export async function run(fn: InitFunction): Promise<void> {
     const teleportRepository = new TeleportRepository(prisma)
     const flushRepository = new FlushRepository(prisma)
     const synchronizerStatusRepository = new SynchronizerStatusRepository(prisma)
+    const settleRepository = new SettleRepository(prisma)
 
-    await fn({ l1Provider, network, synchronizerStatusRepository, teleportRepository, flushRepository })
+    await fn({
+      l1Provider,
+      network,
+      synchronizerStatusRepository,
+      teleportRepository,
+      flushRepository,
+      settleRepository,
+    })
   } catch (e) {
     console.error('Error occured: ', e)
     process.exit(1)

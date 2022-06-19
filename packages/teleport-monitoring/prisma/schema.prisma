@@ -36,3 +36,11 @@ model Flush {
   amount       String
   timestamp    DateTime
 }
+
+model Settle {
+  id           Int      @id @default(autoincrement())
+  sourceDomain String
+  targetDomain String
+  amount       String
+  timestamp    DateTime
+}

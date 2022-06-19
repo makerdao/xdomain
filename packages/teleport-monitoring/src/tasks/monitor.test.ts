@@ -8,6 +8,7 @@ import { impersonateAccount, mineABunchOfBlocks, mintEther } from '../../test-e2
 import { getAttestations } from '../../test-e2e/signing'
 import { chainIds, networks } from '../config'
 import { FlushRepository } from '../db/FlushRepository'
+import { SettleRepository } from '../db/SettleRepository'
 import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
 import { TeleportRepository } from '../db/TeleportRepository'
 import { getKovanSdk } from '../sdk'
@@ -33,25 +34,32 @@ describe('Monitoring', () => {
     const network = networks[chainIds.KOVAN]
     const l2Provider = new ethers.providers.JsonRpcProvider(network.slaves[0].l2Rpc)
     const teleportRepository = new TeleportRepository(prisma)
-    const syncStatusesRepository = new SynchronizerStatusRepository(prisma)
+    const settleRepository = new SettleRepository(prisma)
+    const synchronizerStatusRepository = new SynchronizerStatusRepository(prisma)
     const flushRepository = new FlushRepository(prisma)
-    await syncStatusesRepository.upsert({
+    await synchronizerStatusRepository.upsert({
       domain: sourceDomain,
       block: (await l2Provider.getBlock('latest')).number,
       name: 'InitEventsSynchronizer',
     })
-    await syncStatusesRepository.upsert({
+    await synchronizerStatusRepository.upsert({
       domain: sourceDomain,
       block: (await l2Provider.getBlock('latest')).number,
       name: 'FlushEventsSynchronizer',
+    })
+    await synchronizerStatusRepository.upsert({
+      domain: targetDomain,
+      block: (await hhProvider.getBlockNumber()) - 8,
+      name: 'SettleEventsSynchronizer',
     })
 
     const { metrics, cancel: _cancel } = await monitor({
       network,
       l1Provider: hhProvider,
-      teleportRepository: teleportRepository,
-      synchronizerStatusRepository: syncStatusesRepository,
-      flushRepository: flushRepository,
+      teleportRepository,
+      synchronizerStatusRepository,
+      flushRepository,
+      settleRepository,
     })
     cancel = _cancel
 

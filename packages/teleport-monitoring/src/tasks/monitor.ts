@@ -2,15 +2,18 @@ import { BigNumber, ethers, providers } from 'ethers'
 
 import { onEveryFinalizedBlock } from '../blockchain'
 import { FlushRepository } from '../db/FlushRepository'
+import { SettleRepository } from '../db/SettleRepository'
 import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
 import { TeleportRepository } from '../db/TeleportRepository'
 import { bridgeInvariant } from '../monitoring/bridgeInvariant'
 import { monitorTeleportFlush } from '../monitoring/teleportFlush'
 import { monitorTeleportMints } from '../monitoring/teleportMints'
+import { monitorTeleportSettle } from '../monitoring/teleportSettle'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from '../sdks'
 import { BaseSynchronizer } from '../synchronizers/BaseSynchronizer'
 import { FlushEventsSynchronizer } from '../synchronizers/FlushEventsSynchronizer'
 import { InitEventsSynchronizer } from '../synchronizers/InitEventsSynchronizer'
+import { SettleEventsSynchronizer } from '../synchronizers/SettleEventsSynchronizer'
 import { Metrics, NetworkConfig } from '../types'
 
 export async function monitor({
@@ -18,20 +21,34 @@ export async function monitor({
   l1Provider,
   teleportRepository,
   flushRepository,
+  settleRepository,
   synchronizerStatusRepository,
 }: {
   network: NetworkConfig
   l1Provider: providers.Provider
   teleportRepository: TeleportRepository
   flushRepository: FlushRepository
+  settleRepository: SettleRepository
   synchronizerStatusRepository: SynchronizerStatusRepository
 }) {
   const metrics: Metrics = {}
+  const synchronizers: BaseSynchronizer[] = []
 
+  // sync data from master
   const l1Sdk = getL1SdkBasedOnNetworkName(network.sdkName, l1Provider)
+  const synchronizer = new SettleEventsSynchronizer(
+    l1Provider,
+    synchronizerStatusRepository,
+    settleRepository,
+    l1Sdk,
+    network.name,
+    network.joinDeploymentBlock,
+    network.syncBatchSize,
+  )
+  void synchronizer.run()
+  synchronizers.push(synchronizer)
 
   // sync data from slaves
-  const synchronizers: BaseSynchronizer[] = []
   for (const slave of network.slaves) {
     const l2Provider = new ethers.providers.JsonRpcProvider(slave.l2Rpc)
     const l2Sdk = getL2SdkBasedOnNetworkName(slave.sdkName, l2Provider)
@@ -92,6 +109,15 @@ export async function monitor({
         )
         metrics[`teleport_last_flush_ms{domain="${slave.name}"}`] = sinceLastFlush
         metrics[`teleport_debt_to_flush{domain="${slave.name}"}`] = debtToFlush
+
+        const { sinceLastSettle, debtToSettle } = await monitorTeleportSettle(
+          l1Sdk,
+          settleRepository,
+          slave.name,
+          network.name,
+        )
+        metrics[`teleport_last_settle_ms{domain="${slave.name}"}`] = sinceLastSettle
+        metrics[`teleport_debt_to_settle{domain="${slave.name}"}`] = debtToSettle
       }
     }
   }, l1Provider)

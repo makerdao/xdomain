@@ -46,7 +46,11 @@ export class InitEventsSynchronizer extends BaseSynchronizer {
       )
 
       // ranges are inclusive here so we + 1 to avoid checking the same block twice
-      const newTeleports = await this.l2Sdk.teleportGateway.queryFilter(filter, syncBlock + 1, boundaryBlock)
+      const newTeleports = await this.l2Sdk.teleportGateway.queryFilter(
+        filter,
+        syncBlock + 1,
+        Math.max(boundaryBlock, syncBlock + 1),
+      )
       console.log(`[${this.name}] Found ${newTeleports.length} new teleports`)
       const modelsToCreate: Omit<Teleport, 'id'>[] = newTeleports.map((w) => {
         const hash = keccak256(w.data)
