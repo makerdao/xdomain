@@ -16,7 +16,7 @@ export const provideHandleBlock = (
     const findings: Finding[] = [];
 
     for (let data of l2Data) {
-      const escrowSupply: BigNumber = await daiContract.balanceOf(data.escrow, { blockTag: blockEvent.blockNumber });
+      const escrowSupply: BigNumber = await daiContract.balanceOf(data.l1Escrow, { blockTag: blockEvent.blockNumber });
       const l2Supply: BigNumber = BigNumber.from(
         await fetcher.getL2Supply(data.chainId, blockEvent.block.timestamp, escrowSupply)
       );
@@ -32,11 +32,11 @@ export const provideHandleBlock = (
             protocol: "MakerDAO",
             metadata: {
               chainId: data.chainId.toString(),
-              escrow: data.escrow,
-              escrowBalance: escrowSupply.toString(),
+              l1Escrow: data.l1Escrow,
+              l1EscrowBalance: escrowSupply.toString(),
               totalSupply: l2Supply.toString(),
             },
-            addresses: [data.escrow, dai],
+            addresses: [data.l1Escrow, dai],
           })
         );
       }
