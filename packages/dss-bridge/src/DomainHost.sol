@@ -58,6 +58,7 @@ abstract contract DomainHost {
 
     // --- Data ---
     mapping (address => uint256) public wards;
+    mapping (uint256 => bytes)   public queue;  // Hold ordered messages
 
     bytes32     public immutable ilk;
     VatLike     public immutable vat;
@@ -72,6 +73,8 @@ abstract contract DomainHost {
     uint256 public cure;        // The amount of unused debt [RAD]
     bool public cureReported;   // Returns true if cure has been reported by the guest
     uint256 public live;
+    uint256 public nextId;      // The next message to process
+    uint256 public nextSendId;  // The next id to tag on outgoing messages
 
     uint256 constant RAY = 10 ** 27;
 
@@ -99,7 +102,7 @@ abstract contract DomainHost {
     }
 
     modifier guestOnly {
-        require(_isGuest(msg.sender), "DomainHost/not-guest");
+        require(msg.sender == address(this) || _isGuest(msg.sender), "DomainHost/not-guest");
         _;
     }
 
@@ -153,6 +156,26 @@ abstract contract DomainHost {
 
     // --- MCD Support ---
 
+    /// @notice Enqueue a message to be played back in order
+    /// @param id The order id for the message
+    /// @param data The function call to execute
+    function enqueue(uint256 id, bytes calldata data) external guestOnly {
+        queue[id] = data;
+    }
+
+    /// @notice Play back the next message if available
+    function next() external {
+        uint256 _nextId = nextId + 1;
+        require(queue[_nextId].length > 0, "DomainHost/message-unavailable");
+
+        (bool success, bytes memory response) = address(this).call(queue[_nextId]);
+        if (success) {
+            nextId = _nextId;
+        } else {
+            revert(string(response));
+        }
+    }
+
     /// @notice Set the global debt ceiling for the remote domain
     /// @dev Please note that pre-mint DAI cannot be removed from the remote domain
     /// until the remote domain signals that it is safe to do so
@@ -173,7 +196,7 @@ abstract contract DomainHost {
 
         line = rad;
 
-        _lift(rad, minted);
+        _lift(++nextSendId, rad, minted);
 
         emit Lift(wad);
     }
@@ -206,7 +229,7 @@ abstract contract DomainHost {
         daiJoin.exit(address(escrow), wad);
         
         // Send ERC20 DAI to the remote DomainGuest
-        _rectify(wad);
+        _rectify(++nextSendId, wad);
 
         emit Deficit(wad);
     }
@@ -219,7 +242,7 @@ abstract contract DomainHost {
 
         live = 0;
 
-        _cage();
+        _cage(++nextSendId);
 
         emit Cage();
     }
@@ -296,9 +319,9 @@ abstract contract DomainHost {
 
     // Bridge-specific functions
     function _isGuest(address usr) internal virtual view returns (bool);
-    function _lift(uint256 line, uint256 minted) internal virtual;
-    function _rectify(uint256 wad) internal virtual;
-    function _cage() internal virtual;
+    function _lift(uint256 id, uint256 line, uint256 minted) internal virtual;
+    function _rectify(uint256 id, uint256 wad) internal virtual;
+    function _cage(uint256 id) internal virtual;
     function _mintClaim(address usr, uint256 claim) internal virtual;
     function _deposit(address to, uint256 amount) internal virtual;
 

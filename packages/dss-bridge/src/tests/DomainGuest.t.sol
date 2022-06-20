@@ -32,6 +32,7 @@ import { DomainGuest, TeleportGUID, TeleportGUIDHelper } from "../DomainGuest.so
 contract EmptyDomainGuest is DomainGuest {
 
     bool forceIsHost = true;
+    uint256 public lastId;
     uint256 public releaseBurned;
     uint256 public surplus;
     uint256 public deficit;
@@ -50,17 +51,21 @@ contract EmptyDomainGuest is DomainGuest {
     function _isHost(address) internal override view returns (bool) {
         return forceIsHost;
     }
-    function _release(uint256 burned) internal override {
+    function _release(uint256 _id, uint256 burned) internal override {
+        lastId = _id;
         releaseBurned = burned;
     }
-    function _surplus(uint256 wad) internal virtual override {
+    function _surplus(uint256 _id, uint256 wad) internal virtual override {
+        lastId = _id;
         surplus = wad;
     }
-    function _deficit(uint256 wad) internal virtual override {
-       deficit = wad;
+    function _deficit(uint256 _id, uint256 wad) internal virtual override {
+        lastId = _id;
+        deficit = wad;
     }
-    function _tell(uint256 value) internal virtual override {
-       tellValue = value;
+    function _tell(uint256 _id, uint256 value) internal virtual override {
+        lastId = _id;
+        tellValue = value;
     }
     function _initiateTeleport(TeleportGUID memory _teleport) internal virtual override {
         teleport = _teleport;
@@ -181,12 +186,13 @@ contract DomainGuestTest is DSSTest {
     function testHostOnly() public {
         guest.setIsHost(false);
 
-        bytes[] memory funcs = new bytes[](5);
+        bytes[] memory funcs = new bytes[](6);
         funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0);
         funcs[1] = abi.encodeWithSelector(DomainGuest.rectify.selector, 0);
         funcs[2] = abi.encodeWithSelector(DomainGuest.cage.selector);
         funcs[3] = abi.encodeWithSelector(DomainGuest.mintClaim.selector, 0, 0);
         funcs[4] = abi.encodeWithSelector(DomainGuest.deposit.selector, address(0), 0);
+        funcs[5] = abi.encodeWithSelector(DomainGuest.enqueue.selector, 0, bytes(""));
 
         for (uint256 i = 0; i < funcs.length; i++) {
             assertRevert(address(guest), funcs[i], "DomainGuest/not-host");
@@ -208,18 +214,43 @@ contract DomainGuestTest is DSSTest {
     }
 
     function testEnqueue() public {
-        bytes memory data = abi.encodeWithSelector(DomainGuest.lift.selector, 100, 100);
+        bytes memory data = abi.encodeWithSelector(DomainGuest.lift.selector, 100 * RAD, 100 ether);
 
-        assertEq(guest.queue(0), "");
+        assertEq(guest.queue(1), "");
 
-        guest.enqueue(0, data);
+        guest.enqueue(1, data);
 
-        assertEq(guest.queue(0), data);
+        assertEq(guest.queue(1), data);
+    }
+
+    function testNext() public {
+        bytes memory data = abi.encodeWithSelector(DomainGuest.lift.selector, 100 * RAD, 100 ether);
+        guest.enqueue(1, data);
+
+        assertEq(guest.queue(1), data);
+        assertEq(guest.nextId(), 0);
 
         guest.next();
 
         assertEq(guest.nextId(), 1);
-        assertEq(guest.grain(), 100);
+        assertEq(guest.grain(), 100 ether);
+        assertEq(vat.Line(), 100 * RAD);
+    }
+
+    function testNextMessageUnavailable() public {
+        vm.expectRevert("DomainGuest/message-unavailable");
+        guest.next();
+    }
+
+    function testNextMessageRevert() public {
+        // Encode a function call that will revert
+        bytes memory data = abi.encodeWithSelector(DomainGuest.release.selector);
+        guest.enqueue(1, data);
+
+        assertEq(guest.queue(1), data);
+
+        vm.expectRevert("DomainGuest/limit-too-high");
+        guest.next();
     }
 
     function testLift() public {
@@ -240,6 +271,7 @@ contract DomainGuestTest is DSSTest {
 
         assertEq(guest.grain(), 100 ether);
         assertEq(vat.Line(), 100 * RAD);
+        assertEq(guest.lastId(), 0);
         assertEq(guest.releaseBurned(), 0);
 
         // Lower debt ceiling to 50 DAI
@@ -247,6 +279,7 @@ contract DomainGuestTest is DSSTest {
 
         assertEq(guest.grain(), 100 ether);
         assertEq(vat.Line(), 50 * RAD);
+        assertEq(guest.lastId(), 0);
         assertEq(guest.releaseBurned(), 0);
 
         // Should release 50 DAI because nothing has been minted
@@ -256,6 +289,7 @@ contract DomainGuestTest is DSSTest {
 
         assertEq(guest.grain(), 50 ether);
         assertEq(vat.Line(), 50 * RAD);
+        assertEq(guest.lastId(), 1);
         assertEq(guest.releaseBurned(), 50 ether);
     }
 
@@ -276,6 +310,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.Line(), 0);
         assertEq(vat.debt(), 50 * RAD);
         assertEq(guest.grain(), 50 ether);
+        assertEq(guest.lastId(), 1);
         assertEq(guest.releaseBurned(), 50 ether);
 
         // Repay the loan and release
@@ -285,6 +320,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.Line(), 0);
         assertEq(vat.debt(), 0);
         assertEq(guest.grain(), 0);
+        assertEq(guest.lastId(), 2);
         assertEq(guest.releaseBurned(), 50 ether);
     }
 
@@ -307,6 +343,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.surf(), -int256(100 * RAD));
         assertEq(guest.surplus(), 100 ether);
         assertEq(guest.deficit(), 0);
+        assertEq(guest.lastId(), 1);
     }
 
     function testPushSurplusPartial() public {
@@ -328,6 +365,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.surf(), -int256(100 * RAD));
         assertEq(guest.surplus(), 100 ether);
         assertEq(guest.deficit(), 0);
+        assertEq(guest.lastId(), 1);
     }
 
     function testPushDeficit() public {
@@ -347,6 +385,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.sin(address(guest)), 100 * RAD);
         assertEq(guest.surplus(), 0);
         assertEq(guest.deficit(), 100 ether);
+        assertEq(guest.lastId(), 1);
     }
 
     function testPushDeficitPartial() public {
@@ -365,6 +404,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.sin(address(guest)), 25 * RAD);
         assertEq(guest.surplus(), 0);
         assertEq(guest.deficit(), 25 ether);
+        assertEq(guest.lastId(), 1);
     }
 
     function testRectify() public {
@@ -393,12 +433,14 @@ contract DomainGuestTest is DSSTest {
 
     function testTell() public {
         assertEq(guest.tellValue(), 0);
+        assertEq(guest.lastId(), 0);
 
         vm.expectEmit(true, true, true, true);
         emit Tell(123);
         guest.tell(123);
 
         assertEq(guest.tellValue(), 123);
+        assertEq(guest.lastId(), 1);
     }
 
     function testMintClaim() public {

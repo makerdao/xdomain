@@ -65,6 +65,7 @@ abstract contract DomainGuest {
     uint256 public live;
     uint80  public nonce;
     uint256 public nextId;      // The next message to process
+    uint256 public nextSendId;  // The next id to tag on outgoing messages
 
     bytes32     public immutable domain;
     VatLike     public immutable vat;
@@ -168,19 +169,31 @@ abstract contract DomainGuest {
 
     // --- MCD Support ---
 
+    /// @notice Enqueue a message to be played back in order
+    /// @param id The order id for the message
+    /// @param data The function call to execute
     function enqueue(uint256 id, bytes calldata data) external hostOnly {
         queue[id] = data;
     }
 
+    /// @notice Play back the next message if available
     function next() external {
-        uint256 _nextId = nextId;
+        uint256 _nextId = nextId + 1;
         require(queue[_nextId].length > 0, "DomainGuest/message-unavailable");
 
         (bool success, bytes memory response) = address(this).call(queue[_nextId]);
         if (success) {
-            nextId++;
+            nextId = _nextId;
         } else {
-            revert(string(response));
+            string memory message;
+            assembly {
+                let size := mload(add(response, 0x44))
+                message := mload(0x40)
+                mstore(message, size)
+                mstore(0x40, add(message, and(add(add(size, 0x20), 0x1f), not(0x1f))))
+                returndatacopy(add(message, 0x20), 0x44, size)
+            }
+            revert(string(message));
         }
     }
 
@@ -203,7 +216,7 @@ abstract contract DomainGuest {
         uint256 burned = grain - limit;
         grain = limit;
 
-        _release(burned);
+        _release(++nextSendId, burned);
 
         emit Release(burned);
     }
@@ -221,7 +234,7 @@ abstract contract DomainGuest {
 
             // Burn the DAI and unload on the other side
             vat.swell(address(this), -_int256(wad * RAY));
-            _surplus(wad);
+            _surplus(++nextSendId, wad);
 
             emit Push(int256(wad));
         } else if (_dai < _sin) {
@@ -229,7 +242,7 @@ abstract contract DomainGuest {
             if (_dai > 0) vat.heal(_dai);
 
             uint256 deficit = _divup(_sin - _dai, RAY);
-            _deficit(deficit);   // Round up to overcharge for deficit
+            _deficit(++nextSendId, deficit);   // Round up to overcharge for deficit
 
             emit Push(-_int256(deficit));
         }
@@ -254,7 +267,7 @@ abstract contract DomainGuest {
     /// @dev Triggered during shutdown
     /// @param value Cure value [RAD]
     function tell(uint256 value) external auth {
-        _tell(value);
+        _tell(++nextSendId, value);
 
         emit Tell(value);
     }
@@ -375,10 +388,10 @@ abstract contract DomainGuest {
 
     // Bridge-specific functions
     function _isHost(address usr) internal virtual view returns (bool);
-    function _release(uint256 burned) internal virtual;
-    function _surplus(uint256 wad) internal virtual;
-    function _deficit(uint256 wad) internal virtual;
-    function _tell(uint256 value) internal virtual;
+    function _release(uint256 id, uint256 burned) internal virtual;
+    function _surplus(uint256 id, uint256 wad) internal virtual;
+    function _deficit(uint256 id, uint256 wad) internal virtual;
+    function _tell(uint256 id, uint256 value) internal virtual;
     function _initiateTeleport(TeleportGUID memory teleport) internal virtual;
     function _flush(bytes32 targetDomain, uint256 daiToFlush) internal virtual;
     function _withdraw(address to, uint256 amount) internal virtual;

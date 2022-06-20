@@ -55,14 +55,17 @@ contract SimpleDomainHost is DomainHost {
     function _isGuest(address usr) internal override view returns (bool) {
         return usr == address(guest);
     }
-    function _lift(uint256 _line, uint256 _minted) internal override {
-        guest.lift(_line, _minted);
+    function _lift(uint256 _id, uint256 _line, uint256 _minted) internal override {
+        guest.enqueue(_id, abi.encodeWithSelector(DomainGuest.lift.selector, _line, _minted));
+        guest.next();
     }
-    function _rectify(uint256 wad) internal virtual override {
-        guest.rectify(wad);
+    function _rectify(uint256 _id, uint256 wad) internal virtual override {
+        guest.enqueue(_id, abi.encodeWithSelector(DomainGuest.rectify.selector, wad));
+        guest.next();
     }
-    function _cage() internal virtual override {
-        guest.cage();
+    function _cage(uint256 _id) internal virtual override {
+        guest.enqueue(_id, abi.encodeWithSelector(DomainGuest.cage.selector));
+        guest.next();
     }
     function _mintClaim(address usr, uint256 claim) internal virtual override {
         guest.mintClaim(usr, claim);
@@ -84,17 +87,21 @@ contract SimpleDomainGuest is DomainGuest {
     function _isHost(address usr) internal override view returns (bool) {
         return usr == address(usr);
     }
-    function _release(uint256 burned) internal override {
-        host.release(burned);
+    function _release(uint256 _id, uint256 burned) internal override {
+        host.enqueue(_id, abi.encodeWithSelector(DomainHost.release.selector, burned));
+        host.next();
     }
-    function _surplus(uint256 wad) internal virtual override {
-        host.surplus(wad);
+    function _surplus(uint256 _id, uint256 wad) internal virtual override {
+        host.enqueue(_id, abi.encodeWithSelector(DomainHost.surplus.selector, wad));
+        host.next();
     }
-    function _deficit(uint256 wad) internal virtual override {
-        host.deficit(wad);
+    function _deficit(uint256 _id, uint256 wad) internal virtual override {
+        host.enqueue(_id, abi.encodeWithSelector(DomainHost.deficit.selector, wad));
+        host.next();
     }
-    function _tell(uint256 value) internal virtual override {
-       host.tell(value);
+    function _tell(uint256 _id, uint256 value) internal virtual override {
+        host.enqueue(_id, abi.encodeWithSelector(DomainHost.tell.selector, value));
+        host.next();
     }
     function _initiateTeleport(TeleportGUID memory teleport) internal virtual override {
         host.teleportSlowPath(teleport);
