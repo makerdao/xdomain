@@ -242,6 +242,14 @@ contract DomainGuestTest is DSSTest {
         guest.next();
     }
 
+    function testNextMessageUnavailableOutOfOrder() public {
+        bytes memory data = abi.encodeWithSelector(DomainGuest.lift.selector, 100 * RAD, 100 ether);
+        guest.enqueue(2, data);
+
+        vm.expectRevert("DomainGuest/message-unavailable");
+        guest.next();
+    }
+
     function testNextMessageRevert() public {
         // Encode a function call that will revert
         bytes memory data = abi.encodeWithSelector(DomainGuest.release.selector);

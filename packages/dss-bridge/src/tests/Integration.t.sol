@@ -85,7 +85,7 @@ contract SimpleDomainGuest is DomainGuest {
     }
 
     function _isHost(address usr) internal override view returns (bool) {
-        return usr == address(usr);
+        return usr == address(host);
     }
     function _release(uint256 _id, uint256 burned) internal override {
         host.enqueue(_id, abi.encodeWithSelector(DomainHost.release.selector, burned));

@@ -172,7 +172,15 @@ abstract contract DomainHost {
         if (success) {
             nextId = _nextId;
         } else {
-            revert(string(response));
+            string memory message;
+            assembly {
+                let size := mload(add(response, 0x44))
+                message := mload(0x40)
+                mstore(message, size)
+                mstore(0x40, add(message, and(add(add(size, 0x20), 0x1f), not(0x1f))))
+                returndatacopy(add(message, 0x20), 0x44, size)
+            }
+            revert(string(message));
         }
     }
 

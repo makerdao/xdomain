@@ -188,6 +188,58 @@ contract DomainHostTest is DSSTest {
         }
     }
 
+    function testEnqueue() public {
+        bytes memory data = abi.encodeWithSelector(DomainHost.release.selector, 0);
+
+        assertEq(host.queue(1), "");
+
+        host.enqueue(1, data);
+
+        assertEq(host.queue(1), data);
+    }
+
+    function testNext() public {
+        host.lift(100 ether);
+
+        bytes memory data = abi.encodeWithSelector(DomainHost.release.selector, 100 ether);
+        host.enqueue(1, data);
+
+        assertEq(host.queue(1), data);
+        assertEq(host.grain(), 100 ether);
+        assertEq(host.nextId(), 0);
+
+        host.next();
+
+        assertEq(host.grain(), 0);
+        assertEq(host.nextId(), 1);
+    }
+
+    function testNextMessageUnavailable() public {
+        vm.expectRevert("DomainHost/message-unavailable");
+        host.next();
+    }
+
+    function testNextMessageUnavailableOutOfOrder() public {
+        host.lift(100 ether);
+
+        bytes memory data = abi.encodeWithSelector(DomainHost.release.selector, 100 ether);
+        host.enqueue(2, data);
+        
+        vm.expectRevert("DomainHost/message-unavailable");
+        host.next();
+    }
+
+    function testNextMessageRevert() public {
+        // Encode a function call that will revert
+        bytes memory data = abi.encodeWithSelector(DomainHost.tell.selector, 100 * RAD);
+        host.enqueue(1, data);
+
+        assertEq(host.queue(1), data);
+
+        vm.expectRevert("DomainHost/live");
+        host.next();
+    }
+
     function testLift() public {
         // Set DC to 100
         vm.expectEmit(true, true, true, true);
