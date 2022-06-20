@@ -185,7 +185,7 @@ abstract contract DomainGuest {
     /// @notice Will release remote DAI from the escrow when it is safe to do so
     /// @dev    Should be run by keeper on a regular schedule.
     ///         This will also push the vat debt for informational purposes.
-    function release() external isLive {
+    function release() public isLive {
         uint256 limit = _max(vat.Line() / RAY, _divup(vat.debt(), RAY));
         require(grain > limit, "DomainGuest/limit-too-high");
         uint256 burned = grain - limit;
@@ -198,7 +198,7 @@ abstract contract DomainGuest {
 
     /// @notice Push surplus (or deficit) to the host dss
     /// @dev Should be run by keeper on a regular schedule
-    function push() external isLive {
+    function push() public isLive {
         uint256 _dai = vat.dai(address(this));
         uint256 _sin = vat.sin(address(this));
         if (_dai > _sin) {
@@ -241,7 +241,7 @@ abstract contract DomainGuest {
     /// @notice Set the cure value for the host
     /// @dev Triggered during shutdown
     /// @param value Cure value [RAD]
-    function tell(uint256 value) external auth {
+    function tell(uint256 value) public auth {
         _tell(value);
 
         emit Tell(value);
@@ -279,7 +279,7 @@ abstract contract DomainGuest {
     /// @notice Withdraw local DAI by burning local canonical DAI
     /// @param to The address to send the DAI to on the remote domain
     /// @param amount The amount of DAI to withdraw [WAD]
-    function withdraw(address to, uint256 amount) external {
+    function withdraw(address to, uint256 amount) public {
         require(dai.transferFrom(msg.sender, address(this), amount), "DomainGuest/transfer-failed");
         daiJoin.join(address(this), amount);
         vat.swell(address(this), -_int256(amount * RAY));
@@ -294,7 +294,7 @@ abstract contract DomainGuest {
         bytes32 targetDomain,
         address receiver,
         uint128 amount
-    ) external {
+    ) public {
         return
             _initiateTeleport(targetDomain, TeleportGUIDHelper.addressToBytes32(receiver), amount, 0);
     }
@@ -303,7 +303,7 @@ abstract contract DomainGuest {
         address receiver,
         uint128 amount,
         address operator
-    ) external {
+    ) public {
         return
             _initiateTeleport(
                 targetDomain,
@@ -317,7 +317,7 @@ abstract contract DomainGuest {
         bytes32 receiver,
         uint128 amount,
         bytes32 operator
-    ) external {
+    ) public {
         return _initiateTeleport(targetDomain, receiver, amount, operator);
     }
     function _initiateTeleport(
@@ -349,7 +349,7 @@ abstract contract DomainGuest {
         emit InitiateTeleport(teleport);
     }
 
-    function flush(bytes32 targetDomain) external {
+    function flush(bytes32 targetDomain) public {
         // We do not check for valid domain because previously valid domains still need their DAI flushed
         uint256 daiToFlush = batchedDaiToFlush[targetDomain];
         require(daiToFlush > 0, "DomainGuest/zero-dai-flush");

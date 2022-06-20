@@ -158,7 +158,7 @@ abstract contract DomainHost {
     /// @dev Please note that pre-mint DAI cannot be removed from the remote domain
     /// until the remote domain signals that it is safe to do so
     /// @param wad The new debt ceiling [WAD]
-    function lift(uint256 wad) external auth vatLive {
+    function lift(uint256 wad) public auth vatLive {
         uint256 rad = wad * RAY;
         uint256 minted;
 
@@ -202,7 +202,7 @@ abstract contract DomainHost {
     }
 
     /// @notice Cover the remote domain's deficit by pulling debt from the surplus buffer
-    function deficit(uint256 wad) external guestOnly vatLive {
+    function deficit(uint256 wad) public guestOnly vatLive {
         vat.suck(vow, address(this), wad * RAY);
         daiJoin.exit(address(escrow), wad);
         
@@ -214,7 +214,7 @@ abstract contract DomainHost {
 
     /// @notice Initiate shutdown for this domain
     /// @dev This will trigger the end module on the remote domain
-    function cage() external {
+    function cage() public {
         require(vat.live() == 0 || wards[msg.sender] == 1, "DomainHost/not-authorized");
         require(live == 1, "DomainHost/not-live");
 
@@ -241,7 +241,7 @@ abstract contract DomainHost {
     /// @dev    This will mint a pro-rata claim token on the remote domain.
     ///         Gem amount is scaled by the actual debt of the remote domain.
     ///         `usr` is the address for the mint on the remote domain.
-    function exit(address usr, uint256 wad) external {
+    function exit(address usr, uint256 wad) public {
         require(vat.live() == 0, "DomainHost/vat-live");
         vat.slip(ilk, msg.sender, -_int256(wad));
 
@@ -259,7 +259,7 @@ abstract contract DomainHost {
     /// @notice Deposit local DAI to mint remote canonical DAI
     /// @param to The address to send the DAI to on the remote domain
     /// @param amount The amount of DAI to deposit [WAD]
-    function deposit(address to, uint256 amount) external {
+    function deposit(address to, uint256 amount) public {
         require(dai.transferFrom(msg.sender, escrow, amount), "DomainHost/transfer-failed");
 
         _deposit(to, amount);
