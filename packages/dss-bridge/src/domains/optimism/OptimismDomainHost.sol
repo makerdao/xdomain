@@ -20,6 +20,7 @@
 pragma solidity ^0.8.14;
 
 import {DomainHost} from "../../DomainHost.sol";
+import {DomainGuest} from "../../DomainGuest.sol";
 
 interface L1MessengerLike {
     function sendMessage(address target, bytes calldata message, uint32 gasLimit) external;
@@ -38,6 +39,8 @@ contract OptimismDomainHost is DomainHost {
     uint32 public glMainClaim;
     uint32 public glDeposit;
 
+    bytes32 constant private MAGIC_MEM_LOC = keccak256("MAGIC MEMORY LOCATION");
+
     constructor(
         bytes32 _ilk,
         address _daiJoin,
@@ -50,41 +53,60 @@ contract OptimismDomainHost is DomainHost {
         guest = _guest;
     }
 
+    // Example of providing custom parameters to the bridge
+    function lift(uint256 wad, uint32 gasLimit) external {
+        // Stash extra args in a magic memory location
+        bytes32 loc = MAGIC_MEM_LOC;
+        assembly {
+            mstore(loc, gasLimit)
+        }
+
+        lift(wad);
+    }
+
     function _isGuest(address usr) internal override view returns (bool) {
         return usr == address(l1messenger) && l1messenger.xDomainMessageSender() == guest;
     }
     function _lift(uint256 id, uint256 line, uint256 minted) internal override {
+        // Load extra args or use defaults if not present
+        bytes32 loc = MAGIC_MEM_LOC;
+        uint32 gasLimit;
+        assembly {
+            gasLimit := mload(loc)
+        }
+        if (gasLimit == 0) gasLimit = glLift;
+
         l1messenger.sendMessage(
             guest,
-            abi.encodeWithSignature("lift(uint256,uint256,uint256)", id, line, minted),
+            abi.encodeWithSelector(DomainGuest.lift.selector, id, line, minted),
             glLift
         );
     }
     function _rectify(uint256 wad) internal virtual override {
         l1messenger.sendMessage(
             guest,
-            abi.encodeWithSignature("rectify(uint256)", wad),
+            abi.encodeWithSelector(DomainGuest.rectify.selector, wad),
             glRectify
         );
     }
     function _cage() internal virtual override {
         l1messenger.sendMessage(
             guest,
-            abi.encodeWithSignature("cage()"),
+            abi.encodeWithSelector(DomainGuest.cage.selector),
             glCage
         );
     }
     function _mintClaim(address usr, uint256 claim) internal virtual override {
         l1messenger.sendMessage(
             guest,
-            abi.encodeWithSignature("mintClaim(address,uint256)", usr, claim),
+            abi.encodeWithSelector(DomainGuest.mintClaim.selector, usr, claim),
             glMainClaim
         );
     }
     function _deposit(address to, uint256 amount) internal virtual override {
         l1messenger.sendMessage(
             guest,
-            abi.encodeWithSignature("deposit(address,uint256)", to, amount),
+            abi.encodeWithSelector(DomainGuest.deposit.selector, to, amount),
             glDeposit
         );
     }
