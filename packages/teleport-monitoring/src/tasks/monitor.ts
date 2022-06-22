@@ -98,7 +98,7 @@ export async function monitor({
       const balances = await bridgeInvariant(l1Sdk, l2Sdk)
       metrics[`teleport_l1_dai_balance{domain="${slave.name}"}`] = balances.l1Balance
       metrics[`teleport_l2_dai_balance{domain="${slave.name}"}`] = balances.l2Balance
-      metrics[`teleport_l1_block{domain="${slave.name}"}`] = blockNumber
+      metrics[`teleport_bad_debt_l1_block{domain="${slave.name}"}`] = blockNumber
 
       if (allSynced) {
         const { sinceLastFlush, debtToFlush } = await monitorTeleportFlush(
