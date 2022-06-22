@@ -1,6 +1,6 @@
 import { PrismaClient, SynchronizerStatus } from '@prisma/client'
 
-import { null2Undefined, PublicInterface, TxHandle } from './utils'
+import { null2Undefined, TxHandle } from './utils'
 
 export class SynchronizerStatusRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -24,18 +24,5 @@ export class SynchronizerStatusRepository {
         },
       },
     })
-  }
-}
-
-export class SyncStatusRepositoryInMemory implements PublicInterface<SynchronizerStatusRepository> {
-  private syncStatuses: { [domainName: string]: SynchronizerStatus } = {}
-  private counter = 0
-
-  async findByName(name: string, _domainName: string): Promise<SynchronizerStatus | undefined> {
-    return this.syncStatuses[name]
-  }
-
-  async upsert(syncStatus: Omit<SynchronizerStatus, 'id'>): Promise<void> {
-    this.syncStatuses[syncStatus.name] = { ...syncStatus, id: this.counter++ }
   }
 }

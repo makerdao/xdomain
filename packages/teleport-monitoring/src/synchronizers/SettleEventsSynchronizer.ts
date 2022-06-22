@@ -1,19 +1,19 @@
-import { Flush } from '@prisma/client'
+import { Settle } from '@prisma/client'
 import { providers } from 'ethers/lib/ethers'
 import { parseBytes32String } from 'ethers/lib/utils'
 
-import { FlushRepository } from '../db/FlushRepository'
+import { SettleRepository } from '../db/SettleRepository'
 import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
-import { L2Sdk } from '../sdks'
+import { L1Sdk } from '../sdks'
 import { delay } from '../utils'
 import { BaseSynchronizer } from './BaseSynchronizer'
 
-export class FlushEventsSynchronizer extends BaseSynchronizer {
+export class SettleEventsSynchronizer extends BaseSynchronizer {
   constructor(
-    private readonly l2Provider: providers.Provider,
+    private readonly provider: providers.Provider,
     private readonly synchronizerStatusRepository: SynchronizerStatusRepository,
-    private readonly flushRepository: FlushRepository,
-    private readonly l2Sdk: L2Sdk,
+    private readonly settleRepository: SettleRepository,
+    private readonly l1Sdk: L1Sdk,
     private readonly domainName: string,
     private readonly startingBlock: number,
     private readonly blocksPerBatch: number,
@@ -25,11 +25,11 @@ export class FlushEventsSynchronizer extends BaseSynchronizer {
     const syncStatus = await this.synchronizerStatusRepository.findByName(this.name, this.domainName)
     let syncBlock = syncStatus?.block ?? this.startingBlock - 1
 
-    const filter = this.l2Sdk.teleportGateway.filters.Flushed()
+    const filter = this.l1Sdk.join.filters.Settle()
 
     this._state = 'syncing'
     while (this.state !== 'stopped') {
-      const currentBlock = (await this.l2Provider.getBlock('latest')).number // note: getting block number directly doesnt work b/c optimism doesnt support it
+      const currentBlock = (await this.provider.getBlock('latest')).number - 8 // always stay behind the blockchain HEAD to avoid reorgs
       const boundaryBlock = Math.min(syncBlock + this.blocksPerBatch, currentBlock)
       console.log(
         `[${this.name}] Syncing ${syncBlock}...${boundaryBlock} (${(
@@ -38,26 +38,22 @@ export class FlushEventsSynchronizer extends BaseSynchronizer {
       )
 
       // ranges are inclusive here so we + 1 to avoid checking the same block twice
-      const newFlushes = await this.l2Sdk.teleportGateway.queryFilter(
-        filter,
-        syncBlock + 1,
-        Math.max(boundaryBlock, syncBlock + 1),
-      )
-      console.log(`Found ${newFlushes.length} new flushes`)
-      const modelsToCreate: Omit<Flush, 'id'>[] = await Promise.all(
-        newFlushes.map(async (w) => {
+      const newEvents = await this.l1Sdk.join.queryFilter(filter, syncBlock + 1, Math.max(boundaryBlock, syncBlock + 1))
+      console.log(`Found ${newEvents.length} new settles`)
+      const modelsToCreate: Omit<Settle, 'id'>[] = await Promise.all(
+        newEvents.map(async (w) => {
           return {
-            sourceDomain: this.domainName,
-            targetDomain: parseBytes32String(w.args.targetDomain),
-            amount: w.args.dai.toString(),
+            sourceDomain: parseBytes32String(w.args.sourceDomain),
+            targetDomain: this.domainName,
+            amount: w.args.batchedDaiToFlush.toString(),
             timestamp: new Date((await w.getBlock()).timestamp * 1000),
           }
         }),
       )
 
       // update sync block
-      await this.flushRepository.transaction(async (tx) => {
-        await this.flushRepository.createMany(modelsToCreate, tx)
+      await this.settleRepository.transaction(async (tx) => {
+        await this.settleRepository.createMany(modelsToCreate, tx)
         await this.synchronizerStatusRepository.upsert(
           { domain: this.domainName, block: boundaryBlock, name: this.name },
           tx,
@@ -68,7 +64,9 @@ export class FlushEventsSynchronizer extends BaseSynchronizer {
       const onTip = boundaryBlock === currentBlock
       if (onTip) {
         console.log('Syncing tip. Stalling....')
-        this._state = 'synced'
+        if (this.state === 'syncing') {
+          this._state = 'synced'
+        }
         await delay(5_000)
       }
     }
