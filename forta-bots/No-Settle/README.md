@@ -2,7 +2,7 @@
 
 ## Description
 
-This bot detects when there are no `Settle` events emitted from the `TeleportJoin` contract for more than `DAYS_THRESHOLD` days.
+This bot detects when there are no `Settle` events on each domain emitted from the `TeleportJoin` contract for more than `DAYS_THRESHOLD` days.
 
 > The threshold can be configured in **src/utils.ts**, L5.
 
@@ -17,5 +17,6 @@ This bot detects when there are no `Settle` events emitted from the `TeleportJoi
   - Severity is always set to "Info".
   - Type is always set to "Info".
   - Metadata contains:
+    - `domain`: The domain associated with the event.
     - `currentBlockTimestamp`: The current block's timestamp.
     - `latestSettleTimestamp`: The timestamp of the latest Settle event emitted (if it is known).
