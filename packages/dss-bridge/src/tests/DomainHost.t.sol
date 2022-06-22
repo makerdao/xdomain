@@ -32,8 +32,7 @@ import "../TeleportGUID.sol";
 contract EmptyDomainHost is DomainHost {
 
     bool forceIsGuest = true;
-    uint256 public liftIdEmpty;
-    uint256 public liftLine;
+    int256 public liftDLine;
     uint256 public liftMinted;
     uint256 public rectify;
     bool public caged;
@@ -50,9 +49,8 @@ contract EmptyDomainHost is DomainHost {
     function _isGuest(address) internal override view returns (bool) {
         return forceIsGuest;
     }
-    function _lift(uint256 _id, uint256 _line, uint256 _minted) internal override {
-        liftIdEmpty = _id;
-        liftLine = _line;
+    function _lift(int256 _dline, uint256 _minted) internal override {
+        liftDLine = _dline;
         liftMinted = _minted;
     }
     function _rectify(uint256 wad) internal virtual override {
@@ -197,9 +195,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.line(), 100 * RAD);
         assertEq(host.grain(), 100 ether);
-        assertEq(host.liftId(), 1);
-        assertEq(host.liftIdEmpty(), 1);
-        assertEq(host.liftLine(), 100 * RAD);
+        assertEq(host.liftDLine(), int256(100 * RAD));
         assertEq(host.liftMinted(), 100 ether);
 
         // Raise DC to 200
@@ -211,9 +207,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 200 ether);
         assertEq(host.line(), 200 * RAD);
         assertEq(host.grain(), 200 ether);
-        assertEq(host.liftId(), 2);
-        assertEq(host.liftIdEmpty(), 2);
-        assertEq(host.liftLine(), 200 * RAD);
+        assertEq(host.liftDLine(), int256(100 * RAD));
         assertEq(host.liftMinted(), 100 ether);
 
         // Lower DC back to 100 - should not remove escrowed DAI
@@ -225,9 +219,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 200 ether);
         assertEq(host.line(), 100 * RAD);
         assertEq(host.grain(), 200 ether);
-        assertEq(host.liftId(), 3);
-        assertEq(host.liftIdEmpty(), 3);
-        assertEq(host.liftLine(), 100 * RAD);
+        assertEq(host.liftDLine(), -int256(100 * RAD));
         assertEq(host.liftMinted(), 0);
     }
 
@@ -241,9 +233,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.line(), 100 * RAD);
         assertEq(host.grain(), 100 ether);
-        assertEq(host.liftId(), 1);
-        assertEq(host.liftIdEmpty(), 1);
-        assertEq(host.liftLine(), 100 * RAD);
+        assertEq(host.liftDLine(), int256(100 * RAD));
         assertEq(host.liftMinted(), 100 ether);
 
         // Lower DC back to 50 - should not remove escrowed DAI
@@ -255,9 +245,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(host.grain(), 100 ether);
-        assertEq(host.liftId(), 2);
-        assertEq(host.liftIdEmpty(), 2);
-        assertEq(host.liftLine(), 50 * RAD);
+        assertEq(host.liftDLine(), -int256(50 * RAD));
         assertEq(host.liftMinted(), 0);
 
         // Remote domain triggers release at a later time
@@ -271,9 +259,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 50 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(host.grain(), 50 ether);
-        assertEq(host.liftId(), 2);
-        assertEq(host.liftIdEmpty(), 2);
-        assertEq(host.liftLine(), 50 * RAD);
+        assertEq(host.liftDLine(), -int256(50 * RAD));
         assertEq(host.liftMinted(), 0);
     }
 
@@ -289,7 +275,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 125 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(host.grain(), 125 ether);
-        assertEq(host.liftLine(), 50 * RAD);
+        assertEq(host.liftDLine(), -int256(25 * RAD));
         assertEq(host.liftMinted(), 0);
 
         host.release(50 ether);   // First release comes in
@@ -300,7 +286,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 75 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(host.grain(), 75 ether);
-        assertEq(host.liftLine(), 50 * RAD);
+        assertEq(host.liftDLine(), -int256(25 * RAD));
         assertEq(host.liftMinted(), 0);
 
         host.release(25 ether);   // Second release comes in
@@ -311,7 +297,7 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(escrow)), 50 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(host.grain(), 50 ether);
-        assertEq(host.liftLine(), 50 * RAD);
+        assertEq(host.liftDLine(), -int256(25 * RAD));
         assertEq(host.liftMinted(), 0);
     }
 

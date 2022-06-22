@@ -60,7 +60,7 @@ abstract contract DomainGuest {
     mapping (bytes32 => uint256) public batchedDaiToFlush;
 
     EndLike public end;
-    uint256 public liftId;      // To track the ordering on lift
+    int256  public line;        // Keep track of changes in line
     uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow [WAD]
     uint256 public live;
     uint80  public nonce;
@@ -80,7 +80,7 @@ abstract contract DomainGuest {
     event Deny(address indexed usr);
     event File(bytes32 indexed what, address data);
     event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
-    event Lift(uint256 id, uint256 line, uint256 minted);
+    event Lift(int256 dline, uint256 minted);
     event Release(uint256 burned);
     event Push(int256 surplus);
     event Rectify(uint256 wad);
@@ -167,19 +167,15 @@ abstract contract DomainGuest {
 
     // --- MCD Support ---
 
-    /// @notice Set the global debt ceiling for the local dss
-    /// @param id An incrementing ID to prevent earlier updates from overwriting later ones
-    /// @param line The new global debt ceiling [RAD]
+    /// @notice Record changes in line and grain and update dss global debt ceiling if necessary
+    /// @param dline The change in the line [RAD]
     /// @param minted The amount of DAI minted into the remote escrow
-    function lift(uint256 id, uint256 line, uint256 minted) external hostOnly isLive {
-        // Need to ensure out of order updates do not incorrectly set the debt ceiling
-        if (id > liftId) {
-            vat.file("Line", line);
-            liftId = id;
-        }
+    function lift(int256 dline, uint256 minted) external hostOnly isLive {
+        line += dline;
         grain += minted;
+        vat.file("Line", line > 0 ? uint256(line) : 0);
 
-        emit Lift(id, line, minted);
+        emit Lift(dline, minted);
     }
 
     /// @notice Will release remote DAI from the escrow when it is safe to do so

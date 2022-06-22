@@ -55,8 +55,8 @@ contract SimpleDomainHost is DomainHost {
     function _isGuest(address usr) internal override view returns (bool) {
         return usr == address(guest);
     }
-    function _lift(uint256 _id, uint256 _line, uint256 _minted) internal override {
-        guest.lift(_id, _line, _minted);
+    function _lift(int256 _dline, uint256 _minted) internal override {
+        guest.lift(_dline, _minted);
     }
     function _rectify(uint256 wad) internal virtual override {
         guest.rectify(wad);

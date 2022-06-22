@@ -67,7 +67,6 @@ abstract contract DomainHost {
     RouterLike  public immutable router;
 
     address public vow;
-    uint256 public liftId;      // To track the ordering on lift
     uint256 public line;        // Remote domain global debt ceiling [RAD]
     uint256 public grain;       // Keep track of the pre-minted DAI in the escrow [WAD]
     uint256 public cure;        // The amount of unused debt [RAD]
@@ -161,6 +160,7 @@ abstract contract DomainHost {
     function lift(uint256 wad) external auth vatLive {
         uint256 rad = wad * RAY;
         uint256 minted;
+        int256 dline = _int256(rad) - _int256(line);
 
         if (rad > line) {
             // We are issuing new pre-minted DAI
@@ -174,7 +174,7 @@ abstract contract DomainHost {
 
         line = rad;
 
-        _lift(++liftId, rad, minted);
+        _lift(dline, minted);
 
         emit Lift(wad);
     }
@@ -297,7 +297,7 @@ abstract contract DomainHost {
 
     // Bridge-specific functions
     function _isGuest(address usr) internal virtual view returns (bool);
-    function _lift(uint256 id, uint256 line, uint256 minted) internal virtual;
+    function _lift(int256 dline, uint256 minted) internal virtual;
     function _rectify(uint256 wad) internal virtual;
     function _cage() internal virtual;
     function _mintClaim(address usr, uint256 claim) internal virtual;
