@@ -43,8 +43,6 @@ describe("Domain fetcher test suite", () => {
   });
 
   it("should fetch the domains correctly", async () => {
-    //pool, block
-
     for (let [router, index, domain, block] of DOMAINS_CASES) {
       mockProvider.addCallTo(router, block, DOMAINS_IFACE, "domainAt", {
         inputs: [index],
