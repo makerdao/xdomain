@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - master
-    # paths:
-    #   - packages/teleport-monitoring/**
+    paths:
+      - packages/teleport-monitoring/**
   pull_request:
 
 jobs:
