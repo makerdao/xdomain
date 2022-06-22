@@ -12,13 +12,12 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    env:
+        DATABASE_URL: postgresql://postgres:password@localhost:5432/local
+        TEST_RPC: ${{ secrets.KOVAN_RPC_URL }}
     defaults:
       run:
         working-directory: ./packages/teleport-monitoring
-      env:
-        env:
-          DATABASE_URL: postgresql://postgres:password@localhost:5432/local
-          TEST_RPC: ${{ secrets.KOVAN_RPC_URL }}
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
@@ -50,6 +49,8 @@ jobs:
 
   deploy:
     name: Deploy
+    needs: test
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     env:
       REGION: us-east-1
