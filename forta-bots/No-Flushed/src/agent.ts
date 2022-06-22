@@ -39,9 +39,16 @@ export const provideHandleBlock = (
       const flushedEvents: providers.Log[] = await provider.getLogs(filter);
 
       if (flushedEvents.length) {
-        latestFlushedTimestamp = BigNumber.from(
-          (await provider.getBlock(flushedEvents[flushedEvents.length - 1].blockNumber)).timestamp
+        const masterDomainFlushedEvents: providers.Log[] = flushedEvents.filter(
+          (event) => event.topics[1] === data.domain
         );
+
+        if (masterDomainFlushedEvents.length) {
+          latestFlushedTimestamp = BigNumber.from(
+            (await provider.getBlock(masterDomainFlushedEvents[masterDomainFlushedEvents.length - 1].blockNumber))
+              .timestamp
+          );
+        }
       }
     }
 
@@ -55,6 +62,7 @@ export const provideHandleBlock = (
       findings.push(
         createFinding(
           daysThreshold,
+          data.domain,
           currentTimestamp.toString(),
           !latestFlushedTimestamp.eq(0) ? latestFlushedTimestamp.toString() : undefined
         )
@@ -69,7 +77,12 @@ export const provideHandleBlock = (
     const flushedEvents: providers.Log[] = await provider.getLogs(filter);
 
     if (flushedEvents.length) {
-      latestFlushedTimestamp = BigNumber.from(blockEvent.block.timestamp);
+      const masterDomainFlushedEvents: providers.Log[] = flushedEvents.filter(
+        (event) => event.topics[1] === data.domain
+      );
+      if (masterDomainFlushedEvents.length) {
+        latestFlushedTimestamp = currentTimestamp;
+      }
     }
 
     return findings;

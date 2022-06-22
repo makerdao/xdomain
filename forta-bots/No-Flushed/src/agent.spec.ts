@@ -9,6 +9,7 @@ const TEST_DAYS_THRESHOLD: number = 5;
 
 const testCreateFinding = (
   threshold: number,
+  domain: string,
   currentBlockTimestamp: string,
   latestFlushedTimestamp: string | any = undefined
 ): Finding => {
@@ -20,6 +21,7 @@ const testCreateFinding = (
     severity: FindingSeverity.Info,
     type: FindingType.Info,
     metadata: {
+      domain,
       currentBlockTimestamp,
       latestFlushedTimestamp,
     },
@@ -31,6 +33,7 @@ describe("No-flushed monitoring bot test suite", () => {
   let handleBlock: HandleBlock;
   const mockNetworkManager = {
     L2DaiTeleportGateway: TEST_L2DAITELEPORTGATEWAY,
+    domain: keccak256("master"),
     setNetwork: jest.fn(),
   };
 
@@ -39,7 +42,7 @@ describe("No-flushed monitoring bot test suite", () => {
     resetAllWhenMocks();
   });
 
-  it("should return a finding when there were no recent past Flushed events", async () => {
+  it("should return a finding when there were no recent past Flushed events on master domain", async () => {
     handleBlock = provideHandleBlock(mockNetworkManager as any, mockProvider as any, TEST_DAYS_THRESHOLD, false);
     const blockEvent: BlockEvent = new TestBlockEvent()
       .setTimestamp(523423422)
@@ -53,7 +56,22 @@ describe("No-flushed monitoring bot test suite", () => {
       toBlock: blockEvent.block.number - 1,
     };
 
-    mockProvider.addFilteredLogs(filter0, []);
+    //Flushed event emitted on another domain
+    const log0 = [
+      {
+        blockNumber: 1197,
+        blockHash: keccak256("hash1"),
+        transactionIndex: 2,
+        removed: false,
+        address: mockNetworkManager.L2DaiTeleportGateway,
+        data: keccak256("dataData2"),
+        topics: [FLUSHED_EVENT_TOPIC, keccak256("otherDomain")],
+        transactionHash: keccak256("ttHash2"),
+        logIndex: 3,
+      },
+    ];
+
+    mockProvider.addFilteredLogs(filter0, log0);
 
     const filter1 = {
       address: TEST_L2DAITELEPORTGATEWAY,
@@ -64,13 +82,13 @@ describe("No-flushed monitoring bot test suite", () => {
     mockProvider.addFilteredLogs(filter1, []);
     const findings: Finding[] = await handleBlock(blockEvent);
 
-    expect(findings).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "523423422")]);
+    expect(findings).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, mockNetworkManager.domain, "523423422")]);
   });
 
-  it("should return no findings if there was a recent past Flushed event on the first run", async () => {
+  it("should return no findings if there was a recent past Flushed event on master domain on the first run", async () => {
     handleBlock = provideHandleBlock(mockNetworkManager as any, mockProvider as any, TEST_DAYS_THRESHOLD, false);
     const blockEvent: BlockEvent = new TestBlockEvent()
-      .setTimestamp(12500)
+      .setTimestamp(1322500)
       .setNumber(1200)
       .setHash(keccak256("bfefsd"));
 
@@ -84,18 +102,18 @@ describe("No-flushed monitoring bot test suite", () => {
     const logs0 = [
       {
         blockNumber: 1197,
-        blockHash: blockEvent.blockHash,
+        blockHash: keccak256("hash1"),
         transactionIndex: 2,
         removed: false,
         address: mockNetworkManager.L2DaiTeleportGateway,
         data: keccak256("dataData2"),
-        topics: [FLUSHED_EVENT_TOPIC],
+        topics: [FLUSHED_EVENT_TOPIC, mockNetworkManager.domain],
         transactionHash: keccak256("ttHash2"),
         logIndex: 3,
       },
     ];
 
-    when(mockProvider.getBlock).calledWith(1197).mockReturnValue({ timestamp: 12000 });
+    when(mockProvider.getBlock).calledWith(1197).mockReturnValue({ timestamp: 1312500 });
     mockProvider.addFilteredLogs(filter0, logs0);
 
     const filter1 = {
@@ -107,12 +125,12 @@ describe("No-flushed monitoring bot test suite", () => {
     const logs1 = [
       {
         blockNumber: 1200,
-        blockHash: blockEvent.blockHash,
+        blockHash: keccak256("bfefsd"),
         transactionIndex: 2,
         removed: false,
         address: mockNetworkManager.L2DaiTeleportGateway,
         data: keccak256("dataData2"),
-        topics: [FLUSHED_EVENT_TOPIC],
+        topics: [FLUSHED_EVENT_TOPIC, mockNetworkManager.domain],
         transactionHash: keccak256("ttHash2"),
         logIndex: 3,
       },
@@ -142,13 +160,13 @@ describe("No-flushed monitoring bot test suite", () => {
 
     const logs = [
       {
-        blockNumber: 6999,
+        blockNumber: 7000,
         blockHash: blockEvent1.blockHash,
         transactionIndex: 2,
         removed: false,
         address: mockNetworkManager.L2DaiTeleportGateway,
         data: keccak256("dataData2"),
-        topics: [FLUSHED_EVENT_TOPIC],
+        topics: [FLUSHED_EVENT_TOPIC, mockNetworkManager.domain],
         transactionHash: keccak256("tHash21"),
         logIndex: 3,
       },
@@ -183,7 +201,9 @@ describe("No-flushed monitoring bot test suite", () => {
     const findings = await handleBlock(blockEvent1);
     expect(findings).toStrictEqual([]);
     const findings2 = await handleBlock(blockEvent2);
-    expect(findings2).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, "4286500", "86400")]);
+    expect(findings2).toStrictEqual([
+      testCreateFinding(TEST_DAYS_THRESHOLD, mockNetworkManager.domain, "4286500", "86400"),
+    ]);
     const findings3 = await handleBlock(blockEvent3);
     expect(findings3).toStrictEqual([]);
   });

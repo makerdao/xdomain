@@ -18,5 +18,6 @@ This bot detects when there are no `Flushed` events emitted from the `L2DaiTelep
   - Severity is always set to "Info".
   - Type is always set to "Info".
   - Metadata contains:
+    - `domain`: The domain associated with the event.
     - `currentBlockTimestamp`: The current block's timestamp.
     - `latestFlushedTimestamp`: The timestamp of the latest Flushed event emitted (if it is known).
