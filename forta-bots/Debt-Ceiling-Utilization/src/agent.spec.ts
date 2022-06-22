@@ -37,7 +37,7 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
     TEST_THRESHOLD
   );
 
-  beforeEach(async () => {
+  beforeEach(() => {
     mockProvider.clear();
     mockGetDebt.mockClear();
     mockGetLine.mockClear();
