@@ -1,7 +1,7 @@
 import Fetcher from "./fetcher";
 import { keccak256 } from "forta-agent";
 import { createAddress, MockEthersProvider } from "forta-agent-tools/lib/tests";
-import { FUNCTIONS_IFACE } from "./utils";
+import { DOMAINS_IFACE, FUNCTIONS_IFACE } from "./utils";
 import { BigNumber } from "ethers";
 
 //TeleportJoinAddress, blockNumber, domain, debt
@@ -18,6 +18,22 @@ const LINE_CASES: [string, number, string, BigNumber][] = [
   [createAddress("0xbaaa"), 746547, keccak256("dfjgkdfgnd"), BigNumber.from(4865986746)],
 ];
 
+//TeleportRouter, numDomains, block
+const NUM_DOMAINS_CASES: [string, BigNumber, number][] = [
+  [createAddress("0xabcd"), BigNumber.from(250), 1001],
+  [createAddress("0x123a"), BigNumber.from(1000), 900],
+  [createAddress("0x4343"), BigNumber.from(10000), 1212121],
+  [createAddress("0x171b"), BigNumber.from(40), 987659999],
+];
+
+//TeleportRouter, index, domain, block
+const DOMAINS_CASES: [string, number, string, number][] = [
+  [createAddress("0x2bcd"), 0, keccak256("dom0"), 123],
+  [createAddress("0x2acd"), 32, keccak256("dom23"), 1323],
+  [createAddress("0x2bed"), 99, keccak256("dom121"), 1213],
+  [createAddress("0x2b5d"), 1020, keccak256("dom007"), 11123],
+];
+
 describe("Fetcher test suite", () => {
   const mockProvider: MockEthersProvider = new MockEthersProvider();
 
@@ -32,6 +48,20 @@ describe("Fetcher test suite", () => {
     return mockProvider.addCallTo(joinAddress, blockNumber, FUNCTIONS_IFACE, "line", {
       inputs: [domain],
       outputs: [line],
+    });
+  }
+
+  function createNumDomainsCall(router: string, blockNumber: number, num: BigNumber) {
+    return mockProvider.addCallTo(router, blockNumber, DOMAINS_IFACE, "numDomains", {
+      inputs: [],
+      outputs: [num],
+    });
+  }
+
+  function createDomainAtCall(router: string, blockNumber: number, index: number, domain: string) {
+    return mockProvider.addCallTo(router, blockNumber, DOMAINS_IFACE, "domainAt", {
+      inputs: [index],
+      outputs: [domain],
     });
   }
 
@@ -66,6 +96,36 @@ describe("Fetcher test suite", () => {
       //use cached values
       mockProvider.clear();
       expect(fetchedLine).toStrictEqual(line);
+    }
+  });
+
+  it("should fetch the number of domains correctly", async () => {
+    for (let [router, num, block] of NUM_DOMAINS_CASES) {
+      const fetcher: Fetcher = new Fetcher(mockProvider as any);
+
+      createNumDomainsCall(router, block, num);
+
+      const domainsNum = await fetcher.getNumDomains(router, block);
+      expect(domainsNum).toStrictEqual(num);
+
+      //Use cached values
+      mockProvider.clear();
+      expect(domainsNum).toStrictEqual(num);
+    }
+  });
+
+  it("should fetch the domains correctly", async () => {
+    for (let [router, index, domain, block] of DOMAINS_CASES) {
+      const fetcher: Fetcher = new Fetcher(mockProvider as any);
+
+      createDomainAtCall(router, block, index, domain);
+
+      const dom = await fetcher.getDomain(router, index, block);
+      expect(dom).toStrictEqual(domain);
+
+      //Use cached values
+      mockProvider.clear();
+      expect(dom).toStrictEqual(domain);
     }
   });
 });

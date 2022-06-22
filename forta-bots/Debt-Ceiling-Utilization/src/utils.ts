@@ -10,6 +10,11 @@ export const FUNCTIONS_ABI: string[] = [
 ];
 export const FUNCTIONS_IFACE: Interface = new Interface(FUNCTIONS_ABI);
 
+export const DOMAINS_IFACE: Interface = new Interface([
+  "function numDomains() external view returns (uint256)",
+  "function domainAt(uint256 index) external view returns (bytes32)",
+]);
+
 export const createFinding = (domain: string, debt: BigNumber, line: BigNumber, threshold: BigNumber): Finding => {
   return Finding.fromObject({
     name: "Debt Ceiling utilization threshold exceeded",
