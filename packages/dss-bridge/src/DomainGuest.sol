@@ -20,6 +20,7 @@
 pragma solidity ^0.8.14;
 
 import "./TeleportGUID.sol";
+import {DomainHost} from "./DomainHost.sol";
 
 interface VatLike {
     function hope(address usr) external;
@@ -97,6 +98,7 @@ abstract contract DomainGuest {
         _;
     }
 
+    function _isHost(address usr) internal virtual view returns (bool);
     modifier hostOnly {
         require(_isHost(msg.sender), "DomainGuest/not-host");
         _;
@@ -181,20 +183,20 @@ abstract contract DomainGuest {
     /// @notice Will release remote DAI from the escrow when it is safe to do so
     /// @dev    Should be run by keeper on a regular schedule.
     ///         This will also push the vat debt for informational purposes.
-    function release() external isLive {
+    function _release() internal isLive returns (bytes memory payload) {
         uint256 limit = _max(vat.Line() / RAY, _divup(vat.debt(), RAY));
         require(grain > limit, "DomainGuest/limit-too-high");
         uint256 burned = grain - limit;
         grain = limit;
 
-        _release(burned);
+        payload = abi.encodeWithSelector(DomainHost.release.selector, burned);
 
         emit Release(burned);
     }
 
     /// @notice Push surplus (or deficit) to the host dss
     /// @dev Should be run by keeper on a regular schedule
-    function push() external isLive {
+    function _push() internal isLive returns (bytes memory payload) {
         uint256 _dai = vat.dai(address(this));
         uint256 _sin = vat.sin(address(this));
         if (_dai > _sin) {
@@ -205,17 +207,17 @@ abstract contract DomainGuest {
 
             // Burn the DAI and unload on the other side
             vat.swell(address(this), -_int256(wad * RAY));
-            _surplus(wad);
+            payload = abi.encodeWithSelector(DomainHost.push.selector, _int256(wad));
 
             emit Push(int256(wad));
         } else if (_dai < _sin) {
             // We have a deficit
             if (_dai > 0) vat.heal(_dai);
 
-            uint256 deficit = _divup(_sin - _dai, RAY);
-            _deficit(deficit);   // Round up to overcharge for deficit
+            int256 deficit = -_int256(_divup(_sin - _dai, RAY));    // Round up to overcharge for deficit
+            payload = abi.encodeWithSelector(DomainHost.push.selector, deficit);
 
-            emit Push(-_int256(deficit));
+            emit Push(deficit);
         }
     }
 
@@ -237,8 +239,8 @@ abstract contract DomainGuest {
     /// @notice Set the cure value for the host
     /// @dev Triggered during shutdown
     /// @param value Cure value [RAD]
-    function tell(uint256 value) external auth {
-        _tell(value);
+    function _tell(uint256 value) internal auth returns (bytes memory payload) {
+        payload = abi.encodeWithSelector(DomainHost.tell.selector, value);
 
         emit Tell(value);
     }
@@ -272,56 +274,26 @@ abstract contract DomainGuest {
         emit Deposit(to, amount);
     }
 
-    /// @notice Withdraw local DAI by burning local canonical DAI
+    /// @notice Withdraw DAI by burning local canonical DAI
     /// @param to The address to send the DAI to on the remote domain
     /// @param amount The amount of DAI to withdraw [WAD]
-    function withdraw(address to, uint256 amount) external {
+    function _withdraw(address to, uint256 amount) internal returns (bytes memory payload) {
         require(dai.transferFrom(msg.sender, address(this), amount), "DomainGuest/transfer-failed");
         daiJoin.join(address(this), amount);
         vat.swell(address(this), -_int256(amount * RAY));
 
-        _withdraw(to, amount);
+        payload = abi.encodeWithSelector(DomainHost.withdraw.selector, to, amount);
 
         emit Withdraw(to, amount);
     }
 
     // --- Maker Teleport Support ---
-    function initiateTeleport(
-        bytes32 targetDomain,
-        address receiver,
-        uint128 amount
-    ) external {
-        return
-            _initiateTeleport(targetDomain, TeleportGUIDHelper.addressToBytes32(receiver), amount, 0);
-    }
-    function initiateTeleport(
-        bytes32 targetDomain,
-        address receiver,
-        uint128 amount,
-        address operator
-    ) external {
-        return
-            _initiateTeleport(
-                targetDomain,
-                TeleportGUIDHelper.addressToBytes32(receiver),
-                amount,
-                TeleportGUIDHelper.addressToBytes32(operator)
-            );
-    }
-    function initiateTeleport(
-        bytes32 targetDomain,
-        bytes32 receiver,
-        uint128 amount,
-        bytes32 operator
-    ) external {
-        return _initiateTeleport(targetDomain, receiver, amount, operator);
-    }
     function _initiateTeleport(
         bytes32 targetDomain,
         bytes32 receiver,
         uint128 amount,
         bytes32 operator
-    ) private {
+    ) internal returns (bytes memory payload) {
         // Disallow initiating new teleport transfer if targetDomain has not been whitelisted
         require(validDomains[targetDomain] == 1, "DomainGuest/invalid-domain");
 
@@ -340,31 +312,21 @@ abstract contract DomainGuest {
         daiJoin.join(address(this), amount);
         vat.swell(address(this), -_int256(amount * RAY));
 
-        _initiateTeleport(teleport);
+        payload = abi.encodeWithSelector(DomainHost.teleportSlowPath.selector, teleport);
 
         emit InitiateTeleport(teleport);
     }
 
-    function flush(bytes32 targetDomain) external {
+    function _flush(bytes32 targetDomain) internal returns (bytes memory payload) {
         // We do not check for valid domain because previously valid domains still need their DAI flushed
         uint256 daiToFlush = batchedDaiToFlush[targetDomain];
         require(daiToFlush > 0, "DomainGuest/zero-dai-flush");
 
         batchedDaiToFlush[targetDomain] = 0;
 
-        _flush(targetDomain, daiToFlush);
+        payload = abi.encodeWithSelector(DomainHost.flush.selector, targetDomain, daiToFlush);
 
         emit Flush(targetDomain, daiToFlush);
     }
-
-    // Bridge-specific functions
-    function _isHost(address usr) internal virtual view returns (bool);
-    function _release(uint256 burned) internal virtual;
-    function _surplus(uint256 wad) internal virtual;
-    function _deficit(uint256 wad) internal virtual;
-    function _tell(uint256 value) internal virtual;
-    function _initiateTeleport(TeleportGUID memory teleport) internal virtual;
-    function _flush(bytes32 targetDomain, uint256 daiToFlush) internal virtual;
-    function _withdraw(address to, uint256 amount) internal virtual;
     
 }
