@@ -2966,9 +2966,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.4.164":
-  version: 1.4.168
-  resolution: "electron-to-chromium@npm:1.4.168"
-  checksum: c834e717c0472ed7061685a5302c76524e34b3aa2fde057bf1b20627408c78a6539f070b2600c9ed902f81f0ef57049314163c0cb87e7da4df7edf4fcef4d580
+  version: 1.4.169
+  resolution: "electron-to-chromium@npm:1.4.169"
+  checksum: 745bb5429082591f54d2f6a22e25bd5e977c60c9f5e636b64dda38120f5750425748a477376ee599236f553ee184247d1ae13e17805b3e01965490450bb543da
   languageName: node
   linkType: hard
 
@@ -3618,35 +3618,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"forta-agent@npm:0.1.6":
-  version: 0.1.6
-  resolution: "forta-agent@npm:0.1.6"
-  dependencies:
-    "@grpc/grpc-js": ^1.3.6
-    "@grpc/proto-loader": ^0.6.4
-    awilix: ^4.3.4
-    axios: ^0.21.1
-    ethers: ^5.5.1
-    flat-cache: ^3.0.4
-    form-data: ^4.0.0
-    jsonc: ^2.0.0
-    keythereum: ^1.2.0
-    lodash: ^4.17.21
-    n-readlines: ^1.0.1
-    prompts: ^2.4.1
-    python-shell: ^3.0.0
-    sha3: ^2.1.4
-    shelljs: ^0.8.4
-    yargs: ^17.0.1
-  bin:
-    forta-agent: dist/cli/index.js
-  checksum: 6ce316861ea76b7b90350f1480738b92eb735668f5be9cf983588896d98396370def651f92506b016f01a84d676f7b6aa7e9710198862f962bd258854b7f5fd6
-  languageName: node
-  linkType: hard
-
-"forta-agent@npm:^0.1.3":
-  version: 0.1.7
-  resolution: "forta-agent@npm:0.1.7"
+"forta-agent@npm:^0.1.3, forta-agent@npm:^0.1.8":
+  version: 0.1.8
+  resolution: "forta-agent@npm:0.1.8"
   dependencies:
     "@grpc/grpc-js": ^1.3.6
     "@grpc/proto-loader": ^0.6.4
@@ -3669,7 +3643,7 @@ __metadata:
     yargs: ^17.0.1
   bin:
     forta-agent: dist/cli/index.js
-  checksum: ba3c571c6b0d185f427307db76ae2c0290cbd3400b8646cc26b97b59c4fc811b219bda86ffa858e8fc715689806b815328f213b463c40fa4f1ce46113af04b3d
+  checksum: 6f3df09f6fedcd792da8622996f4d32c06ea01c72e5e3fa7736829f0cfc3b3e37b25b2b5db990492da533001726882263664673dbba7d5c5ca46df4387c920d8
   languageName: node
   linkType: hard
 
@@ -5904,7 +5878,7 @@ __metadata:
   dependencies:
     "@types/jest": ^27.0.1
     "@types/nodemon": ^1.19.0
-    forta-agent: 0.1.6
+    forta-agent: ^0.1.8
     forta-agent-tools: ^2.2.1
     jest: ^27.0.6
     jest-when: ^3.5.1

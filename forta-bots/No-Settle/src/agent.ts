@@ -23,7 +23,7 @@ export const provideHandleBlock = (
 ): HandleBlock => {
   let latestAlertedSettleTimestampMap: Map<string, BigNumber> = new Map<string, BigNumber>();
   let latestSettleTimestampMap: Map<string, BigNumber> = new Map<string, BigNumber>();
-  const domains: string[] = [];
+  let domains: string[] = [];
   const secondsThreshold: BigNumber = BigNumber.from(daysThreshold).mul(86400);
 
   return async (blockEvent: BlockEvent) => {
@@ -34,10 +34,7 @@ export const provideHandleBlock = (
     if (!init) {
       init = true;
 
-      const numDomains: BigNumber = await fetcher.getNumDomains(data.TeleportRouter, blockEvent.block.number);
-      for (let i: number = 0; i < numDomains.toNumber(); i++) {
-        domains.push(await fetcher.getDomain(data.TeleportRouter, i, blockEvent.block.number));
-      }
+      domains = await fetcher.getDomains(data.TeleportRouter, blockEvent.blockNumber);
 
       domains.forEach((domain) => {
         latestAlertedSettleTimestampMap.set(domain, BigNumber.from(-1));
@@ -54,19 +51,14 @@ export const provideHandleBlock = (
       const settleEvents: providers.Log[] = await provider.getLogs(settleFilter);
 
       if (settleEvents.length) {
+        const updates: Map<string, number> = new Map<string, number>();
+        settleEvents.map((event: providers.Log) => {
+          if (latestSettleTimestampMap.has(event.topics[1])) updates.set(event.topics[1], event.blockNumber);
+        });
         await Promise.all(
-          domains.map(async (domain) => {
-            const domainSettleEvents: providers.Log[] = settleEvents.filter(
-              (event: providers.Log) => event.topics[1] === domain
-            );
-            if (domainSettleEvents.length) {
-              latestSettleTimestampMap.set(
-                domain,
-                BigNumber.from(
-                  (await provider.getBlock(domainSettleEvents[domainSettleEvents.length - 1].blockNumber)).timestamp
-                )
-              );
-            }
+          Array.from(updates).map(async (data: [string, number]) => {
+            const [domain, block] = data;
+            latestSettleTimestampMap.set(domain, BigNumber.from((await provider.getBlock(block)).timestamp));
           })
         );
       }
@@ -82,23 +74,22 @@ export const provideHandleBlock = (
 
     if (fileEvents.length) {
       domains.length = 0;
-      const numDomains: BigNumber = await fetcher.getNumDomains(data.TeleportRouter, blockEvent.block.number);
-      for (let i: number = 0; i < numDomains.toNumber(); i++) {
-        const domain = await fetcher.getDomain(data.TeleportRouter, i, blockEvent.block.number);
-        domains.push(domain);
-      }
+      domains = await fetcher.getDomains(data.TeleportRouter, blockEvent.blockNumber);
+
+      let newAlertedSettleTimestampMap: Map<string, BigNumber> = new Map<string, BigNumber>();
+      let newSettleTimestampMap: Map<string, BigNumber> = new Map<string, BigNumber>();
+
       domains.forEach((domain) => {
         if (!latestSettleTimestampMap.has(domain)) {
-          latestAlertedSettleTimestampMap.set(domain, BigNumber.from(-1));
-          latestSettleTimestampMap.set(domain, BigNumber.from(0));
+          newAlertedSettleTimestampMap.set(domain, BigNumber.from(-1));
+          newSettleTimestampMap.set(domain, BigNumber.from(0));
+        } else {
+          newAlertedSettleTimestampMap.set(domain, latestAlertedSettleTimestampMap.get(domain)!);
+          newSettleTimestampMap.set(domain, latestSettleTimestampMap.get(domain)!);
         }
       });
-      for (const key in latestSettleTimestampMap.keys()) {
-        if (!domains.includes(key)) {
-          latestAlertedSettleTimestampMap.delete(key);
-          latestSettleTimestampMap.delete(key);
-        }
-      }
+      latestAlertedSettleTimestampMap = newAlertedSettleTimestampMap;
+      latestSettleTimestampMap = newSettleTimestampMap;
     }
 
     // For each domain, check if:
@@ -129,13 +120,14 @@ export const provideHandleBlock = (
     const settleEvents: providers.Log[] = await provider.getLogs(settleFilter);
 
     if (settleEvents.length) {
-      domains.map((domain) => {
-        const domainSettleEvents: providers.Log[] = settleEvents.filter(
-          (event: providers.Log) => event.topics[1] === domain
-        );
-        if (domainSettleEvents.length) {
-          latestSettleTimestampMap.set(domain, currentTimestamp);
-        }
+      const updates: Map<string, number> = new Map<string, number>();
+      settleEvents.map((event: providers.Log) => {
+        if (latestSettleTimestampMap.has(event.topics[1])) updates.set(event.topics[1], event.blockNumber);
+      });
+
+      Array.from(updates).map((data: [string, number]) => {
+        const [domain] = data;
+        latestSettleTimestampMap.set(domain, currentTimestamp);
       });
     }
 
