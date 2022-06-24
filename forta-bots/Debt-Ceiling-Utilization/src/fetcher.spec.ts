@@ -18,20 +18,17 @@ const LINE_CASES: [string, number, string, BigNumber][] = [
   [createAddress("0xbaaa"), 746547, keccak256("dfjgkdfgnd"), BigNumber.from(4865986746)],
 ];
 
-//TeleportRouter, numDomains, block
-const NUM_DOMAINS_CASES: [string, BigNumber, number][] = [
-  [createAddress("0xabcd"), BigNumber.from(250), 1001],
-  [createAddress("0x123a"), BigNumber.from(1000), 900],
-  [createAddress("0x4343"), BigNumber.from(10000), 1212121],
-  [createAddress("0x171b"), BigNumber.from(40), 987659999],
-];
-
-//TeleportRouter, index, domain, block
-const DOMAINS_CASES: [string, number, string, number][] = [
-  [createAddress("0x2bcd"), 0, keccak256("dom0"), 123],
-  [createAddress("0x2acd"), 32, keccak256("dom23"), 1323],
-  [createAddress("0x2bed"), 99, keccak256("dom121"), 1213],
-  [createAddress("0x2b5d"), 1020, keccak256("dom007"), 11123],
+//TeleportRouter, domains[], block, numDomains
+const DOMAINS_CASES: [string, string[], number, BigNumber][] = [
+  [
+    createAddress("0x2bcd"),
+    [keccak256("dom0"), keccak256("dom1"), keccak256("dom2"), keccak256("dom3")],
+    123,
+    BigNumber.from(4),
+  ],
+  [createAddress("0x2acd"), [keccak256("dom23"), keccak256("dom24"), keccak256("dom25")], 1323, BigNumber.from(3)],
+  [createAddress("0x2bed"), [keccak256("dom121"), keccak256("dom122")], 1213, BigNumber.from(2)],
+  [createAddress("0x2b5d"), [keccak256("dom007")], 11123, BigNumber.from(1)],
 ];
 
 describe("Fetcher test suite", () => {
@@ -99,33 +96,19 @@ describe("Fetcher test suite", () => {
     }
   });
 
-  it("should fetch the number of domains correctly", async () => {
-    for (let [router, num, block] of NUM_DOMAINS_CASES) {
+  it("should fetch the  domains correctly", async () => {
+    for (let [router, domains, block, num] of DOMAINS_CASES) {
       const fetcher: Fetcher = new Fetcher(mockProvider as any);
-
       createNumDomainsCall(router, block, num);
-
-      const domainsNum = await fetcher.getNumDomains(router, block);
-      expect(domainsNum).toStrictEqual(num);
-
-      //Use cached values
-      mockProvider.clear();
-      expect(domainsNum).toStrictEqual(num);
-    }
-  });
-
-  it("should fetch the domains correctly", async () => {
-    for (let [router, index, domain, block] of DOMAINS_CASES) {
-      const fetcher: Fetcher = new Fetcher(mockProvider as any);
-
-      createDomainAtCall(router, block, index, domain);
-
-      const dom = await fetcher.getDomain(router, index, block);
-      expect(dom).toStrictEqual(domain);
+      for (let i = 0; i < num.toNumber(); i++) {
+        createDomainAtCall(router, block, i, domains[i]);
+      }
+      const doms: string[] = await fetcher.getDomains(router, block);
+      expect(doms).toStrictEqual(domains);
 
       //Use cached values
       mockProvider.clear();
-      expect(dom).toStrictEqual(domain);
+      expect(doms).toStrictEqual(domains);
     }
   });
 });

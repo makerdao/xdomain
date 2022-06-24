@@ -6,22 +6,21 @@ import Fetcher from "./fetcher";
 import { createFinding, FILE_IFACE, UTILIZATION_THRESHOLD } from "./utils";
 
 const networkManager: NetworkData = new NetworkManager(NETWORK_MAP);
-const domainsArray: string[] = [];
+let router: { domains: string[] } = {
+  domains: [],
+};
 
 export const provideInitialize =
-  (domains: string[], provider: providers.Provider, data: NetworkData, fetcher: Fetcher): Initialize =>
+  (router: { domains: string[] }, provider: providers.Provider, data: NetworkData, fetcher: Fetcher): Initialize =>
   async () => {
     const { chainId } = await provider.getNetwork();
     networkManager.setNetwork(chainId);
 
-    const numDomains: BigNumber = await fetcher.getNumDomains(data.TeleportRouter, await provider.getBlockNumber());
-    for (let i: number = 0; i < numDomains.toNumber(); i++) {
-      domains.push(await fetcher.getDomain(data.TeleportRouter, i, await provider.getBlockNumber()));
-    }
+    router.domains = await fetcher.getDomains(data.TeleportRouter, await provider.getBlockNumber());
   };
 
 export const provideHandleBlock = (
-  domains: string[],
+  router: { domains: string[] },
   provider: providers.Provider,
   data: NetworkData,
   fetcher: Fetcher,
@@ -39,16 +38,11 @@ export const provideHandleBlock = (
     const fileEvents: providers.Log[] = await provider.getLogs(fileFilter);
 
     if (fileEvents.length) {
-      domains.length = 0;
-      const numDomains: BigNumber = await fetcher.getNumDomains(data.TeleportRouter, blockEvent.block.number);
-      for (let i: number = 0; i < numDomains.toNumber(); i++) {
-        const domain = await fetcher.getDomain(data.TeleportRouter, i, blockEvent.block.number);
-        domains.push(domain);
-      }
+      router.domains = await fetcher.getDomains(data.TeleportRouter, blockEvent.blockNumber);
     }
 
     await Promise.all(
-      domains.map(async (domain) => {
+      router.domains.map(async (domain) => {
         const line: BigNumber = await fetcher.getLine(data.TeleportJoin, domain, blockEvent.blockNumber);
         const debt: BigNumber = await fetcher.getDebt(data.TeleportJoin, domain, blockEvent.blockNumber);
 
@@ -64,9 +58,9 @@ export const provideHandleBlock = (
 };
 
 export default {
-  initialize: provideInitialize(domainsArray, getEthersProvider(), networkManager, new Fetcher(getEthersProvider())),
+  initialize: provideInitialize(router, getEthersProvider(), networkManager, new Fetcher(getEthersProvider())),
   handleBlock: provideHandleBlock(
-    domainsArray,
+    router,
     getEthersProvider(),
     networkManager,
     new Fetcher(getEthersProvider()),

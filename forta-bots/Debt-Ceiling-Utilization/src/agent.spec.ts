@@ -7,8 +7,10 @@ import { when, resetAllWhenMocks } from "jest-when";
 
 const TEST_THRESHOLD = BigNumber.from(1);
 const FILE_EVENT_TOPIC: string = "0x4ff2caaa972a7c6629ea01fae9c93d73cc307d13ea4c369f9bbbb7f9b7e9461d";
-const TEST_NUM_DOMAINS: BigNumber = BigNumber.from(5);
-const TEST_DOMAINS: string[] = [keccak256("testDomain1"), keccak256("testDomain2"), keccak256("testDomain3")];
+const TEST_ROUTER: { domains: string[] } = {
+  domains: [keccak256("testDomain1"), keccak256("testDomain2"), keccak256("testDomain3")],
+};
+//const TEST_DOMAINS: string[] = [keccak256("testDomain1"), keccak256("testDomain2"), keccak256("testDomain3")];
 
 describe("Debt Ceiling Utilization monitoring bot test suite", () => {
   let handleBlock: HandleBlock;
@@ -21,21 +23,19 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
 
   const mockGetDebt = jest.fn();
   const mockGetLine = jest.fn();
-  const mockGetNumDomains = jest.fn();
-  const mockGetDomain = jest.fn();
+  const mockGetDomains = jest.fn();
 
   const mockFetcher = {
     getDebt: mockGetDebt,
     getLine: mockGetLine,
-    getNumDomains: mockGetNumDomains,
-    getDomain: mockGetDomain,
+    getDomains: mockGetDomains,
   };
 
   beforeEach(() => {
     mockProvider = new MockEthersProvider();
 
     handleBlock = provideHandleBlock(
-      TEST_DOMAINS,
+      TEST_ROUTER,
       mockProvider as unknown as ethers.providers.Provider,
       mockNetworkManager as any,
       mockFetcher as any,
@@ -48,9 +48,9 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
   it("should return no findings when all domains' debt/line ratios are below threshold", async () => {
     //domain, line, debt, blockNumber
     const TEST_CASES: [string, BigNumber, BigNumber, number][] = [
-      [TEST_DOMAINS[0], BigNumber.from("9387592759532123"), BigNumber.from(234), 1234],
-      [TEST_DOMAINS[1], BigNumber.from("19387592759532123"), BigNumber.from(55), 1234],
-      [TEST_DOMAINS[2], BigNumber.from("92759532123"), BigNumber.from(-94595), 1234],
+      [TEST_ROUTER.domains[0], BigNumber.from("9387592759532123"), BigNumber.from(234), 1234],
+      [TEST_ROUTER.domains[1], BigNumber.from("19387592759532123"), BigNumber.from(55), 1234],
+      [TEST_ROUTER.domains[2], BigNumber.from("92759532123"), BigNumber.from(-94595), 1234],
     ];
 
     for (let [domain, line, debt, blockNumber] of TEST_CASES) {
@@ -70,9 +70,9 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
   it("should return a finding when a domain's debt/line ratio is above threshold", async () => {
     //domain, line, debt, blockNumber
     const TEST_CASES: [string, BigNumber, BigNumber, number][] = [
-      [TEST_DOMAINS[0], BigNumber.from(133), BigNumber.from("9187592759532123"), 21234],
-      [TEST_DOMAINS[1], BigNumber.from("17387592759532123"), BigNumber.from(12), 21234],
-      [TEST_DOMAINS[2], BigNumber.from("89759532123"), BigNumber.from(13), 21234],
+      [TEST_ROUTER.domains[0], BigNumber.from(133), BigNumber.from("9187592759532123"), 21234],
+      [TEST_ROUTER.domains[1], BigNumber.from("17387592759532123"), BigNumber.from(12), 21234],
+      [TEST_ROUTER.domains[2], BigNumber.from("89759532123"), BigNumber.from(13), 21234],
     ];
 
     for (let [domain, line, debt, blockNumber] of TEST_CASES) {
@@ -94,9 +94,9 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
   it("should fetch new domains and create multiple findings when multiple domains' debt/line ratios are above threshold", async () => {
     //line, debt, blockNumber
     const TEST_CASES: [string, BigNumber, BigNumber, number][] = [
-      [TEST_DOMAINS[0], BigNumber.from(123), BigNumber.from("9187592759532123"), 21234],
-      [TEST_DOMAINS[1], BigNumber.from(11), BigNumber.from("17387592759532123"), 21234],
-      [TEST_DOMAINS[2], BigNumber.from(1111), BigNumber.from("89759532123"), 21234],
+      [TEST_ROUTER.domains[0], BigNumber.from(123), BigNumber.from("9187592759532123"), 21234],
+      [TEST_ROUTER.domains[1], BigNumber.from(11), BigNumber.from("17387592759532123"), 21234],
+      [TEST_ROUTER.domains[2], BigNumber.from(1111), BigNumber.from("89759532123"), 21234],
     ];
 
     const logsFile = [
@@ -114,23 +114,9 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
 
     mockProvider.addLogs(logsFile);
 
-    when(mockFetcher.getNumDomains)
+    when(mockFetcher.getDomains)
       .calledWith(mockNetworkManager.TeleportRouter, 21234)
-      .mockReturnValue(BigNumber.from(4));
-    for (let i = 0; i < TEST_NUM_DOMAINS.toNumber(); i++) {
-      if (i < 3) {
-        when(mockFetcher.getDomain)
-          .calledWith(mockNetworkManager.TeleportRouter, i, 21234)
-          .mockReturnValue(TEST_DOMAINS[i]);
-      } else {
-        when(mockFetcher.getDomain)
-          .calledWith(mockNetworkManager.TeleportRouter, 3, 21234)
-          .mockReturnValue(keccak256("newDomain1"));
-        when(mockFetcher.getDomain)
-          .calledWith(mockNetworkManager.TeleportRouter, 4, 21234)
-          .mockReturnValue(keccak256("newDomain2"));
-      }
-    }
+      .mockReturnValue([...TEST_ROUTER.domains, keccak256("newDomain1"), keccak256("newDomain2")]);
 
     for (let [domain, line, debt, blockNumber] of TEST_CASES) {
       when(mockFetcher.getLine)
