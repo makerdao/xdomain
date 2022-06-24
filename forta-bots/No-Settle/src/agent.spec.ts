@@ -72,136 +72,136 @@ describe("No-settle monitoring bot test suite", () => {
     );
   });
 
-  // it("should return a finding when there were no recent past Settle events on the first run", async () => {
-  //   const blockEvent: BlockEvent = new TestBlockEvent()
-  //     .setTimestamp(142342342)
-  //     .setNumber(3456)
-  //     .setHash(keccak256("fefsd"));
+  it("should return a finding when there were no recent past Settle events on the first run", async () => {
+    const blockEvent: BlockEvent = new TestBlockEvent()
+      .setTimestamp(142342342)
+      .setNumber(3456)
+      .setHash(keccak256("fefsd"));
 
-  //   addCallToNumDomains(mockNetworkManager.TeleportRouter, 3456, TEST_NUM_DOMAINS);
+    addCallToNumDomains(mockNetworkManager.TeleportRouter, 3456, TEST_NUM_DOMAINS);
 
-  //   for (let i = 0; i < TEST_NUM_DOMAINS.toNumber(); i++) {
-  //     addCallToDomainAt(mockNetworkManager.TeleportRouter, 3456, i, TEST_DOMAINS[i]);
-  //   }
+    for (let i = 0; i < TEST_NUM_DOMAINS.toNumber(); i++) {
+      addCallToDomainAt(mockNetworkManager.TeleportRouter, 3456, i, TEST_DOMAINS[i]);
+    }
 
-  //   const findings: Finding[] = await handleBlock(blockEvent);
+    const findings: Finding[] = await handleBlock(blockEvent);
 
-  //   expect(findings).toStrictEqual([
-  //     testCreateFinding(TEST_DAYS_THRESHOLD, TEST_DOMAINS[0], "142342342"),
-  //     testCreateFinding(TEST_DAYS_THRESHOLD, TEST_DOMAINS[1], "142342342"),
-  //     testCreateFinding(TEST_DAYS_THRESHOLD, TEST_DOMAINS[2], "142342342"),
-  //   ]);
-  // });
+    expect(findings).toStrictEqual([
+      testCreateFinding(TEST_DAYS_THRESHOLD, TEST_DOMAINS[0], "142342342"),
+      testCreateFinding(TEST_DAYS_THRESHOLD, TEST_DOMAINS[1], "142342342"),
+      testCreateFinding(TEST_DAYS_THRESHOLD, TEST_DOMAINS[2], "142342342"),
+    ]);
+  });
 
-  // it("should return no findings if there was a recent past Settle event on the first run", async () => {
-  //   const blockEvent: BlockEvent = new TestBlockEvent()
-  //     .setTimestamp(1422500)
-  //     .setNumber(200)
-  //     .setHash(keccak256("fefsd"));
+  it("should return no findings if there was a recent past Settle event on the first run", async () => {
+    const blockEvent: BlockEvent = new TestBlockEvent()
+      .setTimestamp(1422500)
+      .setNumber(200)
+      .setHash(keccak256("fefsd"));
 
-  //   addCallToNumDomains(mockNetworkManager.TeleportRouter, 200, TEST_NUM_DOMAINS);
+    addCallToNumDomains(mockNetworkManager.TeleportRouter, 200, TEST_NUM_DOMAINS);
 
-  //   for (let i = 0; i < TEST_NUM_DOMAINS.toNumber(); i++) {
-  //     addCallToDomainAt(mockNetworkManager.TeleportRouter, 200, i, TEST_DOMAINS[i]);
-  //   }
+    for (let i = 0; i < TEST_NUM_DOMAINS.toNumber(); i++) {
+      addCallToDomainAt(mockNetworkManager.TeleportRouter, 200, i, TEST_DOMAINS[i]);
+    }
 
-  //   const logs0 = [
-  //     {
-  //       blockNumber: 196,
-  //       address: mockNetworkManager.TeleportJoin,
-  //       topics: [SETTLE_EVENT_TOPIC, TEST_DOMAINS[0]],
-  //     },
-  //     {
-  //       blockNumber: 197,
-  //       address: mockNetworkManager.TeleportJoin,
-  //       topics: [SETTLE_EVENT_TOPIC, TEST_DOMAINS[1]],
-  //     },
-  //     {
-  //       blockNumber: 198,
-  //       address: mockNetworkManager.TeleportJoin,
-  //       topics: [SETTLE_EVENT_TOPIC, TEST_DOMAINS[2]],
-  //     },
-  //   ] as ethers.providers.Log[];
+    const logs0 = [
+      {
+        blockNumber: 196,
+        address: mockNetworkManager.TeleportJoin,
+        topics: [SETTLE_EVENT_TOPIC, TEST_DOMAINS[0]],
+      },
+      {
+        blockNumber: 197,
+        address: mockNetworkManager.TeleportJoin,
+        topics: [SETTLE_EVENT_TOPIC, TEST_DOMAINS[1]],
+      },
+      {
+        blockNumber: 198,
+        address: mockNetworkManager.TeleportJoin,
+        topics: [SETTLE_EVENT_TOPIC, TEST_DOMAINS[2]],
+      },
+    ] as ethers.providers.Log[];
 
-  //   when(mockProvider.getBlock)
-  //     .calledWith(196)
-  //     .mockReturnValue({ timestamp: 1380000 })
-  //     .calledWith(197)
-  //     .mockReturnValue({ timestamp: 1390000 })
-  //     .calledWith(198)
-  //     .mockReturnValue({ timestamp: 1400000 });
+    when(mockProvider.getBlock)
+      .calledWith(196)
+      .mockReturnValue({ timestamp: 1380000 })
+      .calledWith(197)
+      .mockReturnValue({ timestamp: 1390000 })
+      .calledWith(198)
+      .mockReturnValue({ timestamp: 1400000 });
 
-  //   mockProvider.addLogs(logs0);
+    mockProvider.addLogs(logs0);
 
-  //   const findings: Finding[] = await handleBlock(blockEvent);
-  //   expect(findings).toStrictEqual([]);
-  // });
+    const findings: Finding[] = await handleBlock(blockEvent);
+    expect(findings).toStrictEqual([]);
+  });
 
-  // it("should return findings for the correct domain and only if the threshold is exceeded", async () => {
-  //   const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(2500).setNumber(6999).setHash(keccak256("fefsd"));
+  it("should return findings for the correct domain and only if the threshold is exceeded", async () => {
+    const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(2500).setNumber(6999).setHash(keccak256("fefsd"));
 
-  //   addCallToNumDomains(mockNetworkManager.TeleportRouter, 6999, TEST_NUM_DOMAINS);
+    addCallToNumDomains(mockNetworkManager.TeleportRouter, 6999, TEST_NUM_DOMAINS);
 
-  //   for (let i = 0; i < TEST_NUM_DOMAINS.toNumber(); i++) {
-  //     addCallToDomainAt(mockNetworkManager.TeleportRouter, 6999, i, TEST_DOMAINS[i]);
-  //   }
+    for (let i = 0; i < TEST_NUM_DOMAINS.toNumber(); i++) {
+      addCallToDomainAt(mockNetworkManager.TeleportRouter, 6999, i, TEST_DOMAINS[i]);
+    }
 
-  //   //domain0 log
-  //   const logs00 = [
-  //     {
-  //       blockNumber: 6998,
-  //       address: mockNetworkManager.TeleportJoin,
-  //       topics: [SETTLE_EVENT_TOPIC, TEST_DOMAINS[0]],
-  //     },
-  //   ] as ethers.providers.Log[];
+    //domain0 log
+    const logs00 = [
+      {
+        blockNumber: 6998,
+        address: mockNetworkManager.TeleportJoin,
+        topics: [SETTLE_EVENT_TOPIC, TEST_DOMAINS[0]],
+      },
+    ] as ethers.providers.Log[];
 
-  //   when(mockProvider.getBlock).calledWith(6998).mockReturnValue({ timestamp: 2450 });
+    when(mockProvider.getBlock).calledWith(6998).mockReturnValue({ timestamp: 2450 });
 
-  //   mockProvider.addLogs(logs00);
+    mockProvider.addLogs(logs00);
 
-  //   await handleBlock(blockEvent);
+    await handleBlock(blockEvent);
 
-  //   // threshold not exceeded
-  //   const blockEvent1: BlockEvent = new TestBlockEvent()
-  //     .setHash(keccak256("hash3"))
-  //     .setTimestamp(86400)
-  //     .setNumber(7000);
+    // threshold not exceeded
+    const blockEvent1: BlockEvent = new TestBlockEvent()
+      .setHash(keccak256("hash3"))
+      .setTimestamp(86400)
+      .setNumber(7000);
 
-  //   //domain2 log
-  //   const logs = [
-  //     {
-  //       blockNumber: 7000,
-  //       blockHash: blockEvent1.blockHash,
-  //       address: mockNetworkManager.TeleportJoin,
-  //       topics: [SETTLE_EVENT_TOPIC, TEST_DOMAINS[2]],
-  //     },
-  //   ] as ethers.providers.Log[];
+    //domain2 log
+    const logs = [
+      {
+        blockNumber: 7000,
+        blockHash: blockEvent1.blockHash,
+        address: mockNetworkManager.TeleportJoin,
+        topics: [SETTLE_EVENT_TOPIC, TEST_DOMAINS[2]],
+      },
+    ] as ethers.providers.Log[];
 
-  //   mockProvider.addLogs(logs);
+    mockProvider.addLogs(logs);
 
-  //   // threshold exceeded
-  //   const blockEvent2: BlockEvent = new TestBlockEvent()
-  //     .setHash(keccak256("hash51"))
-  //     .setTimestamp(4286500)
-  //     .setNumber(7001);
+    // threshold exceeded
+    const blockEvent2: BlockEvent = new TestBlockEvent()
+      .setHash(keccak256("hash51"))
+      .setTimestamp(4286500)
+      .setNumber(7001);
 
-  //   // threshold not exceeded
-  //   const blockEvent3: BlockEvent = new TestBlockEvent()
-  //     .setHash(keccak256("hash25"))
-  //     .setTimestamp(4289999)
-  //     .setNumber(7002);
+    // threshold not exceeded
+    const blockEvent3: BlockEvent = new TestBlockEvent()
+      .setHash(keccak256("hash25"))
+      .setTimestamp(4289999)
+      .setNumber(7002);
 
-  //   const findings = await handleBlock(blockEvent1);
-  //   expect(findings).toStrictEqual([]);
-  //   const findings2 = await handleBlock(blockEvent2);
-  //   expect(findings2).toStrictEqual([
-  //     testCreateFinding(TEST_DAYS_THRESHOLD, TEST_DOMAINS[0], "4286500", "2450"),
-  //     testCreateFinding(TEST_DAYS_THRESHOLD, TEST_DOMAINS[1], "4286500"),
-  //     testCreateFinding(TEST_DAYS_THRESHOLD, TEST_DOMAINS[2], "4286500", "86400"),
-  //   ]);
-  //   const findings3 = await handleBlock(blockEvent3);
-  //   expect(findings3).toStrictEqual([]);
-  // });
+    const findings = await handleBlock(blockEvent1);
+    expect(findings).toStrictEqual([]);
+    const findings2 = await handleBlock(blockEvent2);
+    expect(findings2).toStrictEqual([
+      testCreateFinding(TEST_DAYS_THRESHOLD, TEST_DOMAINS[0], "4286500", "2450"),
+      testCreateFinding(TEST_DAYS_THRESHOLD, TEST_DOMAINS[1], "4286500"),
+      testCreateFinding(TEST_DAYS_THRESHOLD, TEST_DOMAINS[2], "4286500", "86400"),
+    ]);
+    const findings3 = await handleBlock(blockEvent3);
+    expect(findings3).toStrictEqual([]);
+  });
 
   it("should handle domains and create findings correctly when a File event is emitted", async () => {
     const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(2500).setNumber(6999).setHash(keccak256("fefsd"));
