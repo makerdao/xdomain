@@ -1,4 +1,4 @@
-import { Finding, HandleBlock, BlockEvent, keccak256 } from "forta-agent";
+import { Finding, HandleBlock, BlockEvent, keccak256, ethers } from "forta-agent";
 import { MockEthersProvider, createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests";
 import { provideHandleBlock } from "./agent";
 import { BigNumber } from "ethers";
@@ -11,7 +11,9 @@ const TEST_NUM_DOMAINS: BigNumber = BigNumber.from(5);
 const TEST_DOMAINS: string[] = [keccak256("testDomain1"), keccak256("testDomain2"), keccak256("testDomain3")];
 
 describe("Debt Ceiling Utilization monitoring bot test suite", () => {
-  const mockProvider = new MockEthersProvider();
+  let handleBlock: HandleBlock;
+  let mockProvider: MockEthersProvider;
+
   const mockNetworkManager = {
     TeleportJoin: createAddress("0x5432"),
     TeleportRouter: createAddress("0x9832"),
@@ -29,18 +31,17 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
     getDomain: mockGetDomain,
   };
 
-  const handleBlock: HandleBlock = provideHandleBlock(
-    TEST_DOMAINS,
-    mockProvider as any,
-    mockNetworkManager as any,
-    mockFetcher as any,
-    TEST_THRESHOLD
-  );
-
   beforeEach(() => {
-    mockProvider.clear();
-    mockGetDebt.mockClear();
-    mockGetLine.mockClear();
+    mockProvider = new MockEthersProvider();
+
+    handleBlock = provideHandleBlock(
+      TEST_DOMAINS,
+      mockProvider as unknown as ethers.providers.Provider,
+      mockNetworkManager as any,
+      mockFetcher as any,
+      TEST_THRESHOLD
+    );
+
     resetAllWhenMocks();
   });
 
@@ -51,14 +52,6 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
       [TEST_DOMAINS[1], BigNumber.from("19387592759532123"), BigNumber.from(55), 1234],
       [TEST_DOMAINS[2], BigNumber.from("92759532123"), BigNumber.from(-94595), 1234],
     ];
-
-    const filterFile = {
-      address: mockNetworkManager.TeleportRouter,
-      topics: [FILE_EVENT_TOPIC],
-      blockHash: keccak256("fefsd"),
-    };
-
-    mockProvider.addFilteredLogs(filterFile, []);
 
     for (let [domain, line, debt, blockNumber] of TEST_CASES) {
       when(mockFetcher.getLine)
@@ -81,14 +74,6 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
       [TEST_DOMAINS[1], BigNumber.from("17387592759532123"), BigNumber.from(12), 21234],
       [TEST_DOMAINS[2], BigNumber.from("89759532123"), BigNumber.from(13), 21234],
     ];
-
-    const filterFile = {
-      address: mockNetworkManager.TeleportRouter,
-      topics: [FILE_EVENT_TOPIC],
-      blockHash: keccak256("eefsd"),
-    };
-
-    mockProvider.addFilteredLogs(filterFile, []);
 
     for (let [domain, line, debt, blockNumber] of TEST_CASES) {
       when(mockFetcher.getLine)
@@ -114,38 +99,20 @@ describe("Debt Ceiling Utilization monitoring bot test suite", () => {
       [TEST_DOMAINS[2], BigNumber.from(1111), BigNumber.from("89759532123"), 21234],
     ];
 
-    const filterFile = {
-      address: mockNetworkManager.TeleportRouter,
-      topics: [FILE_EVENT_TOPIC],
-      blockHash: keccak256("hash1"),
-    };
-
     const logsFile = [
       {
-        blockNumber: 21234,
         blockHash: keccak256("hash1"),
-        transactionIndex: 2,
-        removed: false,
         address: mockNetworkManager.TeleportRouter,
-        data: keccak256("dataData2"),
         topics: [FILE_EVENT_TOPIC],
-        transactionHash: keccak256("tHashFile"),
-        logIndex: 3,
       },
       {
-        blockNumber: 21234,
         blockHash: keccak256("hash1"),
-        transactionIndex: 3,
-        removed: false,
         address: mockNetworkManager.TeleportRouter,
-        data: keccak256("dataData222"),
         topics: [FILE_EVENT_TOPIC],
-        transactionHash: keccak256("tHashFile2"),
-        logIndex: 4,
       },
-    ];
+    ] as ethers.providers.Log[];
 
-    mockProvider.addFilteredLogs(filterFile, logsFile);
+    mockProvider.addLogs(logsFile);
 
     when(mockFetcher.getNumDomains)
       .calledWith(mockNetworkManager.TeleportRouter, 21234)
