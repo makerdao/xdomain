@@ -249,15 +249,10 @@ describe("No-settle monitoring bot test suite", () => {
     mockProvider.addLogs(fileLog);
 
     // threshold exceeded
-    const blockEvent2: BlockEvent = new TestBlockEvent()
-      .setHash(keccak256("hash51"))
-      .setTimestamp(4286500)
-      .setNumber(7001);
+    const blockEvent2: BlockEvent = new TestBlockEvent().setTimestamp(4286500).setNumber(7001);
 
     const findings = await handleBlock(blockEvent1);
     expect(findings).toStrictEqual([]);
-
-    mockProvider.clear(); //clear previous event's log
 
     const findings2 = await handleBlock(blockEvent2);
     expect(findings2).toStrictEqual([testCreateFinding(TEST_DAYS_THRESHOLD, keccak256("newAndOnlyDomain"), "4286500")]);
