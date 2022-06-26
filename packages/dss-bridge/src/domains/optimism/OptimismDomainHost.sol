@@ -36,10 +36,8 @@ contract OptimismDomainHost is DomainHost {
     uint32 public glLift;
     uint32 public glRectify;
     uint32 public glCage;
-    uint32 public glMainClaim;
+    uint32 public glExit;
     uint32 public glDeposit;
-
-    bytes32 constant private MAGIC_MEM_LOC = keccak256("MAGIC MEMORY LOCATION");
 
     constructor(
         bytes32 _ilk,
@@ -53,61 +51,82 @@ contract OptimismDomainHost is DomainHost {
         guest = _guest;
     }
 
-    // Example of providing custom parameters to the bridge
-    function lift(uint256 wad, uint32 gasLimit) external {
-        // Stash extra args in a magic memory location
-        bytes32 loc = MAGIC_MEM_LOC;
-        assembly {
-            mstore(loc, gasLimit)
-        }
-
-        lift(wad);
-    }
-
     function _isGuest(address usr) internal override view returns (bool) {
         return usr == address(l1messenger) && l1messenger.xDomainMessageSender() == guest;
     }
-    function _lift(uint256 id, uint256 line, uint256 minted) internal override {
-        // Load extra args or use defaults if not present
-        bytes32 loc = MAGIC_MEM_LOC;
-        uint32 gasLimit;
-        assembly {
-            gasLimit := mload(loc)
-        }
-        if (gasLimit == 0) gasLimit = glLift;
 
+    function lift(uint256 wad) external {
         l1messenger.sendMessage(
             guest,
-            abi.encodeWithSelector(DomainGuest.lift.selector, id, line, minted),
+            _lift(wad),
             glLift
         );
     }
-    function _rectify(uint256 wad) internal virtual override {
+    function lift(uint256 wad, uint32 gasLimit) external {
         l1messenger.sendMessage(
             guest,
-            abi.encodeWithSelector(DomainGuest.rectify.selector, wad),
+            _lift(wad),
+            gasLimit
+        );
+    }
+
+    function rectify() external {
+        l1messenger.sendMessage(
+            guest,
+            _rectify(),
             glRectify
         );
     }
-    function _cage() internal virtual override {
+    function rectify(uint32 gasLimit) external {
         l1messenger.sendMessage(
             guest,
-            abi.encodeWithSelector(DomainGuest.cage.selector),
+            _rectify(),
+            gasLimit
+        );
+    }
+
+    function cage() external {
+        l1messenger.sendMessage(
+            guest,
+            _cage(),
             glCage
         );
     }
-    function _mintClaim(address usr, uint256 claim) internal virtual override {
+    function cage(uint32 gasLimit) external {
         l1messenger.sendMessage(
             guest,
-            abi.encodeWithSelector(DomainGuest.mintClaim.selector, usr, claim),
-            glMainClaim
+            _cage(),
+            gasLimit
         );
     }
-    function _deposit(address to, uint256 amount) internal virtual override {
+
+    function exit(address usr, uint256 wad) external {
         l1messenger.sendMessage(
             guest,
-            abi.encodeWithSelector(DomainGuest.deposit.selector, to, amount),
+            _exit(usr, wad),
+            glExit
+        );
+    }
+    function exit(address usr, uint256 wad, uint32 gasLimit) external {
+        l1messenger.sendMessage(
+            guest,
+            _exit(usr, wad),
+            gasLimit
+        );
+    }
+
+    function deposit(address to, uint256 amount) external {
+        l1messenger.sendMessage(
+            guest,
+            _deposit(to, amount),
             glDeposit
+        );
+    }
+    function deposit(address to, uint256 amount, uint32 gasLimit) external {
+        l1messenger.sendMessage(
+            guest,
+            _deposit(to, amount),
+            gasLimit
         );
     }
 

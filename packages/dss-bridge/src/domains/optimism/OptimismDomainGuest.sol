@@ -19,7 +19,7 @@
 
 pragma solidity ^0.8.14;
 
-import {DomainGuest,TeleportGUID} from "../../DomainGuest.sol";
+import {DomainGuest,TeleportGUID,TeleportGUIDHelper} from "../../DomainGuest.sol";
 import {DomainHost} from "../../DomainHost.sol";
 
 interface L2MessengerLike {
@@ -34,12 +34,10 @@ contract OptimismDomainGuest is DomainGuest {
 
     // TODO make these fileable
     uint32 public glRelease;
-    uint32 public glSurplus;
-    uint32 public glDeficit;
+    uint32 public glPush;
     uint32 public glTell;
-    uint32 public glInitiateTeleport;
-    uint32 public glFlush;
     uint32 public glWithdraw;
+    uint32 public glFlush;
 
     constructor(
         bytes32 _domain,
@@ -55,53 +53,122 @@ contract OptimismDomainGuest is DomainGuest {
     function _isHost(address usr) internal override view returns (bool) {
         return usr == address(l2messenger) && l2messenger.xDomainMessageSender() == host;
     }
-    function _release(uint256 burned) internal override {
+
+    function release() external {
         l2messenger.sendMessage(
             host,
-            abi.encodeWithSelector(DomainHost.release.selector, burned),
+            _release(),
             glRelease
         );
     }
-    function _surplus(uint256 wad) internal virtual override {
+    function release(uint32 gasLimit) external {
         l2messenger.sendMessage(
             host,
-            abi.encodeWithSelector(DomainHost.surplus.selector, wad),
-            glSurplus
+            _release(),
+            gasLimit
         );
     }
-    function _deficit(uint256 wad) internal virtual override {
+
+    function push() external {
         l2messenger.sendMessage(
             host,
-            abi.encodeWithSelector(DomainHost.deficit.selector, wad),
-            glDeficit
+            _push(),
+            glPush
         );
     }
-    function _tell(uint256 value) internal virtual override {
+    function push(uint32 gasLimit) external {
         l2messenger.sendMessage(
             host,
-            abi.encodeWithSelector(DomainHost.tell.selector, value),
+            _push(),
+            gasLimit
+        );
+    }
+
+    function tell(uint256 value) external {
+        l2messenger.sendMessage(
+            host,
+            _tell(value),
             glTell
         );
     }
-    function _initiateTeleport(TeleportGUID memory teleport) internal virtual override {
+    function tell(uint256 value, uint32 gasLimit) external {
         l2messenger.sendMessage(
             host,
-            abi.encodeWithSelector(DomainHost.teleportSlowPath.selector, teleport),
-            glInitiateTeleport
+            _tell(value),
+            gasLimit
         );
     }
-    function _flush(bytes32 targetDomain, uint256 daiToFlush) internal virtual override {
+
+    function withdraw(address to, uint256 amount) external {
         l2messenger.sendMessage(
             host,
-            abi.encodeWithSelector(DomainHost.flush.selector, targetDomain, daiToFlush),
+            _withdraw(to, amount),
+            glWithdraw
+        );
+    }
+    function withdraw(address to, uint256 amount, uint32 gasLimit) external {
+        l2messenger.sendMessage(
+            host,
+            _withdraw(to, amount),
+            gasLimit
+        );
+    }
+
+    function initiateTeleport(
+        bytes32 targetDomain,
+        address receiver,
+        uint128 amount
+    ) external {
+        initiateTeleport(
+            targetDomain,
+            TeleportGUIDHelper.addressToBytes32(receiver),
+            amount,
+            0
+        );
+    }
+    function initiateTeleport(
+        bytes32 targetDomain,
+        address receiver,
+        uint128 amount,
+        address operator
+    ) external {
+        initiateTeleport(
+            targetDomain,
+            TeleportGUIDHelper.addressToBytes32(receiver),
+            amount,
+            TeleportGUIDHelper.addressToBytes32(operator)
+        );
+    }
+    function initiateTeleport(
+        bytes32 targetDomain,
+        bytes32 receiver,
+        uint128 amount,
+        bytes32 operator
+    ) public {
+        l2messenger.sendMessage(
+            host,
+            _initiateTeleport(
+                targetDomain,
+                receiver,
+                amount,
+                operator
+            ),
+            0
+        );
+    }
+
+    function flush(bytes32 targetDomain) external {
+        l2messenger.sendMessage(
+            host,
+            _flush(targetDomain),
             glFlush
         );
     }
-    function _withdraw(address to, uint256 amount) internal virtual override {
+    function flush(bytes32 targetDomain, uint32 gasLimit) external {
         l2messenger.sendMessage(
             host,
-            abi.encodeWithSelector(DomainHost.withdraw.selector, to, amount),
-            glWithdraw
+            _flush(targetDomain),
+            gasLimit
         );
     }
 
