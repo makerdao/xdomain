@@ -34,7 +34,7 @@ import { Spotter } from "xdomain-dss/Spotter.sol";
 import { Vat } from "xdomain-dss/Vat.sol";
 
 import { ClaimToken } from "../ClaimToken.sol";
-import { DomainHost, TeleportGUID } from "../DomainHost.sol";
+import { DomainHost, TeleportGUID, TeleportGUIDHelper } from "../DomainHost.sol";
 import { DomainGuest } from "../DomainGuest.sol";
 import { BridgeOracle } from "../BridgeOracle.sol";
 
@@ -51,24 +51,43 @@ contract SimpleDomainHost is DomainHost {
     function setGuest(address _guest) external {
         guest = DomainGuest(_guest);
     }
-
     function _isGuest(address usr) internal override view returns (bool) {
         return usr == address(guest);
     }
-    function _lift(int256 _dline, uint256 _minted) internal override {
-        guest.lift(_dline, _minted);
+
+    function revertNoSuccess(bool success, bytes memory response) internal pure {
+        if (!success) {
+            string memory message;
+            assembly {
+                let size := mload(add(response, 0x44))
+                message := mload(0x40)
+                mstore(message, size)
+                mstore(0x40, add(message, and(add(add(size, 0x20), 0x1f), not(0x1f))))
+                returndatacopy(add(message, 0x20), 0x44, size)
+            }
+            revert(string(message));
+        }
     }
-    function _rectify(uint256 wad) internal virtual override {
-        guest.rectify(wad);
+
+    function lift(uint256 wad) external {
+        (bool success, bytes memory response) = address(guest).call(_lift(wad));
+        revertNoSuccess(success, response);
     }
-    function _cage() internal virtual override {
-        guest.cage();
+    function rectify() external {
+        (bool success, bytes memory response) = address(guest).call(_rectify());
+        revertNoSuccess(success, response);
     }
-    function _mintClaim(address usr, uint256 claim) internal virtual override {
-        guest.mintClaim(usr, claim);
+    function cage() external {
+        (bool success, bytes memory response) = address(guest).call(_cage());
+        revertNoSuccess(success, response);
     }
-    function _deposit(address to, uint256 amount) internal virtual override {
-        guest.deposit(to, amount);
+    function exit(address usr, uint256 wad) external {
+        (bool success, bytes memory response) = address(guest).call(_exit(usr, wad));
+        revertNoSuccess(success, response);
+    }
+    function deposit(address to, uint256 amount) external {
+        (bool success, bytes memory response) = address(guest).call(_deposit(to, amount));
+        revertNoSuccess(success, response);
     }
 
 }
@@ -82,28 +101,83 @@ contract SimpleDomainGuest is DomainGuest {
     }
 
     function _isHost(address usr) internal override view returns (bool) {
-        return usr == address(usr);
+        return usr == address(host);
     }
-    function _release(uint256 burned) internal override {
-        host.release(burned);
+
+    function revertNoSuccess(bool success, bytes memory response) internal pure {
+        if (!success) {
+            string memory message;
+            assembly {
+                let size := mload(add(response, 0x44))
+                message := mload(0x40)
+                mstore(message, size)
+                mstore(0x40, add(message, and(add(add(size, 0x20), 0x1f), not(0x1f))))
+                returndatacopy(add(message, 0x20), 0x44, size)
+            }
+            revert(string(message));
+        }
     }
-    function _surplus(uint256 wad) internal virtual override {
-        host.surplus(wad);
+
+    function release() external {
+        (bool success, bytes memory response) = address(host).call(_release());
+        revertNoSuccess(success, response);
     }
-    function _deficit(uint256 wad) internal virtual override {
-        host.deficit(wad);
+    function push() external {
+        (bool success, bytes memory response) = address(host).call(_push());
+        revertNoSuccess(success, response);
     }
-    function _tell(uint256 value) internal virtual override {
-       host.tell(value);
+    function tell(uint256 value) external {
+        (bool success, bytes memory response) = address(host).call(_tell(value));
+        revertNoSuccess(success, response);
     }
-    function _initiateTeleport(TeleportGUID memory teleport) internal virtual override {
-        host.teleportSlowPath(teleport);
+    function withdraw(address to, uint256 amount) external {
+        (bool success, bytes memory response) = address(host).call(_withdraw(to, amount));
+        revertNoSuccess(success, response);
     }
-    function _flush(bytes32 targetDomain, uint256 daiToFlush) internal virtual override {
-        host.flush(targetDomain, daiToFlush);
+    function initiateTeleport(
+        bytes32 targetDomain,
+        address receiver,
+        uint128 amount
+    ) external {
+        (bool success, bytes memory response) = address(host).call(_initiateTeleport(
+            targetDomain,
+            TeleportGUIDHelper.addressToBytes32(receiver),
+            amount,
+            0
+        ));
+        revertNoSuccess(success, response);
     }
-    function _withdraw(address to, uint256 amount) internal virtual override {
-        host.withdraw(to, amount);
+    function initiateTeleport(
+        bytes32 targetDomain,
+        address receiver,
+        uint128 amount,
+        address operator
+    ) external {
+        (bool success, bytes memory response) = address(host).call(_initiateTeleport(
+            targetDomain,
+            TeleportGUIDHelper.addressToBytes32(receiver),
+            amount,
+            TeleportGUIDHelper.addressToBytes32(operator)
+        ));
+        revertNoSuccess(success, response);
+    }
+    function initiateTeleport(
+        bytes32 targetDomain,
+        bytes32 receiver,
+        uint128 amount,
+        bytes32 operator
+    ) external {
+        (bool success, bytes memory response) = address(host).call(_initiateTeleport(
+            targetDomain,
+            receiver,
+            amount,
+            operator
+        ));
+        revertNoSuccess(success, response);
+    }
+    function flush(bytes32 targetDomain) external {
+        (bool success, bytes memory response) = address(host).call(_flush(targetDomain));
+        revertNoSuccess(success, response);
     }
 
 }
@@ -324,9 +398,14 @@ contract IntegrationTest is DSSTest {
 
         guest.push();
 
-        assertEq(rmcd.vat().dai(address(guest)), 30 * RAD);
+        assertEq(rmcd.vat().dai(address(guest)), 0);
         assertEq(rmcd.vat().sin(address(guest)), 30 * RAD);
+        assertEq(Vat(address(rmcd.vat())).surf(), 0);
+
+        host.rectify();
+
         assertEq(Vat(address(rmcd.vat())).surf(), int256(30 * RAD));
+        assertEq(rmcd.vat().dai(address(guest)), 30 * RAD);
         assertEq(mcd.vat().dai(address(mcd.vow())), vowDai);
         assertEq(mcd.vat().sin(address(mcd.vow())), vowSin + 30 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 130 ether);
