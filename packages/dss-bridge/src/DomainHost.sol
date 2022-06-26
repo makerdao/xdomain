@@ -20,6 +20,7 @@
 pragma solidity ^0.8.14;
 
 import "./TeleportGUID.sol";
+import {DomainGuest} from "./DomainGuest.sol";
 
 interface VatLike {
     function live() external view returns (uint256);
@@ -67,9 +68,9 @@ abstract contract DomainHost {
     RouterLike  public immutable router;
 
     address public vow;
-    uint256 public liftId;      // To track the ordering on lift
     uint256 public line;        // Remote domain global debt ceiling [RAD]
     uint256 public grain;       // Keep track of the pre-minted DAI in the escrow [WAD]
+    uint256 public sin;         // A running total of how much is required to re-capitalize the remote domain [WAD]
     uint256 public cure;        // The amount of unused debt [RAD]
     bool public cureReported;   // Returns true if cure has been reported by the guest
     uint256 public live;
@@ -84,8 +85,8 @@ abstract contract DomainHost {
     event File(bytes32 indexed what, address data);
     event Lift(uint256 wad);
     event Release(uint256 wad);
-    event Surplus(uint256 wad);
-    event Deficit(uint256 wad);
+    event Push(int256 wad);
+    event Rectify(uint256 wad);
     event Cage();
     event Tell(uint256 value);
     event Exit(address indexed usr, uint256 wad, uint256 claim);
@@ -99,6 +100,7 @@ abstract contract DomainHost {
         _;
     }
 
+    function _isGuest(address usr) internal virtual view returns (bool);
     modifier guestOnly {
         require(_isGuest(msg.sender), "DomainHost/not-guest");
         _;
@@ -158,9 +160,10 @@ abstract contract DomainHost {
     /// @dev Please note that pre-mint DAI cannot be removed from the remote domain
     /// until the remote domain signals that it is safe to do so
     /// @param wad The new debt ceiling [WAD]
-    function lift(uint256 wad) public auth vatLive {
+    function _lift(uint256 wad) internal auth vatLive returns (bytes memory payload) {
         uint256 rad = wad * RAY;
         uint256 minted;
+        int256 dline = _int256(rad) - _int256(line);
 
         if (rad > line) {
             // We are issuing new pre-minted DAI
@@ -174,7 +177,7 @@ abstract contract DomainHost {
 
         line = rad;
 
-        _lift(++liftId, rad, minted);
+        payload = abi.encodeWithSelector(DomainGuest.lift.selector, dline, minted);
 
         emit Lift(wad);
     }
@@ -193,34 +196,41 @@ abstract contract DomainHost {
         emit Release(wad);
     }
 
-    /// @notice Merge DAI into surplus
-    function surplus(uint256 wad) external guestOnly {
-        dai.transferFrom(address(escrow), address(this), wad);
-        daiJoin.join(address(vow), wad);
+    /// @notice Guest is pushing a surplus (or deficit)
+    function push(int256 wad) external guestOnly {
+        if (wad >= 0) {
+            dai.transferFrom(address(escrow), address(this), uint256(wad));
+            daiJoin.join(address(vow), uint256(wad));
+        } else {
+            sin += uint256(-wad);
+        }
 
-        emit Surplus(wad);
+        emit Push(wad);
     }
 
-    /// @notice Cover the remote domain's deficit by pulling debt from the surplus buffer
-    function deficit(uint256 wad) public guestOnly vatLive {
+    /// @notice Move bad debt from the remote domain into the local vow
+    function _rectify() internal vatLive returns (bytes memory payload) {
+        uint256 wad = sin;
+        require(sin > 0, "DomainHost/no-sin");
         vat.suck(vow, address(this), wad * RAY);
         daiJoin.exit(address(escrow), wad);
+        sin = 0;
         
         // Send ERC20 DAI to the remote DomainGuest
-        _rectify(wad);
+        payload = abi.encodeWithSelector(DomainGuest.rectify.selector, wad);
 
-        emit Deficit(wad);
+        emit Rectify(wad);
     }
 
     /// @notice Initiate shutdown for this domain
     /// @dev This will trigger the end module on the remote domain
-    function cage() public {
+    function _cage() internal returns (bytes memory payload) {
         require(vat.live() == 0 || wards[msg.sender] == 1, "DomainHost/not-authorized");
         require(live == 1, "DomainHost/not-live");
 
         live = 0;
 
-        _cage();
+        payload = abi.encodeWithSelector(DomainGuest.cage.selector);
 
         emit Cage();
     }
@@ -241,7 +251,7 @@ abstract contract DomainHost {
     /// @dev    This will mint a pro-rata claim token on the remote domain.
     ///         Gem amount is scaled by the actual debt of the remote domain.
     ///         `usr` is the address for the mint on the remote domain.
-    function exit(address usr, uint256 wad) public {
+    function _exit(address usr, uint256 wad) internal returns (bytes memory payload) {
         require(vat.live() == 0, "DomainHost/vat-live");
         vat.slip(ilk, msg.sender, -_int256(wad));
 
@@ -249,7 +259,7 @@ abstract contract DomainHost {
         // Round against the user
         uint256 claim = wad * (grain - _divup(cure, RAY)) / grain;
         
-        _mintClaim(usr, claim);
+        payload = abi.encodeWithSelector(DomainGuest.mintClaim.selector, usr, claim);
 
         emit Exit(usr, wad, claim);
     }
@@ -259,10 +269,10 @@ abstract contract DomainHost {
     /// @notice Deposit local DAI to mint remote canonical DAI
     /// @param to The address to send the DAI to on the remote domain
     /// @param amount The amount of DAI to deposit [WAD]
-    function deposit(address to, uint256 amount) public {
+    function _deposit(address to, uint256 amount) internal returns (bytes memory payload) {
         require(dai.transferFrom(msg.sender, escrow, amount), "DomainHost/transfer-failed");
 
-        _deposit(to, amount);
+        payload = abi.encodeWithSelector(DomainGuest.deposit.selector, to, amount);
 
         emit Deposit(to, amount);
     }
@@ -294,13 +304,5 @@ abstract contract DomainHost {
 
         emit Flush(targetDomain, daiToFlush);
     }
-
-    // Bridge-specific functions
-    function _isGuest(address usr) internal virtual view returns (bool);
-    function _lift(uint256 id, uint256 line, uint256 minted) internal virtual;
-    function _rectify(uint256 wad) internal virtual;
-    function _cage() internal virtual;
-    function _mintClaim(address usr, uint256 claim) internal virtual;
-    function _deposit(address to, uint256 amount) internal virtual;
 
 }

@@ -27,20 +27,12 @@ import { EndMock } from "./mocks/EndMock.sol";
 import { EscrowMock } from "./mocks/EscrowMock.sol";
 import { VatMock } from "./mocks/VatMock.sol";
 import { ClaimToken } from "../ClaimToken.sol";
-import { DomainGuest, TeleportGUID, TeleportGUIDHelper } from "../DomainGuest.sol";
+import { DomainGuest, DomainHost, TeleportGUID, TeleportGUIDHelper } from "../DomainGuest.sol";
 
 contract EmptyDomainGuest is DomainGuest {
 
     bool forceIsHost = true;
-    uint256 public releaseBurned;
-    uint256 public surplus;
-    uint256 public deficit;
-    uint256 public tellValue;
-    TeleportGUID public teleport;
-    bytes32 public flushTargetDomain;
-    uint256 public flushDaiToFlush;
-    address public withdrawTo;
-    uint256 public withdrawAmount;
+    bytes public lastPayload;
 
     constructor(bytes32 _domain, address _daiJoin, address _claimToken) DomainGuest(_domain, _daiJoin, _claimToken) {}
 
@@ -50,28 +42,54 @@ contract EmptyDomainGuest is DomainGuest {
     function _isHost(address) internal override view returns (bool) {
         return forceIsHost;
     }
-    function _release(uint256 burned) internal override {
-        releaseBurned = burned;
+
+    function release() external {
+        lastPayload = _release();
     }
-    function _surplus(uint256 wad) internal virtual override {
-        surplus = wad;
+    function push() external {
+        lastPayload = _push();
     }
-    function _deficit(uint256 wad) internal virtual override {
-       deficit = wad;
+    function tell(uint256 value) external {
+        lastPayload = _tell(value);
     }
-    function _tell(uint256 value) internal virtual override {
-       tellValue = value;
+    function withdraw(address to, uint256 amount) external {
+        lastPayload = _withdraw(to, amount);
     }
-    function _initiateTeleport(TeleportGUID memory _teleport) internal virtual override {
-        teleport = _teleport;
+    function initiateTeleport(
+        bytes32 targetDomain,
+        address receiver,
+        uint128 amount
+    ) external {
+        lastPayload = _initiateTeleport(
+            targetDomain,
+            TeleportGUIDHelper.addressToBytes32(receiver),
+            amount,
+            0
+        );
     }
-    function _flush(bytes32 targetDomain, uint256 daiToFlush) internal virtual override {
-        flushTargetDomain = targetDomain;
-        flushDaiToFlush = daiToFlush;
+    function initiateTeleport(
+        bytes32 targetDomain,
+        address receiver,
+        uint128 amount,
+        address operator
+    ) external {
+        lastPayload = _initiateTeleport(
+            targetDomain,
+            TeleportGUIDHelper.addressToBytes32(receiver),
+            amount,
+            TeleportGUIDHelper.addressToBytes32(operator)
+        );
     }
-    function _withdraw(address to, uint256 amount) internal virtual override {
-        withdrawTo = to;
-        withdrawAmount = amount;
+    function initiateTeleport(
+        bytes32 targetDomain,
+        bytes32 receiver,
+        uint128 amount,
+        bytes32 operator
+    ) external {
+        lastPayload = _initiateTeleport(targetDomain, receiver, amount, operator);
+    }
+    function flush(bytes32 targetDomain) external {
+        lastPayload = _flush(targetDomain);
     }
 
 }
@@ -97,7 +115,7 @@ contract DomainGuestTest is DSSTest {
     bytes32 constant TARGET_DOMAIN = "SOME-DOMAIN-B";
 
     event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
-    event Lift(uint256 id, uint256 line, uint256 minted);
+    event Lift(int256 line, uint256 minted);
     event Release(uint256 burned);
     event Push(int256 surplus);
     event Rectify(uint256 wad);
@@ -171,7 +189,7 @@ contract DomainGuestTest is DSSTest {
         guest.deny(address(this));
 
         bytes[] memory funcs = new bytes[](1);
-        funcs[0] = abi.encodeWithSelector(DomainGuest.tell.selector, 0);
+        funcs[0] = abi.encodeWithSelector(EmptyDomainGuest.tell.selector, 0);
 
         for (uint256 i = 0; i < funcs.length; i++) {
             assertRevert(address(guest), funcs[i], "DomainGuest/not-authorized");
@@ -182,7 +200,7 @@ contract DomainGuestTest is DSSTest {
         guest.setIsHost(false);
 
         bytes[] memory funcs = new bytes[](5);
-        funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0, 0);
+        funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0);
         funcs[1] = abi.encodeWithSelector(DomainGuest.rectify.selector, 0);
         funcs[2] = abi.encodeWithSelector(DomainGuest.cage.selector);
         funcs[3] = abi.encodeWithSelector(DomainGuest.mintClaim.selector, 0, 0);
@@ -198,9 +216,9 @@ contract DomainGuestTest is DSSTest {
 
         bytes[] memory funcs = new bytes[](4);
         funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0, 0);
-        funcs[1] = abi.encodeWithSelector(DomainGuest.release.selector);
-        funcs[2] = abi.encodeWithSelector(DomainGuest.push.selector);
-        funcs[3] = abi.encodeWithSelector(DomainGuest.cage.selector, 0, 0);
+        funcs[1] = abi.encodeWithSelector(EmptyDomainGuest.release.selector);
+        funcs[2] = abi.encodeWithSelector(EmptyDomainGuest.push.selector);
+        funcs[3] = abi.encodeWithSelector(DomainGuest.cage.selector);
 
         for (uint256 i = 0; i < funcs.length; i++) {
             assertRevert(address(guest), funcs[i], "DomainGuest/not-live");
@@ -209,62 +227,52 @@ contract DomainGuestTest is DSSTest {
 
     function testLift() public {
         assertEq(guest.grain(), 0);
-        assertEq(guest.liftId(), 0);
+        assertEq(guest.line(), 0);
         assertEq(vat.Line(), 0);
 
         vm.expectEmit(true, true, true, true);
-        emit Lift(1, 100 * RAD, 100 ether);
-        guest.lift(1, 100 * RAD, 100 ether);
+        emit Lift(int256(100 * RAD), 100 ether);
+        guest.lift(int256(100 * RAD), 100 ether);
 
         assertEq(guest.grain(), 100 ether);
-        assertEq(guest.liftId(), 1);
+        assertEq(guest.line(), int256(100 * RAD));
         assertEq(vat.Line(), 100 * RAD);
     }
 
-    function testLiftSkipId() public {
+    function testLiftNegative() public {
         assertEq(guest.grain(), 0);
-        assertEq(guest.liftId(), 0);
+        assertEq(guest.line(), 0);
         assertEq(vat.Line(), 0);
 
-        guest.lift(2, 100 * RAD, 100 ether);
+        // Simulate an out of order message by reducing dline
+        guest.lift(-int256(50 * RAD), 0);
 
-        assertEq(guest.grain(), 100 ether);
-        assertEq(guest.liftId(), 2);
-        assertEq(vat.Line(), 100 * RAD);
-    }
-
-    function testLiftOutOfOrder() public {
         assertEq(guest.grain(), 0);
-        assertEq(guest.liftId(), 0);
+        assertEq(guest.line(), -int256(50 * RAD));
         assertEq(vat.Line(), 0);
 
-        guest.lift(2, 100 * RAD, 50 ether);
-
-        assertEq(guest.grain(), 50 ether);
-        assertEq(guest.liftId(), 2);
-        assertEq(vat.Line(), 100 * RAD);
-
-        guest.lift(1, 50 * RAD, 50 ether);
+        // We got the previous message now
+        guest.lift(int256(100 * RAD), 100 ether);
 
         assertEq(guest.grain(), 100 ether);
-        assertEq(guest.liftId(), 2);
-        assertEq(vat.Line(), 100 * RAD);
+        assertEq(guest.line(), int256(50 * RAD));
+        assertEq(vat.Line(), 50 * RAD);
     }
 
     function testRelease() public {
         // Set debt ceiling to 100 DAI
-        guest.lift(1, 100 * RAD, 100 ether);
+        guest.lift(int256(100 * RAD), 100 ether);
 
         assertEq(guest.grain(), 100 ether);
+        assertEq(guest.line(), int256(100 * RAD));
         assertEq(vat.Line(), 100 * RAD);
-        assertEq(guest.releaseBurned(), 0);
 
         // Lower debt ceiling to 50 DAI
-        guest.lift(2, 50 * RAD, 0);
+        guest.lift(-int256(50 * RAD), 0);
 
         assertEq(guest.grain(), 100 ether);
+        assertEq(guest.line(), int256(50 * RAD));
         assertEq(vat.Line(), 50 * RAD);
-        assertEq(guest.releaseBurned(), 0);
 
         // Should release 50 DAI because nothing has been minted
         vm.expectEmit(true, true, true, true);
@@ -272,20 +280,20 @@ contract DomainGuestTest is DSSTest {
         guest.release();
 
         assertEq(guest.grain(), 50 ether);
+        assertEq(guest.line(), int256(50 * RAD));
         assertEq(vat.Line(), 50 * RAD);
-        assertEq(guest.releaseBurned(), 50 ether);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.release.selector, 50 ether));
     }
 
     function testReleaseDebtTaken() public {
         // Set so that debt is larger than the global DC
-        guest.lift(1, 100 * RAD, 100 ether);
+        guest.lift(int256(100 * RAD), 100 ether);
         vat.suck(address(this), address(this), 50 * RAD);
-        guest.lift(2, 0, 0);
+        guest.lift(-int256(100 * RAD), 0);
 
         assertEq(vat.Line(), 0);
         assertEq(vat.debt(), 50 * RAD);
         assertEq(guest.grain(), 100 ether);
-        assertEq(guest.releaseBurned(), 0);
 
         // Should only release 50 DAI
         guest.release();
@@ -293,7 +301,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.Line(), 0);
         assertEq(vat.debt(), 50 * RAD);
         assertEq(guest.grain(), 50 ether);
-        assertEq(guest.releaseBurned(), 50 ether);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.release.selector, 50 ether));
 
         // Repay the loan and release
         vat.heal(50 * RAD);
@@ -302,7 +310,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.Line(), 0);
         assertEq(vat.debt(), 0);
         assertEq(guest.grain(), 0);
-        assertEq(guest.releaseBurned(), 50 ether);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.release.selector, 50 ether));
     }
 
     function testPushSurplus() public {
@@ -311,8 +319,6 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.dai(address(guest)), 100 * RAD);
         assertEq(vat.sin(address(guest)), 0);
         assertEq(vat.surf(), 0);
-        assertEq(guest.surplus(), 0);
-        assertEq(guest.deficit(), 0);
 
         // Will push out a surplus of 100 DAI
         vm.expectEmit(true, true, true, true);
@@ -322,8 +328,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.dai(address(guest)), 0);
         assertEq(vat.sin(address(guest)), 0);
         assertEq(vat.surf(), -int256(100 * RAD));
-        assertEq(guest.surplus(), 100 ether);
-        assertEq(guest.deficit(), 0);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.push.selector, int256(100 ether)));
     }
 
     function testPushSurplusPartial() public {
@@ -334,8 +339,6 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.dai(address(guest)), 125 * RAD);
         assertEq(vat.sin(address(guest)), 25 * RAD);
         assertEq(vat.surf(), 0);
-        assertEq(guest.surplus(), 0);
-        assertEq(guest.deficit(), 0);
 
         // Will push out a surplus of 100 DAI (125 - 25)
         guest.push();
@@ -343,8 +346,7 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.dai(address(guest)), 0);
         assertEq(vat.sin(address(guest)), 0);
         assertEq(vat.surf(), -int256(100 * RAD));
-        assertEq(guest.surplus(), 100 ether);
-        assertEq(guest.deficit(), 0);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.push.selector, int256(100 ether)));
     }
 
     function testPushDeficit() public {
@@ -352,8 +354,6 @@ contract DomainGuestTest is DSSTest {
 
         assertEq(vat.dai(address(guest)), 0);
         assertEq(vat.sin(address(guest)), 100 * RAD);
-        assertEq(guest.surplus(), 0);
-        assertEq(guest.deficit(), 0);
 
         // Will push out a deficit of 100 DAI
         vm.expectEmit(true, true, true, true);
@@ -362,8 +362,7 @@ contract DomainGuestTest is DSSTest {
 
         assertEq(vat.dai(address(guest)), 0);
         assertEq(vat.sin(address(guest)), 100 * RAD);
-        assertEq(guest.surplus(), 0);
-        assertEq(guest.deficit(), 100 ether);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.push.selector, -int256(100 ether)));
     }
 
     function testPushDeficitPartial() public {
@@ -372,16 +371,13 @@ contract DomainGuestTest is DSSTest {
 
         assertEq(vat.dai(address(guest)), 100 * RAD);
         assertEq(vat.sin(address(guest)), 125 * RAD);
-        assertEq(guest.surplus(), 0);
-        assertEq(guest.deficit(), 0);
 
         // Will push out a deficit of 25 DAI (125 - 100)
         guest.push();
 
         assertEq(vat.dai(address(guest)), 0);
         assertEq(vat.sin(address(guest)), 25 * RAD);
-        assertEq(guest.surplus(), 0);
-        assertEq(guest.deficit(), 25 ether);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.push.selector, -int256(25 ether)));
     }
 
     function testRectify() public {
@@ -409,13 +405,11 @@ contract DomainGuestTest is DSSTest {
     }
 
     function testTell() public {
-        assertEq(guest.tellValue(), 0);
-
         vm.expectEmit(true, true, true, true);
         emit Tell(123);
         guest.tell(123);
 
-        assertEq(guest.tellValue(), 123);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.tell.selector, 123));
     }
 
     function testMintClaim() public {
@@ -453,8 +447,7 @@ contract DomainGuestTest is DSSTest {
 
         assertEq(dai.balanceOf(address(this)), 0);
         assertEq(vat.surf(), -int256(100 * RAD));
-        assertEq(guest.withdrawTo(), address(123));
-        assertEq(guest.withdrawAmount(), 100 ether);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.withdraw.selector, address(123), 100 ether));
     }
 
     function testInitiateTeleport() public {
@@ -479,28 +472,12 @@ contract DomainGuestTest is DSSTest {
         vm.expectEmit(true, true, true, true);
         emit InitiateTeleport(teleport);
         guest.initiateTeleport(TARGET_DOMAIN, address(123), 100 ether);
-        
-        (
-            bytes32 sourceDomain,
-            bytes32 targetDomain,
-            bytes32 receiver,
-            bytes32 operator,
-            uint128 amount,
-            uint80 nonce,
-            uint48 timestamp
-        ) = guest.teleport();
 
         assertEq(dai.balanceOf(address(this)), 0);
         assertEq(guest.batchedDaiToFlush(TARGET_DOMAIN), 100 ether);
         assertEq(vat.surf(), -int256(100 * RAD));
         assertEq(guest.nonce(), 1);
-        assertEq(sourceDomain, SOURCE_DOMAIN);
-        assertEq(targetDomain, TARGET_DOMAIN);
-        assertEq(receiver, bytes32(uint256(123)));
-        assertEq(operator, bytes32(uint256(0)));
-        assertEq(uint256(amount), 100 ether);
-        assertEq(uint256(nonce), 0);
-        assertEq(uint256(timestamp), block.timestamp);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.teleportSlowPath.selector, teleport));
     }
 
     function testInitiateTeleportInvalidDomain() public {
@@ -525,8 +502,7 @@ contract DomainGuestTest is DSSTest {
         guest.flush(TARGET_DOMAIN);
 
         assertEq(guest.batchedDaiToFlush(TARGET_DOMAIN), 0);
-        assertEq(guest.flushTargetDomain(), TARGET_DOMAIN);
-        assertEq(guest.flushDaiToFlush(), 100 ether);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.flush.selector, TARGET_DOMAIN, 100 ether));
     }
 
     function testFlushNoDaiToFlush() public {
