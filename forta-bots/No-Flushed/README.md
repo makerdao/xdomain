@@ -13,7 +13,7 @@ This bot detects when there are no `Flushed` events emitted from the `L2DaiTelep
 
 ## Alerts
 
-- MK-05
+- MK-04
   - Fired when there is no `Flushed` event emitted from L2DaiTeleportGateway for more than `DAYS_THRESHOLD` days.
   - Severity is always set to "Info".
   - Type is always set to "Info".
