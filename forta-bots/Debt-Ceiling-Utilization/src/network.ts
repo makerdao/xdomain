@@ -16,7 +16,7 @@ const ETH_RINKEBY_TESTNET_DATA: NetworkData = {
 };
 
 //PoC
-const POlYGON_TESTNET_DATA: NetworkData = {
+const POLYGON_TESTNET_DATA: NetworkData = {
   TeleportJoin: "0x0e4f1BD8d0fc5F3b0F1D77d454134Da4dee66dcf",
   TeleportRouter: "0xE59bbDB0c00297926c2fccC4d13E4fCf214eebfE",
 };
@@ -24,7 +24,7 @@ const POlYGON_TESTNET_DATA: NetworkData = {
 export const NETWORK_MAP: Record<number, NetworkData> = {
   42: ETH_KOVAN_TESTNET_DATA,
   4: ETH_RINKEBY_TESTNET_DATA,
-  80001: POlYGON_TESTNET_DATA,
+  80001: POLYGON_TESTNET_DATA,
 };
 
 export default class NetworkManager implements NetworkData {
