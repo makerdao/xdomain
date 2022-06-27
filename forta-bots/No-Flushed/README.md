@@ -4,7 +4,7 @@
 
 This bot detects when there are no `Flushed` events emitted from the `L2DaiTeleportGateway` contract for more than `DAYS_THRESHOLD` days.
 
-> The threshold can be configured in **src/utils.ts**, L5.
+> The threshold can be configured in **src/utils.ts**, L4.
 
 ## Supported Chains
 
