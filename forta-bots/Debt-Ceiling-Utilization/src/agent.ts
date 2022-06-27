@@ -6,28 +6,30 @@ import Fetcher from "./fetcher";
 import { createFinding, FILE_IFACE, UTILIZATION_THRESHOLD } from "./utils";
 
 const networkManager: NetworkData = new NetworkManager(NETWORK_MAP);
-let router: { domains: string[] } = {
-  domains: [],
-};
 
 export const provideInitialize =
-  (router: { domains: string[] }, provider: providers.Provider, data: NetworkData, fetcher: Fetcher): Initialize =>
+  (provider: providers.Provider): Initialize =>
   async () => {
     const { chainId } = await provider.getNetwork();
     networkManager.setNetwork(chainId);
-
-    router.domains = await fetcher.getDomains(data.TeleportRouter, await provider.getBlockNumber());
   };
 
 export const provideHandleBlock = (
-  router: { domains: string[] },
   provider: providers.Provider,
   data: NetworkData,
   fetcher: Fetcher,
-  threshold: BigNumber
+  threshold: BigNumber,
+  init: boolean
 ): HandleBlock => {
+  let domains: string[] = [];
+
   return async (blockEvent: BlockEvent) => {
     const findings: Finding[] = [];
+
+    if (!init) {
+      init = true;
+      domains = await fetcher.getDomains(data.TeleportRouter, blockEvent.blockNumber);
+    }
 
     const fileFilter = {
       address: data.TeleportRouter,
@@ -38,11 +40,11 @@ export const provideHandleBlock = (
     const fileEvents: providers.Log[] = await provider.getLogs(fileFilter);
 
     if (fileEvents.length) {
-      router.domains = await fetcher.getDomains(data.TeleportRouter, blockEvent.blockNumber);
+      domains = await fetcher.getDomains(data.TeleportRouter, blockEvent.blockNumber);
     }
 
     await Promise.all(
-      router.domains.map(async (domain) => {
+      domains.map(async (domain) => {
         const line: BigNumber = await fetcher.getLine(data.TeleportJoin, domain, blockEvent.blockNumber);
         const debt: BigNumber = await fetcher.getDebt(data.TeleportJoin, domain, blockEvent.blockNumber);
 
@@ -58,12 +60,12 @@ export const provideHandleBlock = (
 };
 
 export default {
-  initialize: provideInitialize(router, getEthersProvider(), networkManager, new Fetcher(getEthersProvider())),
+  initialize: provideInitialize(getEthersProvider()),
   handleBlock: provideHandleBlock(
-    router,
     getEthersProvider(),
     networkManager,
     new Fetcher(getEthersProvider()),
-    UTILIZATION_THRESHOLD
+    UTILIZATION_THRESHOLD,
+    false
   ),
 };

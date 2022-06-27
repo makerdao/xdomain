@@ -15,9 +15,16 @@ const ETH_RINKEBY_TESTNET_DATA: NetworkData = {
   TeleportRouter: "0x26266ff35E2d69C6a2DC3fAE9FA71456043a0611",
 };
 
+//PoC
+const POlYGON_TESTNET_DATA: NetworkData = {
+  TeleportJoin: "0x0e4f1BD8d0fc5F3b0F1D77d454134Da4dee66dcf",
+  TeleportRouter: "0xE59bbDB0c00297926c2fccC4d13E4fCf214eebfE",
+};
+
 export const NETWORK_MAP: Record<number, NetworkData> = {
   42: ETH_KOVAN_TESTNET_DATA,
   4: ETH_RINKEBY_TESTNET_DATA,
+  80001: POlYGON_TESTNET_DATA,
 };
 
 export default class NetworkManager implements NetworkData {
