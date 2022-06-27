@@ -4,7 +4,7 @@
 
 This bot detects when there are no `Settle` events on each domain emitted from the `TeleportJoin` contract for more than `DAYS_THRESHOLD` days.
 
-> The threshold can be configured in **src/utils.ts**, L5.
+> The threshold can be configured in **src/utils.ts**, L4.
 
 ## Supported Chains
 
