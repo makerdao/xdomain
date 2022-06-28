@@ -8,6 +8,7 @@ export const FLUSHED_IFACE: Interface = new Interface([FLUSHED_EVENT]);
 
 export const createFinding = (
   threshold: number,
+  domain: string,
   currentBlockTimestamp: string,
   latestFlushedTimestamp: string | any = undefined
 ): Finding => {
@@ -19,6 +20,7 @@ export const createFinding = (
     severity: FindingSeverity.Info,
     type: FindingType.Info,
     metadata: {
+      domain,
       currentBlockTimestamp,
       latestFlushedTimestamp,
     },

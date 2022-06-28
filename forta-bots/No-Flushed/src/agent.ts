@@ -31,16 +31,17 @@ export const provideHandleBlock = (
       init = true;
       const filter = {
         address: data.L2DaiTeleportGateway,
-        topics: [FLUSHED_IFACE.getEventTopic("Flushed")],
+        topics: [FLUSHED_IFACE.getEventTopic("Flushed"), data.domain],
         fromBlock: blockEvent.block.number - daysThreshold * 6100, // 6100 blocks/day on average
         toBlock: blockEvent.block.number - 1,
       };
 
-      const flushedEvents: providers.Log[] = await provider.getLogs(filter);
+      const masterDomainFlushedEvents: providers.Log[] = await provider.getLogs(filter);
 
-      if (flushedEvents.length) {
+      if (masterDomainFlushedEvents.length) {
         latestFlushedTimestamp = BigNumber.from(
-          (await provider.getBlock(flushedEvents[flushedEvents.length - 1].blockNumber)).timestamp
+          (await provider.getBlock(masterDomainFlushedEvents[masterDomainFlushedEvents.length - 1].blockNumber))
+            .timestamp
         );
       }
     }
@@ -55,6 +56,7 @@ export const provideHandleBlock = (
       findings.push(
         createFinding(
           daysThreshold,
+          data.domain,
           currentTimestamp.toString(),
           !latestFlushedTimestamp.eq(0) ? latestFlushedTimestamp.toString() : undefined
         )
@@ -63,13 +65,13 @@ export const provideHandleBlock = (
     }
     const filter = {
       address: data.L2DaiTeleportGateway,
-      topics: [FLUSHED_IFACE.getEventTopic("Flushed")],
+      topics: [FLUSHED_IFACE.getEventTopic("Flushed"), data.domain],
       blockHash: blockEvent.blockHash,
     };
-    const flushedEvents: providers.Log[] = await provider.getLogs(filter);
+    const masterDomainFlushedEvents: providers.Log[] = await provider.getLogs(filter);
 
-    if (flushedEvents.length) {
-      latestFlushedTimestamp = BigNumber.from(blockEvent.block.timestamp);
+    if (masterDomainFlushedEvents.length) {
+      latestFlushedTimestamp = currentTimestamp;
     }
 
     return findings;
