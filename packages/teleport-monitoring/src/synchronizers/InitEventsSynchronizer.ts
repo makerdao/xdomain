@@ -37,20 +37,20 @@ export class InitEventsSynchronizer extends BaseSynchronizer {
 
     const filter = this.l2Sdk.teleportGateway.filters.WormholeInitialized()
 
-    this._state = 'syncing'
+    super.setSyncing()
     while (this.state !== 'stopped') {
       const currentBlock = (await this.l2Provider.getBlock('latest')).number // note: getting block number directly doesnt work b/c optimism doesnt support it
-      const boundaryBlock = Math.min(syncBlock + this.blocksPerBatch, currentBlock)
+      const boundaryBlock = Math.max(Math.min(syncBlock + this.blocksPerBatch, currentBlock), syncBlock + 1)
       console.log(
-        `Syncing ${syncBlock}...${boundaryBlock} (${(boundaryBlock - syncBlock + 1).toLocaleString()} blocks)`,
+        `[${this.name}] Syncing ${syncBlock}...${boundaryBlock} (${(
+          boundaryBlock -
+          syncBlock +
+          1
+        ).toLocaleString()} blocks)`,
       )
 
       // ranges are inclusive here so we + 1 to avoid checking the same block twice
-      const newTeleports = await this.l2Sdk.teleportGateway.queryFilter(
-        filter,
-        syncBlock + 1,
-        Math.max(boundaryBlock, syncBlock + 1),
-      )
+      const newTeleports = await this.l2Sdk.teleportGateway.queryFilter(filter, syncBlock + 1, boundaryBlock)
       console.log(`[${this.name}] Found ${newTeleports.length} new teleports`)
       const modelsToCreate: Omit<Teleport, 'id'>[] = newTeleports.map((w) => {
         const hash = keccak256(w.data)
@@ -79,7 +79,7 @@ export class InitEventsSynchronizer extends BaseSynchronizer {
       const onTip = boundaryBlock === currentBlock
       if (onTip) {
         console.log('Syncing tip. Stalling....')
-        this._state = 'synced'
+        super.setSynced()
         await delay(5_000)
       }
     }

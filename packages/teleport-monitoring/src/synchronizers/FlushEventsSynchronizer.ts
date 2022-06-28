@@ -27,10 +27,10 @@ export class FlushEventsSynchronizer extends BaseSynchronizer {
 
     const filter = this.l2Sdk.teleportGateway.filters.Flushed()
 
-    this._state = 'syncing'
+    super.setSyncing()
     while (this.state !== 'stopped') {
       const currentBlock = (await this.l2Provider.getBlock('latest')).number // note: getting block number directly doesnt work b/c optimism doesnt support it
-      const boundaryBlock = Math.min(syncBlock + this.blocksPerBatch, currentBlock)
+      const boundaryBlock = Math.max(Math.min(syncBlock + this.blocksPerBatch, currentBlock), syncBlock + 1)
       console.log(
         `[${this.name}] Syncing ${syncBlock}...${boundaryBlock} (${(
           boundaryBlock - syncBlock
@@ -68,7 +68,7 @@ export class FlushEventsSynchronizer extends BaseSynchronizer {
       const onTip = boundaryBlock === currentBlock
       if (onTip) {
         console.log('Syncing tip. Stalling....')
-        this._state = 'synced'
+        super.setSynced()
         await delay(5_000)
       }
     }

@@ -9,7 +9,7 @@ export abstract class BaseSynchronizer {
     this.name = this.constructor.name
   }
 
-  protected _state: SynchronizerState = 'stopped'
+  private _state: SynchronizerState = 'stopped'
   get state(): SynchronizerState {
     return this._state
   }
@@ -18,11 +18,24 @@ export abstract class BaseSynchronizer {
     this._state = 'stopped'
   }
 
+  protected setSynced() {
+    if (this.state === 'syncing') {
+      this._state = 'synced'
+    }
+  }
+
+  protected setSyncing() {
+    this._state = 'syncing'
+  }
+
   async syncOnce(): Promise<void> {
+    console.log('syncing once!')
     void this.run()
-    while (this.state === 'synced') {
+    while (this.state === 'syncing') {
+      console.log('still syncing!')
       await delay(1000)
     }
+    console.log('stopping!!')
     this.stop()
   }
 

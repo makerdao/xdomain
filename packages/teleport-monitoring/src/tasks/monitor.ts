@@ -12,8 +12,8 @@ import { monitorTeleportSettle } from '../monitoring/teleportSettle'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from '../sdks'
 import { BaseSynchronizer } from '../synchronizers/BaseSynchronizer'
 import { FlushEventsSynchronizer } from '../synchronizers/FlushEventsSynchronizer'
+import { SettleEventsSynchronizer } from '../synchronizers/GenericSynchronizer'
 import { InitEventsSynchronizer } from '../synchronizers/InitEventsSynchronizer'
-import { SettleEventsSynchronizer } from '../synchronizers/SettleEventsSynchronizer'
 import { Metrics, NetworkConfig } from '../types'
 
 export async function monitor({
