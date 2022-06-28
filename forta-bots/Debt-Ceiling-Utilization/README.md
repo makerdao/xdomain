@@ -26,4 +26,4 @@ This bot detects when the `Debt Ceiling` utilization threshold is exceeded in `T
 
 The bot behaviour can be verified on the following block on Polygon Mumbai Testnet (PoC):
 
-- 26640896, by running the following command: `yarn run block 26640896`
+- 26926950, by running the following command: `yarn run block 26926950`
