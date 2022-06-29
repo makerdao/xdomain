@@ -1,15 +1,9 @@
 import { merge } from 'lodash'
 
-import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
-import { TxHandle } from '../db/utils'
+import { BlockchainClient } from '../peripherals/blockchain'
+import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
+import { TxHandle } from '../peripherals/db/utils'
 import { delay } from '../utils'
-import { BaseSynchronizer } from './BaseSynchronizer'
-
-export interface Blockchain {
-  getLatestBlockNumber(): Promise<number>
-}
-
-export type SyncFn = (tx: TxHandle, from: number, to: number) => Promise<void>
 
 export interface SyncOptions {
   tipSyncDelay: number // ms
@@ -21,26 +15,53 @@ export const defaultSyncOptions: SyncOptions = {
   saveDistanceFromTip: 0,
 }
 
-export class GenericSynchronizer extends BaseSynchronizer {
+export type SynchronizerState = 'stopped' | 'syncing' | 'synced'
+
+export abstract class GenericSynchronizer {
   private readonly options: SyncOptions
+  public readonly syncName: string
+
   constructor(
-    private readonly blockchain: Blockchain,
+    private readonly blockchain: BlockchainClient,
     private readonly synchronizerStatusRepository: SynchronizerStatusRepository,
-    private readonly domainName: string,
-    private readonly startingBlock: number,
-    private readonly blocksPerBatch: number,
-    private readonly syncName: string,
-    // from inclusive
-    // to exclusive
-    private readonly syncFn: SyncFn,
+    public readonly domainName: string,
+    public readonly startingBlock: number,
+    public readonly blocksPerBatch: number,
     _options?: Partial<SyncOptions>,
   ) {
-    super()
+    this.syncName = this.constructor.name
     this.options = merge({}, defaultSyncOptions, _options)
   }
 
+  private _state: SynchronizerState = 'stopped'
+  get state(): SynchronizerState {
+    return this._state
+  }
+  stop() {
+    this._state = 'stopped'
+  }
+  private setSynced() {
+    if (this.state === 'syncing') {
+      this._state = 'synced'
+    }
+  }
+  private setSyncing() {
+    this._state = 'syncing'
+  }
+
+  async syncOnce(): Promise<void> {
+    console.log('syncing once!')
+    void this.run()
+    while (this.state === 'syncing') {
+      console.log('still syncing!')
+      await delay(1000)
+    }
+    console.log('stopping!!')
+    this.stop()
+  }
+
   async run(): Promise<void> {
-    super.setSyncing()
+    this.setSyncing()
     const syncStatus = await this.synchronizerStatusRepository.findByName(this.syncName, this.domainName)
     let fromBlockNumber = syncStatus?.block ?? this.startingBlock // inclusive
 
@@ -50,13 +71,13 @@ export class GenericSynchronizer extends BaseSynchronizer {
 
       if (fromBlockNumber !== toBlockNumber) {
         console.log(
-          `[${this.name}] Syncing ${fromBlockNumber}...${toBlockNumber} (${(
+          `[${this.syncName}] Syncing ${fromBlockNumber}...${toBlockNumber} (${(
             toBlockNumber - fromBlockNumber
           ).toLocaleString()} blocks)`,
         )
 
         await this.synchronizerStatusRepository.transaction(async (tx) => {
-          await this.syncFn(tx, fromBlockNumber, toBlockNumber)
+          await this.sync(tx, fromBlockNumber, toBlockNumber)
           await this.synchronizerStatusRepository.upsert(
             { domain: this.domainName, block: toBlockNumber, name: this.syncName },
             tx,
@@ -68,24 +89,13 @@ export class GenericSynchronizer extends BaseSynchronizer {
       const onTip = toBlockNumber === currentBlock + 1
       if (onTip) {
         console.log('Syncing tip. Stalling....')
-        super.setSynced()
+        this.setSynced()
         await delay(this.options.tipSyncDelay)
       }
     }
   }
-}
 
-// const filter = this.l1Sdk.join.filters.Settle()
-//       // ranges are inclusive here so we + 1 to avoid checking the same block twice
-//       const newEvents = await this.l1Sdk.join.queryFilter(filter, syncBlock + 1, Math.max(boundaryBlock, syncBlock + 1))
-//       console.log(`Found ${newEvents.length} new settles`)
-//       const modelsToCreate: Omit<Settle, 'id'>[] = await Promise.all(
-//         newEvents.map(async (w) => {
-//           return {
-//             sourceDomain: parseBytes32String(w.args.sourceDomain),
-//             targetDomain: this.domainName,
-//             amount: w.args.batchedDaiToFlush.toString(),
-//             timestamp: new Date((await w.getBlock()).timestamp * 1000),
-//           }
-//         }),
-//       )
+  // from inclusive
+  // to exclusive
+  abstract sync(tx: TxHandle, from: number, to: number): Promise<void>
+}

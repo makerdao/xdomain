@@ -2,34 +2,39 @@ import { expect, Mock, mockFn } from 'earljs'
 import waitForExpect from 'wait-for-expect'
 
 import { setupDatabaseTestSuite } from '../../test-e2e/database'
-import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
+import { BlockchainClient } from '../peripherals/blockchain'
+import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
+import { TxHandle } from '../peripherals/db/utils'
 import { delay } from '../utils'
-import { Blockchain, GenericSynchronizer, SyncFn } from './GenericSynchronizer'
+import { GenericSynchronizer } from './GenericSynchronizer'
+
+class TestSynchronizer extends GenericSynchronizer {
+  async sync(_tx: TxHandle, _from: number, _to: number): Promise<void> {}
+}
 
 const domainName = 'local'
-const synchronizerName = 'test'
 const blocksPerBatch = 2
+const synchronizerName = TestSynchronizer.name
 
-describe.only(GenericSynchronizer.name, () => {
+describe(GenericSynchronizer.name, () => {
   const prisma = setupDatabaseTestSuite()
 
   it('syncs past correctly', async () => {
     const startingBlock = 1
     const currentBlock = 5
     const synchronizerStatusRepository = new SynchronizerStatusRepository(prisma)
-    const blockchainMock: Blockchain = {
+    const blockchainMock: BlockchainClient = {
       getLatestBlockNumber: mockFn().resolvesTo(currentBlock),
     }
-    const syncFn = mockFn<SyncFn>().resolvesTo(undefined)
-    const genericSynchronizer = new GenericSynchronizer(
+    const syncFn = mockFn<GenericSynchronizer['sync']>().resolvesTo(undefined)
+    const genericSynchronizer = new TestSynchronizer(
       blockchainMock,
       synchronizerStatusRepository,
       domainName,
       startingBlock,
       blocksPerBatch,
-      synchronizerName,
-      syncFn,
     )
+    genericSynchronizer.sync = syncFn
 
     await genericSynchronizer.syncOnce()
 
@@ -48,7 +53,7 @@ describe.only(GenericSynchronizer.name, () => {
     const startingBlock = 1
     const currentBlock = 1
     const synchronizerStatusRepository = new SynchronizerStatusRepository(prisma)
-    const blockchainMock: Blockchain = {
+    const blockchainMock: BlockchainClient = {
       getLatestBlockNumber: mockFn()
         .resolvesToOnce(currentBlock)
         .resolvesToOnce(currentBlock + 1)
@@ -63,17 +68,16 @@ describe.only(GenericSynchronizer.name, () => {
         .resolvesToOnce(currentBlock + 3)
         .resolvesToOnce(currentBlock + 3),
     }
-    const syncFn = mockFn<SyncFn>().resolvesTo(undefined)
-    const genericSynchronizer = new GenericSynchronizer(
+    const syncFn = mockFn<GenericSynchronizer['sync']>().resolvesTo(undefined)
+    const genericSynchronizer = new TestSynchronizer(
       blockchainMock,
       synchronizerStatusRepository,
       domainName,
       startingBlock,
       blocksPerBatch,
-      synchronizerName,
-      syncFn,
       { tipSyncDelay: 1000 },
     )
+    genericSynchronizer.sync = syncFn
 
     void genericSynchronizer.run()
 
@@ -103,7 +107,7 @@ describe.only(GenericSynchronizer.name, () => {
     const startingBlock = 1
     const currentBlock = 1
     const synchronizerStatusRepository = new SynchronizerStatusRepository(prisma)
-    const blockchainMock: Blockchain = {
+    const blockchainMock: BlockchainClient = {
       getLatestBlockNumber: mockFn()
         .resolvesToOnce(currentBlock)
         .resolvesToOnce(currentBlock + 1)
@@ -118,17 +122,16 @@ describe.only(GenericSynchronizer.name, () => {
         .resolvesToOnce(currentBlock + 3)
         .resolvesToOnce(currentBlock + 3),
     }
-    const syncFn = mockFn<SyncFn>().resolvesTo(undefined)
-    const genericSynchronizer = new GenericSynchronizer(
+    const syncFn = mockFn<GenericSynchronizer['sync']>().resolvesTo(undefined)
+    const genericSynchronizer = new TestSynchronizer(
       blockchainMock,
       synchronizerStatusRepository,
       domainName,
       startingBlock,
       blocksPerBatch,
-      synchronizerName,
-      syncFn,
       { tipSyncDelay: 1000 },
     )
+    genericSynchronizer.sync = syncFn
 
     void genericSynchronizer.run()
 
@@ -167,20 +170,19 @@ describe.only(GenericSynchronizer.name, () => {
     const currentBlock = 15
     const saveDistanceFromTip = 10
     const synchronizerStatusRepository = new SynchronizerStatusRepository(prisma)
-    const blockchainMock: Blockchain = {
+    const blockchainMock: BlockchainClient = {
       getLatestBlockNumber: mockFn().resolvesTo(currentBlock),
     }
-    const syncFn = mockFn<SyncFn>().resolvesTo(undefined)
-    const genericSynchronizer = new GenericSynchronizer(
+    const syncFn = mockFn<GenericSynchronizer['sync']>().resolvesTo(undefined)
+    const genericSynchronizer = new TestSynchronizer(
       blockchainMock,
       synchronizerStatusRepository,
       domainName,
       startingBlock,
       blocksPerBatch,
-      synchronizerName,
-      syncFn,
       { saveDistanceFromTip },
     )
+    genericSynchronizer.sync = syncFn
 
     await genericSynchronizer.syncOnce()
 

@@ -1,16 +1,16 @@
 const hre = require('hardhat')
-import { PrismaClient } from '@prisma/client'
 import { expect } from 'earljs'
 import { ethers, providers, Wallet } from 'ethers'
 import waitForExpect from 'wait-for-expect'
 
+import { setupDatabaseTestSuite } from '../../test-e2e/database'
 import { impersonateAccount, mineABunchOfBlocks, mintEther } from '../../test-e2e/hardhat-utils'
 import { getAttestations } from '../../test-e2e/signing'
 import { chainIds, networks } from '../config'
-import { FlushRepository } from '../db/FlushRepository'
-import { SettleRepository } from '../db/SettleRepository'
-import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
-import { TeleportRepository } from '../db/TeleportRepository'
+import { FlushRepository } from '../peripherals/db/FlushRepository'
+import { SettleRepository } from '../peripherals/db/SettleRepository'
+import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
+import { TeleportRepository } from '../peripherals/db/TeleportRepository'
 import { getKovanSdk } from '../sdk'
 import { monitor } from './monitor'
 
@@ -20,15 +20,12 @@ describe('Monitoring', () => {
   const signers = [Wallet.createRandom()]
   const receiver = Wallet.createRandom().connect(hhProvider)
   let cancel: Function
-  let prisma: PrismaClient
+  const prisma = setupDatabaseTestSuite()
 
   it('detects bad debt', async () => {
     const sourceDomain = 'KOVAN-SLAVE-OPTIMISM-1'
     const targetDomain = 'KOVAN-MASTER-1'
     const daiToMint = 2137
-
-    prisma = new PrismaClient()
-    await prisma.$connect()
 
     // start monitoring
     const network = networks[chainIds.KOVAN]
@@ -91,12 +88,6 @@ describe('Monitoring', () => {
   afterEach(async () => {
     if (cancel) {
       cancel()
-    }
-
-    if (prisma) {
-      await prisma.flush.deleteMany()
-      await prisma.synchronizerStatus.deleteMany()
-      await prisma.teleport.deleteMany()
     }
   })
 })

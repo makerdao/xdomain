@@ -1,44 +1,43 @@
-import { Flush } from '@prisma/client'
+import { Settle } from '@prisma/client'
 import { parseBytes32String } from 'ethers/lib/utils'
 
 import { BlockchainClient } from '../peripherals/blockchain'
-import { FlushRepository } from '../peripherals/db/FlushRepository'
+import { SettleRepository } from '../peripherals/db/SettleRepository'
 import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
 import { TxHandle } from '../peripherals/db/utils'
-import { L2Sdk } from '../sdks'
+import { L1Sdk } from '../sdks'
 import { GenericSynchronizer, SyncOptions } from './GenericSynchronizer'
 
-export class FlushEventsSynchronizer extends GenericSynchronizer {
+export class SettleEventsSynchronizer extends GenericSynchronizer {
   constructor(
     blockchain: BlockchainClient,
     synchronizerStatusRepository: SynchronizerStatusRepository,
     domainName: string,
     startingBlock: number,
     blocksPerBatch: number,
-    private readonly flushRepository: FlushRepository,
-    private readonly l2Sdk: L2Sdk,
+    private readonly settleRepository: SettleRepository,
+    private readonly l1Sdk: L1Sdk,
     _options?: Partial<SyncOptions>,
   ) {
     super(blockchain, synchronizerStatusRepository, domainName, startingBlock, blocksPerBatch, _options)
   }
 
   async sync(tx: TxHandle, from: number, to: number): Promise<void> {
-    const filter = this.l2Sdk.teleportGateway.filters.Flushed()
+    const filter = this.l1Sdk.join.filters.Settle()
 
-    const newFlushes = await this.l2Sdk.teleportGateway.queryFilter(filter, from, to - 1)
-    console.log(`[${this.syncName}] Found ${newFlushes.length} new flushes`)
+    const newEvents = await this.l1Sdk.join.queryFilter(filter, from, to - 1)
+    console.log(`Found ${newEvents.length} new settles`)
 
-    const modelsToCreate: Omit<Flush, 'id'>[] = await Promise.all(
-      newFlushes.map(async (w) => {
+    const modelsToCreate: Omit<Settle, 'id'>[] = await Promise.all(
+      newEvents.map(async (w) => {
         return {
-          sourceDomain: this.domainName,
-          targetDomain: parseBytes32String(w.args.targetDomain),
-          amount: w.args.dai.toString(),
+          sourceDomain: parseBytes32String(w.args.sourceDomain),
+          targetDomain: this.domainName,
+          amount: w.args.batchedDaiToFlush.toString(),
           timestamp: new Date((await w.getBlock()).timestamp * 1000),
         }
       }),
     )
-
-    await this.flushRepository.createMany(modelsToCreate, tx)
+    await this.settleRepository.createMany(modelsToCreate, tx)
   }
 }

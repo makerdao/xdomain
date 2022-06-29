@@ -1,8 +1,9 @@
 import { BigNumber, ethers, providers } from 'ethers'
 
-import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
-import { TeleportRepository } from '../db/TeleportRepository'
 import { monitorTeleportMints } from '../monitoring/teleportMints'
+import { EthersBlockchainClient } from '../peripherals/blockchain'
+import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
+import { TeleportRepository } from '../peripherals/db/TeleportRepository'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from '../sdks'
 import { InitEventsSynchronizer } from '../synchronizers/InitEventsSynchronizer'
 import { NetworkConfig } from '../types'
@@ -30,13 +31,13 @@ export async function calcBadDebt({
     const l2Sdk = getL2SdkBasedOnNetworkName(slave.sdkName, l2Provider)
 
     const synchronizer = new InitEventsSynchronizer(
-      l2Provider,
+      new EthersBlockchainClient(l2Provider),
       synchronizerStatusRepository,
-      teleportRepository,
-      l2Sdk,
       slave.name,
       slave.bridgeDeploymentBlock,
       slave.syncBatchSize,
+      teleportRepository,
+      l2Sdk,
     )
 
     await synchronizer.syncOnce()

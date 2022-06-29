@@ -1,19 +1,18 @@
 import { BigNumber, ethers, providers } from 'ethers'
 
-import { onEveryFinalizedBlock } from '../blockchain'
-import { FlushRepository } from '../db/FlushRepository'
-import { SettleRepository } from '../db/SettleRepository'
-import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
-import { TeleportRepository } from '../db/TeleportRepository'
 import { bridgeInvariant } from '../monitoring/bridgeInvariant'
 import { monitorTeleportFlush } from '../monitoring/teleportFlush'
 import { monitorTeleportMints } from '../monitoring/teleportMints'
 import { monitorTeleportSettle } from '../monitoring/teleportSettle'
+import { EthersBlockchainClient } from '../peripherals/blockchain'
+import { onEveryFinalizedBlock } from '../peripherals/blockchain/onEveryFinalizedBlock'
+import { FlushRepository } from '../peripherals/db/FlushRepository'
+import { SettleRepository } from '../peripherals/db/SettleRepository'
+import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
+import { TeleportRepository } from '../peripherals/db/TeleportRepository'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from '../sdks'
-import { BaseSynchronizer } from '../synchronizers/BaseSynchronizer'
-import { FlushEventsSynchronizer } from '../synchronizers/FlushEventsSynchronizer'
-import { SettleEventsSynchronizer } from '../synchronizers/GenericSynchronizer'
-import { InitEventsSynchronizer } from '../synchronizers/InitEventsSynchronizer'
+import { FlushEventsSynchronizer, InitEventsSynchronizer, SettleEventsSynchronizer } from '../synchronizers'
+import { GenericSynchronizer } from '../synchronizers/GenericSynchronizer'
 import { Metrics, NetworkConfig } from '../types'
 
 export async function monitor({
@@ -32,18 +31,18 @@ export async function monitor({
   synchronizerStatusRepository: SynchronizerStatusRepository
 }) {
   const metrics: Metrics = {}
-  const synchronizers: BaseSynchronizer[] = []
+  const synchronizers: GenericSynchronizer[] = []
 
   // sync data from master
   const l1Sdk = getL1SdkBasedOnNetworkName(network.sdkName, l1Provider)
   const synchronizer = new SettleEventsSynchronizer(
-    l1Provider,
+    new EthersBlockchainClient(l1Provider),
     synchronizerStatusRepository,
-    settleRepository,
-    l1Sdk,
     network.name,
     network.joinDeploymentBlock,
     network.syncBatchSize,
+    settleRepository,
+    l1Sdk,
   )
   void synchronizer.run()
   synchronizers.push(synchronizer)
@@ -54,25 +53,25 @@ export async function monitor({
     const l2Sdk = getL2SdkBasedOnNetworkName(slave.sdkName, l2Provider)
 
     const initEventsSynchronizer = new InitEventsSynchronizer(
-      l2Provider,
+      new EthersBlockchainClient(l2Provider),
       synchronizerStatusRepository,
-      teleportRepository,
-      l2Sdk,
       slave.name,
       slave.bridgeDeploymentBlock,
       slave.syncBatchSize,
+      teleportRepository,
+      l2Sdk,
     )
     void initEventsSynchronizer.run()
     synchronizers.push(initEventsSynchronizer)
 
     const flushEventsSynchronizer = new FlushEventsSynchronizer(
-      l2Provider,
+      new EthersBlockchainClient(l2Provider),
       synchronizerStatusRepository,
-      flushRepository,
-      l2Sdk,
       slave.name,
       slave.bridgeDeploymentBlock,
       slave.syncBatchSize,
+      flushRepository,
+      l2Sdk,
     )
     void flushEventsSynchronizer.run()
     synchronizers.push(flushEventsSynchronizer)
