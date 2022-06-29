@@ -33,7 +33,7 @@ export class InitEventsSynchronizer extends GenericSynchronizer {
     super(blockchain, synchronizerStatusRepository, domainName, startingBlock, blocksPerBatch, _options)
   }
 
-  async sync(tx: TxHandle, from: number, to: number): Promise<void> {
+  async sync(from: number, to: number) {
     const filter = this.l2Sdk.teleportGateway.filters.WormholeInitialized()
 
     const newTeleports = await this.l2Sdk.teleportGateway.queryFilter(filter, from, to - 1)
@@ -53,6 +53,6 @@ export class InitEventsSynchronizer extends GenericSynchronizer {
       }
     })
 
-    await this.teleportRepository.createMany(modelsToCreate, tx)
+    return (tx: TxHandle) => this.teleportRepository.createMany(modelsToCreate, tx)
   }
 }

@@ -6,8 +6,8 @@ export function setupDatabaseTestSuite() {
   })
 
   async function cleanup() {
-    await prisma.flush.deleteMany()
     await prisma.synchronizerStatus.deleteMany()
+    await prisma.flush.deleteMany()
     await prisma.teleport.deleteMany()
     await prisma.settle.deleteMany()
   }

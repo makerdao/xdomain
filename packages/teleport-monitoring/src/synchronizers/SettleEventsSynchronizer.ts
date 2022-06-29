@@ -22,7 +22,7 @@ export class SettleEventsSynchronizer extends GenericSynchronizer {
     super(blockchain, synchronizerStatusRepository, domainName, startingBlock, blocksPerBatch, _options)
   }
 
-  async sync(tx: TxHandle, from: number, to: number): Promise<void> {
+  async sync(from: number, to: number) {
     const filter = this.l1Sdk.join.filters.Settle()
 
     const newEvents = await this.l1Sdk.join.queryFilter(filter, from, to - 1)
@@ -38,6 +38,6 @@ export class SettleEventsSynchronizer extends GenericSynchronizer {
         }
       }),
     )
-    await this.settleRepository.createMany(modelsToCreate, tx)
+    return (tx: TxHandle) => this.settleRepository.createMany(modelsToCreate, tx)
   }
 }

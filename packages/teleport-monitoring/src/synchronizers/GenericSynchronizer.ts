@@ -76,8 +76,12 @@ export abstract class GenericSynchronizer {
           ).toLocaleString()} blocks)`,
         )
 
+        const toCommit = await this.sync(fromBlockNumber, toBlockNumber)
         await this.synchronizerStatusRepository.transaction(async (tx) => {
-          await this.sync(tx, fromBlockNumber, toBlockNumber)
+          if (toCommit) {
+            await toCommit(tx)
+          }
+          console.log('Upserting!', toBlockNumber)
           await this.synchronizerStatusRepository.upsert(
             { domain: this.domainName, block: toBlockNumber, name: this.syncName },
             tx,
@@ -97,5 +101,5 @@ export abstract class GenericSynchronizer {
 
   // from inclusive
   // to exclusive
-  abstract sync(tx: TxHandle, from: number, to: number): Promise<void>
+  abstract sync(from: number, to: number): Promise<((tx: TxHandle) => Promise<any>) | void>
 }

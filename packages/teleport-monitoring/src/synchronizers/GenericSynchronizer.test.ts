@@ -4,12 +4,11 @@ import waitForExpect from 'wait-for-expect'
 import { setupDatabaseTestSuite } from '../../test-e2e/database'
 import { BlockchainClient } from '../peripherals/blockchain'
 import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
-import { TxHandle } from '../peripherals/db/utils'
 import { delay } from '../utils'
 import { GenericSynchronizer } from './GenericSynchronizer'
 
 class TestSynchronizer extends GenericSynchronizer {
-  async sync(_tx: TxHandle, _from: number, _to: number): Promise<void> {}
+  async sync(_from: number, _to: number): Promise<void> {}
 }
 
 const domainName = 'local'
@@ -26,7 +25,7 @@ describe(GenericSynchronizer.name, () => {
     const blockchainMock: BlockchainClient = {
       getLatestBlockNumber: mockFn().resolvesTo(currentBlock),
     }
-    const syncFn = mockFn<GenericSynchronizer['sync']>().resolvesTo(undefined)
+    const syncFn = mockFn<TestSynchronizer['sync']>().resolvesTo(undefined)
     const genericSynchronizer = new TestSynchronizer(
       blockchainMock,
       synchronizerStatusRepository,
@@ -38,8 +37,7 @@ describe(GenericSynchronizer.name, () => {
 
     await genericSynchronizer.syncOnce()
 
-    // this is workaround for https://github.com/dethcrypto/earl/issues/200
-    expect(syncFn.calls.map((p) => p.args.slice(1))).toEqual([
+    expect(syncFn).toHaveBeenCalledExactlyWith([
       [1, 3],
       [3, 5],
       [5, 6],
@@ -68,7 +66,7 @@ describe(GenericSynchronizer.name, () => {
         .resolvesToOnce(currentBlock + 3)
         .resolvesToOnce(currentBlock + 3),
     }
-    const syncFn = mockFn<GenericSynchronizer['sync']>().resolvesTo(undefined)
+    const syncFn = mockFn<TestSynchronizer['sync']>().resolvesTo(undefined)
     const genericSynchronizer = new TestSynchronizer(
       blockchainMock,
       synchronizerStatusRepository,
@@ -82,7 +80,7 @@ describe(GenericSynchronizer.name, () => {
     void genericSynchronizer.run()
 
     await waitForExpect(() =>
-      expect(syncFn.calls.map((p) => p.args.slice(1))).toEqual([
+      expect(syncFn).toHaveBeenCalledExactlyWith([
         [1, 2],
         [2, 3],
         [3, 4],
@@ -94,7 +92,7 @@ describe(GenericSynchronizer.name, () => {
     )
 
     await delay(2000)
-    expect(syncFn.calls.map((p) => p.args.slice(1))).toEqual([
+    expect(syncFn).toHaveBeenCalledExactlyWith([
       [1, 2],
       [2, 3],
       [3, 4],
@@ -122,7 +120,7 @@ describe(GenericSynchronizer.name, () => {
         .resolvesToOnce(currentBlock + 3)
         .resolvesToOnce(currentBlock + 3),
     }
-    const syncFn = mockFn<GenericSynchronizer['sync']>().resolvesTo(undefined)
+    const syncFn = mockFn<TestSynchronizer['sync']>().resolvesTo(undefined)
     const genericSynchronizer = new TestSynchronizer(
       blockchainMock,
       synchronizerStatusRepository,
@@ -133,25 +131,26 @@ describe(GenericSynchronizer.name, () => {
     )
     genericSynchronizer.sync = syncFn
 
-    void genericSynchronizer.run()
+    const syncedPromise = genericSynchronizer.run()
 
-    await waitForExpect(() =>
-      expect(syncFn.calls.map((p) => p.args.slice(1))).toEqual([
+    await waitForExpect(async () => {
+      expect(syncFn).toHaveBeenCalledExactlyWith([
         [1, 2],
         [2, 3],
         [3, 4],
         [4, 5],
-      ]),
-    )
+      ])
+      expect(await synchronizerStatusRepository.findByName(synchronizerName, domainName)).toEqual(
+        expect.objectWith({ block: 5 }),
+      )
+    })
     genericSynchronizer.stop()
-    expect(await synchronizerStatusRepository.findByName(synchronizerName, domainName)).toEqual(
-      expect.objectWith({ block: 5 }),
-    )
+    await syncedPromise
     ;(blockchainMock.getLatestBlockNumber as Mock<any, any>).returns(5)
     void genericSynchronizer.run()
 
     await waitForExpect(() => {
-      expect(syncFn.calls.map((p) => p.args.slice(1))).toEqual([
+      expect(syncFn).toHaveBeenCalledExactlyWith([
         [1, 2],
         [2, 3],
         [3, 4],
@@ -173,7 +172,7 @@ describe(GenericSynchronizer.name, () => {
     const blockchainMock: BlockchainClient = {
       getLatestBlockNumber: mockFn().resolvesTo(currentBlock),
     }
-    const syncFn = mockFn<GenericSynchronizer['sync']>().resolvesTo(undefined)
+    const syncFn = mockFn<TestSynchronizer['sync']>().resolvesTo(undefined)
     const genericSynchronizer = new TestSynchronizer(
       blockchainMock,
       synchronizerStatusRepository,
@@ -186,8 +185,7 @@ describe(GenericSynchronizer.name, () => {
 
     await genericSynchronizer.syncOnce()
 
-    // this is workaround for https://github.com/dethcrypto/earl/issues/200
-    expect(syncFn.calls.map((p) => p.args.slice(1))).toEqual([
+    expect(syncFn).toHaveBeenCalledExactlyWith([
       [1, 3],
       [3, 5],
       [5, 6],
