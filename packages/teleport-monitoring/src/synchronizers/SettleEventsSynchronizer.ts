@@ -6,7 +6,9 @@ import { SettleRepository } from '../peripherals/db/SettleRepository'
 import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
 import { TxHandle } from '../peripherals/db/utils'
 import { L1Sdk } from '../sdks'
-import { GenericSynchronizer, SyncOptions } from './GenericSynchronizer'
+import { GenericSynchronizer } from './GenericSynchronizer'
+
+const MAX_REORG_DEPTH_FOR_MAINNET = 8
 
 export class SettleEventsSynchronizer extends GenericSynchronizer {
   constructor(
@@ -17,9 +19,10 @@ export class SettleEventsSynchronizer extends GenericSynchronizer {
     blocksPerBatch: number,
     private readonly settleRepository: SettleRepository,
     private readonly l1Sdk: L1Sdk,
-    _options?: Partial<SyncOptions>,
   ) {
-    super(blockchain, synchronizerStatusRepository, domainName, startingBlock, blocksPerBatch, _options)
+    super(blockchain, synchronizerStatusRepository, domainName, startingBlock, blocksPerBatch, {
+      saveDistanceFromTip: MAX_REORG_DEPTH_FOR_MAINNET,
+    })
   }
 
   async sync(from: number, to: number) {

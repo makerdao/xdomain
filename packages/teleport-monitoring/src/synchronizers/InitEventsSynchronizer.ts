@@ -7,7 +7,7 @@ import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStat
 import { TeleportRepository } from '../peripherals/db/TeleportRepository'
 import { TxHandle } from '../peripherals/db/utils'
 import { L2Sdk } from '../sdks'
-import { GenericSynchronizer, SyncOptions } from './GenericSynchronizer'
+import { GenericSynchronizer } from './GenericSynchronizer'
 
 export type OnChainTeleport = {
   sourceDomain: string
@@ -28,9 +28,8 @@ export class InitEventsSynchronizer extends GenericSynchronizer {
     blocksPerBatch: number,
     private readonly teleportRepository: TeleportRepository,
     private readonly l2Sdk: L2Sdk,
-    _options?: Partial<SyncOptions>,
   ) {
-    super(blockchain, synchronizerStatusRepository, domainName, startingBlock, blocksPerBatch, _options)
+    super(blockchain, synchronizerStatusRepository, domainName, startingBlock, blocksPerBatch)
   }
 
   async sync(from: number, to: number) {

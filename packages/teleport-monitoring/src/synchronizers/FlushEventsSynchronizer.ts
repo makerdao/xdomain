@@ -6,7 +6,7 @@ import { FlushRepository } from '../peripherals/db/FlushRepository'
 import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
 import { TxHandle } from '../peripherals/db/utils'
 import { L2Sdk } from '../sdks'
-import { GenericSynchronizer, SyncOptions } from './GenericSynchronizer'
+import { GenericSynchronizer } from './GenericSynchronizer'
 
 export class FlushEventsSynchronizer extends GenericSynchronizer {
   constructor(
@@ -17,9 +17,8 @@ export class FlushEventsSynchronizer extends GenericSynchronizer {
     blocksPerBatch: number,
     private readonly flushRepository: FlushRepository,
     private readonly l2Sdk: L2Sdk,
-    _options?: Partial<SyncOptions>,
   ) {
-    super(blockchain, synchronizerStatusRepository, domainName, startingBlock, blocksPerBatch, _options)
+    super(blockchain, synchronizerStatusRepository, domainName, startingBlock, blocksPerBatch)
   }
 
   async sync(from: number, to: number) {
