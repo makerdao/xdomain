@@ -21,7 +21,7 @@ export class SettleEventsSynchronizer extends GenericSynchronizer {
     private readonly l1Sdk: L1Sdk,
   ) {
     super(blockchain, synchronizerStatusRepository, domainName, startingBlock, blocksPerBatch, {
-      saveDistanceFromTip: MAX_REORG_DEPTH_FOR_MAINNET,
+      safeDistanceFromTip: MAX_REORG_DEPTH_FOR_MAINNET,
     })
   }
 

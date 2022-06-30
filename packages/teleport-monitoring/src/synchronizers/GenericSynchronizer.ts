@@ -7,12 +7,12 @@ import { delay } from '../utils'
 
 export interface SyncOptions {
   tipSyncDelay: number // ms
-  saveDistanceFromTip: number
+  safeDistanceFromTip: number
 }
 
 export const defaultSyncOptions: SyncOptions = {
   tipSyncDelay: 5_000,
-  saveDistanceFromTip: 0,
+  safeDistanceFromTip: 0,
 }
 
 export type SynchronizerState = 'stopped' | 'syncing' | 'synced'
@@ -49,14 +49,14 @@ export abstract class GenericSynchronizer {
     this._state = 'syncing'
   }
 
+  /**
+   * Note: this might end up syncing a tip for while before stopping.
+   */
   async syncOnce(): Promise<void> {
-    console.log('syncing once!')
     void this.run()
     while (this.state === 'syncing') {
-      console.log('still syncing!')
       await delay(1000)
     }
-    console.log('stopping!!')
     this.stop()
   }
 
@@ -66,7 +66,7 @@ export abstract class GenericSynchronizer {
     let fromBlockNumber = syncStatus?.block ?? this.startingBlock // inclusive
 
     while (this.state !== 'stopped') {
-      const currentBlock = (await this.blockchain.getLatestBlockNumber()) - this.options.saveDistanceFromTip
+      const currentBlock = (await this.blockchain.getLatestBlockNumber()) - this.options.safeDistanceFromTip
       const toBlockNumber = Math.min(fromBlockNumber + this.blocksPerBatch, currentBlock + 1) // exclusive
 
       if (fromBlockNumber !== toBlockNumber) {

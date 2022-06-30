@@ -167,7 +167,7 @@ describe(GenericSynchronizer.name, () => {
   it('syncs with artificial delay', async () => {
     const startingBlock = 1
     const currentBlock = 15
-    const saveDistanceFromTip = 10
+    const safeDistanceFromTip = 10
     const synchronizerStatusRepository = new SynchronizerStatusRepository(prisma)
     const blockchainMock: BlockchainClient = {
       getLatestBlockNumber: mockFn().resolvesTo(currentBlock),
@@ -179,7 +179,7 @@ describe(GenericSynchronizer.name, () => {
       domainName,
       startingBlock,
       blocksPerBatch,
-      { saveDistanceFromTip },
+      { safeDistanceFromTip },
     )
     genericSynchronizer.sync = syncFn
 
@@ -191,7 +191,7 @@ describe(GenericSynchronizer.name, () => {
       [5, 6],
     ])
     expect(await synchronizerStatusRepository.findByName(synchronizerName, domainName)).toEqual(
-      expect.objectWith({ block: currentBlock + 1 - saveDistanceFromTip }),
+      expect.objectWith({ block: currentBlock + 1 - safeDistanceFromTip }),
     )
   })
 })
