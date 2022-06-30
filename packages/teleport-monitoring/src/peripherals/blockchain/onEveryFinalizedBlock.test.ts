@@ -2,7 +2,7 @@ import { Block } from '@ethersproject/abstract-provider'
 import FakeTimers from '@sinonjs/fake-timers'
 import { expect, mockFn } from 'earljs'
 
-import { onEveryFinalizedBlock } from './blockchain'
+import { onEveryFinalizedBlock } from './onEveryFinalizedBlock'
 
 describe('onEveryFinalizedBlock', () => {
   it('calls when blocks are sequential', async () => {

@@ -1,6 +1,6 @@
 import { formatBytes32String } from 'ethers/lib/utils'
 
-import { FlushRepository } from '../db/FlushRepository'
+import { FlushRepository } from '../peripherals/db/FlushRepository'
 import { L2Sdk } from '../sdks'
 
 export async function monitorTeleportFlush(

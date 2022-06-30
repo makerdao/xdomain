@@ -1,6 +1,6 @@
 import { BigNumber } from 'ethers'
 
-import { TeleportRepository } from '../db/TeleportRepository'
+import { TeleportRepository } from '../peripherals/db/TeleportRepository'
 import { L1Sdk } from '../sdks'
 
 export async function monitorTeleportMints(

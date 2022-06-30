@@ -25,4 +25,8 @@ export class SynchronizerStatusRepository {
       },
     })
   }
+
+  async transaction(fn: (tx: any) => Promise<void>) {
+    await this.prisma.$transaction(fn)
+  }
 }

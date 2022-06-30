@@ -1,6 +1,6 @@
 import { formatBytes32String } from 'ethers/lib/utils'
 
-import { SettleRepository } from '../db/SettleRepository'
+import { SettleRepository } from '../peripherals/db/SettleRepository'
 import { L1Sdk } from '../sdks'
 
 export async function monitorTeleportSettle(

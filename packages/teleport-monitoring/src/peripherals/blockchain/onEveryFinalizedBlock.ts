@@ -1,7 +1,7 @@
 import { providers } from 'ethers'
 import { range } from 'lodash'
 
-import { setIntervalAsync } from './utils'
+import { setIntervalAsync } from '../../utils'
 
 const finalizedAfter = 5
 export async function onEveryFinalizedBlock(

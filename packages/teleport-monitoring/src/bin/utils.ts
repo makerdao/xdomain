@@ -2,10 +2,10 @@ import { PrismaClient } from '@prisma/client'
 import { ethers, providers } from 'ethers'
 
 import { idsToChains, networks } from '../config'
-import { FlushRepository } from '../db/FlushRepository'
-import { SettleRepository } from '../db/SettleRepository'
-import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
-import { TeleportRepository } from '../db/TeleportRepository'
+import { FlushRepository } from '../peripherals/db/FlushRepository'
+import { SettleRepository } from '../peripherals/db/SettleRepository'
+import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
+import { TeleportRepository } from '../peripherals/db/TeleportRepository'
 import { NetworkConfig } from '../types'
 
 type InitFunction = (args: {
