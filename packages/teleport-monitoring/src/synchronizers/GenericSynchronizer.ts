@@ -81,7 +81,6 @@ export abstract class GenericSynchronizer {
           if (toCommit) {
             await toCommit(tx)
           }
-          console.log('Upserting!', toBlockNumber)
           await this.synchronizerStatusRepository.upsert(
             { domain: this.domainName, block: toBlockNumber, name: this.syncName },
             tx,

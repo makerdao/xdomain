@@ -14,6 +14,6 @@ export async function monitorTeleportSettle(
 
   return {
     sinceLastSettle: lastSettle ? currentTimestamp - lastSettle.timestamp.getTime() : +Infinity,
-    debtToSettle: (await l1Sdk.join.debt(formatBytes32String(targetDomain))).toString(),
+    debtToSettle: (await l1Sdk.join.debt(formatBytes32String(sourceDomain))).toString(),
   }
 }
