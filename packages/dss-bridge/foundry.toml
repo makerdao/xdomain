@@ -4,4 +4,8 @@ out = 'out'
 libs = ['lib']
 remappings = ['dss-test/=lib/dss-test/src/']
 
+[default.rpc_endpoints]
+optimism = "${OPT_RPC_URL}"
+mainnet = "${ETH_RPC_URL}"
+
 # See more config options https://github.com/gakonst/foundry/tree/master/config

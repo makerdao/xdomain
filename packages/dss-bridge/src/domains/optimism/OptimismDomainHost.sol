@@ -29,15 +29,18 @@ interface L1MessengerLike {
 
 contract OptimismDomainHost is DomainHost {
 
+    // --- Data ---
     L1MessengerLike public immutable l1messenger;
     address public immutable guest;
 
-    // TODO make these fileable
     uint32 public glLift;
     uint32 public glRectify;
     uint32 public glCage;
     uint32 public glExit;
     uint32 public glDeposit;
+
+    // --- Events ---
+    event File(bytes32 indexed what, uint32 data);
 
     constructor(
         bytes32 _ilk,
@@ -49,6 +52,16 @@ contract OptimismDomainHost is DomainHost {
     ) DomainHost(_ilk, _daiJoin, _escrow, _router) {
         l1messenger = L1MessengerLike(_l1messenger);
         guest = _guest;
+    }
+
+    function file(bytes32 what, uint32 data) external auth {
+        if (what == "glLift") glLift = data;
+        else if (what == "glRectify") glRectify = data;
+        else if (what == "glCage") glCage = data;
+        else if (what == "glExit") glExit = data;
+        else if (what == "glDeposit") glDeposit = data;
+        else revert("OptimismDomainHost/file-unrecognized-param");
+        emit File(what, data);
     }
 
     function _isGuest(address usr) internal override view returns (bool) {
