@@ -32,3 +32,14 @@ export async function inChunks(
     await fn(Math.min(i, to), Math.min(i + delta, to))
   }
 }
+
+export function makeMetricName(baseName: string, labels: { [name: string]: string }) {
+  if (Object.entries(labels).length === 0) {
+    return baseName
+  }
+
+  const labelsString = Object.entries(labels)
+    .flatMap(([k, v]) => `${k}="${v}"`)
+    .join(',')
+  return baseName + `{${labelsString}}`
+}

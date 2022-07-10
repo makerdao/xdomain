@@ -51,7 +51,7 @@ describe('Monitoring', () => {
     })
 
     const { metrics, cancel: _cancel } = await monitor({
-      network,
+      networkConfig: network,
       l1Provider: hhProvider,
       teleportRepository,
       synchronizerStatusRepository,
@@ -81,7 +81,7 @@ describe('Monitoring', () => {
 
     // assert
     await waitForExpect(() => {
-      expect(metrics['teleport_bad_debt{domain="KOVAN-MASTER-1"}']).toEqual(daiToMint.toString())
+      expect(metrics['teleport_bad_debt{domain="KOVAN-MASTER-1",network="kovan"}']).toEqual(daiToMint.toString())
     }, 10_000)
   })
 

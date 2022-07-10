@@ -1,6 +1,7 @@
 export type Metrics = { [name: string]: string | number }
 
 export type NetworkConfig = {
+  networkName: string
   name: string
   sdkName: string
   joinDeploymentBlock: number

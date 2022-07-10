@@ -12,7 +12,7 @@ void run(
     settleRepository,
   }) => {
     const { metrics } = await monitor({
-      network,
+      networkConfig: network,
       l1Provider,
       teleportRepository,
       flushRepository,

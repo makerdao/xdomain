@@ -159,9 +159,11 @@ describe(GenericSynchronizer.name, () => {
       ])
     })
     genericSynchronizer.stop()
-    expect(await synchronizerStatusRepository.findByName(synchronizerName, domainName)).toEqual(
-      expect.objectWith({ block: 6 }),
-    )
+    await waitForExpect(async () => {
+      expect(await synchronizerStatusRepository.findByName(synchronizerName, domainName)).toEqual(
+        expect.objectWith({ block: 6 }),
+      )
+    })
   })
 
   it('syncs with artificial delay', async () => {

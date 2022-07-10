@@ -1,6 +1,6 @@
 import { expect, mockFn } from 'earljs'
 
-import { inChunks } from './utils'
+import { inChunks, makeMetricName } from './utils'
 
 describe('inChunks', () => {
   it('chunks simple case', async () => {
@@ -32,5 +32,21 @@ describe('inChunks', () => {
       [4, 7],
       [8, 10],
     ])
+  })
+})
+
+describe(makeMetricName.name, () => {
+  it('makes a metric name without any labels', () => {
+    expect(makeMetricName('cpu_usage', {})).toEqual('cpu_usage')
+  })
+
+  it('makes a metric name with 1 label', () => {
+    expect(makeMetricName('cpu_usage', { location: 'FRA' })).toEqual('cpu_usage{location="FRA"}')
+  })
+
+  it('makes a metric name with multiple labels', () => {
+    expect(makeMetricName('cpu_usage', { location: 'FRA', arch: 'amd64' })).toEqual(
+      'cpu_usage{location="FRA",arch="amd64"}',
+    )
   })
 })
