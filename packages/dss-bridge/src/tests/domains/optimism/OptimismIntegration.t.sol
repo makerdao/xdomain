@@ -40,12 +40,22 @@ import { BridgeOracle } from "../../../BridgeOracle.sol";
 import { OptimismDomainHost } from "../../../domains/optimism/OptimismDomainHost.sol";
 import { OptimismDomainGuest } from "../../../domains/optimism/OptimismDomainGuest.sol";
 
-interface L1MessengerLike {
-
+interface MessengerLike {
+    function sendMessage(
+        address _target,
+        bytes memory _message,
+        uint32 _gasLimit
+    ) external;
+    function relayMessage(
+        address _target,
+        address _sender,
+        bytes memory _message,
+        uint256 _messageNonce
+    ) external;
 }
 
-interface L2MessengerLike {
-
+interface CTCLike {
+    function getQueueLength() external view returns (uint40);
 }
 
 interface EscrowLike {
@@ -90,27 +100,53 @@ contract DogMock {
     }
 }
 
+// Need to insert an eavesdrop contract to grab values to relay to l2
+contract MessageRelayEavesdrop {
+
+    MessengerLike public messenger;
+    address public target;
+    address public sender;
+    bytes public message;
+
+    constructor(address _messenger) {
+        messenger = MessengerLike(_messenger);
+    }
+
+    function sendMessage(
+        address _target,
+        bytes memory _message,
+        uint32 _gasLimit
+    ) external {
+        target = _target;
+        sender = msg.sender;
+        message = _message;
+
+        // Forward the message
+        messenger.sendMessage(_target, _message, _gasLimit);
+    }
+
+}
+
 contract OptimismIntegrationTest is DSSTest {
 
     using GodMode for *;
 
     ForkCheatCodes constant cheats = ForkCheatCodes(HEVM_ADDRESS);
 
-    // Optimism contracts
-    L1MessengerLike l1messenger;
-    L2MessengerLike l2messenger;
-
-    // Bridge
-    ClaimToken claimToken;
-    OptimismDomainHost host;
-    OptimismDomainGuest guest;
-    BridgeOracle pip;
-
-    // Local contracts
+    // Ethereum-side contracts
+    MessengerLike l1messenger;
+    MessageRelayEavesdrop l1Eavesdrop;
     EscrowLike escrow;
+    BridgeOracle pip;
+    OptimismDomainHost host;
+    CTCLike ctc;
 
-    // Remote domain MCD deploy
+    // Optimism-side contracts
+    MessengerLike l2messenger;
+    MessageRelayEavesdrop l2Eavesdrop;
     MCD rmcd;
+    ClaimToken claimToken;
+    OptimismDomainGuest guest;
 
     bytes32 constant DOMAIN_ILK = "SOME-DOMAIN-A";
     bytes32 constant REMOTE_COLL_ILK = "XCHAIN-COLLATERAL-A";
@@ -130,11 +166,13 @@ contract OptimismIntegrationTest is DSSTest {
         cheats.selectFork(mainnetFork);
 
         escrow = EscrowLike(mcd.chainlog().getAddress("OPTIMISM_ESCROW"));
-        l1messenger = L1MessengerLike(0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1);
+        l1messenger = MessengerLike(0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1);
+        ctc = CTCLike(0x5E4e65926BA27467555EB562121fac00D24E9dD2);
         // TODO add support for Teleport router when it's available
+        l1Eavesdrop = new MessageRelayEavesdrop(address(l1messenger));
         // Pre-calc the guest nonce
-        address guestAddr = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), address(this), bytes1(0x08))))));
-        host = new OptimismDomainHost(DOMAIN_ILK, address(mcd.daiJoin()), address(escrow), address(0), address(l1messenger), guestAddr);
+        address guestAddr = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), address(this), bytes1(0x09))))));
+        host = new OptimismDomainHost(DOMAIN_ILK, address(mcd.daiJoin()), address(escrow), address(0), address(l1Eavesdrop), guestAddr);
         host.file("vow", address(mcd.vow()));
         host.rely(address(guest));
         mcd.giveAdminAccess();
@@ -156,11 +194,13 @@ contract OptimismIntegrationTest is DSSTest {
         // --- Setup optimism contracts ---
         cheats.selectFork(optimismFork);
 
+        l2messenger = MessengerLike(0x4200000000000000000000000000000000000007);
+        l2Eavesdrop = new MessageRelayEavesdrop(address(l2messenger));
         Vat vat = new Vat();
-        Dai dai = new Dai();
+        Dai dai = Dai(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
         DaiJoin daiJoin = new DaiJoin(address(vat), address(dai));
         claimToken = new ClaimToken();
-        guest = new OptimismDomainGuest(DOMAIN_ILK, address(daiJoin), address(claimToken), address(l2messenger), address(host));
+        guest = new OptimismDomainGuest(DOMAIN_ILK, address(daiJoin), address(claimToken), address(l2Eavesdrop), address(host));
         assertEq(address(guest), guestAddr);
         claimToken.rely(address(guest));
         {
@@ -196,21 +236,45 @@ contract OptimismIntegrationTest is DSSTest {
 
         // Default back to mainnet
         cheats.selectFork(mainnetFork);
-
-        emit log_named_uint("glLift", host.glLift());
-        emit log_named_uint("line", rmcd.vat().Line());
     }
 
-    function testRaiseDebtCeiling2() public {
+    function relayLastMessageL1toL2() internal {
+        uint160 offset = uint160(0x1111000000000000000000000000000000001111);
+        address malias;
+        unchecked {
+            malias = address(uint160(address(l1messenger)) + offset);
+        }
+        vm.startPrank(malias);
+        l2messenger.relayMessage(l1Eavesdrop.target(), l1Eavesdrop.sender(), l1Eavesdrop.message(), 1);
+        vm.stopPrank();
+    }
+
+    function relayLastMessageL2toL1() internal {
+        // TODO use the actual messege relayer with state inclusion proofs
+        // Set the xDomainMsgSender
+        vm.store(
+            address(l1messenger),
+            bytes32(uint256(3)),
+            bytes32(uint256(uint160(l2Eavesdrop.sender())))
+        );
+        vm.startPrank(address(l2messenger));
+        (bool success, bytes memory results) = l2Eavesdrop.target().call(l2Eavesdrop.message());
+        if (!success) {
+            revert("Failed to call.");
+        }
+        vm.stopPrank();
+    }
+
+    function testRaiseDebtCeiling() public {
+        uint40 ctclen = ctc.getQueueLength();
         uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
         (uint256 ink, uint256 art) = mcd.vat().urns(DOMAIN_ILK, address(host));
         assertEq(ink, 0);
         assertEq(art, 0);
         assertEq(host.grain(), 0);
         assertEq(host.line(), 0);
-        assertEq(rmcd.vat().Line(), 0);
 
-        host.lift(100 ether, 1000000);
+        host.lift(100 ether);
 
         (ink, art) = mcd.vat().urns(DOMAIN_ILK, address(host));
         assertEq(ink, 100 ether);
@@ -218,7 +282,16 @@ contract OptimismIntegrationTest is DSSTest {
         assertEq(host.grain(), 100 ether);
         assertEq(host.line(), 100 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
-        //assertEq(rmcd.vat().Line(), 100 * RAD);
+        assertEq(l1Eavesdrop.target(), address(guest));    
+        assertEq(l1Eavesdrop.sender(), address(host)); 
+        assertEq(l1Eavesdrop.message(), abi.encodeWithSelector(DomainGuest.lift.selector, int256(100 * RAD), 100 * WAD));
+        assertEq(ctc.getQueueLength(), ctclen + 1);  // Should queue up the CTC
+
+        // Play the message on L2
+        cheats.selectFork(optimismFork);
+        relayLastMessageL1toL2();
+
+        assertEq(rmcd.vat().Line(), 100 * RAD);
     }
 
     function testRaiseLowerDebtCeiling() public {
@@ -238,9 +311,13 @@ contract OptimismIntegrationTest is DSSTest {
         assertEq(host.grain(), 100 ether);
         assertEq(host.line(), 100 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
+
+        cheats.selectFork(optimismFork);
+        relayLastMessageL1toL2();
         assertEq(rmcd.vat().Line(), 100 * RAD);
 
         // Pre-mint DAI is not released here
+        cheats.selectFork(mainnetFork);
         host.lift(50 ether);
 
         (ink, art) = mcd.vat().urns(DOMAIN_ILK, address(host));
@@ -249,25 +326,43 @@ contract OptimismIntegrationTest is DSSTest {
         assertEq(host.grain(), 100 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
+
+        cheats.selectFork(optimismFork);
+        relayLastMessageL1toL2();
         assertEq(rmcd.vat().Line(), 50 * RAD);
 
         // Notify the host that the DAI is safe to remove
         guest.release();
 
+        assertEq(l2Eavesdrop.target(), address(host));    
+        assertEq(l2Eavesdrop.sender(), address(guest)); 
+        assertEq(l2Eavesdrop.message(), abi.encodeWithSelector(DomainHost.release.selector, 50 * RAD));
+        assertEq(rmcd.vat().Line(), 50 * RAD);
+        assertEq(rmcd.vat().debt(), 0);
+
+        cheats.selectFork(mainnetFork);
+        relayLastMessageL2toL1();
         (ink, art) = mcd.vat().urns(DOMAIN_ILK, address(host));
         assertEq(ink, 50 ether);
         assertEq(art, 50 ether);
         assertEq(host.grain(), 50 ether);
         assertEq(host.line(), 50 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 50 ether);
-        assertEq(rmcd.vat().Line(), 50 * RAD);
-        assertEq(rmcd.vat().debt(), 0);
 
         // Add some debt to the guest instance, lower the DC and release some more pre-mint
         // This can only release pre-mint DAI up to the debt
+        cheats.selectFork(optimismFork);
         rmcd.vat().suck(address(guest), address(this), 40 * RAD);
+        assertEq(rmcd.vat().Line(), 25 * RAD);
+        assertEq(rmcd.vat().debt(), 40 * RAD);
+
+        cheats.selectFork(mainnetFork);
         host.lift(25 ether);
+        cheats.selectFork(optimismFork);
+        relayLastMessageL1toL2();
         guest.release();
+        cheats.selectFork(mainnetFork);
+        relayLastMessageL2toL1();
 
         (ink, art) = mcd.vat().urns(DOMAIN_ILK, address(host));
         assertEq(ink, 40 ether);
@@ -275,8 +370,6 @@ contract OptimismIntegrationTest is DSSTest {
         assertEq(host.grain(), 40 ether);
         assertEq(host.line(), 25 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 40 ether);
-        assertEq(rmcd.vat().Line(), 25 * RAD);
-        assertEq(rmcd.vat().debt(), 40 * RAD);
     }
 
     function testPushSurplus() public {
