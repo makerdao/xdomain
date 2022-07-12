@@ -41,6 +41,7 @@ export const CONFIG: AgentConfig = {
     deploymentBlock: 1791185,
   },
 
+  //PoC
   [Network.POLYGON]: {
     TeleportJoin: "0x60d1c5A9968Ee80a2456b552901089e1557c7Aba",
     TeleportOracleAuth: "0x28235e7B8074dee59279f168d6Dd4F44f1596Cf0",
