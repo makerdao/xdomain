@@ -21,15 +21,7 @@ export const provideL1HandleBlock =
       mintEvents.map(async (log) => {
         const { originator, hashGUID } = MINT_IFACE.parseLog(log).args;
         if (originator === data.get("TeleportOracleAuth")) {
-          if (
-            !(await fetcher.L2HashGUIDExists(
-              data.getNetwork(),
-              (
-                await provider.getBlock(blockEvent.blockNumber)
-              ).timestamp,
-              hashGUID
-            ))
-          )
+          if (!(await fetcher.L2HashGUIDExists(data.getNetwork(), blockEvent.block.timestamp, hashGUID)))
             findings.push(createL1Finding(log.transactionHash, hashGUID, data.getNetwork()));
         }
       })

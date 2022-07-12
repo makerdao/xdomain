@@ -99,10 +99,6 @@ describe("L1 Teleport Backing monitoring bot test suite", () => {
 
     const blockEvent = new TestBlockEvent().setTimestamp(21234).setNumber(4321);
 
-    when(mockProvider.getBlock)
-      .calledWith(blockEvent.blockNumber)
-      .mockReturnValue({ timestamp: blockEvent.block.timestamp });
-
     const findings: Finding[] = await handleBlock(blockEvent);
     expect(mockFetcher.L2HashGUIDExists).toHaveBeenCalledWith(
       mockNetworkManager.getNetwork(),
@@ -145,10 +141,6 @@ describe("L1 Teleport Backing monitoring bot test suite", () => {
     mockProvider.addLogs(logs);
 
     const blockEvent = new TestBlockEvent().setTimestamp(12424).setNumber(8790);
-
-    when(mockProvider.getBlock)
-      .calledWith(blockEvent.blockNumber)
-      .mockReturnValue({ timestamp: blockEvent.block.timestamp });
 
     const findings: Finding[] = await handleBlock(blockEvent);
 
@@ -215,10 +207,6 @@ describe("L1 Teleport Backing monitoring bot test suite", () => {
     mockProvider.addLogs(logs);
 
     const blockEvent = new TestBlockEvent().setNumber(354353).setTimestamp(3322353);
-
-    when(mockProvider.getBlock)
-      .calledWith(blockEvent.blockNumber)
-      .mockReturnValue({ timestamp: blockEvent.block.timestamp });
 
     const findings: Finding[] = await handleBlock(blockEvent);
 
