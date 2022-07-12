@@ -1,5 +1,5 @@
 {
-  "name": "mk-2-2",
+  "name": "mk-2",
   "version": "0.0.1",
   "description": "MakerDAO Teleport backing monitoring bot",
   "chainIds": [
