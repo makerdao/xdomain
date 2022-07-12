@@ -1,7 +1,6 @@
 import { ethers, Finding, HandleBlock, keccak256 } from "forta-agent";
 import { createAddress, MockEthersProvider, TestBlockEvent } from "forta-agent-tools/lib/tests";
 import { utils } from "ethers";
-import { when } from "jest-when";
 import { provideHandleBlock } from "./agent";
 import { Network, AgentConfig, NetworkData } from "./network";
 import { NetworkManager } from "forta-agent-tools";
@@ -71,10 +70,6 @@ describe("L1 Teleport Backing/L2 TeleportInitialized events monitoring bot test 
     mockProvider.addLogs(logs);
 
     const blockEvent = new TestBlockEvent().setTimestamp(12424).setNumber(23238790);
-
-    when(mockProvider.getBlock)
-      .calledWith(blockEvent.blockNumber)
-      .mockReturnValue({ timestamp: blockEvent.block.timestamp });
 
     const findings: Finding[] = await handleBlock(blockEvent);
 

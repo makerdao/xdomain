@@ -43,7 +43,7 @@ Before deploying, set the `agentId` in `forta.config.json` and the `BOT_ID` in `
 
 The bot behaviour can be verified with the following block:
 
-- 28754800 (`Polygon mainnet PoC`),
+- 28754800 (`Polygon Mainnet PoC`),
 
 a) On **L2** by default.\
 b) On **L1** by changing the agent.ts, L49 to:

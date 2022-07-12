@@ -3,7 +3,6 @@ import { createAddress, MockEthersProvider, TestBlockEvent } from "forta-agent-t
 import provideL1HandleBlock from "./L1.backing";
 import { Interface } from "@ethersproject/abi";
 import { MINT_IFACE } from "./utils";
-import { when } from "jest-when";
 import { NetworkManager } from "forta-agent-tools";
 import { NetworkData, AgentConfig } from "./network";
 
