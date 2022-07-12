@@ -32,7 +32,13 @@ describe("L1 Teleport Backing/L2 TeleportInitialized events monitoring bot test 
 
   it("should return a finding when the bot is run on L1 and there is no corresponding TeleportInitialized event emitted from L2DaiGateway contract", async () => {
     mockNetworkManager = new NetworkManager(CONFIG, Network.RINKEBY);
-    handleBlock = provideHandleBlock(mockNetworkManager, mockFetcher as any, mockProvider as any, false);
+    handleBlock = provideHandleBlock(
+      mockNetworkManager,
+      mockFetcher as any,
+      mockProvider as any,
+      [Network.RINKEBY],
+      false
+    );
     mockFetcher.L2HashGUIDExists.mockReturnValue(false);
 
     const event = MINT_IFACE.getEvent("Mint");
@@ -81,7 +87,13 @@ describe("L1 Teleport Backing/L2 TeleportInitialized events monitoring bot test 
 
   it("should return a finding when the bot is run on L2 and a TeleportInitialized event is emitted", async () => {
     mockNetworkManager = new NetworkManager(CONFIG, Network.ARBITRUM_RINKEBY);
-    handleBlock = provideHandleBlock(mockNetworkManager, mockFetcher as any, mockProvider as any, true);
+    handleBlock = provideHandleBlock(
+      mockNetworkManager,
+      mockFetcher as any,
+      mockProvider as any,
+      [Network.RINKEBY],
+      true
+    );
     const blockEvent = new TestBlockEvent().setNumber(3456).setHash(keccak256("bH21"));
 
     const logs = [

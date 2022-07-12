@@ -14,14 +14,20 @@ export const initialize = (networkManager: NetworkManager<NetworkData>, provider
 };
 
 export const provideHandleBlock =
-  (data: NetworkManager<NetworkData>, fetcher: Fetcher, provider: providers.Provider, init: boolean): HandleBlock =>
+  (
+    data: NetworkManager<NetworkData>,
+    fetcher: Fetcher,
+    provider: providers.Provider,
+    l1Networks: number[],
+    init: boolean
+  ): HandleBlock =>
   async (blockEvent: BlockEvent) => {
     let findings: Finding[];
 
     const handleL1Block: HandleBlock = provideL1HandleBlock(data, fetcher, provider);
     let handleL2Block: HandleBlock;
 
-    if ([Network.RINKEBY, Network.KOVAN].includes(data.getNetwork())) {
+    if ([...l1Networks].includes(data.getNetwork())) {
       findings = await handleL1Block(blockEvent);
     } else {
       if (!init) {
@@ -36,5 +42,11 @@ export const provideHandleBlock =
 
 export default {
   initialize: initialize(networkManager, getEthersProvider()),
-  handleBlock: provideHandleBlock(networkManager, new Fetcher(), getEthersProvider(), false),
+  handleBlock: provideHandleBlock(
+    networkManager,
+    new Fetcher(),
+    getEthersProvider(),
+    [Network.RINKEBY, Network.KOVAN],
+    false
+  ),
 };
