@@ -2,8 +2,8 @@
 FROM node:12-alpine AS builder
 WORKDIR /app
 COPY . .
-RUN yarn
-RUN yarn run build
+RUN npm ci
+RUN npm run build
 
 # Final stage: copy compiled Javascript from previous stage and install production dependencies
 FROM node:12-alpine
@@ -12,7 +12,6 @@ ENV NODE_ENV=production
 # LABEL "network.forta.settings.agent-logs.enable"="true"
 WORKDIR /app
 COPY --from=builder /app/dist ./src
-COPY package.json ./
-COPY yarn.lock ./
-RUN yarn install --production
-CMD [ "yarn", "run", "start:prod" ]
+COPY package*.json ./
+RUN npm ci --production
+CMD [ "npm", "run", "start:prod" ]
