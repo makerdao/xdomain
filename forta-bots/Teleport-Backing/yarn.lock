@@ -4365,9 +4365,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mk-2-2@workspace:.":
+"mk-2@workspace:.":
   version: 0.0.0-use.local
-  resolution: "mk-2-2@workspace:."
+  resolution: "mk-2@workspace:."
   dependencies:
     "@types/jest": ^27.0.1
     "@types/nodemon": ^1.19.0
