@@ -13,19 +13,18 @@ export const initialize = (networkManager: NetworkManager<NetworkData>, provider
   await networkManager.init(provider);
 };
 
-export const provideHandleBlock =
-  (
-    data: NetworkManager<NetworkData>,
-    fetcher: Fetcher,
-    provider: providers.Provider,
-    l1Networks: number[],
-    init: boolean
-  ): HandleBlock =>
-  async (blockEvent: BlockEvent) => {
-    let findings: Finding[];
+export const provideHandleBlock = (
+  data: NetworkManager<NetworkData>,
+  fetcher: Fetcher,
+  provider: providers.Provider,
+  l1Networks: number[],
+  init: boolean
+): HandleBlock => {
+  const handleL1Block: HandleBlock = provideL1HandleBlock(data, fetcher, provider);
+  let handleL2Block: HandleBlock;
 
-    const handleL1Block: HandleBlock = provideL1HandleBlock(data, fetcher, provider);
-    let handleL2Block: HandleBlock;
+  return async (blockEvent: BlockEvent) => {
+    let findings: Finding[];
 
     if ([...l1Networks].includes(data.getNetwork())) {
       findings = await handleL1Block(blockEvent);
@@ -39,6 +38,7 @@ export const provideHandleBlock =
 
     return findings;
   };
+};
 
 export default {
   initialize: initialize(networkManager, getEthersProvider()),
