@@ -36,7 +36,7 @@ export const createL2Finding = (map: Map<string, string>): Finding => {
     name: "Teleport Initialized",
     description: "TeleportInitialized event emitted from L2TeleportGateway contract",
     alertId: "MK-02-02",
-    protocol: "MakerDAO",
+    protocol: "forta-bots-info: MakerDAO",
     severity: FindingSeverity.Info,
     type: FindingType.Info,
     metadata: Object.fromEntries(map),
