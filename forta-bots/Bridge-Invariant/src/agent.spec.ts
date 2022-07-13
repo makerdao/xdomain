@@ -5,7 +5,7 @@ import { createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests.utils
 import abi from "./abi";
 import { BigNumber } from "ethers";
 import { provideHandleBlock } from "./agent";
-import { AgentConfig, NetworkData } from "./constants";
+import { AgentConfig, L2Data, NetworkData } from "./constants";
 import { when } from "jest-when";
 import { provideL1HandleBlock } from "./L1.bridge.invariant";
 
@@ -54,23 +54,24 @@ describe("L1 Bridge Invariant/L2 DAI Monitor bot test suite", () => {
       outputs: [supply],
     });
 
+  const multiL2Data: L2Data[] = [
+    {
+      chainId: 42,
+      l1Escrow: createAddress("0xe0a"),
+    },
+    {
+      chainId: 2022,
+      l1Escrow: createAddress("0xf33"),
+    },
+    {
+      chainId: 7115,
+      l1Escrow: createAddress("0x7115"),
+    },
+  ];
+
   const CONFIG: AgentConfig = {
     [Network.MAINNET]: {
       DAI: createAddress("0xa0a0"),
-      L2_DATA: [
-        {
-          chainId: 2233,
-          l1Escrow: createAddress("0xa87a"),
-        },
-        {
-          chainId: 987,
-          l1Escrow: createAddress("0x6789"),
-        },
-        {
-          chainId: 86,
-          l1Escrow: createAddress("0x1222"),
-        },
-      ],
     },
     [Network.ARBITRUM]: {
       DAI: createAddress("0xb1b1"),
@@ -85,6 +86,7 @@ describe("L1 Bridge Invariant/L2 DAI Monitor bot test suite", () => {
     mockNetworkManager = new NetworkManager(CONFIG, Network.MAINNET);
     const customHandler: HandleBlock = provideL1HandleBlock(
       mockProvider as any,
+      multiL2Data,
       mockNetworkManager,
       mockFetcher as any
     );
@@ -100,19 +102,19 @@ describe("L1 Bridge Invariant/L2 DAI Monitor bot test suite", () => {
     const expectedFindings: Finding[] = [];
     for (let [l2, balance, supply] of DATA) {
       mockProvider.addCallTo(mockNetworkManager.get("DAI"), block, abi.DAI, "balanceOf", {
-        inputs: [mockNetworkManager.get("L2_DATA")![l2].l1Escrow],
+        inputs: [multiL2Data[l2].l1Escrow],
         outputs: [balance],
       });
       when(mockGetL2Supply)
-        .calledWith(mockNetworkManager.get("L2_DATA")![l2].chainId, timestamp, BigNumber.from(balance))
+        .calledWith(multiL2Data[l2].chainId, timestamp, BigNumber.from(balance))
         .mockReturnValueOnce(supply);
 
       if (balance < supply)
         expectedFindings.push(
           createL1Finding(
             mockNetworkManager.get("DAI"),
-            mockNetworkManager.get("L2_DATA")![l2].chainId,
-            mockNetworkManager.get("L2_DATA")![l2].l1Escrow,
+            multiL2Data[l2].chainId,
+            multiL2Data[l2].l1Escrow,
             balance,
             supply
           )
@@ -126,7 +128,13 @@ describe("L1 Bridge Invariant/L2 DAI Monitor bot test suite", () => {
 
   it("should emit findings when run on L2 and total supply changes", async () => {
     mockNetworkManager = new NetworkManager(CONFIG, Network.ARBITRUM);
-    handleBlock = provideHandleBlock(mockProvider as any, mockNetworkManager, mockFetcher as any, BigNumber.from(-1));
+    handleBlock = provideHandleBlock(
+      mockProvider as any,
+      multiL2Data,
+      mockNetworkManager,
+      mockFetcher as any,
+      BigNumber.from(-1)
+    );
 
     const TEST_DATA: [number, number, boolean][] = [
       // block, supply, findingReported

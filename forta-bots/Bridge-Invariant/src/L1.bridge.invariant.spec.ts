@@ -5,7 +5,7 @@ import { provideL1HandleBlock } from "./L1.bridge.invariant";
 import { NetworkData } from "./constants";
 import { BigNumber } from "ethers";
 import { when, resetAllWhenMocks } from "jest-when";
-import { AgentConfig } from "./constants";
+import { AgentConfig, L2Data } from "./constants";
 import { NetworkManager } from "forta-agent-tools";
 
 const createFinding = (dai: string, chainId: number, l1Escrow: string, escrowSupply: number, l2Supply: number) =>
@@ -36,36 +36,35 @@ describe("Bridge invariant tests", () => {
   const L2_CONFIG: AgentConfig = {
     1234: {
       DAI: createAddress("0xda1da1"),
-      L2_DATA: [
-        {
-          chainId: 15,
-          l1Escrow: createAddress("0xdead"),
-        },
-      ],
     },
   };
 
-  const MULTI_L2_CONFIG: AgentConfig = {
-    12345: {
-      DAI: createAddress("0xda1da2"),
-      L2_DATA: [
-        {
-          chainId: 42,
-          l1Escrow: createAddress("0xe0a"),
-        },
-        {
-          chainId: 2022,
-          l1Escrow: createAddress("0xf33"),
-        },
-        {
-          chainId: 7115,
-          l1Escrow: createAddress("0x7115"),
-        },
-      ],
-    },
+  const data: L2Data = {
+    chainId: 15,
+    l1Escrow: createAddress("0xdead"),
   };
+  const multiL2Data: L2Data[] = [
+    {
+      chainId: 42,
+      l1Escrow: createAddress("0xe0a"),
+    },
+    {
+      chainId: 2022,
+      l1Escrow: createAddress("0xf33"),
+    },
+    {
+      chainId: 7115,
+      l1Escrow: createAddress("0x7115"),
+    },
+  ];
+
   mockNetworkManager = new NetworkManager(L2_CONFIG, 1234);
-  const handler: HandleBlock = provideL1HandleBlock(mockProvider as any, mockNetworkManager, mockFetcher as any);
+  const handler: HandleBlock = provideL1HandleBlock(
+    mockProvider as any,
+    [data],
+    mockNetworkManager,
+    mockFetcher as any
+  );
 
   beforeEach(() => {
     mockProvider.clear();
@@ -85,33 +84,25 @@ describe("Bridge invariant tests", () => {
 
     for (let [block, timestamp, balance, supply] of TEST_CASES) {
       mockProvider.addCallTo(mockNetworkManager.get("DAI"), block, abi.DAI, "balanceOf", {
-        inputs: [mockNetworkManager.get("L2_DATA")![0].l1Escrow],
+        inputs: [data.l1Escrow],
         outputs: [balance],
       });
-      when(mockGetL2Supply)
-        .calledWith(mockNetworkManager.get("L2_DATA")![0].chainId, timestamp, BigNumber.from(balance))
-        .mockReturnValueOnce(supply);
+      when(mockGetL2Supply).calledWith(data.chainId, timestamp, BigNumber.from(balance)).mockReturnValueOnce(supply);
 
       const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(timestamp).setNumber(block);
       const findings: Finding[] = await handler(blockEvent);
       if (balance >= supply) expect(findings).toStrictEqual([]);
       else
         expect(findings).toStrictEqual([
-          createFinding(
-            mockNetworkManager.get("DAI"),
-            mockNetworkManager.get("L2_DATA")![0].chainId,
-            mockNetworkManager.get("L2_DATA")![0].l1Escrow,
-            balance,
-            supply
-          ),
+          createFinding(mockNetworkManager.get("DAI"), data.chainId, data.l1Escrow, balance, supply),
         ]);
     }
   });
 
   it("should emit multiple alerts", async () => {
-    mockNetworkManager = new NetworkManager(MULTI_L2_CONFIG, 12345);
     const customHandler: HandleBlock = provideL1HandleBlock(
       mockProvider as any,
+      multiL2Data,
       mockNetworkManager,
       mockFetcher as any
     );
@@ -127,19 +118,19 @@ describe("Bridge invariant tests", () => {
     const expectedFindings: Finding[] = [];
     for (let [l2, balance, supply] of DATA) {
       mockProvider.addCallTo(mockNetworkManager.get("DAI"), block, abi.DAI, "balanceOf", {
-        inputs: [mockNetworkManager.get("L2_DATA")![l2].l1Escrow],
+        inputs: [multiL2Data[l2].l1Escrow],
         outputs: [balance],
       });
       when(mockGetL2Supply)
-        .calledWith(mockNetworkManager.get("L2_DATA")![l2].chainId, timestamp, BigNumber.from(balance))
+        .calledWith(multiL2Data[l2].chainId, timestamp, BigNumber.from(balance))
         .mockReturnValueOnce(supply);
 
       if (balance < supply)
         expectedFindings.push(
           createFinding(
             mockNetworkManager.get("DAI"),
-            mockNetworkManager.get("L2_DATA")![l2].chainId,
-            mockNetworkManager.get("L2_DATA")![l2].l1Escrow,
+            multiL2Data[l2].chainId,
+            multiL2Data[l2].l1Escrow,
             balance,
             supply
           )

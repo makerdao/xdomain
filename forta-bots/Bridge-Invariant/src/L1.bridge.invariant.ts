@@ -2,16 +2,21 @@ import { BlockEvent, Finding, FindingSeverity, FindingType } from "forta-agent";
 import { BigNumber, Contract, providers } from "ethers";
 import SupplyFetcher from "./api";
 import abi from "./abi";
-import { NetworkData } from "./constants";
+import { L2Data, NetworkData } from "./constants";
 import { NetworkManager } from "forta-agent-tools";
 
 export const provideL1HandleBlock =
-  (provider: providers.JsonRpcProvider, networkData: NetworkManager<NetworkData>, fetcher: SupplyFetcher) =>
+  (
+    provider: providers.JsonRpcProvider,
+    l2Data: L2Data[],
+    networkData: NetworkManager<NetworkData>,
+    fetcher: SupplyFetcher
+  ) =>
   async (blockEvent: BlockEvent) => {
     const findings: Finding[] = [];
     const daiContract: Contract = new Contract(networkData.get("DAI"), abi.DAI, provider);
 
-    for (let data of networkData.get("L2_DATA")!) {
+    for (let data of l2Data) {
       const escrowSupply: BigNumber = await daiContract.balanceOf(data.l1Escrow, { blockTag: blockEvent.blockNumber });
       const l2Supply: BigNumber = BigNumber.from(
         await fetcher.getL2Supply(data.chainId, blockEvent.block.timestamp, escrowSupply)
