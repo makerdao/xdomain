@@ -1,19 +1,8 @@
-import {
-  FindingType,
-  FindingSeverity,
-  Finding,
-  HandleTransaction,
-  createTransactionEvent,
-  ethers,
-  HandleBlock,
-  Network,
-  BlockEvent,
-} from "forta-agent";
+import { FindingType, FindingSeverity, Finding, HandleBlock, Network, BlockEvent } from "forta-agent";
 import { NetworkManager } from "forta-agent-tools";
 import { MockEthersProvider } from "forta-agent-tools/lib/mock.utils";
 import { createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests.utils";
 import abi from "./abi";
-import agent from "./agent";
 import { BigNumber } from "ethers";
 import { provideHandleBlock } from "./agent";
 import { AgentConfig, NetworkData } from "./constants";
@@ -50,7 +39,7 @@ const createL2Finding = (supply: number) =>
     },
   });
 
-describe("high tether transfer agent", () => {
+describe("L1 Bridge Invariant/L2 DAI Monitor bot test suite", () => {
   const mockProvider: MockEthersProvider = new MockEthersProvider();
   const mockGetL2Supply = jest.fn();
   const mockFetcher = {
