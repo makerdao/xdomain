@@ -13,7 +13,7 @@ const createFinding = (supply: number) =>
     name: "L2 DAI supply Monitor",
     severity: FindingSeverity.Info,
     type: FindingType.Info,
-    protocol: "MakerDAO",
+    protocol: "forta-bots-info: MakerDAO",
     metadata: {
       supply: supply.toString(),
     },

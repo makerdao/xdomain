@@ -24,7 +24,7 @@ export const provideL2HandleBlock =
           metadata: {
             supply: currentSupply.toString(),
           },
-          protocol: "MakerDAO",
+          protocol: "forta-bots-info: MakerDAO",
         })
       );
       supply = currentSupply;
