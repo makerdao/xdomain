@@ -5,70 +5,164 @@ import {
   HandleTransaction,
   createTransactionEvent,
   ethers,
+  HandleBlock,
+  Network,
+  BlockEvent,
 } from "forta-agent";
-import agent, {
-  ERC20_TRANSFER_EVENT,
-  TETHER_ADDRESS,
-  TETHER_DECIMALS,
-} from "./agent";
+import { NetworkManager } from "forta-agent-tools";
+import { MockEthersProvider } from "forta-agent-tools/lib/mock.utils";
+import { createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests.utils";
+import abi from "./abi";
+import agent from "./agent";
+import { BigNumber } from "ethers";
+import { provideHandleBlock } from "./agent";
+import { AgentConfig, NetworkData } from "./constants";
+import { when } from "jest-when";
+import { provideL1HandleBlock } from "./L1.bridge.invariant";
 
-describe("high tether transfer agent", () => {
-  let handleTransaction: HandleTransaction;
-  const mockTxEvent = createTransactionEvent({} as any);
-
-  beforeAll(() => {
-    handleTransaction = agent.handleTransaction;
+const createL1Finding = (dai: string, chainId: number, l1Escrow: string, escrowSupply: number, l2Supply: number) =>
+  Finding.from({
+    alertId: "MAKER-BRIDGE-INVARIANT",
+    description: "Escrow DAI balance is less than L2 DAI total supply",
+    name: "Maker bridge invariant monitor",
+    severity: FindingSeverity.High,
+    type: FindingType.Suspicious,
+    protocol: "MakerDAO",
+    metadata: {
+      chainId: chainId.toString(),
+      l1Escrow,
+      l1EscrowBalance: escrowSupply.toString(),
+      totalSupply: l2Supply.toString(),
+    },
+    addresses: [l1Escrow, dai],
   });
 
-  describe("handleTransaction", () => {
-    it("returns empty findings if there are no Tether transfers", async () => {
-      mockTxEvent.filterLog = jest.fn().mockReturnValue([]);
+const createL2Finding = (supply: number) =>
+  Finding.from({
+    alertId: "L2-DAI-MONITOR",
+    description: "Total supply change detected",
+    name: "L2 DAI supply Monitor",
+    severity: FindingSeverity.Info,
+    type: FindingType.Info,
+    protocol: "MakerDAO",
+    metadata: {
+      supply: supply.toString(),
+    },
+  });
 
-      const findings = await handleTransaction(mockTxEvent);
+describe("high tether transfer agent", () => {
+  const mockProvider: MockEthersProvider = new MockEthersProvider();
+  const mockGetL2Supply = jest.fn();
+  const mockFetcher = {
+    getL2Supply: mockGetL2Supply,
+  };
+  let mockNetworkManager: NetworkManager<NetworkData>;
+  let handleBlock: HandleBlock;
 
-      expect(findings).toStrictEqual([]);
-      expect(mockTxEvent.filterLog).toHaveBeenCalledTimes(1);
-      expect(mockTxEvent.filterLog).toHaveBeenCalledWith(
-        ERC20_TRANSFER_EVENT,
-        TETHER_ADDRESS
-      );
+  const prepareBlock = (block: number, supply: number) =>
+    mockProvider.addCallTo(mockNetworkManager.get("DAI"), block, abi.DAI, "totalSupply", {
+      inputs: [],
+      outputs: [supply],
     });
 
-    it("returns a finding if there is a Tether transfer over 10,000", async () => {
-      const mockTetherTransferEvent = {
-        args: {
-          from: "0xabc",
-          to: "0xdef",
-          value: ethers.BigNumber.from("20000000000"), //20k with 6 decimals
+  const CONFIG: AgentConfig = {
+    [Network.MAINNET]: {
+      DAI: createAddress("0xa0a0"),
+      L2_DATA: [
+        {
+          chainId: 2233,
+          l1Escrow: createAddress("0xa87a"),
         },
-      };
-      mockTxEvent.filterLog = jest
-        .fn()
-        .mockReturnValue([mockTetherTransferEvent]);
+        {
+          chainId: 987,
+          l1Escrow: createAddress("0x6789"),
+        },
+        {
+          chainId: 86,
+          l1Escrow: createAddress("0x1222"),
+        },
+      ],
+    },
+    [Network.ARBITRUM]: {
+      DAI: createAddress("0xb1b1"),
+    },
+  };
 
-      const findings = await handleTransaction(mockTxEvent);
+  beforeEach(() => {
+    mockProvider.clear();
+  });
 
-      const normalizedValue = mockTetherTransferEvent.args.value.div(
-        10 ** TETHER_DECIMALS
-      );
-      expect(findings).toStrictEqual([
-        Finding.fromObject({
-          name: "High Tether Transfer",
-          description: `High amount of USDT transferred: ${normalizedValue}`,
-          alertId: "FORTA-1",
-          severity: FindingSeverity.Low,
-          type: FindingType.Info,
-          metadata: {
-            to: mockTetherTransferEvent.args.to,
-            from: mockTetherTransferEvent.args.from,
-          },
-        }),
-      ]);
-      expect(mockTxEvent.filterLog).toHaveBeenCalledTimes(1);
-      expect(mockTxEvent.filterLog).toHaveBeenCalledWith(
-        ERC20_TRANSFER_EVENT,
-        TETHER_ADDRESS
-      );
-    });
+  it("should emit multiple alerts when the bot is run on L1 and the invariant is violated in multiple networks", async () => {
+    mockNetworkManager = new NetworkManager(CONFIG, Network.MAINNET);
+    const customHandler: HandleBlock = provideL1HandleBlock(
+      mockProvider as any,
+      mockNetworkManager,
+      mockFetcher as any
+    );
+    const block: number = 42;
+    const timestamp: number = 123;
+    const DATA: [number, number, number][] = [
+      // L2Id, escrow balance, L2 totalSupply
+      [0, 13, 40],
+      [1, 2, 2],
+      [2, 4, 20],
+    ];
+
+    const expectedFindings: Finding[] = [];
+    for (let [l2, balance, supply] of DATA) {
+      mockProvider.addCallTo(mockNetworkManager.get("DAI"), block, abi.DAI, "balanceOf", {
+        inputs: [mockNetworkManager.get("L2_DATA")![l2].l1Escrow],
+        outputs: [balance],
+      });
+      when(mockGetL2Supply)
+        .calledWith(mockNetworkManager.get("L2_DATA")![l2].chainId, timestamp, BigNumber.from(balance))
+        .mockReturnValueOnce(supply);
+
+      if (balance < supply)
+        expectedFindings.push(
+          createL1Finding(
+            mockNetworkManager.get("DAI"),
+            mockNetworkManager.get("L2_DATA")![l2].chainId,
+            mockNetworkManager.get("L2_DATA")![l2].l1Escrow,
+            balance,
+            supply
+          )
+        );
+    }
+
+    const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(timestamp).setNumber(block);
+    const findings: Finding[] = await customHandler(blockEvent);
+    expect(findings).toStrictEqual(expectedFindings);
+  });
+
+  it("should emit findings when run on L2 and total supply changes", async () => {
+    mockNetworkManager = new NetworkManager(CONFIG, Network.ARBITRUM);
+    handleBlock = provideHandleBlock(mockProvider as any, mockNetworkManager, mockFetcher as any, BigNumber.from(-1));
+
+    const TEST_DATA: [number, number, boolean][] = [
+      // block, supply, findingReported
+      [11, 234, true],
+      [12, 234, false],
+      [13, 300, true],
+      [14, 42, true],
+      [15, 42, false],
+      [16, 42, false],
+      [17, 234, true],
+      [18, 234, false],
+    ];
+    const block: TestBlockEvent = new TestBlockEvent();
+
+    for (let i = 0; i < TEST_DATA.length; ++i) {
+      // ensure that only the correct block has data on the mock
+      mockProvider.clear();
+
+      const [blockNumber, supply, emitAlerts] = TEST_DATA[i];
+      prepareBlock(blockNumber, supply);
+      block.setNumber(blockNumber);
+
+      const findings = await handleBlock(block);
+      if (emitAlerts) expect(findings).toStrictEqual([createL2Finding(supply)]);
+      else expect(findings).toStrictEqual([]);
+    }
   });
 });

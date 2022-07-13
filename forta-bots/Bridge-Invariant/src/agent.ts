@@ -1,68 +1,34 @@
-import {
-  BlockEvent,
-  Finding,
-  HandleBlock,
-  HandleTransaction,
-  TransactionEvent,
-  FindingSeverity,
-  FindingType,
-} from "forta-agent";
+import { BlockEvent, Finding, HandleBlock, getEthersProvider, Network } from "forta-agent";
+import { NetworkManager } from "forta-agent-tools";
+import { ethers, BigNumber } from "ethers";
+import { CONFIG, NetworkData } from "./constants";
+import SupplyFetcher from "./api";
+import { provideL1HandleBlock } from "./L1.bridge.invariant";
+import { provideL2HandleBlock } from "./L2.DAI.monitor";
 
-export const ERC20_TRANSFER_EVENT =
-  "event Transfer(address indexed from, address indexed to, uint256 value)";
-export const TETHER_ADDRESS = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-export const TETHER_DECIMALS = 6;
-let findingsCount = 0;
+const networkManager = new NetworkManager(CONFIG, 1);
 
-const handleTransaction: HandleTransaction = async (
-  txEvent: TransactionEvent
-) => {
-  const findings: Finding[] = [];
+export const provideInitialize =
+  (provider: ethers.providers.JsonRpcProvider, networkManager: NetworkManager<NetworkData>) => async () => {
+    await networkManager.init(provider);
+  };
 
-  // limiting this agent to emit only 5 findings so that the alert feed is not spammed
-  if (findingsCount >= 5) return findings;
-
-  // filter the transaction logs for Tether transfer events
-  const tetherTransferEvents = txEvent.filterLog(
-    ERC20_TRANSFER_EVENT,
-    TETHER_ADDRESS
-  );
-
-  tetherTransferEvents.forEach((transferEvent) => {
-    // extract transfer event arguments
-    const { to, from, value } = transferEvent.args;
-    // shift decimals of transfer value
-    const normalizedValue = value.div(10 ** TETHER_DECIMALS);
-
-    // if more than 10,000 Tether were transferred, report it
-    if (normalizedValue.gt(10000)) {
-      findings.push(
-        Finding.fromObject({
-          name: "High Tether Transfer",
-          description: `High amount of USDT transferred: ${normalizedValue}`,
-          alertId: "FORTA-1",
-          severity: FindingSeverity.Low,
-          type: FindingType.Info,
-          metadata: {
-            to,
-            from,
-          },
-        })
-      );
-      findingsCount++;
-    }
-  });
-
-  return findings;
+export const provideHandleBlock = (
+  provider: ethers.providers.JsonRpcProvider,
+  data: NetworkManager<NetworkData>,
+  fetcher: SupplyFetcher,
+  supply: BigNumber
+): HandleBlock => {
+  const handleL1Block: HandleBlock = provideL1HandleBlock(provider, data, fetcher);
+  const handleL2Block: HandleBlock = provideL2HandleBlock(provider, data, supply);
+  return async (blockEvent: BlockEvent) => {
+    const findings: Finding[] =
+      data.getNetwork() == Network.MAINNET ? await handleL1Block(blockEvent) : await handleL2Block(blockEvent);
+    return findings;
+  };
 };
 
-// const handleBlock: HandleBlock = async (blockEvent: BlockEvent) => {
-//   const findings: Finding[] = [];
-//   // detect some block condition
-//   return findings;
-// }
-
 export default {
-  handleTransaction,
-  // handleBlock
+  initialize: provideInitialize(getEthersProvider(), networkManager),
+  handleBlock: provideHandleBlock(getEthersProvider(), networkManager, new SupplyFetcher(), BigNumber.from(-1)),
 };

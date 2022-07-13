@@ -1,26 +1,58 @@
-# Large Tether Transfer Agent
+# Bridge Invariant Monitor
 
 ## Description
 
-This agent detects transactions with large Tether transfers
+### On L1:
+
+The bot monitors the bridge invariant across the L2 Networks.
+
+The invariant is:
+
+```
+L1DAI.balanceOf(escrow) ≥ L2DAI.totalSupply()
+```
+
+### On L2:
+
+The bot detects DAI `totalSupply` changes.
+
+## Configuration
+
+> The file `src/constants.ts` contains all the variables needed by the bot.
+>
+> - `CONFIG` contains:
+>   - `DAI`: DAI address.
+>   - `L2_DATA`: Contains all the L2 networks with the `chainId` number and their respective `l1Escrow` address.
+> - `L2_MONITOR_HASH`: Hash of the bot.
+>
+> NOTE: Before deploying, set the `L2_MONITOR_HASH` and the `agentId` in `forta.config.json` to the same random keccak256 hash.
 
 ## Supported Chains
 
 - Ethereum
-- List any other chains this agent can support e.g. BSC
+- Optimism
+- Arbitrum
 
 ## Alerts
 
-Describe each of the type of alerts fired by this agent
+- MAKER-BRIDGE-INVARIANT
 
-- FORTA-1
-  - Fired when a transaction contains a Tether transfer over 10,000 USDT
-  - Severity is always set to "low" (mention any conditions where it could be something else)
-  - Type is always set to "info" (mention any conditions where it could be something else)
-  - Mention any other type of metadata fields included with this alert
+  - Fired when the bridge invariant is not met for a L2 network.
+  - Severity is always set to "High".
+  - Type is always set to "Suspicious".
+  - Metadata contains:
+    - `chainId`: The id of the network where the invariant is not met.
+    - `l1Escrow`: The address of the L1 escrow.
+    - `l1EscrowBalance`: The DAI balance of the L1 escrow.
+    - `totalSupply`: The DAI total supply of the L2 network.
+  - Addresses contains:
 
-## Test Data
+    - Escrow addresss
+    - L1 DAI address
 
-The agent behaviour can be verified with the following transactions:
-
-- 0x3a0f757030beec55c22cbc545dd8a844cbbb2e6019461769e1bc3f3a95d10826 (15,000 USDT)
+  - L2-DAI-MONITOR
+  - Fired when the DAI supply in a block differs from the supply in the previous one.
+  - Severity is always set to "Info".
+  - Type is always set to "Info".
+  - Metadata contains:
+    - `supply`: The DAI total supply.
