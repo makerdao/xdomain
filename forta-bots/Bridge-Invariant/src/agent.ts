@@ -6,7 +6,7 @@ import SupplyFetcher from "./api";
 import { provideL1HandleBlock } from "./L1.bridge.invariant";
 import { provideL2HandleBlock } from "./L2.DAI.monitor";
 
-const networkManager = new NetworkManager(CONFIG, 1);
+const networkManager = new NetworkManager(CONFIG);
 
 export const provideInitialize =
   (provider: ethers.providers.JsonRpcProvider, networkManager: NetworkManager<NetworkData>) => async () => {
