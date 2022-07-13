@@ -9,9 +9,10 @@ import { Network, CONFIG } from "./network";
 
 const networkManager = new NetworkManager(CONFIG);
 
-export const initialize = (networkManager: NetworkManager<NetworkData>, provider: providers.Provider) => async () => {
-  await networkManager.init(provider);
-};
+export const provideInitialize =
+  (networkManager: NetworkManager<NetworkData>, provider: providers.Provider) => async () => {
+    await networkManager.init(provider);
+  };
 
 export const provideHandleBlock = (
   data: NetworkManager<NetworkData>,
@@ -41,7 +42,7 @@ export const provideHandleBlock = (
 };
 
 export default {
-  initialize: initialize(networkManager, getEthersProvider()),
+  initialize: provideInitialize(networkManager, getEthersProvider()),
   handleBlock: provideHandleBlock(
     networkManager,
     new Fetcher(),
