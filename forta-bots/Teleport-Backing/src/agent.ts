@@ -3,9 +3,8 @@ import { providers } from "ethers";
 import { NetworkData } from "./network";
 import { NetworkManager } from "forta-agent-tools";
 import Fetcher from "./fetchAPI";
-import provideL2HandleBlock from "./L2.events";
-import provideL1HandleBlock from "./L1.backing";
-import { Network, CONFIG } from "./network";
+import { CONFIG } from "./network";
+import { Params } from "./utils";
 
 const networkManager = new NetworkManager(CONFIG);
 
@@ -14,40 +13,30 @@ export const provideInitialize =
     await networkManager.init(provider);
   };
 
-export const provideHandleBlock = (
-  data: NetworkManager<NetworkData>,
-  fetcher: Fetcher,
-  provider: providers.Provider,
-  l1Networks: number[],
-  init: boolean
-): HandleBlock => {
-  const handleL1Block: HandleBlock = provideL1HandleBlock(data, fetcher, provider);
-  let handleL2Block: HandleBlock;
+const params: Params = {
+  data: networkManager,
+  fetcher: new Fetcher(),
+  provider: getEthersProvider(),
+  init: false,
+};
 
-  return async (blockEvent: BlockEvent) => {
-    let findings: Finding[];
+export const provideHandleBlock = (data: NetworkManager<NetworkData>, params: Params): HandleBlock => {
+  let handler: HandleBlock;
 
-    if ([...l1Networks].includes(data.getNetwork())) {
-      findings = await handleL1Block(blockEvent);
-    } else {
-      if (!init) {
-        handleL2Block = provideL2HandleBlock(data, provider, false);
-        init = true;
-      } else handleL2Block = provideL2HandleBlock(data, provider, true);
-      findings = await handleL2Block(blockEvent);
-    }
-
-    return findings;
+  const delayedHandlerBuilder = (blockEvent: BlockEvent): Promise<Finding[]> => {
+    handler = data.get("handler")(params);
+    return handler(blockEvent);
   };
+
+  const wrapper = (blockEvent: BlockEvent): Promise<Finding[]> => {
+    return handler(blockEvent);
+  };
+
+  handler = delayedHandlerBuilder;
+  return wrapper;
 };
 
 export default {
   initialize: provideInitialize(networkManager, getEthersProvider()),
-  handleBlock: provideHandleBlock(
-    networkManager,
-    new Fetcher(),
-    getEthersProvider(),
-    [Network.RINKEBY, Network.KOVAN],
-    false
-  ),
+  handleBlock: provideHandleBlock(networkManager, params),
 };

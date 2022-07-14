@@ -12,7 +12,7 @@ The bot detects `TeleportInitialized` emissions from the `L2DaiTeleportGateway` 
 
 ## Deployment Instructions
 
-Before deploying, set the `agentId` in `forta.config.json` and the `BOT_ID` in `src/utils, L4` to the same random keccak256 hash.
+Before deploying, set the `agentId` in `forta.config.json` and the `BOT_ID` in `src/utils, L7` to the same random keccak256 hash.
 
 ## Supported Chains
 
@@ -34,7 +34,7 @@ Before deploying, set the `agentId` in `forta.config.json` and the `BOT_ID` in `
 
 - MK-02-02
 
-  - Fired when `TeleportInitialized` events emissions are detected.
+  - Fired when `TeleportInitialized` event emissions are detected.
   - Severity is always set to "Info".
   - Type is always set to "Info".
   - Metadata contains all the `Teleport GUID hashes` of the specific block.
@@ -46,6 +46,6 @@ The bot behaviour can be verified with the following block:
 - 28754800 (`Polygon Mainnet PoC`),
 
 a) On **L2** by default.\
-b) On **L1** by changing the agent.ts, L49 to:
+b) On **L1** by changing the src/network.ts, L60 to:
 
-> [Network.RINKEBY, Network.KOVAN, **Network.POLYGON**]
+> handler: provide**L1**HandleBlock,

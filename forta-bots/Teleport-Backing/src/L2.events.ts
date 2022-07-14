@@ -1,24 +1,22 @@
 import { BlockEvent, Finding, HandleBlock } from "forta-agent";
-import { providers, utils } from "ethers";
-import { NetworkData } from "./network";
-import { NetworkManager } from "forta-agent-tools";
-import { EVENT_IFACE, createL2Finding } from "./utils";
+import { utils } from "ethers";
+import { EVENT_IFACE, createL2Finding, Params } from "./utils";
 
 export const provideL2HandleBlock =
-  (data: NetworkManager<NetworkData>, provider: providers.Provider, init: boolean): HandleBlock =>
+  (params: Params): HandleBlock =>
   async (blockEvent: BlockEvent) => {
     const findings: Finding[] = [];
 
-    if (!init) {
+    if (!params.init) {
+      params.init = true;
       const filter = {
-        address: data.get("L2DaiTeleportGateway"),
+        address: params.data.get("L2DaiTeleportGateway"),
         topics: [EVENT_IFACE.getEventTopic("WormholeInitialized")],
-        fromBlock: data.get("deploymentBlock"),
+        fromBlock: params.data.get("deploymentBlock"),
         toBlock: blockEvent.block.number - 1,
       };
 
-      const teleportInitializedLogs = await provider.getLogs(filter);
-
+      const teleportInitializedLogs = await params.provider.getLogs(filter);
       if (teleportInitializedLogs.length) {
         let logsMapInit: Map<string, string> = new Map<string, string>();
         teleportInitializedLogs.forEach((log, i) => {
@@ -30,12 +28,12 @@ export const provideL2HandleBlock =
     }
 
     const filter = {
-      address: data.get("L2DaiTeleportGateway"),
+      address: params.data.get("L2DaiTeleportGateway"),
       topics: [EVENT_IFACE.getEventTopic("WormholeInitialized")],
       blockHash: blockEvent.blockHash,
     };
 
-    const teleportInitializedLogs = await provider.getLogs(filter);
+    const teleportInitializedLogs = await params.provider.getLogs(filter);
     if (!teleportInitializedLogs.length) {
       return findings;
     }

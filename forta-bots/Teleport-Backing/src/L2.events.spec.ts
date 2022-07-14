@@ -4,6 +4,7 @@ import provideL2HandleBlock from "./L2.events";
 import { utils } from "ethers";
 import { AgentConfig, NetworkData } from "./network";
 import { NetworkManager } from "forta-agent-tools";
+import { Params } from "./utils";
 
 const TEST_L2_TELEPORT_GATEWAY = createAddress("0xaaee");
 const TEST_DEPLOYMENT_BLOCK = 423;
@@ -30,6 +31,7 @@ describe("L2 TeleportInitialized events monitoring test suite", () => {
     123: {
       L2DaiTeleportGateway: TEST_L2_TELEPORT_GATEWAY,
       deploymentBlock: TEST_DEPLOYMENT_BLOCK,
+      handler: provideL2HandleBlock,
     },
   };
 
@@ -40,7 +42,13 @@ describe("L2 TeleportInitialized events monitoring test suite", () => {
   });
 
   it("should return no findings if no TeleportInitialized event is emitted on first run", async () => {
-    handleBlock = provideL2HandleBlock(mockNetworkManager, mockProvider as any, false);
+    const mockParams: Params = {
+      data: mockNetworkManager,
+      fetcher: {} as any,
+      provider: mockProvider as any,
+      init: false,
+    };
+    handleBlock = provideL2HandleBlock(mockParams);
 
     const blockEvent: BlockEvent = new TestBlockEvent().setHash(keccak256("bH0"));
 
@@ -50,7 +58,13 @@ describe("L2 TeleportInitialized events monitoring test suite", () => {
   });
 
   it("should return no findings if no TeleportInitialized event is emitted", async () => {
-    handleBlock = provideL2HandleBlock(mockNetworkManager, mockProvider as any, true);
+    const mockParams: Params = {
+      data: mockNetworkManager,
+      fetcher: {} as any,
+      provider: mockProvider as any,
+      init: true,
+    };
+    handleBlock = provideL2HandleBlock(mockParams);
 
     const blockEvent: BlockEvent = new TestBlockEvent().setHash(keccak256("bH1"));
 
@@ -60,7 +74,13 @@ describe("L2 TeleportInitialized events monitoring test suite", () => {
   });
 
   it("should return findings correctly on first run", async () => {
-    handleBlock = provideL2HandleBlock(mockNetworkManager, mockProvider as any, false);
+    const mockParams: Params = {
+      data: mockNetworkManager,
+      fetcher: {} as any,
+      provider: mockProvider as any,
+      init: false,
+    };
+    handleBlock = provideL2HandleBlock(mockParams);
 
     const blockEvent: BlockEvent = new TestBlockEvent().setNumber(4357);
 
@@ -88,7 +108,13 @@ describe("L2 TeleportInitialized events monitoring test suite", () => {
   });
 
   it("should return a finding if a TeleportInitialized event is emitted", async () => {
-    handleBlock = provideL2HandleBlock(mockNetworkManager, mockProvider as any, true);
+    const mockParams: Params = {
+      data: mockNetworkManager,
+      fetcher: {} as any,
+      provider: mockProvider as any,
+      init: true,
+    };
+    handleBlock = provideL2HandleBlock(mockParams);
     const blockEvent: BlockEvent = new TestBlockEvent().setNumber(3456).setHash(keccak256("bH21"));
 
     const logs = [
@@ -109,7 +135,13 @@ describe("L2 TeleportInitialized events monitoring test suite", () => {
   });
 
   it("should return multiple findings for multiple TeleportInitialized events emitted on the same block", async () => {
-    handleBlock = provideL2HandleBlock(mockNetworkManager, mockProvider as any, true);
+    const mockParams: Params = {
+      data: mockNetworkManager,
+      fetcher: {} as any,
+      provider: mockProvider as any,
+      init: true,
+    };
+    handleBlock = provideL2HandleBlock(mockParams);
     const blockEvent: BlockEvent = new TestBlockEvent().setNumber(999).setHash(keccak256("bH11"));
 
     const logs = [

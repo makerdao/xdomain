@@ -4,7 +4,9 @@ import { utils } from "ethers";
 import { provideHandleBlock } from "./agent";
 import { Network, AgentConfig, NetworkData } from "./network";
 import { NetworkManager } from "forta-agent-tools";
-import { MINT_IFACE, EVENT_IFACE, createL1Finding, createL2Finding } from "./utils";
+import { MINT_IFACE, EVENT_IFACE, createL1Finding, createL2Finding, Params } from "./utils";
+import provideL1HandleBlock from "./L1.backing";
+import provideL2HandleBlock from "./L2.events";
 
 describe("L1 Teleport Backing/L2 TeleportInitialized events monitoring bot test suite", () => {
   const mockProvider = new MockEthersProvider();
@@ -15,10 +17,12 @@ describe("L1 Teleport Backing/L2 TeleportInitialized events monitoring bot test 
     [Network.RINKEBY]: {
       TeleportJoin: createAddress("0x0a"),
       TeleportOracleAuth: createAddress("0x0b"),
+      handler: provideL1HandleBlock,
     },
     [Network.ARBITRUM_RINKEBY]: {
       L2DaiTeleportGateway: createAddress("0x0c"),
       deploymentBlock: 328383,
+      handler: provideL2HandleBlock,
     },
   };
   const mockFetcher = {
@@ -31,13 +35,13 @@ describe("L1 Teleport Backing/L2 TeleportInitialized events monitoring bot test 
 
   it("should return a finding when the bot is run on L1 and there is no corresponding TeleportInitialized event emitted from L2DaiGateway contract", async () => {
     mockNetworkManager = new NetworkManager(CONFIG, Network.RINKEBY);
-    handleBlock = provideHandleBlock(
-      mockNetworkManager,
-      mockFetcher as any,
-      mockProvider as any,
-      [Network.RINKEBY],
-      false
-    );
+    const mockParams: Params = {
+      data: mockNetworkManager,
+      fetcher: mockFetcher as any,
+      provider: mockProvider as any,
+      init: false,
+    };
+    handleBlock = provideHandleBlock(mockNetworkManager, mockParams);
     mockFetcher.L2HashGUIDExists.mockReturnValue(false);
 
     const event = MINT_IFACE.getEvent("Mint");
@@ -82,13 +86,13 @@ describe("L1 Teleport Backing/L2 TeleportInitialized events monitoring bot test 
 
   it("should return a finding when the bot is run on L2 and a TeleportInitialized event is emitted", async () => {
     mockNetworkManager = new NetworkManager(CONFIG, Network.ARBITRUM_RINKEBY);
-    handleBlock = provideHandleBlock(
-      mockNetworkManager,
-      mockFetcher as any,
-      mockProvider as any,
-      [Network.RINKEBY],
-      true
-    );
+    const mockParams: Params = {
+      data: mockNetworkManager,
+      fetcher: mockFetcher as any,
+      provider: mockProvider as any,
+      init: true,
+    };
+    handleBlock = provideHandleBlock(mockNetworkManager, mockParams);
     const blockEvent = new TestBlockEvent().setNumber(3456).setHash(keccak256("bH21"));
 
     const logs = [

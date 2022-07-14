@@ -1,13 +1,23 @@
 import { Interface } from "@ethersproject/abi";
-import { Finding, FindingSeverity, FindingType } from "forta-agent";
+import { ethers, Finding, FindingSeverity, FindingType } from "forta-agent";
+import { NetworkManager } from "forta-agent-tools";
+import Fetcher from "./fetchAPI";
+import { NetworkData } from "./network";
 
 export const BOT_ID: string = "";
 
-export const MINT_EVENT: string =
+export type Params = {
+  data: NetworkManager<NetworkData>;
+  fetcher: Fetcher;
+  provider: ethers.providers.JsonRpcProvider;
+  init: boolean;
+};
+
+const MINT_EVENT: string =
   "event Mint(bytes32 indexed hashGUID, tuple(bytes32, bytes32, bytes32, bytes32, uint128, uint80, uint48) wormholeGUID, uint256 amount, uint256 maxFeePercentage, uint256 operatorFee, address originator)";
 export const MINT_IFACE: Interface = new Interface([MINT_EVENT]);
 
-export const TELEPORT_INITIALIZED_EVENT: string =
+const TELEPORT_INITIALIZED_EVENT: string =
   "event WormholeInitialized(tuple(bytes32, bytes32, bytes32, bytes32, uint128, uint80, uint48) wormhole)";
 export const EVENT_IFACE: Interface = new Interface([TELEPORT_INITIALIZED_EVENT]);
 

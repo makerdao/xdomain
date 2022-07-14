@@ -2,7 +2,7 @@ import { ethers, Finding, FindingSeverity, FindingType, HandleBlock, keccak256 }
 import { createAddress, MockEthersProvider, TestBlockEvent } from "forta-agent-tools/lib/tests";
 import provideL1HandleBlock from "./L1.backing";
 import { Interface } from "@ethersproject/abi";
-import { MINT_IFACE } from "./utils";
+import { MINT_IFACE, Params } from "./utils";
 import { NetworkManager } from "forta-agent-tools";
 import { NetworkData, AgentConfig } from "./network";
 
@@ -28,11 +28,13 @@ const testCreateFinding = (txHash: string, hashGUID: string, networkId: number):
 
 describe("L1 Teleport Backing monitoring bot test suite", () => {
   let mockNetworkManager: NetworkManager<NetworkData>;
+  let handleBlock: HandleBlock;
 
   const CONFIG: AgentConfig = {
     1: {
       TeleportJoin: createAddress("0x0a"),
       TeleportOracleAuth: createAddress("0x0b"),
+      handler: provideL1HandleBlock,
     },
   };
 
@@ -41,12 +43,16 @@ describe("L1 Teleport Backing monitoring bot test suite", () => {
     L2HashGUIDExists: jest.fn(),
   };
 
-  let handleBlock: HandleBlock;
-
   beforeEach(() => {
     mockFetcher.L2HashGUIDExists.mockClear();
     mockNetworkManager = new NetworkManager(CONFIG, 1);
-    handleBlock = provideL1HandleBlock(mockNetworkManager, mockFetcher as any, mockProvider as any);
+    const mockParams: Params = {
+      data: mockNetworkManager,
+      fetcher: mockFetcher as any,
+      provider: mockProvider as any,
+      init: false,
+    };
+    handleBlock = provideL1HandleBlock(mockParams);
   });
 
   it("should ignore empty transactions", async () => {
