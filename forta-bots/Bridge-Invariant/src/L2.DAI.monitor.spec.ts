@@ -42,7 +42,7 @@ describe("L2 DAI Monitor tests", () => {
       provider: mockProvider as any,
       l2Data: {} as any,
       data: mockNetworkManager,
-      fetcher: jest.fn() as any,
+      fetcher: {} as any,
     };
     handler = provideL2HandleBlock(mockParams);
     mockProvider.clear();
