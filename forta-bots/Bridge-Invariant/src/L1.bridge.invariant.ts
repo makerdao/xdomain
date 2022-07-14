@@ -1,25 +1,18 @@
-import { BlockEvent, Finding, FindingSeverity, FindingType } from "forta-agent";
-import { BigNumber, Contract, providers } from "ethers";
-import SupplyFetcher from "./api";
+import { BlockEvent, Finding, FindingSeverity, FindingType, HandleBlock } from "forta-agent";
+import { BigNumber, Contract } from "ethers";
 import abi from "./abi";
-import { L2Data, NetworkData } from "./constants";
-import { NetworkManager } from "forta-agent-tools";
+import { Params } from "./constants";
 
-export const provideL1HandleBlock =
-  (
-    provider: providers.JsonRpcProvider,
-    l2Data: L2Data[],
-    networkData: NetworkManager<NetworkData>,
-    fetcher: SupplyFetcher
-  ) =>
-  async (blockEvent: BlockEvent) => {
+export const provideL1HandleBlock = (params: Params): HandleBlock => {
+  const daiContract: Contract = new Contract(params.data.get("DAI"), abi.DAI, params.provider);
+
+  return async (blockEvent: BlockEvent) => {
     const findings: Finding[] = [];
-    const daiContract: Contract = new Contract(networkData.get("DAI"), abi.DAI, provider);
 
-    for (let data of l2Data) {
+    for (let data of params.l2Data) {
       const escrowSupply: BigNumber = await daiContract.balanceOf(data.l1Escrow, { blockTag: blockEvent.blockNumber });
       const l2Supply: BigNumber = BigNumber.from(
-        await fetcher.getL2Supply(data.chainId, blockEvent.block.timestamp, escrowSupply)
+        await params.fetcher.getL2Supply(data.chainId, blockEvent.block.timestamp, escrowSupply)
       );
 
       if (escrowSupply.lt(l2Supply)) {
@@ -37,7 +30,7 @@ export const provideL1HandleBlock =
               l1EscrowBalance: escrowSupply.toString(),
               totalSupply: l2Supply.toString(),
             },
-            addresses: [data.l1Escrow, networkData.get("DAI")],
+            addresses: [data.l1Escrow, params.data.get("DAI")],
           })
         );
       }
@@ -45,3 +38,4 @@ export const provideL1HandleBlock =
 
     return findings;
   };
+};

@@ -3,8 +3,7 @@ import { provideL2HandleBlock } from "./L2.DAI.monitor";
 import { MockEthersProvider, createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests";
 import abi from "./abi";
 import { NetworkManager } from "forta-agent-tools";
-import { AgentConfig, NetworkData } from "./constants";
-import { BigNumber } from "ethers";
+import { AgentConfig, NetworkData, Params } from "./constants";
 
 const createFinding = (supply: number) =>
   Finding.from({
@@ -25,6 +24,7 @@ describe("L2 DAI Monitor tests", () => {
   const CONFIG: AgentConfig = {
     123: {
       DAI: createAddress("0xdeadda1"),
+      handler: provideL2HandleBlock,
     },
   };
 
@@ -38,7 +38,13 @@ describe("L2 DAI Monitor tests", () => {
 
   beforeEach(() => {
     mockNetworkManager = new NetworkManager(CONFIG, 123);
-    handler = provideL2HandleBlock(mockProvider as any, mockNetworkManager, BigNumber.from(-1));
+    const mockParams: Params = {
+      provider: mockProvider as any,
+      l2Data: {} as any,
+      data: mockNetworkManager,
+      fetcher: jest.fn() as any,
+    };
+    handler = provideL2HandleBlock(mockParams);
     mockProvider.clear();
   });
 

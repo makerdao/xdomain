@@ -1,18 +1,18 @@
-import { BlockEvent, Finding, FindingSeverity, FindingType } from "forta-agent";
+import { BlockEvent, Finding, FindingSeverity, FindingType, HandleBlock } from "forta-agent";
 import abi from "./abi";
-import { ethers, BigNumber, Contract } from "ethers";
-import { NetworkData } from "./constants";
-import { NetworkManager } from "forta-agent-tools";
+import { BigNumber, Contract } from "ethers";
+import { Params } from "./constants";
 
-export const provideL2HandleBlock =
-  (provider: ethers.providers.JsonRpcProvider, data: NetworkManager<NetworkData>, supply: BigNumber) =>
-  async (blockEvent: BlockEvent) => {
+export const provideL2HandleBlock = (params: Params): HandleBlock => {
+  const daiContract: Contract = new Contract(params.data.get("DAI"), abi.DAI, params.provider);
+  let supply: BigNumber = BigNumber.from(-1);
+
+  return async (blockEvent: BlockEvent) => {
     const findings: Finding[] = [];
-    const daiContract: Contract = new Contract(data.get("DAI"), abi.DAI, provider);
-
     const currentSupply: BigNumber = await daiContract.totalSupply({
       blockTag: blockEvent.blockNumber,
     });
+
     if (!supply.eq(currentSupply)) {
       findings.push(
         Finding.from({
@@ -32,3 +32,4 @@ export const provideL2HandleBlock =
 
     return findings;
   };
+};

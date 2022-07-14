@@ -5,9 +5,10 @@ import { createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests.utils
 import abi from "./abi";
 import { BigNumber } from "ethers";
 import { provideHandleBlock } from "./agent";
-import { AgentConfig, L2Data, NetworkData } from "./constants";
+import { AgentConfig, L2Data, NetworkData, Params } from "./constants";
 import { when } from "jest-when";
 import { provideL1HandleBlock } from "./L1.bridge.invariant";
+import { provideL2HandleBlock } from "./L2.DAI.monitor";
 
 const createL1Finding = (dai: string, chainId: number, l1Escrow: string, escrowSupply: number, l2Supply: number) =>
   Finding.from({
@@ -54,7 +55,7 @@ describe("L1 Bridge Invariant/L2 DAI Monitor bot test suite", () => {
       outputs: [supply],
     });
 
-  const multiL2Data: L2Data[] = [
+  const MOCK_MULTI_L2_DATA: L2Data[] = [
     {
       chainId: 42,
       l1Escrow: createAddress("0xe0a"),
@@ -72,9 +73,11 @@ describe("L1 Bridge Invariant/L2 DAI Monitor bot test suite", () => {
   const CONFIG: AgentConfig = {
     [Network.MAINNET]: {
       DAI: createAddress("0xa0a0"),
+      handler: provideL1HandleBlock,
     },
     [Network.ARBITRUM]: {
       DAI: createAddress("0xb1b1"),
+      handler: provideL2HandleBlock,
     },
   };
 
@@ -84,12 +87,13 @@ describe("L1 Bridge Invariant/L2 DAI Monitor bot test suite", () => {
 
   it("should emit multiple alerts when the bot is run on L1 and the invariant is violated in multiple networks", async () => {
     mockNetworkManager = new NetworkManager(CONFIG, Network.MAINNET);
-    const customHandler: HandleBlock = provideL1HandleBlock(
-      mockProvider as any,
-      multiL2Data,
-      mockNetworkManager,
-      mockFetcher as any
-    );
+    const mockParams: Params = {
+      provider: mockProvider as any,
+      l2Data: MOCK_MULTI_L2_DATA,
+      data: mockNetworkManager,
+      fetcher: mockFetcher as any,
+    };
+    handleBlock = provideHandleBlock(mockNetworkManager, mockParams);
     const block: number = 42;
     const timestamp: number = 123;
     const DATA: [number, number, number][] = [
@@ -102,19 +106,19 @@ describe("L1 Bridge Invariant/L2 DAI Monitor bot test suite", () => {
     const expectedFindings: Finding[] = [];
     for (let [l2, balance, supply] of DATA) {
       mockProvider.addCallTo(mockNetworkManager.get("DAI"), block, abi.DAI, "balanceOf", {
-        inputs: [multiL2Data[l2].l1Escrow],
+        inputs: [mockParams.l2Data[l2].l1Escrow],
         outputs: [balance],
       });
       when(mockGetL2Supply)
-        .calledWith(multiL2Data[l2].chainId, timestamp, BigNumber.from(balance))
+        .calledWith(mockParams.l2Data[l2].chainId, timestamp, BigNumber.from(balance))
         .mockReturnValueOnce(supply);
 
       if (balance < supply)
         expectedFindings.push(
           createL1Finding(
             mockNetworkManager.get("DAI"),
-            multiL2Data[l2].chainId,
-            multiL2Data[l2].l1Escrow,
+            mockParams.l2Data[l2].chainId,
+            mockParams.l2Data[l2].l1Escrow,
             balance,
             supply
           )
@@ -122,19 +126,19 @@ describe("L1 Bridge Invariant/L2 DAI Monitor bot test suite", () => {
     }
 
     const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(timestamp).setNumber(block);
-    const findings: Finding[] = await customHandler(blockEvent);
+    const findings: Finding[] = await handleBlock(blockEvent);
     expect(findings).toStrictEqual(expectedFindings);
   });
 
   it("should emit findings when run on L2 and total supply changes", async () => {
     mockNetworkManager = new NetworkManager(CONFIG, Network.ARBITRUM);
-    handleBlock = provideHandleBlock(
-      mockProvider as any,
-      multiL2Data,
-      mockNetworkManager,
-      mockFetcher as any,
-      BigNumber.from(-1)
-    );
+    const mockParams: Params = {
+      provider: mockProvider as any,
+      l2Data: MOCK_MULTI_L2_DATA,
+      data: mockNetworkManager,
+      fetcher: mockFetcher as any,
+    };
+    handleBlock = provideHandleBlock(mockNetworkManager, mockParams);
 
     const TEST_DATA: [number, number, boolean][] = [
       // block, supply, findingReported
