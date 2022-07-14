@@ -12,7 +12,7 @@ The bot detects `TeleportInitialized` emissions from the `L2DaiTeleportGateway` 
 
 ## Deployment Instructions
 
-Before deploying, set the `agentId` in `forta.config.json` and the `BOT_ID` in `src/utils, L7` to the same random keccak256 hash.
+Before deploying, set the `agentId` in `forta.config.json` and the `BOT_ID` in `src/utils.ts, L7` to the same random keccak256 hash.
 
 ## Supported Chains
 
