@@ -44,10 +44,9 @@ describe("L2 TeleportInitialized events monitoring test suite", () => {
   it("should return no findings if no TeleportInitialized event is emitted on first run", async () => {
     const mockParams: Params = {
       data: mockNetworkManager,
-      fetcher: {} as any,
       provider: mockProvider as any,
       init: false,
-    };
+    } as any;
     handleBlock = provideL2HandleBlock(mockParams);
 
     const blockEvent: BlockEvent = new TestBlockEvent().setHash(keccak256("bH0"));
@@ -60,10 +59,9 @@ describe("L2 TeleportInitialized events monitoring test suite", () => {
   it("should return no findings if no TeleportInitialized event is emitted", async () => {
     const mockParams: Params = {
       data: mockNetworkManager,
-      fetcher: {} as any,
       provider: mockProvider as any,
       init: true,
-    };
+    } as any;
     handleBlock = provideL2HandleBlock(mockParams);
 
     const blockEvent: BlockEvent = new TestBlockEvent().setHash(keccak256("bH1"));
@@ -76,10 +74,9 @@ describe("L2 TeleportInitialized events monitoring test suite", () => {
   it("should return findings correctly on first run", async () => {
     const mockParams: Params = {
       data: mockNetworkManager,
-      fetcher: {} as any,
       provider: mockProvider as any,
       init: false,
-    };
+    } as any;
     handleBlock = provideL2HandleBlock(mockParams);
 
     const blockEvent: BlockEvent = new TestBlockEvent().setNumber(4357);
@@ -110,10 +107,9 @@ describe("L2 TeleportInitialized events monitoring test suite", () => {
   it("should return a finding if a TeleportInitialized event is emitted", async () => {
     const mockParams: Params = {
       data: mockNetworkManager,
-      fetcher: {} as any,
       provider: mockProvider as any,
       init: true,
-    };
+    } as any;
     handleBlock = provideL2HandleBlock(mockParams);
     const blockEvent: BlockEvent = new TestBlockEvent().setNumber(3456).setHash(keccak256("bH21"));
 
@@ -137,10 +133,9 @@ describe("L2 TeleportInitialized events monitoring test suite", () => {
   it("should return multiple findings for multiple TeleportInitialized events emitted on the same block", async () => {
     const mockParams: Params = {
       data: mockNetworkManager,
-      fetcher: {} as any,
       provider: mockProvider as any,
       init: true,
-    };
+    } as any;
     handleBlock = provideL2HandleBlock(mockParams);
     const blockEvent: BlockEvent = new TestBlockEvent().setNumber(999).setHash(keccak256("bH11"));
 
