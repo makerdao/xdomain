@@ -40,10 +40,8 @@ describe("L2 DAI Monitor tests", () => {
     mockNetworkManager = new NetworkManager(CONFIG, 123);
     const mockParams: Params = {
       provider: mockProvider as any,
-      l2Data: {} as any,
       data: mockNetworkManager,
-      fetcher: {} as any,
-    };
+    } as any;
     handler = provideL2HandleBlock(mockParams);
     mockProvider.clear();
   });
