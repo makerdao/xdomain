@@ -200,7 +200,7 @@ contract OptimismIntegrationTest is DSSTest {
         Dai dai = Dai(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
         DaiJoin daiJoin = new DaiJoin(address(vat), address(dai));
         claimToken = new ClaimToken();
-        guest = new OptimismDomainGuest(DOMAIN_ILK, address(daiJoin), address(claimToken), address(l2Eavesdrop), address(host));
+        guest = new OptimismDomainGuest(DOMAIN_ILK, address(daiJoin), address(claimToken), address(l2messenger), address(host));
         assertEq(address(guest), guestAddr);
         claimToken.rely(address(guest));
         {
@@ -258,14 +258,15 @@ contract OptimismIntegrationTest is DSSTest {
             bytes32(uint256(uint160(l2Eavesdrop.sender())))
         );
         vm.startPrank(address(l2messenger));
-        (bool success, bytes memory results) = l2Eavesdrop.target().call(l2Eavesdrop.message());
+        bool success;
+        (success,) = l2Eavesdrop.target().call(l2Eavesdrop.message());
         if (!success) {
             revert("Failed to call.");
         }
         vm.stopPrank();
     }
 
-    function testRaiseDebtCeiling() public {
+    function testRaiseDebtCeiling2() public {
         uint40 ctclen = ctc.getQueueLength();
         uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
         (uint256 ink, uint256 art) = mcd.vat().urns(DOMAIN_ILK, address(host));
