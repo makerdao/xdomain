@@ -1,12 +1,16 @@
-import { FindingType, FindingSeverity, Finding, HandleBlock, BlockEvent } from "forta-agent";
-import { MockEthersProvider, createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests";
+import { FindingType, FindingSeverity, Finding, HandleBlock, Network, BlockEvent } from "forta-agent";
+import { NetworkManager } from "forta-agent-tools";
+import { MockEthersProvider } from "forta-agent-tools/lib/mock.utils";
+import { createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests.utils";
 import abi from "./abi";
-import { provideHandleBlock } from "./agent";
-import { NetworkData } from "./constants";
 import { BigNumber } from "ethers";
-import { when, resetAllWhenMocks } from "jest-when";
+import { provideHandleBlock } from "./agent";
+import { AgentConfig, L2Data, NetworkData, Params } from "./constants";
+import { when } from "jest-when";
+import { provideL1HandleBlock } from "./L1.bridge.invariant";
+import { provideL2HandleBlock } from "./L2.DAI.monitor";
 
-const createFinding = (dai: string, chainId: number, l1Escrow: string, escrowSupply: number, l2Supply: number) =>
+const createL1Finding = (dai: string, chainId: number, l1Escrow: string, escrowSupply: number, l2Supply: number) =>
   Finding.from({
     alertId: "MAKER-BRIDGE-INVARIANT",
     description: "Escrow DAI balance is less than L2 DAI total supply",
@@ -23,14 +27,35 @@ const createFinding = (dai: string, chainId: number, l1Escrow: string, escrowSup
     addresses: [l1Escrow, dai],
   });
 
-describe("Bridge invariant tests", () => {
+const createL2Finding = (supply: number) =>
+  Finding.from({
+    alertId: "L2-DAI-MONITOR",
+    description: "Total supply change detected",
+    name: "L2 DAI supply Monitor",
+    severity: FindingSeverity.Info,
+    type: FindingType.Info,
+    protocol: "forta-bots-info: MakerDAO",
+    metadata: {
+      supply: supply.toString(),
+    },
+  });
+
+describe("L1 Bridge Invariant/L2 DAI Monitor bot test suite", () => {
+  const mockProvider: MockEthersProvider = new MockEthersProvider();
   const mockGetL2Supply = jest.fn();
   const mockFetcher = {
     getL2Supply: mockGetL2Supply,
   };
-  const mockProvider: MockEthersProvider = new MockEthersProvider();
-  const dai: string = createAddress("0xda1da1");
-  const multiL2Data: NetworkData[] = [
+  let mockNetworkManager: NetworkManager<NetworkData>;
+  let handleBlock: HandleBlock;
+
+  const prepareBlock = (block: number, supply: number) =>
+    mockProvider.addCallTo(mockNetworkManager.get("DAI"), block, abi.DAI, "totalSupply", {
+      inputs: [],
+      outputs: [supply],
+    });
+
+  const MOCK_MULTI_L2_DATA: L2Data[] = [
     {
       chainId: 42,
       l1Escrow: createAddress("0xe0a"),
@@ -44,41 +69,31 @@ describe("Bridge invariant tests", () => {
       l1Escrow: createAddress("0x7115"),
     },
   ];
-  const data: NetworkData = {
-    chainId: 15,
-    l1Escrow: createAddress("0xdead"),
+
+  const CONFIG: AgentConfig = {
+    [Network.MAINNET]: {
+      DAI: createAddress("0xa0a0"),
+      handler: provideL1HandleBlock,
+    },
+    [Network.ARBITRUM]: {
+      DAI: createAddress("0xb1b1"),
+      handler: provideL2HandleBlock,
+    },
   };
-  const handler: HandleBlock = provideHandleBlock(mockProvider as any, [data], mockFetcher as any, dai);
 
   beforeEach(() => {
     mockProvider.clear();
-    mockGetL2Supply.mockClear();
-    resetAllWhenMocks();
   });
 
-  it("should emit alerts properly", async () => {
-    const TEST_CASES: [number, number, number, number][] = [
-      // block, timestamp, escrow balance, L2 totalSupply
-      [1, 2, 3, 4],
-      [123, 12, 2, 2],
-      [444, 44, 4, 4],
-      [12, 34, 56, 57],
-      [12345, 1000, 59, 57],
-    ];
-
-    for (let [block, timestamp, balance, supply] of TEST_CASES) {
-      mockProvider.addCallTo(dai, block, abi.DAI, "balanceOf", { inputs: [data.l1Escrow], outputs: [balance] });
-      when(mockGetL2Supply).calledWith(data.chainId, timestamp, BigNumber.from(balance)).mockReturnValueOnce(supply);
-
-      const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(timestamp).setNumber(block);
-      const findings: Finding[] = await handler(blockEvent);
-      if (balance >= supply) expect(findings).toStrictEqual([]);
-      else expect(findings).toStrictEqual([createFinding(dai, data.chainId, data.l1Escrow, balance, supply)]);
-    }
-  });
-
-  it("should emit multiple alerts", async () => {
-    const customHandler: HandleBlock = provideHandleBlock(mockProvider as any, multiL2Data, mockFetcher as any, dai);
+  it("should emit multiple alerts when the bot is run on L1 and the invariant is violated in multiple networks", async () => {
+    mockNetworkManager = new NetworkManager(CONFIG, Network.MAINNET);
+    const mockParams: Params = {
+      provider: mockProvider as any,
+      l2Data: MOCK_MULTI_L2_DATA,
+      data: mockNetworkManager,
+      fetcher: mockFetcher as any,
+    };
+    handleBlock = provideHandleBlock(mockNetworkManager, mockParams);
     const block: number = 42;
     const timestamp: number = 123;
     const DATA: [number, number, number][] = [
@@ -90,20 +105,65 @@ describe("Bridge invariant tests", () => {
 
     const expectedFindings: Finding[] = [];
     for (let [l2, balance, supply] of DATA) {
-      mockProvider.addCallTo(dai, block, abi.DAI, "balanceOf", {
-        inputs: [multiL2Data[l2].l1Escrow],
+      mockProvider.addCallTo(mockNetworkManager.get("DAI"), block, abi.DAI, "balanceOf", {
+        inputs: [mockParams.l2Data[l2].l1Escrow],
         outputs: [balance],
       });
       when(mockGetL2Supply)
-        .calledWith(multiL2Data[l2].chainId, timestamp, BigNumber.from(balance))
+        .calledWith(mockParams.l2Data[l2].chainId, timestamp, BigNumber.from(balance))
         .mockReturnValueOnce(supply);
 
       if (balance < supply)
-        expectedFindings.push(createFinding(dai, multiL2Data[l2].chainId, multiL2Data[l2].l1Escrow, balance, supply));
+        expectedFindings.push(
+          createL1Finding(
+            mockNetworkManager.get("DAI"),
+            mockParams.l2Data[l2].chainId,
+            mockParams.l2Data[l2].l1Escrow,
+            balance,
+            supply
+          )
+        );
     }
 
     const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(timestamp).setNumber(block);
-    const findings: Finding[] = await customHandler(blockEvent);
+    const findings: Finding[] = await handleBlock(blockEvent);
     expect(findings).toStrictEqual(expectedFindings);
+  });
+
+  it("should emit findings when run on L2 and total supply changes", async () => {
+    mockNetworkManager = new NetworkManager(CONFIG, Network.ARBITRUM);
+    const mockParams: Params = {
+      provider: mockProvider as any,
+      l2Data: MOCK_MULTI_L2_DATA,
+      data: mockNetworkManager,
+      fetcher: mockFetcher as any,
+    };
+    handleBlock = provideHandleBlock(mockNetworkManager, mockParams);
+
+    const TEST_DATA: [number, number, boolean][] = [
+      // block, supply, findingReported
+      [11, 234, true],
+      [12, 234, false],
+      [13, 300, true],
+      [14, 42, true],
+      [15, 42, false],
+      [16, 42, false],
+      [17, 234, true],
+      [18, 234, false],
+    ];
+    const block: TestBlockEvent = new TestBlockEvent();
+
+    for (let i = 0; i < TEST_DATA.length; ++i) {
+      // ensure that only the correct block has data on the mock
+      mockProvider.clear();
+
+      const [blockNumber, supply, emitAlerts] = TEST_DATA[i];
+      prepareBlock(blockNumber, supply);
+      block.setNumber(blockNumber);
+
+      const findings = await handleBlock(block);
+      if (emitAlerts) expect(findings).toStrictEqual([createL2Finding(supply)]);
+      else expect(findings).toStrictEqual([]);
+    }
   });
 });

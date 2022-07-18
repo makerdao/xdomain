@@ -1,12 +1,9 @@
-import {
-  FindingType,
-  FindingSeverity,
-  Finding,
-  HandleBlock,
-} from "forta-agent";
-import { provideHandleBlock } from "./agent";
+import { FindingType, FindingSeverity, Finding, HandleBlock } from "forta-agent";
+import { provideL2HandleBlock } from "./L2.DAI.monitor";
 import { MockEthersProvider, createAddress, TestBlockEvent } from "forta-agent-tools/lib/tests";
 import abi from "./abi";
+import { NetworkManager } from "forta-agent-tools";
+import { AgentConfig, NetworkData, Params } from "./constants";
 
 const createFinding = (supply: number) =>
   Finding.from({
@@ -15,7 +12,7 @@ const createFinding = (supply: number) =>
     name: "L2 DAI supply Monitor",
     severity: FindingSeverity.Info,
     type: FindingType.Info,
-    protocol: "forta-bots-info",
+    protocol: "forta-bots-info: MakerDAO",
     metadata: {
       supply: supply.toString(),
     },
@@ -23,14 +20,29 @@ const createFinding = (supply: number) =>
 
 describe("L2 DAI Monitor tests", () => {
   let handler: HandleBlock;
-  const dai: string = createAddress("0xdeadda1");
+  let mockNetworkManager: NetworkManager<NetworkData>;
+  const CONFIG: AgentConfig = {
+    123: {
+      DAI: createAddress("0xdeadda1"),
+      handler: provideL2HandleBlock,
+    },
+  };
+
   const mockProvider: MockEthersProvider = new MockEthersProvider();
 
   const prepareBlock = (block: number, supply: number) =>
-    mockProvider.addCallTo(dai, block, abi.DAI, "totalSupply", { inputs: [], outputs: [supply] });
+    mockProvider.addCallTo(mockNetworkManager.get("DAI"), block, abi.DAI, "totalSupply", {
+      inputs: [],
+      outputs: [supply],
+    });
 
   beforeEach(() => {
-    handler = provideHandleBlock(mockProvider as any, dai);
+    mockNetworkManager = new NetworkManager(CONFIG, 123);
+    const mockParams: Params = {
+      provider: mockProvider as any,
+      data: mockNetworkManager,
+    } as any;
+    handler = provideL2HandleBlock(mockParams);
     mockProvider.clear();
   });
 
