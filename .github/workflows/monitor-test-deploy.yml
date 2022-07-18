@@ -54,7 +54,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REGION: us-east-1
-      SERVICE_NAME: teleport-monitor-prod
+      SERVICE_NAME_RINKEBY: teleport-monitor-prod
+      SERVICE_NAME_KOVAN: teleport-monitor-kovan-prod
       CLUSTER_NAME: teleport-monitor-prod
       ECR_REPO_NAME: teleport-monitor-prod
 
@@ -98,11 +99,19 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPO_NAME --all-tags
         working-directory: ./packages/teleport-monitoring
 
-      - name: Update ECS service
+      - name: Update ECS Rinkeby service
         id: service-update
         run: |
           aws ecs update-service --cluster ${{ env.CLUSTER_NAME }} \
-                                --service ${{ env.SERVICE_NAME }} \
+                                --service ${{ env.SERVICE_NAME_RINKEBY }} \
+                                --force-new-deployment \
+                                --region ${{ env.REGION }}
+
+      - name: Update ECS Kovan service
+        id: service-update
+        run: |
+          aws ecs update-service --cluster ${{ env.CLUSTER_NAME }} \
+                                --service ${{ env.SERVICE_NAME_KOVAN }} \
                                 --force-new-deployment \
                                 --region ${{ env.REGION }}
 
@@ -110,4 +119,4 @@ jobs:
         run: |
           aws ecs wait services-stable \
                     --cluster ${{ env.CLUSTER_NAME }} \
-                    --services '[ "${{ env.SERVICE_NAME }}" ]'
+                    --services '[ "${{ env.SERVICE_NAME_RINKEBY }}" "${{ env.SERVICE_NAME_KOVAN }}" ]'
