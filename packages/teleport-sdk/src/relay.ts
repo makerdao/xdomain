@@ -105,7 +105,7 @@ async function waitForRelayTaskConfirmation(
   let timeSlept = 0
   let isExecPending = false
   while (true) {
-    const { data } = await queryGelatoApi(`tasks/${taskId}`, 'get')
+    const { data } = await queryGelatoApi(`tasks/GelatoMetaBox/${taskId}`, 'get')
     // console.log(`TaskId=${taskId}, data:`, data[0])
     if (data[0]?.taskState === 'ExecSuccess') {
       const txHash = data[0].execution?.transactionHash
@@ -215,13 +215,13 @@ export async function getRelayGasFee(
   const { chainId } = await relay.provider.getNetwork()
   const oracleChainId = oracles.includes(chainId.toString()) ? chainId : 1
 
+  if ([3, 4, 5, 42].includes(chainId)) {
+    return '1' // use 1 wei for the relay fee on testnets
+  }
   const { estimatedFee } = await queryGelatoApi(`oracles/${oracleChainId}/estimate`, 'get', {
     params: { paymentToken: ETHEREUM_DAI_ADDRESS, gasLimit, isHighPriority },
   })
 
-  if ([3, 4, 5, 42].includes(chainId)) {
-    return '1' // use 1 wei for the relay fee on testnets
-  }
   return estimatedFee
 }
 
