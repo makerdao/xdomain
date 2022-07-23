@@ -8,7 +8,6 @@
   "license": "AGPL-3.0",
   "main": "dist/index.js",
   "scripts": {
-    "postinstall": "eth-sdk",
     "format": "prettier --check \"./**/*.ts\"",
     "format:fix": "prettier --write \"./**/*.ts\"",
     "lint": "eslint --ext .ts src test scripts",
