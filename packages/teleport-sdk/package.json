@@ -1,7 +1,7 @@
 {
-  "name": "wormhole-sdk",
+  "name": "teleport-sdk",
   "version": "1.0.0",
-  "description": "Frontend SDK to @makerdao/dss-wormhole",
+  "description": "Frontend SDK to @makerdao/dss-teleport",
   "files": [
     "/dist"
   ],
