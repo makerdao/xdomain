@@ -239,13 +239,19 @@ contract OptimismIntegrationTest is DSSTest {
     }
 
     function relayLastMessageL1toL2() internal {
+        address target = l1Eavesdrop.target();
+        address sender = l1Eavesdrop.sender();
+        bytes memory message = l1Eavesdrop.message();
+
+        cheats.selectFork(optimismFork);
+
         uint160 offset = uint160(0x1111000000000000000000000000000000001111);
         address malias;
         unchecked {
             malias = address(uint160(address(l1messenger)) + offset);
         }
         vm.startPrank(malias);
-        l2messenger.relayMessage(l1Eavesdrop.target(), l1Eavesdrop.sender(), l1Eavesdrop.message(), 1);
+        l2messenger.relayMessage(target, sender, message, 1);
         vm.stopPrank();
     }
 
@@ -266,7 +272,7 @@ contract OptimismIntegrationTest is DSSTest {
         vm.stopPrank();
     }
 
-    function testRaiseDebtCeiling2() public {
+    function testRaiseDebtCeiling() public {
         uint40 ctclen = ctc.getQueueLength();
         uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
         (uint256 ink, uint256 art) = mcd.vat().urns(DOMAIN_ILK, address(host));
@@ -289,7 +295,6 @@ contract OptimismIntegrationTest is DSSTest {
         assertEq(ctc.getQueueLength(), ctclen + 1);  // Should queue up the CTC
 
         // Play the message on L2
-        cheats.selectFork(optimismFork);
         relayLastMessageL1toL2();
 
         assertEq(rmcd.vat().Line(), 100 * RAD);
