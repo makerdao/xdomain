@@ -1,6 +1,6 @@
 import { Provider } from '@ethersproject/abstract-provider'
 import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrides, Signer } from 'ethers'
-import { hexZeroPad } from 'ethers/lib/utils'
+import { hexZeroPad, Interface } from 'ethers/lib/utils'
 
 import {
   ArbitrumDstDomainId,
@@ -123,6 +123,17 @@ export class TeleportBridge {
       timeoutMs,
       newSignatureReceivedCallback,
     )
+  }
+
+  public async getSrcBalance(userAddress: string): Promise<BigNumber> {
+    const srcSdk = getSdk(this.srcDomain, this.srcDomainProvider)
+    const DaiLike = new Contract(
+      await srcSdk.TeleportOutboundGateway!.l2Token(),
+      new Interface(['function balanceOf(address) view returns (uint256)']),
+      this.srcDomainProvider,
+    )
+    const srcBalance = await DaiLike.balanceOf(userAddress)
+    return srcBalance
   }
 
   public async getAmounts(

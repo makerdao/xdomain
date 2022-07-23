@@ -65,6 +65,12 @@ export function getAttestations(
   )
 }
 
+export function getSrcBalance(
+  opts: { userAddress: string } & DomainContext,
+): ReturnType<TeleportBridge['getSrcBalance']> {
+  return getTeleportBridge(opts).getSrcBalance(opts.userAddress)
+}
+
 export function getAmountsForTeleportGUID(
   opts: {
     teleportGUID: TeleportGUID

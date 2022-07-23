@@ -14,6 +14,7 @@ import {
   DEFAULT_RPC_URLS,
   DomainDescription,
   DomainId,
+  getSrcBalance,
   getAmounts,
   getAmountsForTeleportGUID,
   getAttestations,
@@ -49,6 +50,9 @@ async function getTestWallets(srcDomainDescr: DomainDescription) {
   const l2User = new Wallet(pkey, l2Provider)
 
   await fundTestWallet(l1User, l2User, srcDomain, dstDomain, amount)
+
+  const srcBalance = await getSrcBalance({ userAddress: l2User.address, srcDomain })
+  expect(srcBalance).to.be.gt(0)
 
   return { l1User, l2User, dstDomain }
 }
@@ -139,7 +143,7 @@ describe('TeleportBridge', () => {
   }
 
   describe('Init Teleport', async () => {
-    it.skip('should initiate withdrawal (kovan-optimism)', async () => {
+    it('should initiate withdrawal (kovan-optimism)', async () => {
       await testInitTeleport({ srcDomain: 'optimism-testnet' })
     })
 
