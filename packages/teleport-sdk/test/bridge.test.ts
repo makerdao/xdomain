@@ -143,7 +143,7 @@ describe('TeleportBridge', () => {
   }
 
   describe('Init Teleport', async () => {
-    it('should initiate withdrawal (kovan-optimism)', async () => {
+    it.skip('should initiate withdrawal (kovan-optimism)', async () => {
       await testInitTeleport({ srcDomain: 'optimism-testnet' })
     })
 
