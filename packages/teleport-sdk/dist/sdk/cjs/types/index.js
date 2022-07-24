@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Outbox__factory = exports.FakeOutbox__factory = exports.Vat__factory = exports.TrustedRelay__factory = exports.TeleportOracleAuth__factory = exports.TeleportJoin__factory = exports.Multicall__factory = exports.BasicRelay__factory = exports.TeleportOutboundGateway__factory = exports.Faucet__factory = void 0;
+exports.Outbox__factory = exports.FakeOutbox__factory = exports.Vat__factory = exports.TrustedRelay__factory = exports.TeleportOracleAuth__factory = exports.TeleportJoin__factory = exports.Multicall__factory = exports.BasicRelay__factory = exports.TeleportOutboundGateway__factory = exports.Faucet__factory = exports.Dai__factory = void 0;
+var Dai__factory_1 = require("./factories/Dai__factory");
+Object.defineProperty(exports, "Dai__factory", { enumerable: true, get: function () { return Dai__factory_1.Dai__factory; } });
 var Faucet__factory_1 = require("./factories/Faucet__factory");
 Object.defineProperty(exports, "Faucet__factory", { enumerable: true, get: function () { return Faucet__factory_1.Faucet__factory; } });
 var TeleportOutboundGateway__factory_1 = require("./factories/TeleportOutboundGateway__factory");

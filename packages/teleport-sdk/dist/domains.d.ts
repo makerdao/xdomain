@@ -1,7 +1,7 @@
 import { Provider } from '@ethersproject/abstract-provider';
 import { Signer } from 'ethers';
 import { Dictionary } from 'ts-essentials';
-import { BasicRelay, Faucet, Multicall, TeleportJoin, TeleportOracleAuth, TeleportOutboundGateway, TrustedRelay, Vat } from './sdk/esm/types';
+import { BasicRelay, Faucet, Multicall, TeleportJoin, TeleportOracleAuth, TeleportOutboundGateway, TrustedRelay, Vat, Dai } from './sdk/esm/types';
 export interface TeleportSdk {
     TeleportOracleAuth?: TeleportOracleAuth;
     TeleportJoin?: TeleportJoin;
@@ -11,6 +11,7 @@ export interface TeleportSdk {
     Faucet?: Faucet;
     BasicRelay?: BasicRelay;
     TrustedRelay?: TrustedRelay;
+    Dai?: Dai;
 }
 export declare const DOMAINS: readonly ["RINKEBY-SLAVE-ARBITRUM-1", "RINKEBY-MASTER-1", "KOVAN-SLAVE-OPTIMISM-1", "KOVAN-MASTER-1"];
 export declare type DomainId = typeof DOMAINS[number];

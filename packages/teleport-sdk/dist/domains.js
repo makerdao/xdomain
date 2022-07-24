@@ -63,6 +63,7 @@ function getSdk(domain, signerOrProvider) {
         Faucet: undefined,
         BasicRelay: undefined,
         TrustedRelay: undefined,
+        Dai: undefined,
         ...sdk,
     };
     return res;

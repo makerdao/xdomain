@@ -17,6 +17,7 @@ export declare function getOptimismKovanSdk(defaultSigner: Signer): {
     "KOVAN-SLAVE-OPTIMISM-1": {
         TeleportOutboundGateway: types.TeleportOutboundGateway;
         Faucet: types.Faucet;
+        Dai: types.Dai;
     };
 };
 export declare type RinkebySdk = ReturnType<typeof getRinkebySdk>;
@@ -37,5 +38,6 @@ export declare function getArbitrumTestnetSdk(defaultSigner: Signer): {
     "RINKEBY-SLAVE-ARBITRUM-1": {
         TeleportOutboundGateway: types.TeleportOutboundGateway;
         Faucet: types.Faucet;
+        Dai: types.Dai;
     };
 };

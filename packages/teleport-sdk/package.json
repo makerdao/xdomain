@@ -21,13 +21,13 @@
   },
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@arbitrum/sdk": "1.1.2",
+    "@arbitrum/sdk": "^1.1.2",
     "axios": "^0.26.0",
     "ethers": "^5.5.4",
     "ts-essentials": "^9.1.2"
   },
   "devDependencies": {
-    "@dethcrypto/eth-sdk": "0.3.0",
+    "@dethcrypto/eth-sdk": "0.3.1",
     "@ethereum-waffle/chai": "^4.0.0-alpha.0",
     "@types/chai": "^4.3.0",
     "@types/chai-as-promised": "^7.1.5",

@@ -127,8 +127,11 @@ export class TeleportBridge {
 
   public async getSrcBalance(userAddress: string): Promise<BigNumber> {
     const srcSdk = getSdk(this.srcDomain, this.srcDomainProvider)
+    if (!srcSdk.Dai) {
+      throw new Error(`Dai contract not found on source domain ${this.srcDomain}`)
+    }
     const DaiLike = new Contract(
-      await srcSdk.TeleportOutboundGateway!.l2Token(),
+      srcSdk.Dai.address,
       new Interface(['function balanceOf(address) view returns (uint256)']),
       this.srcDomainProvider,
     )

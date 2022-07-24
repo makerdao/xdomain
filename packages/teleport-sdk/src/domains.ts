@@ -12,6 +12,7 @@ import {
   TeleportOutboundGateway,
   TrustedRelay,
   Vat,
+  Dai,
 } from './sdk/esm/types'
 
 export interface TeleportSdk {
@@ -23,6 +24,7 @@ export interface TeleportSdk {
   Faucet?: Faucet
   BasicRelay?: BasicRelay
   TrustedRelay?: TrustedRelay
+  Dai?: Dai
 }
 
 export const DOMAINS = [
@@ -95,6 +97,7 @@ export function getSdk(domain: DomainDescription, signerOrProvider: Signer | Pro
     Faucet: undefined,
     BasicRelay: undefined,
     TrustedRelay: undefined,
+    Dai: undefined,
     ...sdk,
   }
 

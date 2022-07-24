@@ -35,7 +35,10 @@ class TeleportBridge {
     }
     async getSrcBalance(userAddress) {
         const srcSdk = (0, _1.getSdk)(this.srcDomain, this.srcDomainProvider);
-        const DaiLike = new ethers_1.Contract(await srcSdk.TeleportOutboundGateway.l2Token(), new utils_1.Interface(['function balanceOf(address) view returns (uint256)']), this.srcDomainProvider);
+        if (!srcSdk.Dai) {
+            throw new Error(`Dai contract not found on source domain ${this.srcDomain}`);
+        }
+        const DaiLike = new ethers_1.Contract(srcSdk.Dai.address, new utils_1.Interface(['function balanceOf(address) view returns (uint256)']), this.srcDomainProvider);
         const srcBalance = await DaiLike.balanceOf(userAddress);
         return srcBalance;
     }

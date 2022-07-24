@@ -1,3 +1,4 @@
+export { Dai__factory } from "./factories/Dai__factory";
 export { Faucet__factory } from "./factories/Faucet__factory";
 export { TeleportOutboundGateway__factory } from "./factories/TeleportOutboundGateway__factory";
 export { BasicRelay__factory } from "./factories/BasicRelay__factory";

@@ -7,6 +7,7 @@ import kovanKOVANMASTER1BasicRelayAbi from '../../../eth-sdk/abis/kovan/KOVAN-MA
 import kovanKOVANMASTER1TrustedRelayAbi from '../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/TrustedRelay.json';
 import optimismKovanKOVANSLAVEOPTIMISM1TeleportOutboundGatewayAbi from '../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/TeleportOutboundGateway.json';
 import optimismKovanKOVANSLAVEOPTIMISM1FaucetAbi from '../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/Faucet.json';
+import optimismKovanKOVANSLAVEOPTIMISM1DaiAbi from '../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/Dai.json';
 import rinkebyRINKEBYMASTER1TeleportOracleAuthAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TeleportOracleAuth.json';
 import rinkebyRINKEBYMASTER1TeleportJoinAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TeleportJoin.json';
 import rinkebyRINKEBYMASTER1VatAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Vat.json';
@@ -17,6 +18,7 @@ import rinkebyRINKEBYMASTER1BasicRelayAbi from '../../../eth-sdk/abis/rinkeby/RI
 import rinkebyRINKEBYMASTER1TrustedRelayAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TrustedRelay.json';
 import arbitrumTestnetRINKEBYSLAVEARBITRUM1TeleportOutboundGatewayAbi from '../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/TeleportOutboundGateway.json';
 import arbitrumTestnetRINKEBYSLAVEARBITRUM1FaucetAbi from '../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Faucet.json';
+import arbitrumTestnetRINKEBYSLAVEARBITRUM1DaiAbi from '../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Dai.json';
 export function getContract(address, abi, defaultSigner) {
     return new Contract(address, abi, defaultSigner);
 }
@@ -37,6 +39,7 @@ export function getOptimismKovanSdk(defaultSigner) {
         "KOVAN-SLAVE-OPTIMISM-1": {
             "TeleportOutboundGateway": getContract('0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0', optimismKovanKOVANSLAVEOPTIMISM1TeleportOutboundGatewayAbi, defaultSigner),
             "Faucet": getContract('0xDB66c86899967A3D9E4D77D7d2Bb703747aAEeA7', optimismKovanKOVANSLAVEOPTIMISM1FaucetAbi, defaultSigner),
+            "Dai": getContract('0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', optimismKovanKOVANSLAVEOPTIMISM1DaiAbi, defaultSigner),
         },
     };
 }
@@ -59,6 +62,7 @@ export function getArbitrumTestnetSdk(defaultSigner) {
         "RINKEBY-SLAVE-ARBITRUM-1": {
             "TeleportOutboundGateway": getContract('0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3', arbitrumTestnetRINKEBYSLAVEARBITRUM1TeleportOutboundGatewayAbi, defaultSigner),
             "Faucet": getContract('0xc72cfA99ef0aec40334A2df3E70eB1028402cceE', arbitrumTestnetRINKEBYSLAVEARBITRUM1FaucetAbi, defaultSigner),
+            "Dai": getContract('0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15', arbitrumTestnetRINKEBYSLAVEARBITRUM1DaiAbi, defaultSigner),
         },
     };
 }
