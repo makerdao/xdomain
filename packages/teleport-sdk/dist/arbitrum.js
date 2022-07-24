@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.relayArbitrumMessage = exports.isArbitrumMessageInOutbox = void 0;
 const sdk_1 = require("@arbitrum/sdk");
-const chai_1 = require("chai");
 const utils_1 = require("ethers/lib/utils");
 const sdk_2 = require("./sdk");
 function getArbitrumOutbox(senderOrProvider, domain) {
@@ -28,7 +27,8 @@ async function relayArbitrumMessage(txHash, sender, dstDomain, srcDomainProvider
     const l2Network = await (0, sdk_1.getL2Network)(srcDomainProvider);
     const { outbox, fakeOutbox } = getArbitrumOutbox(sender, dstDomain);
     if (useFakeOutbox) {
-        (0, chai_1.assert)(l2Network.chainID === 421611, `FakeOutbox not supported for chainId ${l2Network.chainID}`);
+        if (l2Network.chainID !== 421611)
+            throw new Error(`FakeOutbox not supported for chainId ${l2Network.chainID}`);
         const iface = new utils_1.Interface([
             `event TxToL1(address indexed from, address indexed to, uint256 indexed id, bytes data)`,
         ]);
