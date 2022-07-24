@@ -86,7 +86,15 @@ class TeleportBridge {
 }
 exports.TeleportBridge = TeleportBridge;
 function _getSignerOrProvider(provider, signer) {
-    return signer ? signer.connect(provider) : provider;
+    if (signer) {
+        try {
+            return signer.connect(provider);
+        }
+        catch (_a) {
+            return signer;
+        }
+    }
+    return provider;
 }
 async function _optionallySendTx(shouldSendTx, contract, method, data, overrides) {
     return {

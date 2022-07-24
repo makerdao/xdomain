@@ -277,7 +277,14 @@ export class TeleportBridge {
 }
 
 function _getSignerOrProvider(provider: Provider, signer?: Signer): Signer | Provider {
-  return signer ? signer.connect(provider) : provider
+  if (signer) {
+    try {
+      return signer.connect(provider)
+    } catch {
+      return signer
+    }
+  }
+  return provider
 }
 
 async function _optionallySendTx(
