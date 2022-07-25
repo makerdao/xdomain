@@ -28,7 +28,7 @@ export async function getFeesAndMintableAmounts(
   pending: BigNumber
   mintable: BigNumber
   bridgeFee: BigNumber
-  relayFee: BigNumber
+  relayFee?: BigNumber
 }> {
   const sdk = getSdk(dstDomain, dstDomainProvider)
   const join = sdk.TeleportJoin!
@@ -70,7 +70,7 @@ export async function getFeesAndMintableAmounts(
     ],
   )
 
-  let relayFee = BigNumber.from(-1)
+  let relayFee = undefined
   if (relay) {
     try {
       relayFee = BigNumber.from(await getRelayGasFee(relay, isHighPriority, relayParams))

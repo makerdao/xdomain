@@ -146,7 +146,7 @@ export class TeleportBridge {
   ): Promise<{
     mintable: BigNumber
     bridgeFee: BigNumber
-    relayFee: BigNumber
+    relayFee?: BigNumber
   }> {
     const zero = hexZeroPad('0x', 32)
     const amount = hexZeroPad(BigNumber.from(withdrawn).toHexString(), 32)
@@ -180,7 +180,7 @@ export class TeleportBridge {
     pending: BigNumber
     mintable: BigNumber
     bridgeFee: BigNumber
-    relayFee: BigNumber
+    relayFee?: BigNumber
   }> {
     const sdk = getSdk(this.dstDomain, this.dstDomainProvider)
     const relay = sdk.BasicRelay && _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)

@@ -366,6 +366,7 @@ describe('TeleportBridge', () => {
       res = await bridge!.getAmountsForTeleportGUID(teleportGUID!, undefined, relayParams, relayAddress)
     }
     const { mintable, bridgeFee, relayFee } = res
+    expect(relayFee).to.not.be.undefined
 
     const maxFeePercentage = bridgeFee.mul(WAD).div(mintable)
 
@@ -377,7 +378,7 @@ describe('TeleportBridge', () => {
           receiver: l1User,
           teleportGUID: teleportGUID!,
           signatures,
-          relayFee,
+          relayFee: relayFee || 0,
           maxFeePercentage,
           relayAddress,
         })
@@ -386,7 +387,7 @@ describe('TeleportBridge', () => {
           l1User,
           teleportGUID!,
           signatures,
-          relayFee,
+          relayFee || 0,
           maxFeePercentage,
           undefined,
           undefined,
