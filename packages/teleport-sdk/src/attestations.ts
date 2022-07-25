@@ -23,7 +23,7 @@ interface Attestation {
 async function fetchAttestations(txHash: string): Promise<Attestation[]> {
   const response = await axios.get(ORACLE_API_URL, {
     params: {
-      type: 'wormhole',
+      type: 'teleport_evm',
       index: txHash,
     },
   })

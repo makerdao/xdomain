@@ -11,7 +11,7 @@ const ORACLE_API_URL = 'http://52.42.179.195:8080';
 async function fetchAttestations(txHash) {
     const response = await axios_1.default.get(ORACLE_API_URL, {
         params: {
-            type: 'wormhole',
+            type: 'teleport_evm',
             index: txHash,
         },
     });
