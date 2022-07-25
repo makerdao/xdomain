@@ -34,7 +34,7 @@ export declare class TeleportBridge {
     getAmounts(withdrawn: BigNumberish, isHighPriority?: boolean, relayAddress?: string): Promise<{
         mintable: BigNumber;
         bridgeFee: BigNumber;
-        relayFee: BigNumber;
+        relayFee?: BigNumber;
     }>;
     getAmountsForTeleportGUID(teleportGUID: TeleportGUID, isHighPriority?: boolean, relayParams?: {
         receiver: Signer;
@@ -48,7 +48,7 @@ export declare class TeleportBridge {
         pending: BigNumber;
         mintable: BigNumber;
         bridgeFee: BigNumber;
-        relayFee: BigNumber;
+        relayFee?: BigNumber;
     }>;
     mintWithOracles(teleportGUID: TeleportGUID, signatures: string, maxFeePercentage?: BigNumberish, operatorFee?: BigNumberish, sender?: Signer, overrides?: Overrides): Promise<Call>;
     getRelayFee(isHighPriority?: boolean, relayParams?: {

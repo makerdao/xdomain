@@ -13,5 +13,5 @@ export declare function getFeesAndMintableAmounts(srcDomain: DomainId, dstDomain
     pending: BigNumber;
     mintable: BigNumber;
     bridgeFee: BigNumber;
-    relayFee: BigNumber;
+    relayFee?: BigNumber;
 }>;

@@ -41,7 +41,7 @@ async function getFeesAndMintableAmounts(srcDomain, dstDomain, dstDomainProvider
             outputTypes: ['address feeAddress'],
         },
     ]);
-    let relayFee = ethers_1.BigNumber.from(-1);
+    let relayFee = undefined;
     if (relay) {
         try {
             relayFee = ethers_1.BigNumber.from(await (0, _1.getRelayGasFee)(relay, isHighPriority, relayParams));
