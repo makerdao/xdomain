@@ -12,11 +12,11 @@ const GELATO_API_URL = 'https://relay.gelato.digital';
 const ETHEREUM_DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f';
 const GELATO_ADDRESSES = {
     4: {
-        service: '0x7084d869F0C120957E40D762Ebe3104474D5248f',
+        service: '0x9B79b798563e538cc326D03696B3Be38b971D282',
         gelato: '0x0630d1b8C2df3F0a68Df578D02075027a6397173',
     },
     42: {
-        service: '0xb34758F24fFEf132dc5831C2Cd9A0a5e120CD564',
+        service: '0x4F36f93F58d36DcbC1E60b9bdBE213482285C482',
         gelato: '0xDf592cB2d32445F8e831d211AB20D3233cA41bD8',
     },
 };
@@ -66,14 +66,16 @@ async function getRelayCalldata(relayInterface, receiver, teleportGUID, signatur
     ]);
     return calldata;
 }
-async function createRelayTask(relay, calldata, gasFee) {
+async function createRelayTask(relay, calldata, gasLimit) {
     const { chainId } = await relay.provider.getNetwork();
     const token = await relay.dai();
-    const { taskId } = await queryGelatoApi(`relays/${chainId}`, 'post', {
+    const { taskId } = await queryGelatoApi(`metabox-relays/${chainId}`, 'post', {
+        typeId: 'ForwardCall',
+        chainId,
+        target: relay.address,
         data: calldata,
-        dest: relay.address,
-        token,
-        relayerFee: gasFee.toString(),
+        feeToken: token,
+        gas: gasLimit.toString(),
     });
     return taskId;
 }
@@ -82,7 +84,7 @@ async function waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs
     let timeSlept = 0;
     let isExecPending = false;
     while (true) {
-        const { data } = await queryGelatoApi(`tasks/${taskId}`, 'get');
+        const { data } = await queryGelatoApi(`tasks/GelatoMetaBox/${taskId}`, 'get');
         // console.log(`TaskId=${taskId}, data:`, data[0])
         if (((_a = data[0]) === null || _a === void 0 ? void 0 : _a.taskState) === 'ExecSuccess') {
             const txHash = (_b = data[0].execution) === null || _b === void 0 ? void 0 : _b.transactionHash;
@@ -112,13 +114,14 @@ async function getRelayGasLimit(relay, relayParams) {
     const addresses = GELATO_ADDRESSES[chainId];
     const serviceAddress = addresses.service;
     const serviceInterface = new utils_1.Interface([
-        'function execTransit(address _dest,bytes calldata _data,uint256 _minFee,address _token,bytes32 _taskId)',
+        'function forwardCallSyncFee(address _target,bytes calldata _data,address _feeToken,uint256 _gas,uint256 _gelatoFee,bytes32 _taskId)',
     ]);
-    const serviceData = serviceInterface.encodeFunctionData('execTransit', [
+    const serviceData = serviceInterface.encodeFunctionData('forwardCallSyncFee', [
         relay.address,
         relayData,
-        0,
         await relay.dai(),
+        2000000,
+        0,
         ethers_1.ethers.constants.MaxUint256.toHexString(),
     ]);
     const gelatoAddress = addresses.gelato;
@@ -148,12 +151,12 @@ async function getRelayGasFee(relay, isHighPriority, relayParams) {
     const { oracles } = await queryGelatoApi(`oracles`, 'get');
     const { chainId } = await relay.provider.getNetwork();
     const oracleChainId = oracles.includes(chainId.toString()) ? chainId : 1;
-    const { estimatedFee } = await queryGelatoApi(`oracles/${oracleChainId}/estimate`, 'get', {
-        params: { paymentToken: ETHEREUM_DAI_ADDRESS, gasLimit, isHighPriority },
-    });
     if ([3, 4, 5, 42].includes(chainId)) {
         return '1'; // use 1 wei for the relay fee on testnets
     }
+    const { estimatedFee } = await queryGelatoApi(`oracles/${oracleChainId}/estimate`, 'get', {
+        params: { paymentToken: ETHEREUM_DAI_ADDRESS, gasLimit, isHighPriority },
+    });
     return estimatedFee;
 }
 exports.getRelayGasFee = getRelayGasFee;
@@ -163,7 +166,7 @@ async function waitForRelay(relay, receiver, teleportGUID, signatures, relayFee,
         throw new Error(`Amount transferred (${(0, utils_1.formatEther)(teleportGUID.amount)} DAI) must be greater than relay fee (${(0, utils_1.formatEther)(relayFee)} DAI)`);
     }
     const relayData = await getRelayCalldata(relay.interface, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data);
-    const taskId = await createRelayTask(relay, relayData, relayFee);
+    const taskId = await createRelayTask(relay, relayData, getEstimatedRelayGasLimit(relay));
     const txHash = await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs);
     return txHash;
 }
