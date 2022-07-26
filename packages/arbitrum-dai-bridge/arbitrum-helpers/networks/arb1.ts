@@ -7,7 +7,7 @@ import { RetryProvider } from './RetryProvider'
 // maker contracts: https://changelog.makerdao.com/releases/mainnet/1.9.5/contracts.json
 // arbitrum contracts: https://github.com/OffchainLabs/arbitrum/blob/master/packages/arb-bridge-eth/_deployments/1_current_deployment.json
 
-export async function getMainnetNetworkConfig({
+export async function getArb1NetworkConfig({
   pkey,
   l1Rpc,
   l2Rpc,
@@ -21,8 +21,8 @@ export async function getMainnetNetworkConfig({
   const l1Deployer = new ethers.Wallet(pkey, l1)
   const l2Deployer = new ethers.Wallet(pkey, l2)
 
-  assert((await l1.getNetwork()).chainId === 1, 'Not mainnet!')
-  assert((await l2.getNetwork()).chainId === 42161, 'Not arbitrum one!')
+  assert((await l1.getNetwork()).chainId === 1, 'Not Ethereum mainnet!')
+  assert((await l2.getNetwork()).chainId === 42161, 'Not Arbitrum One!')
 
   return {
     l1: {
@@ -40,7 +40,7 @@ export async function getMainnetNetworkConfig({
   }
 }
 
-export async function getMainnetRouterDeployment(network: NetworkConfig) {
+export async function getArb1RouterDeployment(network: NetworkConfig) {
   return await useStaticRouterDeployment(network, {
     l1GatewayRouter: '0x72Ce9c846789fdB6fC1f34aC4AD25Dd9ef7031ef',
     l2GatewayRouter: '0x5288c571Fd7aD117beA99bF60FE0846C4E84F933',
