@@ -5,6 +5,7 @@ import { Dictionary } from 'ts-essentials'
 import { getArbitrumTestnetSdk, getKovanSdk, getOptimismKovanSdk, getRinkebySdk } from './sdk'
 import {
   BasicRelay,
+  Dai,
   Faucet,
   Multicall,
   TeleportJoin,
@@ -12,7 +13,6 @@ import {
   TeleportOutboundGateway,
   TrustedRelay,
   Vat,
-  Dai,
 } from './sdk/esm/types'
 
 export interface TeleportSdk {
