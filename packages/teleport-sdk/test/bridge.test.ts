@@ -210,16 +210,16 @@ describe('TeleportBridge', () => {
     return { bridge, teleportGUID: guid, signatures }
   }
 
-  describe.skip('Get Attestations', async () => {
-    it('should produce attestations (kovan-optimism)', async () => {
+  describe('Get Attestations', async () => {
+    it.skip('should produce attestations (kovan-optimism)', async () => {
       await testGetAttestations({ srcDomain: 'optimism-testnet' })
     })
 
-    it('should produce attestations (rinkeby-arbitrum)', async () => {
+    it.skip('should produce attestations (rinkeby-arbitrum)', async () => {
       await testGetAttestations({ srcDomain: 'arbitrum-testnet' })
     })
 
-    it('should produce attestations (rinkeby-arbitrum, wrapper)', async () => {
+    it.skip('should produce attestations (rinkeby-arbitrum, wrapper)', async () => {
       await testGetAttestations({ srcDomain: 'arbitrum-testnet', useWrapper: true })
     })
 
@@ -262,7 +262,7 @@ describe('TeleportBridge', () => {
     })
   })
 
-  describe.skip('Get Amounts', async () => {
+  describe('Get Amounts', async () => {
     async function testGetAmountsForTeleportGUID({
       srcDomain,
       useRelay,
@@ -432,7 +432,7 @@ describe('TeleportBridge', () => {
     return { txHash: tx!.hash, bridge }
   }
 
-  describe.skip('Direct mints', async () => {
+  describe('Direct mints', async () => {
     it('should mint with oracles (kovan-optimism)', async () => {
       await testMintWithOracles({ srcDomain: 'optimism-testnet' })
     })
@@ -452,7 +452,7 @@ describe('TeleportBridge', () => {
 
   describe('Relayed mints', async () => {
     async function testRelayMint({ useRelay }: { useRelay: boolean | 'BasicRelay' | 'TrustedRelay' }) {
-      it.skip('should relay a mint with oracles (rinkeby-arbitrum, precise relayFee)', async () => {
+      it('should relay a mint with oracles (rinkeby-arbitrum, precise relayFee)', async () => {
         await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay, usePreciseRelayFeeEstimation: true })
       })
 
@@ -464,15 +464,15 @@ describe('TeleportBridge', () => {
         await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay, useWrapper: true })
       })
 
-      it.skip('should relay a mint with oracles (kovan-optimism, precise relayFee)', async () => {
+      it('should relay a mint with oracles (kovan-optimism, precise relayFee)', async () => {
         await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay, usePreciseRelayFeeEstimation: true })
       })
 
-      it.skip('should relay a mint with oracles (kovan-optimism, non-precise relayFee)', async () => {
+      it('should relay a mint with oracles (kovan-optimism, non-precise relayFee)', async () => {
         await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay })
       })
 
-      it.skip('should relay a mint with oracles (kovan-optimism, wrapper, non-precise relayFee)', async () => {
+      it('should relay a mint with oracles (kovan-optimism, wrapper, non-precise relayFee)', async () => {
         await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay, useWrapper: true })
       })
     }
@@ -485,7 +485,7 @@ describe('TeleportBridge', () => {
     })
   })
 
-  describe.skip('Using the slow path', () => {
+  describe('Using the slow path', () => {
     async function testMintWithoutOracles({
       srcDomain,
       settings,
