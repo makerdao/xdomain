@@ -2,4 +2,3 @@ node_modules
 src/sdk
 tmp
 .env
-src/sdk
