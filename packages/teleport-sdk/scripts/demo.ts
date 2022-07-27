@@ -82,7 +82,7 @@ export async function demo(
   const { signatures, teleportGUID } = await getAttestations({
     txHash: initTx.tx!.hash,
     srcDomain,
-    newSignatureReceivedCallback: (numSigs: number, threshold: number) =>
+    onNewSignatureReceived: (numSigs: number, threshold: number) =>
       console.log(`Signatures received: ${numSigs} (required: ${threshold}).`),
   })
 

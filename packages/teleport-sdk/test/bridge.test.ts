@@ -187,7 +187,7 @@ describe('TeleportBridge', () => {
     let signatures: string
     let guid: TeleportGUID | undefined
 
-    const newSignatureReceivedCallback = (numSigs: number, threshold: number) =>
+    const onNewSignatureReceived = (numSigs: number, threshold: number) =>
       console.log(`Signatures received: ${numSigs} (required: ${threshold}).`)
 
     console.log(`Requesting attestation for ${txHash} (timeout: ${timeoutMs}ms)`)
@@ -196,13 +196,13 @@ describe('TeleportBridge', () => {
         txHash,
         srcDomain,
         timeoutMs,
-        newSignatureReceivedCallback,
+        onNewSignatureReceived,
         teleportGUID,
       }))
     } else {
       ;({ signatures, teleportGUID: guid } = await bridge!.getAttestations(
         txHash,
-        newSignatureReceivedCallback,
+        onNewSignatureReceived,
         timeoutMs,
         undefined,
         teleportGUID,
@@ -381,6 +381,11 @@ describe('TeleportBridge', () => {
           relayFee: relayFee || 0,
           maxFeePercentage,
           relayAddress,
+          onPayloadSigned: (payload, r, s, v) => {
+            expect(payload).to.satisfy((h: string) => h.startsWith('0x'))
+            expect(r).to.satisfy((h: string) => h.startsWith('0x'))
+            expect(s).to.satisfy((h: string) => h.startsWith('0x'))
+          },
         })
       } else {
         txHash = await bridge!.relayMintWithOracles(
@@ -393,6 +398,13 @@ describe('TeleportBridge', () => {
           undefined,
           undefined,
           relayAddress,
+          undefined,
+          undefined,
+          (payload, r, s, v) => {
+            expect(payload).to.satisfy((h: string) => h.startsWith('0x'))
+            expect(r).to.satisfy((h: string) => h.startsWith('0x'))
+            expect(s).to.satisfy((h: string) => h.startsWith('0x'))
+          },
         )
       }
 

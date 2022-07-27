@@ -52,6 +52,7 @@ async function getRelayCalldata(
   expiry?: BigNumberish,
   to?: string,
   data?: string,
+  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
 ): Promise<string> {
   maxFeePercentage ||= 0
   expiry ||= Math.floor(Date.now() / 1000 + 3600)
@@ -66,6 +67,7 @@ async function getRelayCalldata(
     ]),
   )
   const { r, s, v } = splitSignature(await receiver.signMessage(arrayify(payload)))
+  onPayloadSigned?.(payload, r, s, v)
 
   const useTrustedRelay = relayInterface.functions.hasOwnProperty('signers(address)')
   const extCall = useTrustedRelay ? [to || constants.AddressZero, data || '0x'] : []
@@ -137,6 +139,7 @@ async function getRelayGasLimit(
     to?: string
     data?: string
   },
+  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
 ): Promise<string> {
   if (!relayParams) return getEstimatedRelayGasLimit(relay)
   const { receiver, teleportGUID, signatures, maxFeePercentage, expiry, to, data } = relayParams
@@ -151,6 +154,7 @@ async function getRelayGasLimit(
     expiry,
     to,
     data,
+    onPayloadSigned,
   )
   const { chainId } = await relay.provider.getNetwork()
   const addresses = GELATO_ADDRESSES[chainId]
@@ -237,6 +241,7 @@ export async function waitForRelay(
   data?: string,
   pollingIntervalMs?: number,
   timeoutMs?: number,
+  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
 ): Promise<string> {
   pollingIntervalMs ||= 2000
 
@@ -258,6 +263,7 @@ export async function waitForRelay(
     expiry,
     to,
     data,
+    onPayloadSigned,
   )
   const taskId = await createRelayTask(relay, relayData, getEstimatedRelayGasLimit(relay))
   const txHash = await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)

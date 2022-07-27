@@ -102,7 +102,7 @@ export class TeleportBridge {
 
   public async getAttestations(
     txHash: string,
-    newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void,
+    onNewSignatureReceived?: (numSignatures: number, threshold: number) => void,
     timeoutMs?: number,
     pollingIntervalMs: number = 2000,
     teleportGUID?: TeleportGUID,
@@ -121,7 +121,7 @@ export class TeleportBridge {
       pollingIntervalMs,
       teleportGUID,
       timeoutMs,
-      newSignatureReceivedCallback,
+      onNewSignatureReceived,
     )
   }
 
@@ -242,9 +242,25 @@ export class TeleportBridge {
     to?: string,
     data?: string,
     relayAddress?: string,
+    pollingIntervalMs?: number,
+    timeoutMs?: number,
+    onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
   ): Promise<string> {
     const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
-    return await waitForRelay(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data)
+    return await waitForRelay(
+      relay,
+      receiver,
+      teleportGUID,
+      signatures,
+      relayFee,
+      maxFeePercentage,
+      expiry,
+      to,
+      data,
+      pollingIntervalMs,
+      timeoutMs,
+      onPayloadSigned,
+    )
   }
 
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {

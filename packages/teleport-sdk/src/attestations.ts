@@ -49,7 +49,7 @@ export async function waitForAttestations(
   pollingIntervalMs: number,
   teleportGUID?: TeleportGUID,
   timeoutMs?: number,
-  newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void,
+  onNewSignatureReceived?: (numSignatures: number, threshold: number) => void,
 ): Promise<{
   signatures: string
   teleportGUID: TeleportGUID
@@ -73,7 +73,7 @@ export async function waitForAttestations(
     const numSigs = (signatures.length - 2) / 130
 
     if (prevNumSigs === undefined || prevNumSigs! < numSigs) {
-      newSignatureReceivedCallback?.(numSigs, threshold)
+      onNewSignatureReceived?.(numSigs, threshold)
 
       if (guid && numSigs >= threshold) {
         const guidHash = getGuidHash(guid!)
