@@ -7,7 +7,14 @@ exports.Dai__factory = void 0;
 const ethers_1 = require("ethers");
 const _abi = [
     {
-        inputs: [],
+        inputs: [
+            {
+                internalType: "uint256",
+                name: "chainId_",
+                type: "uint256",
+            },
+        ],
+        payable: false,
         stateMutability: "nonpayable",
         type: "constructor",
     },
@@ -17,19 +24,19 @@ const _abi = [
             {
                 indexed: true,
                 internalType: "address",
-                name: "owner",
+                name: "src",
                 type: "address",
             },
             {
                 indexed: true,
                 internalType: "address",
-                name: "spender",
+                name: "guy",
                 type: "address",
             },
             {
                 indexed: false,
                 internalType: "uint256",
-                name: "value",
+                name: "wad",
                 type: "uint256",
             },
         ],
@@ -37,16 +44,40 @@ const _abi = [
         type: "event",
     },
     {
-        anonymous: false,
+        anonymous: true,
         inputs: [
+            {
+                indexed: true,
+                internalType: "bytes4",
+                name: "sig",
+                type: "bytes4",
+            },
             {
                 indexed: true,
                 internalType: "address",
                 name: "usr",
                 type: "address",
             },
+            {
+                indexed: true,
+                internalType: "bytes32",
+                name: "arg1",
+                type: "bytes32",
+            },
+            {
+                indexed: true,
+                internalType: "bytes32",
+                name: "arg2",
+                type: "bytes32",
+            },
+            {
+                indexed: false,
+                internalType: "bytes",
+                name: "data",
+                type: "bytes",
+            },
         ],
-        name: "Deny",
+        name: "LogNote",
         type: "event",
     },
     {
@@ -55,32 +86,19 @@ const _abi = [
             {
                 indexed: true,
                 internalType: "address",
-                name: "usr",
-                type: "address",
-            },
-        ],
-        name: "Rely",
-        type: "event",
-    },
-    {
-        anonymous: false,
-        inputs: [
-            {
-                indexed: true,
-                internalType: "address",
-                name: "from",
+                name: "src",
                 type: "address",
             },
             {
                 indexed: true,
                 internalType: "address",
-                name: "to",
+                name: "dst",
                 type: "address",
             },
             {
                 indexed: false,
                 internalType: "uint256",
-                name: "value",
+                name: "wad",
                 type: "uint256",
             },
         ],
@@ -88,6 +106,7 @@ const _abi = [
         type: "event",
     },
     {
+        constant: true,
         inputs: [],
         name: "DOMAIN_SEPARATOR",
         outputs: [
@@ -97,10 +116,12 @@ const _abi = [
                 type: "bytes32",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: true,
         inputs: [],
         name: "PERMIT_TYPEHASH",
         outputs: [
@@ -110,10 +131,12 @@ const _abi = [
                 type: "bytes32",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: true,
         inputs: [
             {
                 internalType: "address",
@@ -134,19 +157,21 @@ const _abi = [
                 type: "uint256",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: false,
         inputs: [
             {
                 internalType: "address",
-                name: "spender",
+                name: "usr",
                 type: "address",
             },
             {
                 internalType: "uint256",
-                name: "value",
+                name: "wad",
                 type: "uint256",
             },
         ],
@@ -158,10 +183,12 @@ const _abi = [
                 type: "bool",
             },
         ],
+        payable: false,
         stateMutability: "nonpayable",
         type: "function",
     },
     {
+        constant: true,
         inputs: [
             {
                 internalType: "address",
@@ -177,28 +204,32 @@ const _abi = [
                 type: "uint256",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: false,
         inputs: [
             {
                 internalType: "address",
-                name: "from",
+                name: "usr",
                 type: "address",
             },
             {
                 internalType: "uint256",
-                name: "value",
+                name: "wad",
                 type: "uint256",
             },
         ],
         name: "burn",
         outputs: [],
+        payable: false,
         stateMutability: "nonpayable",
         type: "function",
     },
     {
+        constant: true,
         inputs: [],
         name: "decimals",
         outputs: [
@@ -208,102 +239,72 @@ const _abi = [
                 type: "uint8",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: false,
         inputs: [
             {
                 internalType: "address",
-                name: "spender",
+                name: "guy",
                 type: "address",
             },
-            {
-                internalType: "uint256",
-                name: "subtractedValue",
-                type: "uint256",
-            },
         ],
-        name: "decreaseAllowance",
-        outputs: [
-            {
-                internalType: "bool",
-                name: "",
-                type: "bool",
-            },
-        ],
+        name: "deny",
+        outputs: [],
+        payable: false,
         stateMutability: "nonpayable",
         type: "function",
     },
     {
+        constant: false,
         inputs: [
             {
                 internalType: "address",
                 name: "usr",
                 type: "address",
             },
-        ],
-        name: "deny",
-        outputs: [],
-        stateMutability: "nonpayable",
-        type: "function",
-    },
-    {
-        inputs: [],
-        name: "deploymentChainId",
-        outputs: [
             {
                 internalType: "uint256",
-                name: "",
-                type: "uint256",
-            },
-        ],
-        stateMutability: "view",
-        type: "function",
-    },
-    {
-        inputs: [
-            {
-                internalType: "address",
-                name: "spender",
-                type: "address",
-            },
-            {
-                internalType: "uint256",
-                name: "addedValue",
-                type: "uint256",
-            },
-        ],
-        name: "increaseAllowance",
-        outputs: [
-            {
-                internalType: "bool",
-                name: "",
-                type: "bool",
-            },
-        ],
-        stateMutability: "nonpayable",
-        type: "function",
-    },
-    {
-        inputs: [
-            {
-                internalType: "address",
-                name: "to",
-                type: "address",
-            },
-            {
-                internalType: "uint256",
-                name: "value",
+                name: "wad",
                 type: "uint256",
             },
         ],
         name: "mint",
         outputs: [],
+        payable: false,
         stateMutability: "nonpayable",
         type: "function",
     },
     {
+        constant: false,
+        inputs: [
+            {
+                internalType: "address",
+                name: "src",
+                type: "address",
+            },
+            {
+                internalType: "address",
+                name: "dst",
+                type: "address",
+            },
+            {
+                internalType: "uint256",
+                name: "wad",
+                type: "uint256",
+            },
+        ],
+        name: "move",
+        outputs: [],
+        payable: false,
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        constant: true,
         inputs: [],
         name: "name",
         outputs: [
@@ -313,10 +314,12 @@ const _abi = [
                 type: "string",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: true,
         inputs: [
             {
                 internalType: "address",
@@ -332,14 +335,16 @@ const _abi = [
                 type: "uint256",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: false,
         inputs: [
             {
                 internalType: "address",
-                name: "owner",
+                name: "holder",
                 type: "address",
             },
             {
@@ -349,13 +354,18 @@ const _abi = [
             },
             {
                 internalType: "uint256",
-                name: "value",
+                name: "nonce",
                 type: "uint256",
             },
             {
                 internalType: "uint256",
-                name: "deadline",
+                name: "expiry",
                 type: "uint256",
+            },
+            {
+                internalType: "bool",
+                name: "allowed",
+                type: "bool",
             },
             {
                 internalType: "uint8",
@@ -375,23 +385,67 @@ const _abi = [
         ],
         name: "permit",
         outputs: [],
+        payable: false,
         stateMutability: "nonpayable",
         type: "function",
     },
     {
+        constant: false,
         inputs: [
             {
                 internalType: "address",
                 name: "usr",
                 type: "address",
             },
+            {
+                internalType: "uint256",
+                name: "wad",
+                type: "uint256",
+            },
         ],
-        name: "rely",
+        name: "pull",
         outputs: [],
+        payable: false,
         stateMutability: "nonpayable",
         type: "function",
     },
     {
+        constant: false,
+        inputs: [
+            {
+                internalType: "address",
+                name: "usr",
+                type: "address",
+            },
+            {
+                internalType: "uint256",
+                name: "wad",
+                type: "uint256",
+            },
+        ],
+        name: "push",
+        outputs: [],
+        payable: false,
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        constant: false,
+        inputs: [
+            {
+                internalType: "address",
+                name: "guy",
+                type: "address",
+            },
+        ],
+        name: "rely",
+        outputs: [],
+        payable: false,
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        constant: true,
         inputs: [],
         name: "symbol",
         outputs: [
@@ -401,10 +455,12 @@ const _abi = [
                 type: "string",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: true,
         inputs: [],
         name: "totalSupply",
         outputs: [
@@ -414,19 +470,21 @@ const _abi = [
                 type: "uint256",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: false,
         inputs: [
             {
                 internalType: "address",
-                name: "to",
+                name: "dst",
                 type: "address",
             },
             {
                 internalType: "uint256",
-                name: "value",
+                name: "wad",
                 type: "uint256",
             },
         ],
@@ -438,24 +496,26 @@ const _abi = [
                 type: "bool",
             },
         ],
+        payable: false,
         stateMutability: "nonpayable",
         type: "function",
     },
     {
+        constant: false,
         inputs: [
             {
                 internalType: "address",
-                name: "from",
+                name: "src",
                 type: "address",
             },
             {
                 internalType: "address",
-                name: "to",
+                name: "dst",
                 type: "address",
             },
             {
                 internalType: "uint256",
-                name: "value",
+                name: "wad",
                 type: "uint256",
             },
         ],
@@ -467,10 +527,12 @@ const _abi = [
                 type: "bool",
             },
         ],
+        payable: false,
         stateMutability: "nonpayable",
         type: "function",
     },
     {
+        constant: true,
         inputs: [],
         name: "version",
         outputs: [
@@ -480,10 +542,12 @@ const _abi = [
                 type: "string",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: true,
         inputs: [
             {
                 internalType: "address",
@@ -499,6 +563,7 @@ const _abi = [
                 type: "uint256",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },

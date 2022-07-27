@@ -5,6 +5,7 @@ import kovanKOVANMASTER1VatAbi from '../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/
 import kovanKOVANMASTER1MulticallAbi from '../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/Multicall.json';
 import kovanKOVANMASTER1BasicRelayAbi from '../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/BasicRelay.json';
 import kovanKOVANMASTER1TrustedRelayAbi from '../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/TrustedRelay.json';
+import kovanKOVANMASTER1DaiAbi from '../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/Dai.json';
 import optimismKovanKOVANSLAVEOPTIMISM1TeleportOutboundGatewayAbi from '../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/TeleportOutboundGateway.json';
 import optimismKovanKOVANSLAVEOPTIMISM1FaucetAbi from '../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/Faucet.json';
 import optimismKovanKOVANSLAVEOPTIMISM1DaiAbi from '../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/Dai.json';
@@ -16,6 +17,7 @@ import rinkebyRINKEBYMASTER1FakeOutboxAbi from '../../../eth-sdk/abis/rinkeby/RI
 import rinkebyRINKEBYMASTER1OutboxAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Outbox.json';
 import rinkebyRINKEBYMASTER1BasicRelayAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/BasicRelay.json';
 import rinkebyRINKEBYMASTER1TrustedRelayAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TrustedRelay.json';
+import rinkebyRINKEBYMASTER1DaiAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Dai.json';
 import arbitrumTestnetRINKEBYSLAVEARBITRUM1TeleportOutboundGatewayAbi from '../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/TeleportOutboundGateway.json';
 import arbitrumTestnetRINKEBYSLAVEARBITRUM1FaucetAbi from '../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Faucet.json';
 import arbitrumTestnetRINKEBYSLAVEARBITRUM1DaiAbi from '../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Dai.json';
@@ -31,6 +33,7 @@ export function getKovanSdk(defaultSigner) {
             "Multicall": getContract('0xC6D81A2e375Eee15a20E6464b51c5FC6Bb949fdA', kovanKOVANMASTER1MulticallAbi, defaultSigner),
             "BasicRelay": getContract('0x5B3363996Bd8164F07315faAf3F96B72D192382c', kovanKOVANMASTER1BasicRelayAbi, defaultSigner),
             "TrustedRelay": getContract('0xAAFa36901AdC6C03df8B935fFA129677D1D7Eb81', kovanKOVANMASTER1TrustedRelayAbi, defaultSigner),
+            "Dai": getContract('0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa', kovanKOVANMASTER1DaiAbi, defaultSigner),
         },
     };
 }
@@ -54,6 +57,7 @@ export function getRinkebySdk(defaultSigner) {
             "Outbox": getContract('0x2360A33905dc1c72b12d975d975F42BaBdcef9F3', rinkebyRINKEBYMASTER1OutboxAbi, defaultSigner),
             "BasicRelay": getContract('0xC35787975484A858B878032B045B6E0B6EfE2e2c', rinkebyRINKEBYMASTER1BasicRelayAbi, defaultSigner),
             "TrustedRelay": getContract('0xef4dF54E711e0d42754a12e85fD4186f8fF2c7A7', rinkebyRINKEBYMASTER1TrustedRelayAbi, defaultSigner),
+            "Dai": getContract('0x17B729a6Ac1f265090cbb4AecBdd53E34664C00e', rinkebyRINKEBYMASTER1DaiAbi, defaultSigner),
         },
     };
 }

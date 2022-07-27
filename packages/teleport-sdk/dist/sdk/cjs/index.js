@@ -11,9 +11,10 @@ const Vat_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MA
 const Multicall_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/Multicall.json"));
 const BasicRelay_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/BasicRelay.json"));
 const TrustedRelay_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/TrustedRelay.json"));
+const Dai_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/Dai.json"));
 const TeleportOutboundGateway_json_1 = __importDefault(require("../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/TeleportOutboundGateway.json"));
 const Faucet_json_1 = __importDefault(require("../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/Faucet.json"));
-const Dai_json_1 = __importDefault(require("../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/Dai.json"));
+const Dai_json_2 = __importDefault(require("../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/Dai.json"));
 const TeleportOracleAuth_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TeleportOracleAuth.json"));
 const TeleportJoin_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TeleportJoin.json"));
 const Vat_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Vat.json"));
@@ -22,9 +23,10 @@ const FakeOutbox_json_1 = __importDefault(require("../../../eth-sdk/abis/rinkeby
 const Outbox_json_1 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Outbox.json"));
 const BasicRelay_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/BasicRelay.json"));
 const TrustedRelay_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TrustedRelay.json"));
+const Dai_json_3 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Dai.json"));
 const TeleportOutboundGateway_json_2 = __importDefault(require("../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/TeleportOutboundGateway.json"));
 const Faucet_json_2 = __importDefault(require("../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Faucet.json"));
-const Dai_json_2 = __importDefault(require("../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Dai.json"));
+const Dai_json_4 = __importDefault(require("../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Dai.json"));
 function getContract(address, abi, defaultSigner) {
     return new ethers_1.Contract(address, abi, defaultSigner);
 }
@@ -38,6 +40,7 @@ function getKovanSdk(defaultSigner) {
             "Multicall": getContract('0xC6D81A2e375Eee15a20E6464b51c5FC6Bb949fdA', Multicall_json_1.default, defaultSigner),
             "BasicRelay": getContract('0x5B3363996Bd8164F07315faAf3F96B72D192382c', BasicRelay_json_1.default, defaultSigner),
             "TrustedRelay": getContract('0xAAFa36901AdC6C03df8B935fFA129677D1D7Eb81', TrustedRelay_json_1.default, defaultSigner),
+            "Dai": getContract('0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa', Dai_json_1.default, defaultSigner),
         },
     };
 }
@@ -47,7 +50,7 @@ function getOptimismKovanSdk(defaultSigner) {
         "KOVAN-SLAVE-OPTIMISM-1": {
             "TeleportOutboundGateway": getContract('0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0', TeleportOutboundGateway_json_1.default, defaultSigner),
             "Faucet": getContract('0xDB66c86899967A3D9E4D77D7d2Bb703747aAEeA7', Faucet_json_1.default, defaultSigner),
-            "Dai": getContract('0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', Dai_json_1.default, defaultSigner),
+            "Dai": getContract('0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', Dai_json_2.default, defaultSigner),
         },
     };
 }
@@ -63,6 +66,7 @@ function getRinkebySdk(defaultSigner) {
             "Outbox": getContract('0x2360A33905dc1c72b12d975d975F42BaBdcef9F3', Outbox_json_1.default, defaultSigner),
             "BasicRelay": getContract('0xC35787975484A858B878032B045B6E0B6EfE2e2c', BasicRelay_json_2.default, defaultSigner),
             "TrustedRelay": getContract('0xef4dF54E711e0d42754a12e85fD4186f8fF2c7A7', TrustedRelay_json_2.default, defaultSigner),
+            "Dai": getContract('0x17B729a6Ac1f265090cbb4AecBdd53E34664C00e', Dai_json_3.default, defaultSigner),
         },
     };
 }
@@ -72,7 +76,7 @@ function getArbitrumTestnetSdk(defaultSigner) {
         "RINKEBY-SLAVE-ARBITRUM-1": {
             "TeleportOutboundGateway": getContract('0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3', TeleportOutboundGateway_json_2.default, defaultSigner),
             "Faucet": getContract('0xc72cfA99ef0aec40334A2df3E70eB1028402cceE', Faucet_json_2.default, defaultSigner),
-            "Dai": getContract('0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15', Dai_json_2.default, defaultSigner),
+            "Dai": getContract('0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15', Dai_json_4.default, defaultSigner),
         },
     };
 }

@@ -10,6 +10,7 @@ export declare function getKovanSdk(defaultSigner: Signer): {
         Multicall: types.Multicall;
         BasicRelay: types.BasicRelay;
         TrustedRelay: types.TrustedRelay;
+        Dai: types.Dai;
     };
 };
 export declare type OptimismKovanSdk = ReturnType<typeof getOptimismKovanSdk>;
@@ -31,6 +32,7 @@ export declare function getRinkebySdk(defaultSigner: Signer): {
         Outbox: types.Outbox;
         BasicRelay: types.BasicRelay;
         TrustedRelay: types.TrustedRelay;
+        Dai: types.Dai;
     };
 };
 export declare type ArbitrumTestnetSdk = ReturnType<typeof getArbitrumTestnetSdk>;
