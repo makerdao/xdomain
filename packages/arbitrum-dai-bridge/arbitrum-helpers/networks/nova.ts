@@ -4,7 +4,7 @@ import { ethers } from 'hardhat'
 import { NetworkConfig, useStaticRouterDeployment } from '..'
 import { RetryProvider } from './RetryProvider'
 
-// maker contracts: https://changelog.makerdao.com/releases/mainnet/1.9.5/contracts.json
+// maker contracts: https://chainlog.makerdao.com/api/mainnet/1.13.2.json
 // arbitrum contracts: https://github.com/OffchainLabs/arbitrum/blob/9d2fc42d1b07f226f5f90c0561475521b1c68a20/docs/Useful_Addresses.md
 
 export async function getNovaNetworkConfig({
@@ -31,7 +31,7 @@ export async function getNovaNetworkConfig({
       dai: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
       inbox: '0xc4448b71118c9071Bcb9734A0EAc55D18A153949',
       makerPauseProxy: '0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB',
-      makerESM: '0x29CfBd381043D00a98fD9904a431015Fef07af2f',
+      makerESM: '0x09e05fF6142F2f9de8B6B65855A1d56B6cfE4c58',
     },
     l2: {
       provider: l2,
