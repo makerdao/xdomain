@@ -22,7 +22,7 @@ export declare function initRelayedTeleport(opts: Omit<InitTeleportOpts, 'operat
 } & DomainContext): ReturnType<TeleportBridge['initTeleport']>;
 export interface GetAttestationsOpts {
     txHash: string;
-    newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void;
+    onNewSignatureReceived?: (numSignatures: number, threshold: number) => void;
     timeoutMs?: number;
     pollingIntervalMs?: number;
     teleportGUID?: TeleportGUID;
@@ -69,6 +69,9 @@ export interface RelayMintWithOraclesOpts {
     to?: string;
     data?: string;
     relayAddress?: string;
+    pollingIntervalMs?: number;
+    timeoutMs?: number;
+    onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void;
 }
 export declare function relayMintWithOracles(opts: RelayMintWithOraclesOpts & DomainContext): ReturnType<TeleportBridge['relayMintWithOracles']>;
 export declare function canMintWithoutOracle(opts: {

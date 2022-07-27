@@ -1,7 +1,7 @@
 import { Provider } from '@ethersproject/abstract-provider';
 import { Signer } from 'ethers';
 import { Dictionary } from 'ts-essentials';
-import { BasicRelay, Faucet, Multicall, TeleportJoin, TeleportOracleAuth, TeleportOutboundGateway, TrustedRelay, Vat, Dai } from './sdk/esm/types';
+import { BasicRelay, Dai, Faucet, Multicall, TeleportJoin, TeleportOracleAuth, TeleportOutboundGateway, TrustedRelay, Vat } from './sdk/esm/types';
 export interface TeleportSdk {
     TeleportOracleAuth?: TeleportOracleAuth;
     TeleportJoin?: TeleportJoin;

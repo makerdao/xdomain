@@ -26,7 +26,7 @@ export declare class TeleportBridge {
     constructor({ srcDomain, dstDomain, srcDomainProvider, dstDomainProvider, settings }: TeleportBridgeOpts);
     initTeleport(receiverAddress: string, amount: BigNumberish, operatorAddress?: string, sender?: Signer, overrides?: Overrides): Promise<Call>;
     initRelayedTeleport(receiverAddress: string, amount: BigNumberish, sender?: Signer, relayAddress?: string, overrides?: Overrides): Promise<Call>;
-    getAttestations(txHash: string, newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void, timeoutMs?: number, pollingIntervalMs?: number, teleportGUID?: TeleportGUID): Promise<{
+    getAttestations(txHash: string, onNewSignatureReceived?: (numSignatures: number, threshold: number) => void, timeoutMs?: number, pollingIntervalMs?: number, teleportGUID?: TeleportGUID): Promise<{
         signatures: string;
         teleportGUID: TeleportGUID;
     }>;
@@ -60,7 +60,7 @@ export declare class TeleportBridge {
         to?: string;
         data?: string;
     }, relayAddress?: string): Promise<string>;
-    relayMintWithOracles(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, relayAddress?: string): Promise<string>;
+    relayMintWithOracles(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, relayAddress?: string, pollingIntervalMs?: number, timeoutMs?: number, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void): Promise<string>;
     canMintWithoutOracle(txHash: string): Promise<boolean>;
     mintWithoutOracles(sender: Signer, txHash: string, overrides?: Overrides): Promise<ContractTransaction>;
 }

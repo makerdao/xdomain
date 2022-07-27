@@ -26,7 +26,7 @@ async function fetchAttestations(txHash) {
     }
     return Array.from(teleports.values());
 }
-async function waitForAttestations(txHash, threshold, isValidAttestation, pollingIntervalMs, teleportGUID, timeoutMs, newSignatureReceivedCallback) {
+async function waitForAttestations(txHash, threshold, isValidAttestation, pollingIntervalMs, teleportGUID, timeoutMs, onNewSignatureReceived) {
     const startTime = Date.now();
     let signatures;
     let guid;
@@ -42,7 +42,7 @@ async function waitForAttestations(txHash, threshold, isValidAttestation, pollin
         ({ signatures, teleportGUID: guid } = attestation || { signatures: '0x' });
         const numSigs = (signatures.length - 2) / 130;
         if (prevNumSigs === undefined || prevNumSigs < numSigs) {
-            newSignatureReceivedCallback === null || newSignatureReceivedCallback === void 0 ? void 0 : newSignatureReceivedCallback(numSigs, threshold);
+            onNewSignatureReceived === null || onNewSignatureReceived === void 0 ? void 0 : onNewSignatureReceived(numSigs, threshold);
             if (guid && numSigs >= threshold) {
                 const guidHash = (0, _1.getGuidHash)(guid);
                 const signHash = (0, utils_1.hashMessage)((0, utils_1.arrayify)(guidHash));

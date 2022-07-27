@@ -40,7 +40,7 @@ async function queryGelatoApi(url, method, params) {
         throw err;
     }
 }
-async function getRelayCalldata(relayInterface, receiver, teleportGUID, signatures, gasFee, maxFeePercentage, expiry, to, data) {
+async function getRelayCalldata(relayInterface, receiver, teleportGUID, signatures, gasFee, maxFeePercentage, expiry, to, data, onPayloadSigned) {
     maxFeePercentage || (maxFeePercentage = 0);
     expiry || (expiry = Math.floor(Date.now() / 1000 + 3600));
     const guidHash = (0, _1.getGuidHash)(teleportGUID);
@@ -51,6 +51,7 @@ async function getRelayCalldata(relayInterface, receiver, teleportGUID, signatur
         (0, utils_1.hexZeroPad)(ethers_1.BigNumber.from(expiry).toHexString(), 32),
     ]));
     const { r, s, v } = (0, utils_1.splitSignature)(await receiver.signMessage((0, utils_1.arrayify)(payload)));
+    onPayloadSigned === null || onPayloadSigned === void 0 ? void 0 : onPayloadSigned(payload, r, s, v);
     const useTrustedRelay = relayInterface.functions.hasOwnProperty('signers(address)');
     const extCall = useTrustedRelay ? [to || ethers_1.constants.AddressZero, data || '0x'] : [];
     const calldata = relayInterface.encodeFunctionData('relay', [
@@ -105,11 +106,11 @@ async function waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs
         timeSlept += pollingIntervalMs;
     }
 }
-async function getRelayGasLimit(relay, relayParams) {
+async function getRelayGasLimit(relay, relayParams, onPayloadSigned) {
     if (!relayParams)
         return getEstimatedRelayGasLimit(relay);
     const { receiver, teleportGUID, signatures, maxFeePercentage, expiry, to, data } = relayParams;
-    const relayData = await getRelayCalldata(relay.interface, receiver, teleportGUID, signatures, 1, maxFeePercentage, expiry, to, data);
+    const relayData = await getRelayCalldata(relay.interface, receiver, teleportGUID, signatures, 1, maxFeePercentage, expiry, to, data, onPayloadSigned);
     const { chainId } = await relay.provider.getNetwork();
     const addresses = GELATO_ADDRESSES[chainId];
     const serviceAddress = addresses.service;
@@ -160,12 +161,12 @@ async function getRelayGasFee(relay, isHighPriority, relayParams) {
     return estimatedFee;
 }
 exports.getRelayGasFee = getRelayGasFee;
-async function waitForRelay(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs) {
+async function waitForRelay(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned) {
     pollingIntervalMs || (pollingIntervalMs = 2000);
     if (ethers_1.BigNumber.from(teleportGUID.amount).lt(relayFee)) {
         throw new Error(`Amount transferred (${(0, utils_1.formatEther)(teleportGUID.amount)} DAI) must be greater than relay fee (${(0, utils_1.formatEther)(relayFee)} DAI)`);
     }
-    const relayData = await getRelayCalldata(relay.interface, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data);
+    const relayData = await getRelayCalldata(relay.interface, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, onPayloadSigned);
     const taskId = await createRelayTask(relay, relayData, getEstimatedRelayGasLimit(relay));
     const txHash = await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs);
     return txHash;

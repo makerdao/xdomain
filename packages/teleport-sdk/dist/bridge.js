@@ -27,11 +27,11 @@ class TeleportBridge {
         const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
         return await this.initTeleport(receiverAddress, amount, relay.address, sender, overrides);
     }
-    async getAttestations(txHash, newSignatureReceivedCallback, timeoutMs, pollingIntervalMs = 2000, teleportGUID) {
+    async getAttestations(txHash, onNewSignatureReceived, timeoutMs, pollingIntervalMs = 2000, teleportGUID) {
         const sdk = (0, _1.getSdk)(this.dstDomain, this.dstDomainProvider);
         const oracleAuth = sdk.TeleportOracleAuth;
         const threshold = (await oracleAuth.threshold()).toNumber();
-        return await (0, _1.waitForAttestations)(txHash, threshold, oracleAuth.isValid, pollingIntervalMs, teleportGUID, timeoutMs, newSignatureReceivedCallback);
+        return await (0, _1.waitForAttestations)(txHash, threshold, oracleAuth.isValid, pollingIntervalMs, teleportGUID, timeoutMs, onNewSignatureReceived);
     }
     async getSrcBalance(userAddress) {
         const srcSdk = (0, _1.getSdk)(this.srcDomain, this.srcDomainProvider);
@@ -65,9 +65,9 @@ class TeleportBridge {
         const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
         return await (0, _1.getRelayGasFee)(relay, isHighPriority, relayParams);
     }
-    async relayMintWithOracles(receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, relayAddress) {
+    async relayMintWithOracles(receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, relayAddress, pollingIntervalMs, timeoutMs, onPayloadSigned) {
         const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
-        return await (0, _1.waitForRelay)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data);
+        return await (0, _1.waitForRelay)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned);
     }
     async canMintWithoutOracle(txHash) {
         if (this.srcDomain === 'RINKEBY-SLAVE-ARBITRUM-1') {

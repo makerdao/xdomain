@@ -15,7 +15,7 @@ function initRelayedTeleport(opts) {
 }
 exports.initRelayedTeleport = initRelayedTeleport;
 function getAttestations(opts) {
-    return getTeleportBridge(opts).getAttestations(opts.txHash, opts.newSignatureReceivedCallback, opts.timeoutMs, opts.pollingIntervalMs, opts.teleportGUID);
+    return getTeleportBridge(opts).getAttestations(opts.txHash, opts.onNewSignatureReceived, opts.timeoutMs, opts.pollingIntervalMs, opts.teleportGUID);
 }
 exports.getAttestations = getAttestations;
 function getSrcBalance(opts) {
@@ -35,7 +35,7 @@ function mintWithOracles(opts) {
 }
 exports.mintWithOracles = mintWithOracles;
 function relayMintWithOracles(opts) {
-    return getTeleportBridge(opts).relayMintWithOracles(opts.receiver, opts.teleportGUID, opts.signatures, opts.relayFee, opts.maxFeePercentage, opts.expiry, opts.to, opts.data, opts.relayAddress);
+    return getTeleportBridge(opts).relayMintWithOracles(opts.receiver, opts.teleportGUID, opts.signatures, opts.relayFee, opts.maxFeePercentage, opts.expiry, opts.to, opts.data, opts.relayAddress, opts.pollingIntervalMs, opts.timeoutMs, opts.onPayloadSigned);
 }
 exports.relayMintWithOracles = relayMintWithOracles;
 function canMintWithoutOracle(opts) {
