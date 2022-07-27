@@ -4,7 +4,7 @@ import { ethers } from 'hardhat'
 import { NetworkConfig, useStaticRouterDeployment } from '..'
 import { RetryProvider } from './RetryProvider'
 
-// maker contracts: https://changelog.makerdao.com/releases/goerli/1.9.5/contracts.json
+// maker contracts: https://chainlog.makerdao.com/api/goerli/1.13.2.json
 // arbitrum contracts: https://github.com/OffchainLabs/arbitrum/blob/9d2fc42d1b07f226f5f90c0561475521b1c68a20/docs/Useful_Addresses.md
 
 export async function getGoerliNetworkConfig({
