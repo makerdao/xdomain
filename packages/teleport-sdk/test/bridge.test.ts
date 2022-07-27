@@ -21,6 +21,7 @@ import {
   getLikelyDomainId,
   getSdk,
   getSrcBalance,
+  getDstBalance,
   getTeleportBridge,
   initRelayedTeleport,
   initTeleport,
@@ -370,6 +371,8 @@ describe('TeleportBridge', () => {
 
     const maxFeePercentage = bridgeFee.mul(WAD).div(mintable)
 
+    const initialDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
+
     if (useRelay) {
       let txHash
       if (useWrapper) {
@@ -446,6 +449,10 @@ describe('TeleportBridge', () => {
     }
 
     await tx!.wait()
+
+    const finalDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
+    expect(finalDstBalance).to.be.gt(initialDstBalance)
+
     return { txHash: tx!.hash, bridge }
   }
 
@@ -523,6 +530,8 @@ describe('TeleportBridge', () => {
       }
       expect(canMint).to.be.eq(settings.useFakeArbitrumOutbox || false)
 
+      const initialDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
+
       if (canMint) {
         let tx: ContractTransaction
         if (useWrapper) {
@@ -537,6 +546,9 @@ describe('TeleportBridge', () => {
         }
 
         await tx.wait()
+
+        const finalDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
+        expect(finalDstBalance).to.be.gt(initialDstBalance)
       }
     }
 

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mintWithoutOracles = exports.canMintWithoutOracle = exports.relayMintWithOracles = exports.mintWithOracles = exports.getAmounts = exports.getAmountsForTeleportGUID = exports.getSrcBalance = exports.getAttestations = exports.initRelayedTeleport = exports.initTeleport = exports.getTeleportBridge = void 0;
+exports.mintWithoutOracles = exports.canMintWithoutOracle = exports.relayMintWithOracles = exports.mintWithOracles = exports.getAmounts = exports.getAmountsForTeleportGUID = exports.getDstBalance = exports.getSrcBalance = exports.getAttestations = exports.initRelayedTeleport = exports.initTeleport = exports.getTeleportBridge = void 0;
 const _1 = require(".");
 function getTeleportBridge(opts) {
     return new _1.TeleportBridge({ ...opts, srcDomain: (0, _1.getLikelyDomainId)(opts.srcDomain) });
@@ -22,6 +22,10 @@ function getSrcBalance(opts) {
     return getTeleportBridge(opts).getSrcBalance(opts.userAddress);
 }
 exports.getSrcBalance = getSrcBalance;
+function getDstBalance(opts) {
+    return getTeleportBridge(opts).getDstBalance(opts.userAddress);
+}
+exports.getDstBalance = getDstBalance;
 function getAmountsForTeleportGUID(opts) {
     return getTeleportBridge(opts).getAmountsForTeleportGUID(opts.teleportGUID, opts.isHighPriority, opts.relayParams, opts.relayAddress);
 }

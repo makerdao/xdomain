@@ -31,6 +31,7 @@ export declare class TeleportBridge {
         teleportGUID: TeleportGUID;
     }>;
     getSrcBalance(userAddress: string): Promise<BigNumber>;
+    getDstBalance(userAddress: string): Promise<BigNumber>;
     getAmounts(withdrawn: BigNumberish, isHighPriority?: boolean, relayAddress?: string): Promise<{
         mintable: BigNumber;
         bridgeFee: BigNumber;

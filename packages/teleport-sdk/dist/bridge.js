@@ -34,13 +34,10 @@ class TeleportBridge {
         return await (0, _1.waitForAttestations)(txHash, threshold, oracleAuth.isValid, pollingIntervalMs, teleportGUID, timeoutMs, onNewSignatureReceived);
     }
     async getSrcBalance(userAddress) {
-        const srcSdk = (0, _1.getSdk)(this.srcDomain, this.srcDomainProvider);
-        if (!srcSdk.Dai) {
-            throw new Error(`Dai contract not found on source domain ${this.srcDomain}`);
-        }
-        const DaiLike = new ethers_1.Contract(srcSdk.Dai.address, new utils_1.Interface(['function balanceOf(address) view returns (uint256)']), this.srcDomainProvider);
-        const srcBalance = await DaiLike.balanceOf(userAddress);
-        return srcBalance;
+        return await _getDaiBalance(userAddress, this.srcDomain, this.srcDomainProvider);
+    }
+    async getDstBalance(userAddress) {
+        return await _getDaiBalance(userAddress, this.dstDomain, this.dstDomainProvider);
     }
     async getAmounts(withdrawn, isHighPriority, relayAddress) {
         const zero = (0, utils_1.hexZeroPad)('0x', 32);
@@ -102,6 +99,15 @@ async function _optionallySendTx(shouldSendTx, contract, method, data, overrides
         to: contract.address,
         data: contract.interface.encodeFunctionData(method, data),
     };
+}
+async function _getDaiBalance(userAddress, domain, domainProvider) {
+    const sdk = (0, _1.getSdk)(domain, domainProvider);
+    if (!sdk.Dai) {
+        throw new Error(`Dai contract not found on domain ${domain}`);
+    }
+    const DaiLike = new ethers_1.Contract(sdk.Dai.address, new utils_1.Interface(['function balanceOf(address) view returns (uint256)']), domainProvider);
+    const balance = await DaiLike.balanceOf(userAddress);
+    return balance;
 }
 function _getRelay(dstDomain, dstDomainProvider, relayAddress) {
     var _a;

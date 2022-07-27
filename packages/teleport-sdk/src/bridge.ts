@@ -126,17 +126,11 @@ export class TeleportBridge {
   }
 
   public async getSrcBalance(userAddress: string): Promise<BigNumber> {
-    const srcSdk = getSdk(this.srcDomain, this.srcDomainProvider)
-    if (!srcSdk.Dai) {
-      throw new Error(`Dai contract not found on source domain ${this.srcDomain}`)
-    }
-    const DaiLike = new Contract(
-      srcSdk.Dai.address,
-      new Interface(['function balanceOf(address) view returns (uint256)']),
-      this.srcDomainProvider,
-    )
-    const srcBalance = await DaiLike.balanceOf(userAddress)
-    return srcBalance
+    return await _getDaiBalance(userAddress, this.srcDomain, this.srcDomainProvider)
+  }
+
+  public async getDstBalance(userAddress: string): Promise<BigNumber> {
+    return await _getDaiBalance(userAddress, this.dstDomain, this.dstDomainProvider)
   }
 
   public async getAmounts(
@@ -315,6 +309,20 @@ async function _optionallySendTx(
     to: contract.address,
     data: contract.interface.encodeFunctionData(method, data),
   }
+}
+
+async function _getDaiBalance(userAddress: string, domain: DomainDescription, domainProvider: any): Promise<BigNumber> {
+  const sdk = getSdk(domain, domainProvider)
+  if (!sdk.Dai) {
+    throw new Error(`Dai contract not found on domain ${domain}`)
+  }
+  const DaiLike = new Contract(
+    sdk.Dai.address,
+    new Interface(['function balanceOf(address) view returns (uint256)']),
+    domainProvider,
+  )
+  const balance = await DaiLike.balanceOf(userAddress)
+  return balance
 }
 
 function _getRelay(dstDomain: DomainDescription, dstDomainProvider: Provider, relayAddress?: string): Relay {

@@ -31,6 +31,9 @@ export declare function getAttestations(opts: GetAttestationsOpts & DomainContex
 export declare function getSrcBalance(opts: {
     userAddress: string;
 } & DomainContext): ReturnType<TeleportBridge['getSrcBalance']>;
+export declare function getDstBalance(opts: {
+    userAddress: string;
+} & DomainContext): ReturnType<TeleportBridge['getDstBalance']>;
 export declare function getAmountsForTeleportGUID(opts: {
     teleportGUID: TeleportGUID;
     isHighPriority?: boolean;
