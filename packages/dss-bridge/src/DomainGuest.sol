@@ -81,7 +81,7 @@ abstract contract DomainGuest {
     event Deny(address indexed usr);
     event File(bytes32 indexed what, address data);
     event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
-    event Lift(int256 dline, uint256 minted);
+    event Lift(int256 dline);
     event Release(uint256 burned);
     event Push(int256 surplus);
     event Rectify(uint256 wad);
@@ -171,13 +171,12 @@ abstract contract DomainGuest {
 
     /// @notice Record changes in line and grain and update dss global debt ceiling if necessary
     /// @param dline The change in the line [RAD]
-    /// @param minted The amount of DAI minted into the remote escrow
-    function lift(int256 dline, uint256 minted) external hostOnly isLive {
+    function lift(int256 dline) external hostOnly isLive {
         line += dline;
-        grain += minted;
+        if (dline > 0) grain += uint256(dline) / RAY;
         vat.file("Line", line > 0 ? uint256(line) : 0);
 
-        emit Lift(dline, minted);
+        emit Lift(dline);
     }
 
     /// @notice Will release remote DAI from the escrow when it is safe to do so

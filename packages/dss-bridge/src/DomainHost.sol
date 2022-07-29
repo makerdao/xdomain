@@ -177,7 +177,7 @@ abstract contract DomainHost {
 
         line = rad;
 
-        payload = abi.encodeWithSelector(DomainGuest.lift.selector, dline, minted);
+        payload = abi.encodeWithSelector(DomainGuest.lift.selector, dline);
 
         emit Lift(wad);
     }

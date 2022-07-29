@@ -115,7 +115,7 @@ contract DomainGuestTest is DSSTest {
     bytes32 constant TARGET_DOMAIN = "SOME-DOMAIN-B";
 
     event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
-    event Lift(int256 line, uint256 minted);
+    event Lift(int256 line);
     event Release(uint256 burned);
     event Push(int256 surplus);
     event Rectify(uint256 wad);
@@ -200,7 +200,7 @@ contract DomainGuestTest is DSSTest {
         guest.setIsHost(false);
 
         bytes[] memory funcs = new bytes[](5);
-        funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0);
+        funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0);
         funcs[1] = abi.encodeWithSelector(DomainGuest.rectify.selector, 0);
         funcs[2] = abi.encodeWithSelector(DomainGuest.cage.selector);
         funcs[3] = abi.encodeWithSelector(DomainGuest.mintClaim.selector, 0, 0);
@@ -215,7 +215,7 @@ contract DomainGuestTest is DSSTest {
         guest.cage();
 
         bytes[] memory funcs = new bytes[](4);
-        funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0, 0);
+        funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0);
         funcs[1] = abi.encodeWithSelector(EmptyDomainGuest.release.selector);
         funcs[2] = abi.encodeWithSelector(EmptyDomainGuest.push.selector);
         funcs[3] = abi.encodeWithSelector(DomainGuest.cage.selector);
@@ -231,8 +231,8 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.Line(), 0);
 
         vm.expectEmit(true, true, true, true);
-        emit Lift(int256(100 * RAD), 100 ether);
-        guest.lift(int256(100 * RAD), 100 ether);
+        emit Lift(int256(100 * RAD));
+        guest.lift(int256(100 * RAD));
 
         assertEq(guest.grain(), 100 ether);
         assertEq(guest.line(), int256(100 * RAD));
@@ -245,14 +245,14 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.Line(), 0);
 
         // Simulate an out of order message by reducing dline
-        guest.lift(-int256(50 * RAD), 0);
+        guest.lift(-int256(50 * RAD));
 
         assertEq(guest.grain(), 0);
         assertEq(guest.line(), -int256(50 * RAD));
         assertEq(vat.Line(), 0);
 
         // We got the previous message now
-        guest.lift(int256(100 * RAD), 100 ether);
+        guest.lift(int256(100 * RAD));
 
         assertEq(guest.grain(), 100 ether);
         assertEq(guest.line(), int256(50 * RAD));
@@ -261,14 +261,14 @@ contract DomainGuestTest is DSSTest {
 
     function testRelease() public {
         // Set debt ceiling to 100 DAI
-        guest.lift(int256(100 * RAD), 100 ether);
+        guest.lift(int256(100 * RAD));
 
         assertEq(guest.grain(), 100 ether);
         assertEq(guest.line(), int256(100 * RAD));
         assertEq(vat.Line(), 100 * RAD);
 
         // Lower debt ceiling to 50 DAI
-        guest.lift(-int256(50 * RAD), 0);
+        guest.lift(-int256(50 * RAD));
 
         assertEq(guest.grain(), 100 ether);
         assertEq(guest.line(), int256(50 * RAD));
@@ -287,9 +287,9 @@ contract DomainGuestTest is DSSTest {
 
     function testReleaseDebtTaken() public {
         // Set so that debt is larger than the global DC
-        guest.lift(int256(100 * RAD), 100 ether);
+        guest.lift(int256(100 * RAD));
         vat.suck(address(this), address(this), 50 * RAD);
-        guest.lift(-int256(100 * RAD), 0);
+        guest.lift(-int256(100 * RAD));
 
         assertEq(vat.Line(), 0);
         assertEq(vat.debt(), 50 * RAD);
