@@ -119,7 +119,7 @@ async function waitForRelayTaskConfirmation(
   let isExecPending = false
   while (true) {
     const { data } = await queryGelatoApi(`tasks/GelatoMetaBox/${taskId}`, 'get')
-    console.log(`TaskId=${taskId}, data:`, data[0])
+    // console.log(`TaskId=${taskId}, data:`, data[0])
     if (data[0]?.taskState === 'ExecSuccess') {
       const txHash = data[0].execution?.transactionHash
       if (txHash) return txHash
