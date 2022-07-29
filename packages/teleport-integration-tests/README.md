@@ -23,7 +23,23 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
 
 # Teleport test deployment
 
-## Arbitrum testnet
+## Optimism & Arbitrum Goerli testnet
+
+1. Set the name of the new ilk in `deployment/goerli/deploy-teleport.ts` then run
+   `npx hardhat run deployment/goerli/deploy-teleport.ts` to deploy `dss-teleport`, `arbitrum-dai-bridge` Teleport
+   contracts and `optimism-dai-bridge` Teleport contracts.
+
+2. Set the addresses of the newly deployed `teleportJoin`, `router` (TeleportRouter), `oracleAuth` (TeleportOracleAuth),
+   `constantFees` (TeleportConstantFees), `trustedRelay` (TrustedRelay), `optimismL1Bridge` (L1TeleportGateway) and
+   `arbitrumL1Bridge` (L1TeleportGateway) in `contracts/deploy/goerli/L1GoerliAddTeleportDomainSpell.sol`.
+
+3. Run `npx hardhat run deployment/goerli/cast-l1-spell.ts` to deploy and cast the L1 spell on goerli.
+
+4. To validate the resulting changes, copy the addresses of the newly deployed `oracleAuth` and `l2TeleportGateway` into
+   `deployment/goerli/test-e2e-[optimism|arbitrum].ts` and run
+   `npx hardhat run deployment/goerli/test-e2e-[optimism|arbitrum].ts`.
+
+## Arbitrum Rinkeby testnet (deprecated)
 
 1. Set the name of the new ilk in `deployment/rinkeby/deploy-teleport.ts` then run
    `npx hardhat run deployment/rinkeby/deploy-teleport.ts` to deploy `dss-teleport` and `arbitrum-dai-bridge` Teleport
@@ -78,7 +94,7 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
 }
 ```
 
-## Kovan testnet
+## Optimism Kovan testnet (deprecated)
 
 ### Instructions
 

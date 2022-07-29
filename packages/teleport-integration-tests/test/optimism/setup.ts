@@ -94,6 +94,7 @@ export async function setupOptimismTests({
     teleportSdk,
     baseBridgeSdk,
     slaveDomain: domain,
+    masterDomain,
     optimismRollupSdk,
   })
 

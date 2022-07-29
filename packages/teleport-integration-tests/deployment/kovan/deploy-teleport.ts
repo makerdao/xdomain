@@ -61,6 +61,7 @@ async function main() {
     teleportSdk,
     baseBridgeSdk,
     slaveDomain: optimismSlaveDomain,
+    masterDomain,
     optimismRollupSdk,
   })
 

@@ -109,6 +109,8 @@ Some of these scripts may require valid `.env` file. Copy `.env.example` as `.en
 - `scripts/deployMainnet.ts` - deploys a full solution to mainnet and optimism mainnet. Run with `yarn deploy:mainnet`
 - `scripts/deployKovan.ts` - deploys a full solution to kovan and optimism testnet on kovan. Run with
   `yarn deploy:kovan`
+- `scripts/deployGoerli.ts` - deploys a full solution to goerli and optimism goerli testnet. Run with
+  `yarn deploy:goerli`
 
 ## Running
 
