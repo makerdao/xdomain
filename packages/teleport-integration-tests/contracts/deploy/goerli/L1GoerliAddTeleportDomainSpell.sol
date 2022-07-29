@@ -98,7 +98,8 @@ contract DssSpellAction is DssAction {
   uint256 public constant RAY = 10**27;
   uint256 public constant RAD = 10**45;
 
-  string public constant override description = "Goerli Optimism & Arbitrum Teleport deployment spell";
+  string public constant override description =
+    "Goerli Optimism & Arbitrum Teleport deployment spell";
 
   function officeHours() public pure override returns (bool) {
     return false;
@@ -157,7 +158,7 @@ contract DssSpellAction is DssAction {
     teleportJoin.file(bytes32("fees"), optimismDomain, constantFees);
     teleportJoin.file(bytes32("line"), optimismDomain, optimismLine);
     optimismL1Escrow.approve(dai, optimismL1Bridge, type(uint256).max);
-    
+
     // configure Arbitrum teleport
 
     bytes32 arbitrumDomain = "ARB-GOE-A";
