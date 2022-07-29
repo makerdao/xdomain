@@ -247,6 +247,34 @@ contract DomainHostTest is DSSTest {
         assertEq(host.lastPayload(), abi.encodeWithSelector(DomainGuest.lift.selector, -int256(50 * RAD)));
     }
 
+    function testReleasePermissionlessRepay() public {
+        vat.suck(address(456), address(this), 1 * RAD);
+        host.lift(100 ether);
+        host.lift(0);
+
+        (uint256 ink, uint256 art) = vat.urns(ILK, address(host));
+        assertEq(ink, 100 ether);
+        assertEq(art, 100 ether);
+        
+        // Repay some dust
+        vat.frob(ILK, address(host), address(this), address(this), 0, -int256(1 ether));
+
+        (ink, art) = vat.urns(ILK, address(host));
+        assertEq(ink, 100 ether);
+        assertEq(art, 99 ether);
+        assertEq(vat.sin(vow), 0);
+        assertEq(vat.dai(vow), 0);
+
+        // Should not block releasing all DAI
+        host.release(100 ether);
+
+        (ink, art) = vat.urns(ILK, address(host));
+        assertEq(ink, 0);
+        assertEq(art, 0);
+        assertEq(vat.sin(vow), 0);
+        assertEq(vat.dai(vow), 1 * RAD);
+    }
+
     function testAsyncReordering() public {
         host.lift(100 ether);
         host.lift(50 ether);        // Trigger lowering

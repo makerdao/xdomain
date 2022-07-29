@@ -29,6 +29,8 @@ interface VatLike {
     function slip(bytes32 ilk, address usr, int256 wad) external;
     function frob(bytes32 i, address u, address v, address w, int dink, int dart) external;
     function suck(address u, address v, uint256 rad) external;
+    function urns(bytes32, address) external view returns (uint256, uint256);
+    function grab(bytes32, address, address, address, int256, int256) external;
 }
 
 interface DaiJoinLike {
@@ -185,6 +187,15 @@ abstract contract DomainHost {
     /// @notice Withdraw pre-mint DAI from the remote domain
     function release(uint256 wad) external guestOnly vatLive {
         int256 amt = -_int256(wad);
+
+        // Fix any permissionless repays that may have occurred
+        (uint256 ink, uint256 art) = vat.urns(ilk, address(this));
+        if (art < ink) {
+            address _vow = vow;
+            uint256 diff = ink - art;
+            vat.suck(_vow, _vow, diff * RAY); // This needs to be done to make sure we can deduct sin[vow] and vice in the next call
+            vat.grab(ilk, address(this), address(this), _vow, 0, _int256(diff));
+        }
 
         require(dai.transferFrom(escrow, address(this), wad), "DomainHost/transfer-failed");
         daiJoin.join(address(this), wad);
