@@ -28,16 +28,29 @@ function getEstimatedRelayGasLimit(relay) {
 }
 async function queryGelatoApi(url, method, params) {
     var _a;
-    try {
-        const response = await axios_1.default[method](`${GELATO_API_URL}/${url}`, params);
-        return response.data;
-    }
-    catch (err) {
-        if (axios_1.default.isAxiosError(err)) {
-            const { response } = err;
-            throw new Error(`Gelato API ${response === null || response === void 0 ? void 0 : response.status} error: "${(_a = response === null || response === void 0 ? void 0 : response.data) === null || _a === void 0 ? void 0 : _a.message}"`);
+    let attempt = 1;
+    while (true) {
+        try {
+            const response = await axios_1.default[method](`${GELATO_API_URL}/${url}`, params);
+            return response.data;
         }
-        throw err;
+        catch (err) {
+            if (axios_1.default.isAxiosError(err)) {
+                const { response } = err;
+                const errorMsg = `Gelato API ${response === null || response === void 0 ? void 0 : response.status} error (attempt ${attempt}/5): "${(_a = response === null || response === void 0 ? void 0 : response.data) === null || _a === void 0 ? void 0 : _a.message}"`;
+                if (attempt <= 5) {
+                    console.error(errorMsg);
+                    await (0, _1.sleep)(2000 * attempt);
+                    attempt++;
+                }
+                else {
+                    throw new Error(errorMsg);
+                }
+            }
+            else {
+                throw err;
+            }
+        }
     }
 }
 async function getRelayCalldata(relayInterface, receiver, teleportGUID, signatures, gasFee, maxFeePercentage, expiry, to, data, onPayloadSigned) {
@@ -86,7 +99,7 @@ async function waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs
     let isExecPending = false;
     while (true) {
         const { data } = await queryGelatoApi(`tasks/GelatoMetaBox/${taskId}`, 'get');
-        // console.log(`TaskId=${taskId}, data:`, data[0])
+        console.log(`TaskId=${taskId}, data:`, data[0]);
         if (((_a = data[0]) === null || _a === void 0 ? void 0 : _a.taskState) === 'ExecSuccess') {
             const txHash = (_b = data[0].execution) === null || _b === void 0 ? void 0 : _b.transactionHash;
             if (txHash)

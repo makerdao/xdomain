@@ -30,15 +30,26 @@ function getEstimatedRelayGasLimit(relay: BasicRelay | TrustedRelay): string {
 }
 
 async function queryGelatoApi(url: string, method: 'get' | 'post', params?: Object): Promise<any> {
-  try {
-    const response = await axios[method](`${GELATO_API_URL}/${url}`, params)
-    return response.data
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      const { response } = err
-      throw new Error(`Gelato API ${response?.status} error: "${response?.data?.message}"`)
+  let attempt = 1
+  while (true) {
+    try {
+      const response = await axios[method](`${GELATO_API_URL}/${url}`, params)
+      return response.data
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        const { response } = err
+        const errorMsg = `Gelato API ${response?.status} error (attempt ${attempt}/5): "${response?.data?.message}"`
+        if (attempt <= 5) {
+          console.error(errorMsg)
+          await sleep(2000 * attempt)
+          attempt++
+        } else {
+          throw new Error(errorMsg)
+        }
+      } else {
+        throw err
+      }
     }
-    throw err
   }
 }
 
@@ -108,7 +119,7 @@ async function waitForRelayTaskConfirmation(
   let isExecPending = false
   while (true) {
     const { data } = await queryGelatoApi(`tasks/GelatoMetaBox/${taskId}`, 'get')
-    // console.log(`TaskId=${taskId}, data:`, data[0])
+    console.log(`TaskId=${taskId}, data:`, data[0])
     if (data[0]?.taskState === 'ExecSuccess') {
       const txHash = data[0].execution?.transactionHash
       if (txHash) return txHash
