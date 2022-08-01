@@ -4,7 +4,7 @@ import { arrayify, hashMessage } from 'ethers/lib/utils'
 import { decodeTeleportData, getGuidHash, sleep, TeleportGUID } from '.'
 import { TeleportOracleAuth } from './sdk/esm/types'
 
-const ORACLE_API_URL = 'http://52.42.179.195:8080'
+const ORACLE_API_URL = 'https://lair.chroniclelabs.org'
 
 interface OracleData {
   data: { event: string; hash: string }
