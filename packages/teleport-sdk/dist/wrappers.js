@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mintWithoutOracles = exports.canMintWithoutOracle = exports.relayMintWithOracles = exports.mintWithOracles = exports.getAmounts = exports.getAmountsForTeleportGUID = exports.getDstBalance = exports.getSrcBalance = exports.getAttestations = exports.initRelayedTeleport = exports.initTeleport = exports.getTeleportBridge = void 0;
+exports.mintWithoutOracles = exports.canMintWithoutOracle = exports.relayMintWithOracles = exports.mintWithOracles = exports.requestFaucetDai = exports.getAmounts = exports.getAmountsForTeleportGUID = exports.getDstBalance = exports.getSrcBalance = exports.getAttestations = exports.initRelayedTeleport = exports.initTeleport = exports.getTeleportBridge = void 0;
 const _1 = require(".");
 function getTeleportBridge(opts) {
     return new _1.TeleportBridge({ ...opts, srcDomain: (0, _1.getLikelyDomainId)(opts.srcDomain) });
@@ -34,6 +34,10 @@ function getAmounts(opts) {
     return getTeleportBridge(opts).getAmounts(opts.withdrawn, opts.isHighPriority, opts.relayAddress);
 }
 exports.getAmounts = getAmounts;
+function requestFaucetDai(opts) {
+    return getTeleportBridge(opts).requestFaucetDai(opts.sender, opts.overrides);
+}
+exports.requestFaucetDai = requestFaucetDai;
 function mintWithOracles(opts) {
     return getTeleportBridge(opts).mintWithOracles(opts.teleportGUID, opts.signatures, opts.maxFeePercentage, opts.operatorFee, opts.sender, opts.overrides);
 }

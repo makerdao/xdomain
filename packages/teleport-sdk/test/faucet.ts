@@ -2,7 +2,7 @@ import { assert } from 'chai'
 import { BigNumberish, Contract, Signer } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 
-import { DomainDescription, DomainId, getSdk } from '../src/index'
+import { DomainDescription, DomainId, getSdk, requestFaucetDai } from '../src/index'
 
 export async function fundTestWallet(
   l1Wallet: Signer,
@@ -29,11 +29,9 @@ export async function fundTestWallet(
   )
   let l2DaiBalance = await l2DaiLike.balanceOf(walletAddress)
   if (l2DaiBalance.lt(daiAmount)) {
-    if (!l2Sdk.Faucet) throw new Error(`No faucet setup for domain ${srcDomain}!`)
-    const done = await l2Sdk.Faucet!.done(walletAddress, l2DaiLike.address)
-    if (done) throw new Error(`${srcDomain} faucet already used for ${walletAddress}!`)
     console.log('Pulling L2Dai from faucet...')
-    await (await l2Sdk.Faucet!['gulp(address)'](l2DaiLike.address)).wait()
+    const tx = await requestFaucetDai({ sender: l2Wallet, srcDomain })
+    await tx.wait()
     l2DaiBalance = await l2DaiLike.balanceOf(walletAddress)
     assert(l2DaiBalance.gte(daiAmount), 'Insufficient L2Dai balance!')
     console.log('Wallet funded with L2Dai.')

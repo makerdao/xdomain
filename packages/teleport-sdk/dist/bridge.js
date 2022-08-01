@@ -52,6 +52,17 @@ class TeleportBridge {
         const relay = sdk.BasicRelay && _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
         return await (0, _1.getFeesAndMintableAmounts)(this.srcDomain, this.dstDomain, this.dstDomainProvider, teleportGUID, relay, isHighPriority, relayParams);
     }
+    async requestFaucetDai(sender, overrides) {
+        const sdk = (0, _1.getSdk)(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender));
+        if (!sdk.Faucet)
+            throw new Error(`No faucet setup for source domain ${this.srcDomain}!`);
+        const senderAddress = await sender.getAddress();
+        const done = await sdk.Faucet.done(senderAddress, sdk.Dai.address);
+        if (done)
+            throw new Error(`${this.srcDomain} faucet already used for ${senderAddress}!`);
+        const tx = await sdk.Faucet['gulp(address)'](sdk.Dai.address);
+        return tx;
+    }
     async mintWithOracles(teleportGUID, signatures, maxFeePercentage, operatorFee, sender, overrides) {
         const shouldSendTx = Boolean(sender);
         const sdk = (0, _1.getSdk)(this.dstDomain, _getSignerOrProvider(this.dstDomainProvider, sender));

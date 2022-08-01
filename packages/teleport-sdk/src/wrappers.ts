@@ -116,6 +116,12 @@ export interface MintWithOraclesOpts {
   overrides?: Overrides
 }
 
+export function requestFaucetDai(
+  opts: { sender: Signer; overrides?: Overrides } & DomainContext,
+): ReturnType<TeleportBridge['requestFaucetDai']> {
+  return getTeleportBridge(opts).requestFaucetDai(opts.sender, opts.overrides)
+}
+
 export function mintWithOracles(
   opts: MintWithOraclesOpts & DomainContext,
 ): ReturnType<TeleportBridge['mintWithOracles']> {

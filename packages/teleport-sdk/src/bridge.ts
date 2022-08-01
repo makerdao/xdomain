@@ -189,6 +189,16 @@ export class TeleportBridge {
     )
   }
 
+  public async requestFaucetDai(sender: Signer, overrides?: Overrides): Promise<ContractTransaction> {
+    const sdk = getSdk(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender))
+    if (!sdk.Faucet) throw new Error(`No faucet setup for source domain ${this.srcDomain}!`)
+    const senderAddress = await sender.getAddress()
+    const done = await sdk.Faucet.done(senderAddress, sdk.Dai!.address)
+    if (done) throw new Error(`${this.srcDomain} faucet already used for ${senderAddress}!`)
+    const tx = await sdk.Faucet['gulp(address)'](sdk.Dai!.address, overrides)
+    return tx
+  }
+
   public async mintWithOracles(
     teleportGUID: TeleportGUID,
     signatures: string,

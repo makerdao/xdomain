@@ -51,6 +51,7 @@ export declare class TeleportBridge {
         bridgeFee: BigNumber;
         relayFee?: BigNumber;
     }>;
+    requestFaucetDai(sender: Signer, overrides?: Overrides): Promise<ContractTransaction>;
     mintWithOracles(teleportGUID: TeleportGUID, signatures: string, maxFeePercentage?: BigNumberish, operatorFee?: BigNumberish, sender?: Signer, overrides?: Overrides): Promise<Call>;
     getRelayFee(isHighPriority?: boolean, relayParams?: {
         receiver: Signer;
