@@ -7,7 +7,7 @@ exports.waitForAttestations = void 0;
 const axios_1 = __importDefault(require("axios"));
 const utils_1 = require("ethers/lib/utils");
 const _1 = require(".");
-const ORACLE_API_URL = 'http://52.42.179.195:8080';
+const ORACLE_API_URL = 'https://lair.chroniclelabs.org';
 async function fetchAttestations(txHash) {
     const response = await axios_1.default.get(ORACLE_API_URL, {
         params: {
