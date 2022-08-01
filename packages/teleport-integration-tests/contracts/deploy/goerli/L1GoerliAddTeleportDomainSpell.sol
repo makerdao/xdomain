@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.13;
+pragma solidity 0.8.14;
 
 import {DssExec} from "../common/DssExec.sol";
 import {DssAction} from "../common/DssAction.sol";
@@ -127,7 +127,7 @@ contract DssSpellAction is DssAction {
   }
 
   function actions() public override {
-    bytes32 masterDomain = "ETH-GOE-A";
+    bytes32 masterDomain = "ETH-GOER-A";
     TeleportJoinLike teleportJoin = TeleportJoinLike(0x894DB23D804c626f1aAA89a2Bc3280052e6c4750);
     address vow = 0xD9dFdf1f1604eF572EFd9c8c2e5c6DDca659150A;
     VatLike vat = VatLike(0x66b3D63621FDD5967603A824114Da95cc3A35107);
@@ -149,7 +149,7 @@ contract DssSpellAction is DssAction {
 
     // configure Optimism teleport
 
-    bytes32 optimismDomain = "OPT-GOE-A";
+    bytes32 optimismDomain = "OPT-GOER-A";
     uint256 optimismLine = 100 * RAD;
     address optimismL1Bridge = 0x7b84fFac4A71fE09b14CfF4E0A6429dFfa78630D;
     L1EscrowLike optimismL1Escrow = L1EscrowLike(0x3128d6ffeB4CdD14dC47E4e6A70022F4bf8E7751);
@@ -161,7 +161,7 @@ contract DssSpellAction is DssAction {
 
     // configure Arbitrum teleport
 
-    bytes32 arbitrumDomain = "ARB-GOE-A";
+    bytes32 arbitrumDomain = "ARB-GOER-A";
     uint256 arbitrumLine = 100 * RAD;
     address arbitrumL1Bridge = 0x7b84fFac4A71fE09b14CfF4E0A6429dFfa78630D;
     L1EscrowLike arbitrumL1Escrow = L1EscrowLike(0x3128d6ffeB4CdD14dC47E4e6A70022F4bf8E7751);

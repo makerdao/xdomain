@@ -23,9 +23,9 @@ async function main() {
   const fee = 0 // 0 fees
   const feeTTL = 60 * 60 * 24 * 8 // flush should happen more or less, 1 day after initTeleport, and should take 7 days to finalize
   const ilk: string = bytes32('TELEPORT-FW-A')
-  const l1Domain = bytes32('ETH-GOE-A')
-  const l2ArbitrumDomain = bytes32('ARB-GOE-A')
-  const l2OptimismDomain = bytes32('OPT-GOE-A')
+  const l1Domain = bytes32('ETH-GOER-A')
+  const l2ArbitrumDomain = bytes32('ARB-GOER-A')
+  const l2OptimismDomain = bytes32('OPT-GOER-A')
 
   const { l1Signer, l2OptimismSigner, l2ArbitrumSigner } = await setupSigners()
   const l1StartingBlock = await l1Signer.provider.getBlockNumber()

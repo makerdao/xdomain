@@ -11,7 +11,7 @@ import { getAttestations } from '../../test/teleport'
 import { ArbitrumL2DaiTeleportGateway__factory, TeleportOracleAuth__factory } from '../../typechain'
 
 const bytes32 = ethers.utils.formatBytes32String
-const masterDomain = 'ETH-GOE-A'
+const masterDomain = 'ETH-GOER-A'
 
 const oracleAuth = '0x1E7722E502D3dCbB0704f99c75c99a5402598f13'
 const l2TeleportGateway = '0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3'

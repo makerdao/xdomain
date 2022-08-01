@@ -12,7 +12,7 @@ import { getAttestations } from '../../test/teleport'
 import { OptimismL2DaiTeleportGateway__factory, TeleportOracleAuth__factory } from '../../typechain'
 
 const bytes32 = ethers.utils.formatBytes32String
-const masterDomain = 'ETH-GOE-A'
+const masterDomain = 'ETH-GOER-A'
 
 const oracleAuth = '0xcEBe310e86d44a55EC6Be05e0c233B033979BC67'
 const l2TeleportGateway = '0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0'
