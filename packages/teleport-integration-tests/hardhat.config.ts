@@ -8,7 +8,7 @@ import { HardhatUserConfig } from 'hardhat/config'
 dotenv.config()
 
 const config: HardhatUserConfig = {
-  solidity: '0.8.13',
+  solidity: '0.8.14',
   networks: {
     // we don't use default network so this should make it unusable to prevent any accidental use
     defaultNetwork: {
