@@ -8,10 +8,15 @@ import { formatEther, parseEther } from 'ethers/lib/utils'
 
 import { getContractFactory, waitForTx } from '../../test/helpers'
 import { getAttestations } from '../../test/teleport'
-import { ArbitrumL2DaiTeleportGateway__factory, TeleportOracleAuth__factory } from '../../typechain'
+import {
+  ArbitrumL2DaiTeleportGateway__factory,
+  TeleportOracleAuth__factory,
+  ArbitrumDai__factory,
+} from '../../typechain'
 
 const bytes32 = ethers.utils.formatBytes32String
 const masterDomain = 'ETH-GOER-A'
+const amount = parseEther('0.01')
 
 const oracleAuth = '0xe6c2b941d268cA7690c01F95Cd4bDD12360A0A4F'
 const l2TeleportGateway = '0xb586c1D27Ee93329B1da48B8F7F4436C173FCef8'
@@ -45,16 +50,18 @@ async function main() {
     l2Signer,
   ).attach(l2TeleportGateway)
 
+  const l2Dai = getContractFactory<ArbitrumDai__factory>('ArbitrumDai', l2Signer).attach(await l2Gateway.l2Token())
+  const allowance = await l2Dai.allowance(l2Signer.address, l2TeleportGateway)
+  if (allowance.lt(amount)) {
+    console.log('approving l2TeleportGateway...')
+    await waitForTx(l2Dai.approve(l2TeleportGateway, ethers.constants.MaxUint256))
+  }
+
   console.log('initiateTeleport...')
   const txR = await waitForTx(
-    l2Gateway['initiateTeleport(bytes32,address,uint128)'](
-      bytes32(masterDomain),
-      receiver.address,
-      parseEther('0.01'),
-      {
-        gasLimit: 2000000,
-      },
-    ),
+    l2Gateway['initiateTeleport(bytes32,address,uint128)'](bytes32(masterDomain), receiver.address, amount, {
+      gasLimit: 2000000,
+    }),
   )
 
   console.log('get PECU attestation...')
