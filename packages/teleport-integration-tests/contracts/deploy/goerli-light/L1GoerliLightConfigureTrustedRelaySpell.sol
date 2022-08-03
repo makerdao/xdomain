@@ -32,14 +32,14 @@ interface MedianLike {
 }
 
 contract DssSpellAction is DssAction {
-  string public constant override description = "Goerli Arbitrum TrustedRelay configuration spell";
+  string public constant override description = "GoerliLight TrustedRelay configuration spell";
 
   function officeHours() public pure override returns (bool) {
     return false;
   }
 
   function actions() public override {
-    TrustedRelayLike trustedRelay = TrustedRelayLike(0xef4dF54E711e0d42754a12e85fD4186f8fF2c7A7);
+    TrustedRelayLike trustedRelay = TrustedRelayLike(0xB23Ab27F7B59B718ea1eEF536F66e1Db3F18ac8E);
     trustedRelay.file(bytes32("margin"), 15000);
     // trustedRelay.kiss(0x0000000000000000000000000000000000000000); // authorise integrator's account
 
@@ -48,11 +48,11 @@ contract DssSpellAction is DssAction {
   }
 }
 
-contract L1GoerliConfigureTrustedRelaySpell is DssExec {
+contract L1GoerliLightConfigureTrustedRelaySpell is DssExec {
   // hack allowing execution of spell without full MCD deployment
   function execute() external {
     (bool success, ) = address(action).delegatecall(abi.encodeWithSignature("actions()"));
-    require(success, "L1GoerliConfigureTrustedRelaySpell/delegatecall-failed");
+    require(success, "L1GoerliLightConfigureTrustedRelaySpell/delegatecall-failed");
   }
 
   constructor() DssExec(block.timestamp + 30 days, address(new DssSpellAction())) {}

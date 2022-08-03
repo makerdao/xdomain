@@ -22,7 +22,7 @@ async function main() {
 
 async function setupSigners() {
   const l1Rpc = getRequiredEnv('GOERLI_RPC_URL')
-  const deployerPrivKey = getRequiredEnv('GOERLI_DEPLOYER_PRIV_KEY')
+  const deployerPrivKey = getRequiredEnv('GOERLILIGHT_DEPLOYER_PRIV_KEY')
   const l1Provider = new ethers.providers.JsonRpcProvider(l1Rpc)
 
   expect((await l1Provider.getNetwork()).chainId).to.eq(5, 'Not goerli!')
@@ -39,7 +39,7 @@ async function deployAndExecuteSpell(l1Signer: Signer, makerSdk: MakerSdk) {
     l1SpellContract = new ethers.Contract(l1Spell, l1SpellInterface, l1Signer)
   } else {
     console.log('Deploying L1 spell...')
-    const SpellFactory = await hre.ethers.getContractFactory('L1GoerliAddTeleportDomainSpell')
+    const SpellFactory = await hre.ethers.getContractFactory('L1GoerliLightAddTeleportDomainSpell')
     l1SpellContract = await deployUsingFactoryAndVerify(l1Signer, SpellFactory, [])
     console.log('L1 spell deployed at: ', l1SpellContract.address)
   }

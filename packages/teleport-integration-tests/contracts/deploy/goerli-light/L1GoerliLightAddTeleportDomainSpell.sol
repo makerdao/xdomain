@@ -99,7 +99,7 @@ contract DssSpellAction is DssAction {
   uint256 public constant RAD = 10**45;
 
   string public constant override description =
-    "Goerli Optimism & Arbitrum Teleport deployment spell";
+    "GoerliLight Optimism & Arbitrum Teleport deployment spell";
 
   function officeHours() public pure override returns (bool) {
     return false;
@@ -173,11 +173,11 @@ contract DssSpellAction is DssAction {
   }
 }
 
-contract L1GoerliAddTeleportDomainSpell is DssExec {
+contract L1GoerliLightAddTeleportDomainSpell is DssExec {
   // hack allowing execution of spell without full MCD deployment
   function execute() external {
     (bool success, ) = address(action).delegatecall(abi.encodeWithSignature("actions()"));
-    require(success, "L1GoerliAddTeleportDomainSpell/delegatecall-failed");
+    require(success, "L1GoerliLightAddTeleportDomainSpell/delegatecall-failed");
   }
 
   constructor() DssExec(block.timestamp + 30 days, address(new DssSpellAction())) {}

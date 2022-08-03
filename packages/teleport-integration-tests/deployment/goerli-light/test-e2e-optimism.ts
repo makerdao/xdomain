@@ -9,10 +9,15 @@ import { formatEther, parseEther } from 'ethers/lib/utils'
 
 import { getContractFactory, waitForTx } from '../../test/helpers'
 import { getAttestations } from '../../test/teleport'
-import { OptimismL2DaiTeleportGateway__factory, TeleportOracleAuth__factory } from '../../typechain'
+import {
+  OptimismDai__factory,
+  OptimismL2DaiTeleportGateway__factory,
+  TeleportOracleAuth__factory,
+} from '../../typechain'
 
 const bytes32 = ethers.utils.formatBytes32String
 const masterDomain = 'ETH-GOER-A'
+const amount = parseEther('0.01')
 
 const oracleAuth = '0xe6c2b941d268cA7690c01F95Cd4bDD12360A0A4F'
 const l2TeleportGateway = '0xFF660111D2C6887D8F24B5378cceDbf465B33B6F'
@@ -45,6 +50,13 @@ async function main() {
     'OptimismL2DaiTeleportGateway',
     l2Signer,
   ).attach(l2TeleportGateway)
+
+  const l2Dai = getContractFactory<OptimismDai__factory>('OptimismDai', l2Signer).attach(await l2Gateway.l2Token())
+  const allowance = await l2Dai.allowance(l2Signer.address, l2TeleportGateway)
+  if (allowance.lt(amount)) {
+    console.log('approving l2TeleportGateway...')
+    await waitForTx(l2Dai.approve(l2TeleportGateway, ethers.constants.MaxUint256))
+  }
 
   console.log('initiateTeleport...')
   const txR = await waitForTx(
