@@ -111,7 +111,7 @@ export default defineConfig({
       arbitrumDaiBridge: {
         l1Escrow: '0xD9e08dc985012296b9A80BEf4a587Ad72288D986',
         l1GovernanceRelay: '0xb07c5507Eff5A62F20418b3d0f0be843f640ce9A',
-        l1DaiGateway: '0xEa06484749b37564Ad58E9ADaD478bcDFd876D1B',
+        l1DaiGateway: '0x50757b50b02F5981f2610B039B02975037E9E1A7',
       },
       optimism: {
         xDomainMessenger: '0x5086d1eEF304eb5284A0f6720f79403b4e9bE294',
@@ -127,7 +127,7 @@ export default defineConfig({
       arbitrumDaiBridge: {
         dai: '0x8ea903081aa1137F11D51F64A1F372EDe67571a9',
         l2GovernanceRelay: '0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce',
-        l2DaiGateway: '0x293D5AA7F26EF9A687880C4501871632d1015A82',
+        l2DaiGateway: '0xf59649811c30681A391F7857Dcd56EefF03AF64e',
       },
     },
     optimismGoerliTestnet: {

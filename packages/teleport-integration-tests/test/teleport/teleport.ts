@@ -90,21 +90,24 @@ export async function deployTeleport({
   ])
   console.log('TrustedRelay deployed at: ', trustedRelay.address)
 
-  console.log('Finalizing permissions...')
+  console.log('Setting join permissions...')
   await waitForTx(join.rely(oracleAuth.address))
   await waitForTx(join.rely(router.address))
   await waitForTx(join.rely(makerSdk.pause_proxy.address))
   await waitForTx(join.rely(makerSdk.esm.address))
   await waitForTx(join.deny(await defaultSigner.getAddress()))
 
+  console.log('Setting oracleAuth permissions...')
   await waitForTx(oracleAuth.rely(makerSdk.pause_proxy.address))
   await waitForTx(oracleAuth.rely(makerSdk.esm.address))
   await waitForTx(oracleAuth.deny(await defaultSigner.getAddress()))
 
+  console.log('Setting router permissions...')
   await waitForTx(router.rely(makerSdk.pause_proxy.address))
   await waitForTx(router.rely(makerSdk.esm.address))
   await waitForTx(router.deny(await defaultSigner.getAddress()))
 
+  console.log('Setting trustedRelay permissions...')
   await waitForTx(trustedRelay.rely(makerSdk.pause_proxy.address))
   await waitForTx(trustedRelay.rely(makerSdk.esm.address))
   await waitForTx(trustedRelay.deny(await defaultSigner.getAddress()))

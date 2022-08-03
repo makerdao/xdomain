@@ -14,8 +14,8 @@ import { OptimismL2DaiTeleportGateway__factory, TeleportOracleAuth__factory } fr
 const bytes32 = ethers.utils.formatBytes32String
 const masterDomain = 'ETH-GOER-A'
 
-const oracleAuth = '0xcEBe310e86d44a55EC6Be05e0c233B033979BC67'
-const l2TeleportGateway = '0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0'
+const oracleAuth = '0xe6c2b941d268cA7690c01F95Cd4bDD12360A0A4F'
+const l2TeleportGateway = '0xFF660111D2C6887D8F24B5378cceDbf465B33B6F'
 
 async function main() {
   const { l1Signer, l2Signer } = await setupSigners()

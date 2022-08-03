@@ -25,30 +25,97 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
 
 ## Optimism & Arbitrum Goerli testnet
 
+### Instructions
+
 1. Set the name of the new ilk in `deployment/goerli/deploy-teleport.ts` then run
-   `npx hardhat run deployment/goerli/deploy-teleport.ts` to deploy `dss-teleport`, `arbitrum-dai-bridge` Teleport
+   `yarn hardhat run deployment/goerli/deploy-teleport.ts` to deploy `dss-teleport`, `arbitrum-dai-bridge` Teleport
    contracts and `optimism-dai-bridge` Teleport contracts.
 
 2. Set the addresses of the newly deployed `teleportJoin`, `router` (TeleportRouter), `oracleAuth` (TeleportOracleAuth),
    `constantFees` (TeleportConstantFees), `trustedRelay` (TrustedRelay), `optimismL1Bridge` (L1TeleportGateway) and
    `arbitrumL1Bridge` (L1TeleportGateway) in `contracts/deploy/goerli/L1GoerliAddTeleportDomainSpell.sol`.
 
-3. Run `npx hardhat run deployment/goerli/cast-l1-spell.ts` to deploy and cast the L1 spell on goerli.
+3. Run `yarn hardhat run deployment/goerli/cast-l1-spell.ts` to deploy and cast the L1 spell on goerli.
 
 4. To validate the resulting changes, copy the addresses of the newly deployed `oracleAuth` and `l2TeleportGateway` into
    `deployment/goerli/test-e2e-[optimism|arbitrum].ts` and run
-   `npx hardhat run deployment/goerli/test-e2e-[optimism|arbitrum].ts`.
+   `yarn hardhat run deployment/goerli/test-e2e-[optimism|arbitrum].ts`.
+
+### Latest deployment
+
+In the following, "GoerliLight" refers to a light deployment of MCD on Goerli. It can be thought of as a testing
+environment, distinct from the staging environment that constitutes the canonical deployment of MCD on Goerli (which is
+used for makerdao/spells-goerli).
+
+```
+{
+   "GoerliLight MCD": {
+      "vat": "0x293D5AA7F26EF9A687880C4501871632d1015A82",
+      "dai_join": "0x53275153854358E12789307fD45Bbab0f5b575A0",
+      "vow": "0xFF660111D2C6887D8F24B5378cceDbf465B33B6F",
+      "pause_proxy": "0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce",
+      "esm": "0x4EdB261c15EF5A895f449593CDC9Fc7D2Fb714c2",
+      "dai": "0x0089Ed33ED517F58a064D0ef56C9E89Dc01EE9A2",
+      "median_ethusd": "0xAdC6217F6D549dD4CBc7BF7B4f22769334C20f2D",
+   },
+
+   "GoerliLight Teleport": {
+      "join": "0xd88310A476ee960487FDb2772CC4bd017dadEf6B",
+      "oracleAuth": "0xe6c2b941d268cA7690c01F95Cd4bDD12360A0A4F",
+      "router": "0x9031Ab810C496FCF09B65851c736E9a37983B963",
+      "constantFee": "0x19EeED0950e8AD1Ac6dde969df0c230C31e5479C",
+      "basicRelay": "0x0Cb8747982d99f4b8640EE27330ADD0c2b54d0e6",
+      "trustedRelay": "0xB23Ab27F7B59B718ea1eEF536F66e1Db3F18ac8E"
+   }
+
+  "Optimism GoerliLight teleport gateways":  {
+      "l2TeleportGateway": "0xFF660111D2C6887D8F24B5378cceDbf465B33B6F",
+      "l1TeleportGateway": "0x1FD5a4A2b5572A8697E93b5164dE73E52686228B"
+   }
+
+   "Arbitrum GoerliLight teleport gateways":  {
+      "l2TeleportGateway": "0xb586c1D27Ee93329B1da48B8F7F4436C173FCef8",
+      "l1TeleportGateway": "0x350d78BfE252a81cc03407Fe781052E020dCd456"
+   },
+
+   "Legacy (slow) GoerliLight Optimism Dai bridge": {
+      "l2Dai": "0x8ea903081aa1137F11D51F64A1F372EDe67571a9",
+      "l1Escrow": "0xC2351e2a0Dd9f44bB1E3ECd523442473Fa5e46a0",
+      "l1DAITokenBridge": "0xd95CbA7F7be2984058f15e4a4e03C89845fD8EB2",
+      "l2DAITokenBridge": "0x293D5AA7F26EF9A687880C4501871632d1015A82",
+      "l1GovernanceRelay": "0x38BF0bBF7dEb5Eb17a5f453AfCED4ee3A992b08d",
+      "l2GovernanceRelay": "0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce",
+   },
+
+   "Legacy (slow) GoerliLight Arbitrum Dai bridge": {
+      "l2Dai": "0x8ea903081aa1137F11D51F64A1F372EDe67571a9",
+      "l1Escrow": "0xD9e08dc985012296b9A80BEf4a587Ad72288D986",
+      "l1DaiGateway": "0x426572EdE6436D0A9F0c2BE45Ad5E9273C9b5B0a",
+      "l2DaiGateway": "0x2BD50836f3998D5952331f41C5c2395B7b825F50",
+      "l1GovernanceRelay": "0xb07c5507Eff5A62F20418b3d0f0be843f640ce9A",
+      "l2GovernanceRelay": "0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce",
+      "l1GatewayRouter"": "0x9C032F29427E185b52D02880131a3577484BE651",
+      "l2GatewayRouter"": "0x5dA2465705DCe5Fac5f8753F765bf68b42F96E4C",
+   },
+
+   "GoerliLight Spell": {
+      "l1": "0x29ADBE7cE6F650D56d8611Ab43a1153f5654fC01",
+   }
+}
+```
 
 ## Arbitrum Rinkeby testnet (deprecated)
 
+### Instructions
+
 1. Set the name of the new ilk in `deployment/rinkeby/deploy-teleport.ts` then run
-   `npx hardhat run deployment/rinkeby/deploy-teleport.ts` to deploy `dss-teleport` and `arbitrum-dai-bridge` Teleport
+   `yarn hardhat run deployment/rinkeby/deploy-teleport.ts` to deploy `dss-teleport` and `arbitrum-dai-bridge` Teleport
    contracts.
 
 2. Set the address of the newly deployed `teleportBridge` (L2TeleportGateway) in
    `contracts/deploy/rinkeby/L2RinkebyAddTeleportDomainSpell.sol` and deploy this L2 spell on arbitrum-testnet.
 
-3. Run `npx hardhat run deployment/rinkeby/print-relay-params.ts` and copy the printed values into
+3. Run `yarn hardhat run deployment/rinkeby/print-relay-params.ts` and copy the printed values into
    `contracts/deploy/rinkeby/L1RinkebyAddTeleportDomainSpell.sol`.
 
 4. Set the addresses of the newly deployed `teleportJoin`, `router` (TeleportRouter), `oracleAuth` (TeleportOracleAuth),
@@ -56,11 +123,11 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
    `l2ConfigureDomainSpell` (L2RinkebyAddTeleportDomainSpell) in
    `contracts/deploy/rinkeby/L1RinkebyAddTeleportDomainSpell.sol`.
 
-5. Run `npx hardhat run deployment/rinkeby/cast-l1-spell.ts` to deploy and cast the L1 spell on rinkeby. Wait ~5 minutes
-   for the execution of the L2 spell to be confirmed.
+5. Run `yarn hardhat run deployment/rinkeby/cast-l1-spell.ts` to deploy and cast the L1 spell on rinkeby. Wait ~5
+   minutes for the execution of the L2 spell to be confirmed.
 
 6. To validate the resulting changes, copy the addresses of the newly deployed `oracleAuth` and `l2TeleportGateway` into
-   `deployment/rinkeby/test-e2e.ts` and run `npx hardhat run deployment/rinkeby/test-e2e.ts`.
+   `deployment/rinkeby/test-e2e.ts` and run `yarn hardhat run deployment/rinkeby/test-e2e.ts`.
 
 ### Latest deployment
 
@@ -99,7 +166,7 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
 ### Instructions
 
 1. Set the name of the new ilk in `deployment/kovan/deploy-teleport.ts` then run
-   `npx hardhat run deployment/kovan/deploy-teleport.ts` to deploy `dss-teleport` and `optimism-dai-bridge` Teleport
+   `yarn hardhat run deployment/kovan/deploy-teleport.ts` to deploy `dss-teleport` and `optimism-dai-bridge` Teleport
    contracts.
 
 2. Set the address of the newly deployed `teleportGateway` (L2TeleportGateway) in
@@ -112,16 +179,16 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
 
 4. To test the L2 spell, copy the addresses of the newly deployed `l2Spell` and `l2TeleportGateway` into
    `deployment/kovan/test-l2-spell.ts`, spin up a local hardhark fork of optimistic-kovan and run
-   `npx hardhat run deployment/kovan/test-l2-spell.ts --network localhost`
+   `yarn hardhat run deployment/kovan/test-l2-spell.ts --network localhost`
 
 5. To test the L1 spell, copy the addresses of the newly deployed `oracleAuth` and `l1Spell` into
    `deployment/kovan/test-l1-spell.ts`, spin up a local hardhark fork of kovan and run
-   `npx hardhat run deployment/kovan/test-l1-spell.ts --network localhost`
+   `yarn hardhat run deployment/kovan/test-l1-spell.ts --network localhost`
 
 6. Cast the L1 spell
 
 7. To validate the resulting changes, copy the addresses of the newly deployed `oracleAuth` and `l2TeleportGateway` into
-   `deployment/kovan/test-e2e.ts` and run `npx hardhat run deployment/kovan/test-e2e.ts`.
+   `deployment/kovan/test-e2e.ts` and run `yarn hardhat run deployment/kovan/test-e2e.ts`.
 
 ### Latest deployment
 

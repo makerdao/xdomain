@@ -106,7 +106,7 @@ contract DssSpellAction is DssAction {
   }
 
   function setupOracleAuth() internal {
-    OracleAuthLike oracleAuth = OracleAuthLike(0x1E7722E502D3dCbB0704f99c75c99a5402598f13);
+    OracleAuthLike oracleAuth = OracleAuthLike(0xe6c2b941d268cA7690c01F95Cd4bDD12360A0A4F);
     address[] memory oracles = new address[](5);
     oracles[0] = 0xC4756A9DaE297A046556261Fa3CD922DFC32Db78; // OCU
     oracles[1] = 0x23ce419DcE1De6b3647Ca2484A25F595132DfBd2; // OCU
@@ -118,7 +118,7 @@ contract DssSpellAction is DssAction {
   }
 
   function setupTrustedRelay() internal {
-    TrustedRelayLike trustedRelay = TrustedRelayLike(0xef4dF54E711e0d42754a12e85fD4186f8fF2c7A7);
+    TrustedRelayLike trustedRelay = TrustedRelayLike(0xB23Ab27F7B59B718ea1eEF536F66e1Db3F18ac8E);
     trustedRelay.file(bytes32("margin"), 15000);
     // trustedRelay.kiss(0x0000000000000000000000000000000000000000); // authorise integrator's account
 
@@ -128,11 +128,11 @@ contract DssSpellAction is DssAction {
 
   function actions() public override {
     bytes32 masterDomain = "ETH-GOER-A";
-    TeleportJoinLike teleportJoin = TeleportJoinLike(0x894DB23D804c626f1aAA89a2Bc3280052e6c4750);
-    address vow = 0xD9dFdf1f1604eF572EFd9c8c2e5c6DDca659150A;
-    VatLike vat = VatLike(0x66b3D63621FDD5967603A824114Da95cc3A35107);
+    TeleportJoinLike teleportJoin = TeleportJoinLike(0xd88310A476ee960487FDb2772CC4bd017dadEf6B);
+    address vow = 0xFF660111D2C6887D8F24B5378cceDbf465B33B6F;
+    VatLike vat = VatLike(0x293D5AA7F26EF9A687880C4501871632d1015A82);
     uint256 globalLine = 10000000000 * RAD;
-    RouterLike router = RouterLike(0x26266ff35E2d69C6a2DC3fAE9FA71456043a0611);
+    RouterLike router = RouterLike(0x9031Ab810C496FCF09B65851c736E9a37983B963);
 
     teleportJoin.file(bytes32("vow"), vow);
     router.file(bytes32("gateway"), masterDomain, address(teleportJoin));
@@ -144,15 +144,15 @@ contract DssSpellAction is DssAction {
     setupOracleAuth();
     setupTrustedRelay();
 
-    address constantFees = 0xeFf66D2A040097919A1A36D9D8816c21acC3C6C0;
-    address dai = 0x17B729a6Ac1f265090cbb4AecBdd53E34664C00e;
+    address constantFees = 0x19EeED0950e8AD1Ac6dde969df0c230C31e5479C;
+    address dai = 0x0089Ed33ED517F58a064D0ef56C9E89Dc01EE9A2;
 
     // configure Optimism teleport
 
     bytes32 optimismDomain = "OPT-GOER-A";
     uint256 optimismLine = 100 * RAD;
-    address optimismL1Bridge = 0x7b84fFac4A71fE09b14CfF4E0A6429dFfa78630D;
-    L1EscrowLike optimismL1Escrow = L1EscrowLike(0x3128d6ffeB4CdD14dC47E4e6A70022F4bf8E7751);
+    address optimismL1Bridge = 0x1FD5a4A2b5572A8697E93b5164dE73E52686228B;
+    L1EscrowLike optimismL1Escrow = L1EscrowLike(0xC2351e2a0Dd9f44bB1E3ECd523442473Fa5e46a0);
 
     router.file(bytes32("gateway"), optimismDomain, optimismL1Bridge);
     teleportJoin.file(bytes32("fees"), optimismDomain, constantFees);
@@ -163,8 +163,8 @@ contract DssSpellAction is DssAction {
 
     bytes32 arbitrumDomain = "ARB-GOER-A";
     uint256 arbitrumLine = 100 * RAD;
-    address arbitrumL1Bridge = 0x7b84fFac4A71fE09b14CfF4E0A6429dFfa78630D;
-    L1EscrowLike arbitrumL1Escrow = L1EscrowLike(0x3128d6ffeB4CdD14dC47E4e6A70022F4bf8E7751);
+    address arbitrumL1Bridge = 0x350d78BfE252a81cc03407Fe781052E020dCd456;
+    L1EscrowLike arbitrumL1Escrow = L1EscrowLike(0xD9e08dc985012296b9A80BEf4a587Ad72288D986);
 
     router.file(bytes32("gateway"), arbitrumDomain, arbitrumL1Bridge);
     teleportJoin.file(bytes32("fees"), arbitrumDomain, constantFees);

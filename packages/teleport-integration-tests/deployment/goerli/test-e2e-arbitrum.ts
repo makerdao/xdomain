@@ -13,8 +13,8 @@ import { ArbitrumL2DaiTeleportGateway__factory, TeleportOracleAuth__factory } fr
 const bytes32 = ethers.utils.formatBytes32String
 const masterDomain = 'ETH-GOER-A'
 
-const oracleAuth = '0x1E7722E502D3dCbB0704f99c75c99a5402598f13'
-const l2TeleportGateway = '0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3'
+const oracleAuth = '0xe6c2b941d268cA7690c01F95Cd4bDD12360A0A4F'
+const l2TeleportGateway = '0xb586c1D27Ee93329B1da48B8F7F4436C173FCef8'
 
 async function main() {
   const { l1Signer, l2Signer } = await setupSigners()

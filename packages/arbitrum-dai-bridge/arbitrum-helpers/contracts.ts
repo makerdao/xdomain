@@ -1,4 +1,5 @@
 import { ContractFactory, ethers } from 'ethers'
+import { Interface } from 'ethers/lib/utils'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -17,6 +18,13 @@ export function getArbitrumCoreContracts(l2: ethers.providers.BaseProvider) {
     nodeInterface: new ethers.Contract(
       arbitrumL2CoreContracts.nodeInterface,
       require('./abis/NodeInterface.json').abi,
+      l2,
+    ),
+    nodeInterface_Nitro: new ethers.Contract(
+      arbitrumL2CoreContracts.nodeInterface,
+      new Interface([
+        'function estimateRetryableTicket(address sender,uint256 deposit,address to,uint256 l2CallValue,address excessFeeRefundAddress,address callValueRefundAddress,bytes calldata data) external',
+      ]),
       l2,
     ),
   }
