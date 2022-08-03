@@ -9,9 +9,9 @@ import { formatEther, parseEther } from 'ethers/lib/utils'
 import { getContractFactory, waitForTx } from '../../test/helpers'
 import { getAttestations } from '../../test/teleport'
 import {
+  ArbitrumDai__factory,
   ArbitrumL2DaiTeleportGateway__factory,
   TeleportOracleAuth__factory,
-  ArbitrumDai__factory,
 } from '../../typechain'
 
 const bytes32 = ethers.utils.formatBytes32String
