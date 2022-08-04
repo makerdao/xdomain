@@ -601,9 +601,8 @@ describe('TeleportBridge', () => {
       }
       expect(canMint).to.be.eq(settings.useFakeArbitrumOutbox || false)
 
-      const initialDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
-
       if (canMint) {
+        const initialDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
         let tx: ContractTransaction
         if (useWrapper) {
           tx = await mintWithoutOracles({
