@@ -1,4 +1,4 @@
-import { L1ToL2MessageStatus,L1TransactionReceipt } from '@arbitrum/sdk'
+import { L1ToL2MessageStatus, L1TransactionReceipt } from '@arbitrum/sdk'
 import { expect } from 'chai'
 import { BigNumber, ethers, providers, Signer, utils } from 'ethers'
 import hre from 'hardhat'
