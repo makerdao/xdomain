@@ -536,11 +536,11 @@ describe('TeleportBridge', () => {
       await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useWrapper: true })
     })
 
-    it.only('should mint with oracles (goerli-arbitrum, wrapper)', async () => {
+    it('should mint with oracles (goerli-arbitrum, wrapper)', async () => {
       await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet', useWrapper: true })
     })
 
-    it.only('should mint with oracles (goerli-optimism, wrapper)', async () => {
+    it('should mint with oracles (goerli-optimism, wrapper)', async () => {
       await testMintWithOracles({ srcDomain: 'optimism-goerli-testnet', useWrapper: true })
     })
   })
