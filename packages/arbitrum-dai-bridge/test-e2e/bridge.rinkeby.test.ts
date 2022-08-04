@@ -40,7 +40,7 @@ describe('bridge', () => {
     console.log({ bridgeDeployment, network, routerDeployment })
   })
 
-  it.only('deposits funds', async () => {
+  it('deposits funds', async () => {
     const initialL1Balance = await bridgeDeployment.l1Dai.balanceOf(network.l1.deployer.address)
     const initialEscrowBalance = await bridgeDeployment.l1Dai.balanceOf(bridgeDeployment.l1Escrow.address)
     const initialL2Balance = await bridgeDeployment.l2Dai.balanceOf(network.l1.deployer.address)
