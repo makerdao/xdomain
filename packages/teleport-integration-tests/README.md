@@ -96,6 +96,9 @@ used for makerdao/spells-goerli).
       "l2GovernanceRelay": "0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce",
       "l1GatewayRouter"": "0x9C032F29427E185b52D02880131a3577484BE651",
       "l2GatewayRouter"": "0x5dA2465705DCe5Fac5f8753F765bf68b42F96E4C",
+      "l1FakeArbitrumInbox": "0x5d38C7b5cf3F25DE11E13d8f882ab9a0399907dE",
+      "l1FakeArbitrumBridge": "0x5A30CB67fAC7aBaF95Efc57c35B41750b6157813",
+      "l1FakeArbitrumOutbox": "0x95637Cabe684a324A8225C4b6Ce880D70074938d",
    },
 
    "GoerliLight Spell": {
