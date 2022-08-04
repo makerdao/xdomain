@@ -47,7 +47,7 @@ export function initRelayedTeleport(
 
 export interface GetAttestationsOpts {
   txHash: string
-  newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void
+  onNewSignatureReceived?: (numSignatures: number, threshold: number) => void
   timeoutMs?: number
   pollingIntervalMs?: number
   teleportGUID?: TeleportGUID
@@ -58,11 +58,23 @@ export function getAttestations(
 ): ReturnType<TeleportBridge['getAttestations']> {
   return getTeleportBridge(opts).getAttestations(
     opts.txHash,
-    opts.newSignatureReceivedCallback,
+    opts.onNewSignatureReceived,
     opts.timeoutMs,
     opts.pollingIntervalMs,
     opts.teleportGUID,
   )
+}
+
+export function getSrcBalance(
+  opts: { userAddress: string } & DomainContext,
+): ReturnType<TeleportBridge['getSrcBalance']> {
+  return getTeleportBridge(opts).getSrcBalance(opts.userAddress)
+}
+
+export function getDstBalance(
+  opts: { userAddress: string } & DomainContext,
+): ReturnType<TeleportBridge['getDstBalance']> {
+  return getTeleportBridge(opts).getDstBalance(opts.userAddress)
 }
 
 export function getAmountsForTeleportGUID(
@@ -104,6 +116,12 @@ export interface MintWithOraclesOpts {
   overrides?: Overrides
 }
 
+export function requestFaucetDai(
+  opts: { sender: Signer; overrides?: Overrides } & DomainContext,
+): ReturnType<TeleportBridge['requestFaucetDai']> {
+  return getTeleportBridge(opts).requestFaucetDai(opts.sender, opts.overrides)
+}
+
 export function mintWithOracles(
   opts: MintWithOraclesOpts & DomainContext,
 ): ReturnType<TeleportBridge['mintWithOracles']> {
@@ -127,6 +145,9 @@ export interface RelayMintWithOraclesOpts {
   to?: string
   data?: string
   relayAddress?: string
+  pollingIntervalMs?: number
+  timeoutMs?: number
+  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void
 }
 
 export function relayMintWithOracles(
@@ -142,6 +163,9 @@ export function relayMintWithOracles(
     opts.to,
     opts.data,
     opts.relayAddress,
+    opts.pollingIntervalMs,
+    opts.timeoutMs,
+    opts.onPayloadSigned,
   )
 }
 

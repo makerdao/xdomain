@@ -56,7 +56,7 @@ export async function demo(
   console.log(`\nDesired withdrawal: ${formatEther(amount)} DAI.`)
   console.log(`Expected Mintable: ${formatEther(expectedMintable)} DAI.`)
   console.log(`Expected Bridge Fees: ${formatEther(expectedBridgeFee)} DAI.`)
-  RELAY_MINT && console.log(`Expected Relay Fees: ${formatEther(expectedRelayFee)} DAI.`)
+  RELAY_MINT && console.log(`Expected Relay Fees: ${formatEther(expectedRelayFee || '0')} DAI.`)
 
   // *******************************************/
   // ********  init(Relayed)Teleport ***********/
@@ -82,7 +82,7 @@ export async function demo(
   const { signatures, teleportGUID } = await getAttestations({
     txHash: initTx.tx!.hash,
     srcDomain,
-    newSignatureReceivedCallback: (numSigs: number, threshold: number) =>
+    onNewSignatureReceived: (numSigs: number, threshold: number) =>
       console.log(`Signatures received: ${numSigs} (required: ${threshold}).`),
   })
 
@@ -117,7 +117,7 @@ export async function demo(
   const maxFeePercentage = bridgeFee.mul(WAD).div(mintable)
 
   if (RELAY_MINT) {
-    console.log(`Relay Fees: ${formatEther(relayFee)} DAI.`)
+    console.log(`Relay Fees: ${formatEther(relayFee || '0')} DAI.`)
     console.log(`\nRelaying minting of ${formatEther(mintable)} DAI on ${dstDomain} ...`)
     const mintTxHash = await relayMintWithOracles({
       receiver: sender,
@@ -125,7 +125,7 @@ export async function demo(
       teleportGUID: teleportGUID!,
       signatures,
       maxFeePercentage,
-      relayFee,
+      relayFee: relayFee || '0',
       relayAddress,
     })
     console.log(`Relayed minting tx submitted: ${dstDomainEtherscan}${mintTxHash}`)

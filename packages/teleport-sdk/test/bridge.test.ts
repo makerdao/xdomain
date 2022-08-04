@@ -18,8 +18,10 @@ import {
   getAmountsForTeleportGUID,
   getAttestations,
   getDefaultDstDomain,
+  getDstBalance,
   getLikelyDomainId,
   getSdk,
+  getSrcBalance,
   getTeleportBridge,
   initRelayedTeleport,
   initTeleport,
@@ -49,6 +51,9 @@ async function getTestWallets(srcDomainDescr: DomainDescription) {
   const l2User = new Wallet(pkey, l2Provider)
 
   await fundTestWallet(l1User, l2User, srcDomain, dstDomain, amount)
+
+  const srcBalance = await getSrcBalance({ userAddress: l2User.address, srcDomain })
+  expect(srcBalance).to.be.gt(0)
 
   return { l1User, l2User, dstDomain }
 }
@@ -183,7 +188,7 @@ describe('TeleportBridge', () => {
     let signatures: string
     let guid: TeleportGUID | undefined
 
-    const newSignatureReceivedCallback = (numSigs: number, threshold: number) =>
+    const onNewSignatureReceived = (numSigs: number, threshold: number) =>
       console.log(`Signatures received: ${numSigs} (required: ${threshold}).`)
 
     console.log(`Requesting attestation for ${txHash} (timeout: ${timeoutMs}ms)`)
@@ -192,13 +197,13 @@ describe('TeleportBridge', () => {
         txHash,
         srcDomain,
         timeoutMs,
-        newSignatureReceivedCallback,
+        onNewSignatureReceived,
         teleportGUID,
       }))
     } else {
       ;({ signatures, teleportGUID: guid } = await bridge!.getAttestations(
         txHash,
-        newSignatureReceivedCallback,
+        onNewSignatureReceived,
         timeoutMs,
         undefined,
         teleportGUID,
@@ -362,8 +367,11 @@ describe('TeleportBridge', () => {
       res = await bridge!.getAmountsForTeleportGUID(teleportGUID!, undefined, relayParams, relayAddress)
     }
     const { mintable, bridgeFee, relayFee } = res
+    expect(relayFee).to.not.be.undefined
 
     const maxFeePercentage = bridgeFee.mul(WAD).div(mintable)
+
+    const initialDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
 
     if (useRelay) {
       let txHash
@@ -373,21 +381,33 @@ describe('TeleportBridge', () => {
           receiver: l1User,
           teleportGUID: teleportGUID!,
           signatures,
-          relayFee,
+          relayFee: relayFee || 0,
           maxFeePercentage,
           relayAddress,
+          onPayloadSigned: (payload, r, s) => {
+            expect(payload).to.satisfy((h: string) => h.startsWith('0x'))
+            expect(r).to.satisfy((h: string) => h.startsWith('0x'))
+            expect(s).to.satisfy((h: string) => h.startsWith('0x'))
+          },
         })
       } else {
         txHash = await bridge!.relayMintWithOracles(
           l1User,
           teleportGUID!,
           signatures,
-          relayFee,
+          relayFee || 0,
           maxFeePercentage,
           undefined,
           undefined,
           undefined,
           relayAddress,
+          undefined,
+          undefined,
+          (payload, r, s) => {
+            expect(payload).to.satisfy((h: string) => h.startsWith('0x'))
+            expect(r).to.satisfy((h: string) => h.startsWith('0x'))
+            expect(s).to.satisfy((h: string) => h.startsWith('0x'))
+          },
         )
       }
 
@@ -429,6 +449,10 @@ describe('TeleportBridge', () => {
     }
 
     await tx!.wait()
+
+    const finalDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
+    expect(finalDstBalance).to.be.gt(initialDstBalance)
+
     return { txHash: tx!.hash, bridge }
   }
 
@@ -506,6 +530,8 @@ describe('TeleportBridge', () => {
       }
       expect(canMint).to.be.eq(settings.useFakeArbitrumOutbox || false)
 
+      const initialDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
+
       if (canMint) {
         let tx: ContractTransaction
         if (useWrapper) {
@@ -520,6 +546,9 @@ describe('TeleportBridge', () => {
         }
 
         await tx.wait()
+
+        const finalDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
+        expect(finalDstBalance).to.be.gt(initialDstBalance)
       }
     }
 

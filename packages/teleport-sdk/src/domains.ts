@@ -5,6 +5,7 @@ import { Dictionary } from 'ts-essentials'
 import { getArbitrumTestnetSdk, getKovanSdk, getOptimismKovanSdk, getRinkebySdk } from './sdk'
 import {
   BasicRelay,
+  Dai,
   Faucet,
   Multicall,
   TeleportJoin,
@@ -23,6 +24,7 @@ export interface TeleportSdk {
   Faucet?: Faucet
   BasicRelay?: BasicRelay
   TrustedRelay?: TrustedRelay
+  Dai?: Dai
 }
 
 export const DOMAINS = [
@@ -95,6 +97,7 @@ export function getSdk(domain: DomainDescription, signerOrProvider: Signer | Pro
     Faucet: undefined,
     BasicRelay: undefined,
     TrustedRelay: undefined,
+    Dai: undefined,
     ...sdk,
   }
 

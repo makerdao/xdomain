@@ -10,12 +10,14 @@ export default defineConfig({
         Multicall: '0xC6D81A2e375Eee15a20E6464b51c5FC6Bb949fdA',
         BasicRelay: '0x5B3363996Bd8164F07315faAf3F96B72D192382c',
         TrustedRelay: '0xAAFa36901AdC6C03df8B935fFA129677D1D7Eb81',
+        Dai: '0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa', // L1Dai
       },
     },
     optimismKovan: {
       'KOVAN-SLAVE-OPTIMISM-1': {
         TeleportOutboundGateway: '0x0aeDbEf4105fdfc0db5A3Cd8C827bE2efA93ebe0', // L2DaiTeleportGateway
         Faucet: '0xDB66c86899967A3D9E4D77D7d2Bb703747aAEeA7', // L2Dai Faucet
+        Dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', // L2Dai
       },
     },
     rinkeby: {
@@ -28,12 +30,14 @@ export default defineConfig({
         Outbox: '0x2360A33905dc1c72b12d975d975F42BaBdcef9F3',
         BasicRelay: '0xC35787975484A858B878032B045B6E0B6EfE2e2c',
         TrustedRelay: '0xef4dF54E711e0d42754a12e85fD4186f8fF2c7A7',
+        Dai: '0x17B729a6Ac1f265090cbb4AecBdd53E34664C00e', // L1Dai
       },
     },
     arbitrumTestnet: {
       'RINKEBY-SLAVE-ARBITRUM-1': {
         TeleportOutboundGateway: '0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3', // L2DaiTeleportGateway
         Faucet: '0xc72cfA99ef0aec40334A2df3E70eB1028402cceE', // L2Dai Faucet
+        Dai: '0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15', // L2Dai
       },
     },
   },

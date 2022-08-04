@@ -1,6 +1,5 @@
 import { getL2Network, L2TransactionReceipt } from '@arbitrum/sdk'
 import { Provider } from '@ethersproject/abstract-provider'
-import { assert } from 'chai'
 import { ContractTransaction, Overrides, Signer } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 import { Dictionary } from 'ts-essentials'
@@ -51,7 +50,7 @@ export async function relayArbitrumMessage(
   const { outbox, fakeOutbox } = getArbitrumOutbox(sender, dstDomain)
 
   if (useFakeOutbox) {
-    assert(l2Network.chainID === 421611, `FakeOutbox not supported for chainId ${l2Network.chainID}`)
+    if (l2Network.chainID !== 421611) throw new Error(`FakeOutbox not supported for chainId ${l2Network.chainID}`)
     const iface = new Interface([
       `event TxToL1(address indexed from, address indexed to, uint256 indexed id, bytes data)`,
     ])

@@ -1,6 +1,6 @@
 import { Provider } from '@ethersproject/abstract-provider'
 import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrides, Signer } from 'ethers'
-import { hexZeroPad } from 'ethers/lib/utils'
+import { hexZeroPad, Interface } from 'ethers/lib/utils'
 
 import {
   ArbitrumDstDomainId,
@@ -102,7 +102,7 @@ export class TeleportBridge {
 
   public async getAttestations(
     txHash: string,
-    newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void,
+    onNewSignatureReceived?: (numSignatures: number, threshold: number) => void,
     timeoutMs?: number,
     pollingIntervalMs: number = 2000,
     teleportGUID?: TeleportGUID,
@@ -121,8 +121,16 @@ export class TeleportBridge {
       pollingIntervalMs,
       teleportGUID,
       timeoutMs,
-      newSignatureReceivedCallback,
+      onNewSignatureReceived,
     )
+  }
+
+  public async getSrcBalance(userAddress: string): Promise<BigNumber> {
+    return await _getDaiBalance(userAddress, this.srcDomain, this.srcDomainProvider)
+  }
+
+  public async getDstBalance(userAddress: string): Promise<BigNumber> {
+    return await _getDaiBalance(userAddress, this.dstDomain, this.dstDomainProvider)
   }
 
   public async getAmounts(
@@ -132,7 +140,7 @@ export class TeleportBridge {
   ): Promise<{
     mintable: BigNumber
     bridgeFee: BigNumber
-    relayFee: BigNumber
+    relayFee?: BigNumber
   }> {
     const zero = hexZeroPad('0x', 32)
     const amount = hexZeroPad(BigNumber.from(withdrawn).toHexString(), 32)
@@ -166,7 +174,7 @@ export class TeleportBridge {
     pending: BigNumber
     mintable: BigNumber
     bridgeFee: BigNumber
-    relayFee: BigNumber
+    relayFee?: BigNumber
   }> {
     const sdk = getSdk(this.dstDomain, this.dstDomainProvider)
     const relay = sdk.BasicRelay && _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
@@ -179,6 +187,16 @@ export class TeleportBridge {
       isHighPriority,
       relayParams,
     )
+  }
+
+  public async requestFaucetDai(sender: Signer, overrides?: Overrides): Promise<ContractTransaction> {
+    const sdk = getSdk(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender))
+    if (!sdk.Faucet) throw new Error(`No faucet setup for source domain ${this.srcDomain}!`)
+    const senderAddress = await sender.getAddress()
+    const done = await sdk.Faucet.done(senderAddress, sdk.Dai!.address)
+    if (done) throw new Error(`${this.srcDomain} faucet already used for ${senderAddress}!`)
+    const tx = await sdk.Faucet['gulp(address)'](sdk.Dai!.address, overrides)
+    return tx
   }
 
   public async mintWithOracles(
@@ -228,9 +246,25 @@ export class TeleportBridge {
     to?: string,
     data?: string,
     relayAddress?: string,
+    pollingIntervalMs?: number,
+    timeoutMs?: number,
+    onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
   ): Promise<string> {
     const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
-    return await waitForRelay(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data)
+    return await waitForRelay(
+      relay,
+      receiver,
+      teleportGUID,
+      signatures,
+      relayFee,
+      maxFeePercentage,
+      expiry,
+      to,
+      data,
+      pollingIntervalMs,
+      timeoutMs,
+      onPayloadSigned,
+    )
   }
 
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {
@@ -263,7 +297,14 @@ export class TeleportBridge {
 }
 
 function _getSignerOrProvider(provider: Provider, signer?: Signer): Signer | Provider {
-  return signer ? signer.connect(provider) : provider
+  if (signer) {
+    try {
+      return signer.connect(provider)
+    } catch {
+      return signer
+    }
+  }
+  return provider
 }
 
 async function _optionallySendTx(
@@ -278,6 +319,20 @@ async function _optionallySendTx(
     to: contract.address,
     data: contract.interface.encodeFunctionData(method, data),
   }
+}
+
+async function _getDaiBalance(userAddress: string, domain: DomainDescription, domainProvider: any): Promise<BigNumber> {
+  const sdk = getSdk(domain, domainProvider)
+  if (!sdk.Dai) {
+    throw new Error(`Dai contract not found on domain ${domain}`)
+  }
+  const DaiLike = new Contract(
+    sdk.Dai.address,
+    new Interface(['function balanceOf(address) view returns (uint256)']),
+    domainProvider,
+  )
+  const balance = await DaiLike.balanceOf(userAddress)
+  return balance
 }
 
 function _getRelay(dstDomain: DomainDescription, dstDomainProvider: Provider, relayAddress?: string): Relay {
