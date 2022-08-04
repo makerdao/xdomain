@@ -33,6 +33,7 @@ export async function isArbitrumMessageInOutbox(
   const l2Receipt = new L2TransactionReceipt(receipt)
   const messages = await l2Receipt.getL2ToL1Messages(dstDomainProvider, l2Network)
   const l2ToL1Msg = messages[0]
+  if (!l2ToL1Msg) return false
 
   return await outbox.outboxEntryExists(l2ToL1Msg.batchNumber)
 }
