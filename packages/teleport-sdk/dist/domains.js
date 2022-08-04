@@ -8,6 +8,9 @@ exports.DOMAINS = [
     'RINKEBY-MASTER-1',
     'KOVAN-SLAVE-OPTIMISM-1',
     'KOVAN-MASTER-1',
+    'OPT-GOER-A',
+    'ARB-GOER-A',
+    'ETH-GOER-A',
     // 'ETHEREUM-SLAVE-OPTIMISM-1',
     // 'ETHEREUM-SLAVE-ARBITRUM-1',
     // 'ETHEREUM-MASTER-1',
@@ -17,6 +20,9 @@ exports.DEFAULT_RPC_URLS = {
     'RINKEBY-MASTER-1': 'https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
     'KOVAN-SLAVE-OPTIMISM-1': 'https://kovan.optimism.io/',
     'KOVAN-MASTER-1': 'https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+    'OPT-GOER-A': 'https://goerli.optimism.io',
+    'ARB-GOER-A': 'https://goerli-rollup.arbitrum.io/rpc',
+    'ETH-GOER-A': 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
     //   "ETHEREUM-SLAVE-OPTIMISM-1": "https://optimism.io/",
     //   "ETHEREUM-SLAVE-ARBITRUM-1": "https://arb1.arbitrum.io/rpc",
     //   "ETHEREUM-MASTER-1": "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
@@ -24,6 +30,8 @@ exports.DEFAULT_RPC_URLS = {
 const descriptionsToDomainIds = {
     'arbitrum-testnet': 'RINKEBY-SLAVE-ARBITRUM-1',
     'optimism-testnet': 'KOVAN-SLAVE-OPTIMISM-1',
+    'arbitrum-goerli-testnet': 'ARB-GOER-A',
+    'optimism-goerli-testnet': 'OPT-GOER-A',
     ...Object.assign({}, ...exports.DOMAINS.map((d) => ({ [d]: d }))),
 };
 function getLikelyDomainId(srcDomain) {
@@ -38,6 +46,9 @@ function getDefaultDstDomain(srcDomain) {
     if (domainId.includes('RINKEBY')) {
         return 'RINKEBY-MASTER-1';
     }
+    if (domainId.includes('GOER')) {
+        return 'ETH-GOER-A';
+    }
     throw new Error(`No default destination domain for source domain "${srcDomain}"`);
 }
 exports.getDefaultDstDomain = getDefaultDstDomain;
@@ -47,6 +58,9 @@ function getSdk(domain, signerOrProvider) {
         'RINKEBY-SLAVE-ARBITRUM-1': sdk_1.getArbitrumTestnetSdk,
         'KOVAN-MASTER-1': sdk_1.getKovanSdk,
         'KOVAN-SLAVE-OPTIMISM-1': sdk_1.getOptimismKovanSdk,
+        'OPT-GOER-A': sdk_1.getOptimismGoerliTestnetSdk,
+        'ARB-GOER-A': sdk_1.getArbitrumGoerliTestnetSdk,
+        'ETH-GOER-A': sdk_1.getGoerliSdk,
     };
     const domainId = getLikelyDomainId(domain);
     const signer = signerOrProvider;

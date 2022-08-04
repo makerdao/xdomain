@@ -17,6 +17,10 @@ const GELATO_ADDRESSES: { [chainId: number]: { service: string; gelato: string }
     service: '0x4F36f93F58d36DcbC1E60b9bdBE213482285C482',
     gelato: '0xDf592cB2d32445F8e831d211AB20D3233cA41bD8',
   },
+  5: {
+    service: '',
+    gelato: '',
+  },
 }
 
 export type Relay = BasicRelay | TrustedRelay
@@ -171,6 +175,7 @@ async function getRelayGasLimit(
   const addresses = GELATO_ADDRESSES[chainId]
 
   const serviceAddress = addresses.service
+  if (!serviceAddress) throw new Error(`Missing "service" address for chainId ${chainId}`)
   const serviceInterface = new Interface([
     'function forwardCallSyncFee(address _target,bytes calldata _data,address _feeToken,uint256 _gas,uint256 _gelatoFee,bytes32 _taskId)',
   ])
@@ -184,6 +189,7 @@ async function getRelayGasLimit(
   ])
 
   const gelatoAddress = addresses.gelato
+  if (!gelatoAddress) throw new Error(`Missing "gelato" address for chainId ${chainId}`)
   const gelatoInterface = new Interface([
     'function exec(address _service,bytes calldata _data,address _creditToken) returns (uint256 credit,uint256 gasDebitInNativeToken,uint256 gasDebitInCreditToken,uint256 estimatedGasUsed)',
     'function executors() view returns (address[] memory)',

@@ -13,15 +13,23 @@ class TeleportBridge {
         this.dstDomainProvider = dstDomainProvider || new ethers_1.ethers.providers.JsonRpcProvider(_1.DEFAULT_RPC_URLS[this.dstDomain]);
         this.settings = { useFakeArbitrumOutbox: false, ...settings };
     }
+    async approveSrcGateway(sender, amount, overrides) {
+        const shouldSendTx = Boolean(sender);
+        const sdk = (0, _1.getSdk)(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender));
+        return await _optionallySendTx(shouldSendTx, sdk.Dai, 'approve(address,uint256)', [sdk.TeleportOutboundGateway.address, amount || ethers_1.ethers.constants.MaxUint256], overrides);
+    }
     async initTeleport(receiverAddress, amount, operatorAddress, sender, overrides) {
         const shouldSendTx = Boolean(sender);
         const sdk = (0, _1.getSdk)(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender));
         const l2Bridge = sdk.TeleportOutboundGateway;
         const dstDomainBytes32 = bytes32(this.dstDomain);
+        const methodName = ['KOVAN-SLAVE-OPTIMISM-1', 'RINKEBY-SLAVE-ARBITRUM-1'].includes(this.srcDomain)
+            ? 'initiateWormhole'
+            : 'initiateTeleport';
         if (operatorAddress) {
-            return await _optionallySendTx(shouldSendTx, l2Bridge, 'initiateWormhole(bytes32,address,uint128,address)', [dstDomainBytes32, receiverAddress, amount, operatorAddress], overrides);
+            return await _optionallySendTx(shouldSendTx, l2Bridge, `${methodName}(bytes32,address,uint128,address)`, [dstDomainBytes32, receiverAddress, amount, operatorAddress], overrides);
         }
-        return await _optionallySendTx(shouldSendTx, l2Bridge, 'initiateWormhole(bytes32,address,uint128)', [dstDomainBytes32, receiverAddress, amount], overrides);
+        return await _optionallySendTx(shouldSendTx, l2Bridge, `${methodName}(bytes32,address,uint128)`, [dstDomainBytes32, receiverAddress, amount], overrides);
     }
     async initRelayedTeleport(receiverAddress, amount, sender, relayAddress, overrides) {
         const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
@@ -38,6 +46,11 @@ class TeleportBridge {
     }
     async getDstBalance(userAddress) {
         return await _getDaiBalance(userAddress, this.dstDomain, this.dstDomainProvider);
+    }
+    async getSrcGatewayAllowance(userAddress) {
+        const sdk = (0, _1.getSdk)(this.srcDomain, this.srcDomainProvider);
+        const allowance = await sdk.Dai.allowance(userAddress, sdk.TeleportOutboundGateway.address);
+        return allowance;
     }
     async getAmounts(withdrawn, isHighPriority, relayAddress) {
         const zero = (0, utils_1.hexZeroPad)('0x', 32);
@@ -60,7 +73,7 @@ class TeleportBridge {
         const done = await sdk.Faucet.done(senderAddress, sdk.Dai.address);
         if (done)
             throw new Error(`${this.srcDomain} faucet already used for ${senderAddress}!`);
-        const tx = await sdk.Faucet['gulp(address)'](sdk.Dai.address);
+        const tx = await sdk.Faucet['gulp(address)'](sdk.Dai.address, { ...overrides });
         return tx;
     }
     async mintWithOracles(teleportGUID, signatures, maxFeePercentage, operatorFee, sender, overrides) {
@@ -113,11 +126,7 @@ async function _optionallySendTx(shouldSendTx, contract, method, data, overrides
 }
 async function _getDaiBalance(userAddress, domain, domainProvider) {
     const sdk = (0, _1.getSdk)(domain, domainProvider);
-    if (!sdk.Dai) {
-        throw new Error(`Dai contract not found on domain ${domain}`);
-    }
-    const DaiLike = new ethers_1.Contract(sdk.Dai.address, new utils_1.Interface(['function balanceOf(address) view returns (uint256)']), domainProvider);
-    const balance = await DaiLike.balanceOf(userAddress);
+    const balance = await sdk.Dai.balanceOf(userAddress);
     return balance;
 }
 function _getRelay(dstDomain, dstDomainProvider, relayAddress) {

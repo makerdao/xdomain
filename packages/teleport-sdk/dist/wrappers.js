@@ -1,11 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mintWithoutOracles = exports.canMintWithoutOracle = exports.relayMintWithOracles = exports.mintWithOracles = exports.requestFaucetDai = exports.getAmounts = exports.getAmountsForTeleportGUID = exports.getDstBalance = exports.getSrcBalance = exports.getAttestations = exports.initRelayedTeleport = exports.initTeleport = exports.getTeleportBridge = void 0;
+exports.mintWithoutOracles = exports.canMintWithoutOracle = exports.relayMintWithOracles = exports.mintWithOracles = exports.requestFaucetDai = exports.getAmounts = exports.getAmountsForTeleportGUID = exports.getSrcGatewayAllowance = exports.getDstBalance = exports.getSrcBalance = exports.getAttestations = exports.initRelayedTeleport = exports.initTeleport = exports.approveSrcGateway = exports.getTeleportBridge = void 0;
 const _1 = require(".");
 function getTeleportBridge(opts) {
     return new _1.TeleportBridge({ ...opts, srcDomain: (0, _1.getLikelyDomainId)(opts.srcDomain) });
 }
 exports.getTeleportBridge = getTeleportBridge;
+function approveSrcGateway(opts) {
+    return getTeleportBridge(opts).approveSrcGateway(opts.sender, opts.amount, opts.overrides);
+}
+exports.approveSrcGateway = approveSrcGateway;
 function initTeleport(opts) {
     return getTeleportBridge(opts).initTeleport(opts.receiverAddress, opts.amount, opts.operatorAddress, opts.sender, opts.overrides);
 }
@@ -26,6 +30,10 @@ function getDstBalance(opts) {
     return getTeleportBridge(opts).getDstBalance(opts.userAddress);
 }
 exports.getDstBalance = getDstBalance;
+function getSrcGatewayAllowance(opts) {
+    return getTeleportBridge(opts).getSrcGatewayAllowance(opts.userAddress);
+}
+exports.getSrcGatewayAllowance = getSrcGatewayAllowance;
 function getAmountsForTeleportGUID(opts) {
     return getTeleportBridge(opts).getAmountsForTeleportGUID(opts.teleportGUID, opts.isHighPriority, opts.relayParams, opts.relayAddress);
 }

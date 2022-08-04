@@ -1,6 +1,6 @@
 import { Provider } from '@ethersproject/abstract-provider'
 import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrides, Signer } from 'ethers'
-import { hexZeroPad, Interface } from 'ethers/lib/utils'
+import { hexZeroPad } from 'ethers/lib/utils'
 
 import {
   ArbitrumDstDomainId,
@@ -58,6 +58,18 @@ export class TeleportBridge {
     this.settings = { useFakeArbitrumOutbox: false, ...settings }
   }
 
+  public async approveSrcGateway(sender?: Signer, amount?: BigNumberish, overrides?: Overrides): Promise<Call> {
+    const shouldSendTx = Boolean(sender)
+    const sdk = getSdk(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender))
+    return await _optionallySendTx(
+      shouldSendTx,
+      sdk.Dai!,
+      'approve(address,uint256)',
+      [sdk.TeleportOutboundGateway!.address, amount || ethers.constants.MaxUint256],
+      overrides,
+    )
+  }
+
   public async initTeleport(
     receiverAddress: string,
     amount: BigNumberish,
@@ -70,11 +82,15 @@ export class TeleportBridge {
     const l2Bridge = sdk.TeleportOutboundGateway!
     const dstDomainBytes32 = bytes32(this.dstDomain)
 
+    const methodName = ['KOVAN-SLAVE-OPTIMISM-1', 'RINKEBY-SLAVE-ARBITRUM-1'].includes(this.srcDomain)
+      ? 'initiateWormhole'
+      : 'initiateTeleport'
+
     if (operatorAddress) {
       return await _optionallySendTx(
         shouldSendTx,
         l2Bridge,
-        'initiateWormhole(bytes32,address,uint128,address)',
+        `${methodName}(bytes32,address,uint128,address)`,
         [dstDomainBytes32, receiverAddress, amount, operatorAddress],
         overrides,
       )
@@ -83,7 +99,7 @@ export class TeleportBridge {
     return await _optionallySendTx(
       shouldSendTx,
       l2Bridge,
-      'initiateWormhole(bytes32,address,uint128)',
+      `${methodName}(bytes32,address,uint128)`,
       [dstDomainBytes32, receiverAddress, amount],
       overrides,
     )
@@ -131,6 +147,12 @@ export class TeleportBridge {
 
   public async getDstBalance(userAddress: string): Promise<BigNumber> {
     return await _getDaiBalance(userAddress, this.dstDomain, this.dstDomainProvider)
+  }
+
+  public async getSrcGatewayAllowance(userAddress: string): Promise<BigNumber> {
+    const sdk = getSdk(this.srcDomain, this.srcDomainProvider)
+    const allowance = await sdk.Dai!.allowance(userAddress, sdk.TeleportOutboundGateway!.address)
+    return allowance
   }
 
   public async getAmounts(
@@ -195,7 +217,7 @@ export class TeleportBridge {
     const senderAddress = await sender.getAddress()
     const done = await sdk.Faucet.done(senderAddress, sdk.Dai!.address)
     if (done) throw new Error(`${this.srcDomain} faucet already used for ${senderAddress}!`)
-    const tx = await sdk.Faucet['gulp(address)'](sdk.Dai!.address, overrides)
+    const tx = await sdk.Faucet['gulp(address)'](sdk.Dai!.address, { ...overrides })
     return tx
   }
 
@@ -323,15 +345,7 @@ async function _optionallySendTx(
 
 async function _getDaiBalance(userAddress: string, domain: DomainDescription, domainProvider: any): Promise<BigNumber> {
   const sdk = getSdk(domain, domainProvider)
-  if (!sdk.Dai) {
-    throw new Error(`Dai contract not found on domain ${domain}`)
-  }
-  const DaiLike = new Contract(
-    sdk.Dai.address,
-    new Interface(['function balanceOf(address) view returns (uint256)']),
-    domainProvider,
-  )
-  const balance = await DaiLike.balanceOf(userAddress)
+  const balance = await sdk.Dai!.balanceOf(userAddress)
   return balance
 }
 

@@ -9,6 +9,11 @@ export interface DomainContext {
     settings?: BridgeSettings;
 }
 export declare function getTeleportBridge(opts: DomainContext): TeleportBridge;
+export declare function approveSrcGateway(opts: {
+    sender?: Signer;
+    amount?: BigNumberish;
+    overrides?: Overrides;
+} & DomainContext): ReturnType<TeleportBridge['approveSrcGateway']>;
 export interface InitTeleportOpts {
     receiverAddress: string;
     amount: BigNumberish;
@@ -34,6 +39,9 @@ export declare function getSrcBalance(opts: {
 export declare function getDstBalance(opts: {
     userAddress: string;
 } & DomainContext): ReturnType<TeleportBridge['getDstBalance']>;
+export declare function getSrcGatewayAllowance(opts: {
+    userAddress: string;
+} & DomainContext): ReturnType<TeleportBridge['getSrcGatewayAllowance']>;
 export declare function getAmountsForTeleportGUID(opts: {
     teleportGUID: TeleportGUID;
     isHighPriority?: boolean;

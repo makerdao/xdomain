@@ -63,7 +63,7 @@ export default defineConfig({
     arbitrumGoerliTestnet: {
       'ARB-GOER-A': {
         TeleportOutboundGateway: '0xb586c1D27Ee93329B1da48B8F7F4436C173FCef8', // L2DaiTeleportGateway
-        Faucet: '0xc72cfA99ef0aec40334A2df3E70eB1028402cceE', // L2Dai Faucet
+        Faucet: '0x9031Ab810C496FCF09B65851c736E9a37983B963', // L2Dai Faucet
         Dai: '0x8ea903081aa1137F11D51F64A1F372EDe67571a9', // L2Dai
       },
     },

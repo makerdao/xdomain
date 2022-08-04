@@ -43,3 +43,33 @@ export declare function getArbitrumTestnetSdk(defaultSigner: Signer): {
         Dai: types.Dai;
     };
 };
+export declare type GoerliSdk = ReturnType<typeof getGoerliSdk>;
+export declare function getGoerliSdk(defaultSigner: Signer): {
+    "ETH-GOER-A": {
+        TeleportOracleAuth: types.TeleportOracleAuth;
+        TeleportJoin: types.TeleportJoin;
+        Vat: types.Vat;
+        Multicall: types.Multicall;
+        FakeOutbox: types.FakeOutbox;
+        Outbox: types.Outbox;
+        BasicRelay: types.BasicRelay;
+        TrustedRelay: types.TrustedRelay;
+        Dai: types.Dai;
+    };
+};
+export declare type OptimismGoerliTestnetSdk = ReturnType<typeof getOptimismGoerliTestnetSdk>;
+export declare function getOptimismGoerliTestnetSdk(defaultSigner: Signer): {
+    "OPT-GOER-A": {
+        TeleportOutboundGateway: types.TeleportOutboundGateway;
+        Faucet: types.Faucet;
+        Dai: types.Dai;
+    };
+};
+export declare type ArbitrumGoerliTestnetSdk = ReturnType<typeof getArbitrumGoerliTestnetSdk>;
+export declare function getArbitrumGoerliTestnetSdk(defaultSigner: Signer): {
+    "ARB-GOER-A": {
+        TeleportOutboundGateway: types.TeleportOutboundGateway;
+        Faucet: types.Faucet;
+        Dai: types.Dai;
+    };
+};

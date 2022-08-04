@@ -24,6 +24,7 @@ export declare class TeleportBridge {
     dstDomainProvider: Provider;
     settings: AllBridgeSettings;
     constructor({ srcDomain, dstDomain, srcDomainProvider, dstDomainProvider, settings }: TeleportBridgeOpts);
+    approveSrcGateway(sender?: Signer, amount?: BigNumberish, overrides?: Overrides): Promise<Call>;
     initTeleport(receiverAddress: string, amount: BigNumberish, operatorAddress?: string, sender?: Signer, overrides?: Overrides): Promise<Call>;
     initRelayedTeleport(receiverAddress: string, amount: BigNumberish, sender?: Signer, relayAddress?: string, overrides?: Overrides): Promise<Call>;
     getAttestations(txHash: string, onNewSignatureReceived?: (numSignatures: number, threshold: number) => void, timeoutMs?: number, pollingIntervalMs?: number, teleportGUID?: TeleportGUID): Promise<{
@@ -32,6 +33,7 @@ export declare class TeleportBridge {
     }>;
     getSrcBalance(userAddress: string): Promise<BigNumber>;
     getDstBalance(userAddress: string): Promise<BigNumber>;
+    getSrcGatewayAllowance(userAddress: string): Promise<BigNumber>;
     getAmounts(withdrawn: BigNumberish, isHighPriority?: boolean, relayAddress?: string): Promise<{
         mintable: BigNumber;
         bridgeFee: BigNumber;
