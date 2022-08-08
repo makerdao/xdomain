@@ -95,6 +95,7 @@ export async function setupArbitrumTests({
     teleportSdk,
     baseBridgeSdk,
     slaveDomain: domain,
+    masterDomain,
     arbitrumRollupSdk: { ...arbitrumRollupSdk, inbox: fakeInbox },
   })
 

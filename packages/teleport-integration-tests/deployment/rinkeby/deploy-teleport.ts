@@ -60,6 +60,7 @@ async function main() {
     teleportSdk,
     baseBridgeSdk,
     slaveDomain: arbitrumSlaveDomain,
+    masterDomain,
     arbitrumRollupSdk: { ...arbitrumRollupSdk, inbox: fakeInbox },
   })
 

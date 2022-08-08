@@ -91,5 +91,55 @@ export default defineConfig({
         l2DaiGateway: '0x7DC1e34e97c990f2B7d46777a47Fa47D069A8825',
       },
     },
+
+    goerli: {
+      maker: {
+        // bespoke "light" MCD deployment where the pause_proxy is owned by the deployer EOA
+        vat: '0x293D5AA7F26EF9A687880C4501871632d1015A82',
+        dai_join: '0x53275153854358E12789307fD45Bbab0f5b575A0',
+        vow: '0xFF660111D2C6887D8F24B5378cceDbf465B33B6F',
+        pause_proxy: '0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce',
+        esm: '0x4EdB261c15EF5A895f449593CDC9Fc7D2Fb714c2',
+        dai: '0x0089Ed33ED517F58a064D0ef56C9E89Dc01EE9A2',
+        median_ethusd: '0xAdC6217F6D549dD4CBc7BF7B4f22769334C20f2D',
+      },
+      optimismDaiBridge: {
+        l1Escrow: '0xC2351e2a0Dd9f44bB1E3ECd523442473Fa5e46a0',
+        l1GovernanceRelay: '0x38BF0bBF7dEb5Eb17a5f453AfCED4ee3A992b08d',
+        l1DAITokenBridge: '0xd95CbA7F7be2984058f15e4a4e03C89845fD8EB2',
+      },
+      arbitrumDaiBridge: {
+        l1Escrow: '0xD9e08dc985012296b9A80BEf4a587Ad72288D986',
+        l1GovernanceRelay: '0xb07c5507Eff5A62F20418b3d0f0be843f640ce9A',
+        l1DaiGateway: '0x9C032F29427E185b52D02880131a3577484BE651',
+      },
+      optimism: {
+        xDomainMessenger: '0x5086d1eEF304eb5284A0f6720f79403b4e9bE294',
+        l1StandardBridge: '0x636Af16bf2f682dD3109e60102b8E1A089FedAa8',
+        stateCommitmentChain: '0x72281826E90dD8A65Ab686fF254eb45Be426DD22',
+      },
+      arbitrum: {
+        inbox: '0x6BEbC4925716945D46F0Ec336D5C2564F419682C', // real inbox
+      },
+    },
+
+    arbitrumGoerliTestnet: {
+      arbitrumDaiBridge: {
+        dai: '0x8ea903081aa1137F11D51F64A1F372EDe67571a9',
+        l2GovernanceRelay: '0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce',
+        l2DaiGateway: '0x2BD50836f3998D5952331f41C5c2395B7b825F50',
+      },
+    },
+    optimismGoerliTestnet: {
+      optimismDaiBridge: {
+        dai: '0x8ea903081aa1137F11D51F64A1F372EDe67571a9',
+        l2GovernanceRelay: '0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce',
+        l2DAITokenBridge: '0x293D5AA7F26EF9A687880C4501871632d1015A82',
+      },
+      optimism: {
+        xDomainMessenger: '0x4200000000000000000000000000000000000007',
+        l2StandardBridge: '0x4200000000000000000000000000000000000010',
+      },
+    },
   },
 })

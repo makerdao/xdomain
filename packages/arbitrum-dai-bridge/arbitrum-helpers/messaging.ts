@@ -1,6 +1,33 @@
+import { L1ToL2MessageStatus, L1TransactionReceipt } from '@arbitrum/sdk'
 import { expect } from 'chai'
 import { BigNumber, ethers, providers, Signer, utils } from 'ethers'
 import hre from 'hardhat'
+
+export async function waitToRelayTxsToL2_Nitro(
+  inProgressL1Tx: Promise<providers.TransactionReceipt>,
+  l2Signer: ethers.Signer,
+) {
+  const txnReceipt = await inProgressL1Tx
+  const l1TxnReceipt = new L1TransactionReceipt(txnReceipt)
+  const l1ToL2Message = (await l1TxnReceipt.getL1ToL2Messages(l2Signer))[0]
+  console.log('Waiting for L1 to L2 message status...')
+  const res = await l1ToL2Message.waitForStatus()
+
+  if (res.status === L1ToL2MessageStatus.FUNDS_DEPOSITED_ON_L2) {
+    console.log('Redeeming xchain message ...')
+    const response = await l1ToL2Message.redeem()
+    const receipt = await response.wait()
+    if (receipt.status === 1) {
+      console.log('Xchain message was succesfully redeemed.')
+    } else {
+      throw new Error('Xchain message redemption failed')
+    }
+  } else if (res.status === L1ToL2MessageStatus.REDEEMED) {
+    console.log('Xchain message was auto-redeemed.')
+  } else {
+    throw new Error(`Unknown L1 to L2 message status: ${res.status}`)
+  }
+}
 
 export async function waitToRelayTxsToL2(
   inProgressL1Tx: Promise<providers.TransactionReceipt>,
