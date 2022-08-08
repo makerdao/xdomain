@@ -33,6 +33,7 @@ export function useMainButton(
   provider?: ethers.providers.Provider,
 ) {
   const [burnConfirmed, setBurnConfirmed] = useState<boolean>(false)
+  const [checkingBurnConfirmed, setCheckingBurnConfirmed] = useState<boolean>(false)
   const [gulpConfirmed, setGulpConfirmed] = useState<boolean>(false)
   const [approveConfirmed, setApproveConfirmed] = useState<boolean>(false)
   const [attestationsRequested, setAttestationsRequested] = useState<boolean>(false)
@@ -156,6 +157,8 @@ export function useMainButton(
           `getTransactionReceipt(burnTxHash=${burnTxHash}): no receipt after 10 attempts. Source domain probably incorrect.`,
         )
       }
+      if (checkingBurnConfirmed) return
+      setCheckingBurnConfirmed(true)
       waitForBurn().catch(console.error)
     } else if (!guid) {
       setMainButton({
