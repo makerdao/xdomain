@@ -127,8 +127,9 @@ contract DomainHostTest is DSSTest {
     function testAuth() public {
         host.deny(address(this));
 
-        bytes[] memory funcs = new bytes[](1);
+        bytes[] memory funcs = new bytes[](2);
         funcs[0] = abi.encodeWithSelector(EmptyDomainHost.lift.selector, 0);
+        funcs[1] = abi.encodeWithSelector(EmptyDomainHost.rectify.selector);
 
         for (uint256 i = 0; i < funcs.length; i++) {
             assertRevert(address(host), funcs[i], "DomainHost/not-authorized");

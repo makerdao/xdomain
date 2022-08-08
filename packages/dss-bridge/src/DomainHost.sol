@@ -220,7 +220,9 @@ abstract contract DomainHost {
     }
 
     /// @notice Move bad debt from the remote domain into the local vow
-    function _rectify() internal vatLive returns (bytes memory payload) {
+    /// @dev This is a potentially dangerous operation as a malicious domain can drain the entire surplus buffer
+    /// Because of this we require an authed party to perform this operation
+    function _rectify() internal auth vatLive returns (bytes memory payload) {
         uint256 wad = sin;
         require(sin > 0, "DomainHost/no-sin");
         vat.suck(vow, address(this), wad * RAY);
