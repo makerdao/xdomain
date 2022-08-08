@@ -1,0 +1,40 @@
+@import '~antd/dist/antd.css';
+
+.App {
+  margin-top: 16px;
+}
+
+.box {
+  border: 1px solid lightgray;
+  background-color: #f0f5ff;
+}
+
+.box.top-bar {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+.box.teleport {
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+.domain {
+  border: 1.5px solid black;
+  margin-bottom: 20px;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  padding-right: 30px;
+  padding-left: 30px;
+  background-color: #d6e4ff;
+  border-radius: 15px;
+
+  .max-amount {
+    padding-right: 5px;
+    padding-left: 5px;
+  }
+  .dst-balance {
+  }
+}
