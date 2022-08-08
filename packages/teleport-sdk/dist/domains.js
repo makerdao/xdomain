@@ -11,9 +11,9 @@ exports.DOMAINS = [
     'OPT-GOER-A',
     'ARB-GOER-A',
     'ETH-GOER-A',
-    // 'ETHEREUM-SLAVE-OPTIMISM-1',
-    // 'ETHEREUM-SLAVE-ARBITRUM-1',
-    // 'ETHEREUM-MASTER-1',
+    // 'OPT-MAIN-A',
+    // 'ARB-MAIN-A',
+    // 'ETH-MAIN-A',
 ];
 exports.DEFAULT_RPC_URLS = {
     'RINKEBY-SLAVE-ARBITRUM-1': 'https://rinkeby.arbitrum.io/rpc',
@@ -23,9 +23,9 @@ exports.DEFAULT_RPC_URLS = {
     'OPT-GOER-A': 'https://goerli.optimism.io',
     'ARB-GOER-A': 'https://goerli-rollup.arbitrum.io/rpc',
     'ETH-GOER-A': 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
-    //   "ETHEREUM-SLAVE-OPTIMISM-1": "https://optimism.io/",
-    //   "ETHEREUM-SLAVE-ARBITRUM-1": "https://arb1.arbitrum.io/rpc",
-    //   "ETHEREUM-MASTER-1": "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+    //   "OPT-MAIN-A": "https://optimism.io/",
+    //   "ARB-MAIN-A": "https://arb1.arbitrum.io/rpc",
+    //   "ETH-MAIN-A": "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
 };
 const descriptionsToDomainIds = {
     'arbitrum-testnet': 'RINKEBY-SLAVE-ARBITRUM-1',

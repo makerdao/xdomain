@@ -19,6 +19,10 @@ const GELATO_ADDRESSES = {
         service: '0x4F36f93F58d36DcbC1E60b9bdBE213482285C482',
         gelato: '0xDf592cB2d32445F8e831d211AB20D3233cA41bD8',
     },
+    5: {
+        service: '0x61BF11e6641C289d4DA1D59dC3E03E15D2BA971c',
+        gelato: '0x683913B3A32ada4F8100458A3E1675425BdAa7DF',
+    },
 };
 function getEstimatedRelayGasLimit(relay) {
     if (relay.hasOwnProperty('signers')) {
@@ -39,7 +43,7 @@ async function queryGelatoApi(url, method, params) {
                 const { response } = err;
                 const errorMsg = `Gelato API ${response === null || response === void 0 ? void 0 : response.status} error (attempt ${attempt}/5): "${(_a = response === null || response === void 0 ? void 0 : response.data) === null || _a === void 0 ? void 0 : _a.message}"`;
                 if (attempt <= 5) {
-                    console.error(errorMsg);
+                    console.error(((response === null || response === void 0 ? void 0 : response.status) && errorMsg) || `Gelato API unknown error (attempt ${attempt}/5): ${err}`);
                     await (0, _1.sleep)(2000 * attempt);
                     attempt++;
                 }
@@ -99,7 +103,7 @@ async function waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs
     let isExecPending = false;
     while (true) {
         const { data } = await queryGelatoApi(`tasks/GelatoMetaBox/${taskId}`, 'get');
-        // console.log(`TaskId=${taskId}, data:`, data[0])
+        console.log(`TaskId=${taskId}, data:`, data[0]);
         if (((_a = data[0]) === null || _a === void 0 ? void 0 : _a.taskState) === 'ExecSuccess') {
             const txHash = (_b = data[0].execution) === null || _b === void 0 ? void 0 : _b.transactionHash;
             if (txHash)
@@ -127,6 +131,8 @@ async function getRelayGasLimit(relay, relayParams, onPayloadSigned) {
     const { chainId } = await relay.provider.getNetwork();
     const addresses = GELATO_ADDRESSES[chainId];
     const serviceAddress = addresses.service;
+    if (!serviceAddress)
+        throw new Error(`Missing "service" address for chainId ${chainId}`);
     const serviceInterface = new utils_1.Interface([
         'function forwardCallSyncFee(address _target,bytes calldata _data,address _feeToken,uint256 _gas,uint256 _gelatoFee,bytes32 _taskId)',
     ]);
@@ -139,6 +145,8 @@ async function getRelayGasLimit(relay, relayParams, onPayloadSigned) {
         ethers_1.ethers.constants.MaxUint256.toHexString(),
     ]);
     const gelatoAddress = addresses.gelato;
+    if (!gelatoAddress)
+        throw new Error(`Missing "gelato" address for chainId ${chainId}`);
     const gelatoInterface = new utils_1.Interface([
         'function exec(address _service,bytes calldata _data,address _creditToken) returns (uint256 credit,uint256 gasDebitInNativeToken,uint256 gasDebitInCreditToken,uint256 estimatedGasUsed)',
         'function executors() view returns (address[] memory)',
