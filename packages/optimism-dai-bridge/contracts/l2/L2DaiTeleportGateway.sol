@@ -60,6 +60,10 @@ contract L2DaiTeleportGateway is OVM_CrossDomainEnabled, IL2TeleportGateway {
   event Deny(address indexed usr);
   event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
 
+  function _add(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    require((z = x + y) >= x);
+  }
+
   constructor(
     address _l2CrossDomainMessenger,
     address _l2Token,
@@ -149,7 +153,7 @@ contract L2DaiTeleportGateway is OVM_CrossDomainEnabled, IL2TeleportGateway {
       timestamp: uint48(block.timestamp)
     });
 
-    batchedDaiToFlush[targetDomain] += amount;
+    batchedDaiToFlush[targetDomain] = _add(batchedDaiToFlush[targetDomain], amount);
     Mintable(l2Token).burn(msg.sender, amount);
 
     bytes memory message = abi.encodeWithSelector(
