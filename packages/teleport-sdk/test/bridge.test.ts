@@ -567,10 +567,31 @@ describe('TeleportBridge', () => {
         await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay })
       })
 
-      it('should relay a mint with oracles (kovan-optimism, wrapper, non-precise relayFee)', async () => {
-        await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay, useWrapper: true })
+      it('should relay a mint with oracles (goerli-optimism, precise relayFee)', async () => {
+        await testMintWithOracles({
+          srcDomain: 'optimism-goerli-testnet',
+          useRelay,
+          usePreciseRelayFeeEstimation: true,
+        })
+      })
+
+      it('should relay a mint with oracles (goerli-optimism, non-precise relayFee)', async () => {
+        await testMintWithOracles({ srcDomain: 'optimism-goerli-testnet', useRelay })
+      })
+
+      it('should relay a mint with oracles (goerli-arbitrum, precise relayFee)', async () => {
+        await testMintWithOracles({
+          srcDomain: 'arbitrum-goerli-testnet',
+          useRelay,
+          usePreciseRelayFeeEstimation: true,
+        })
+      })
+
+      it('should relay a mint with oracles (goerli-arbitrum, non-precise relayFee)', async () => {
+        await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet', useRelay })
       })
     }
+
     describe('Using BasicRelay', async () => {
       await testRelayMint({ useRelay: true })
     })

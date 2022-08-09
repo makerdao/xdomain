@@ -114,6 +114,7 @@ async function createRelayTask(relay: Relay, calldata: string, gasLimit: BigNumb
   return taskId
 }
 
+let lastTaskLog: string | undefined
 async function waitForRelayTaskConfirmation(
   taskId: string,
   pollingIntervalMs: number,
@@ -123,7 +124,11 @@ async function waitForRelayTaskConfirmation(
   let isExecPending = false
   while (true) {
     const { data } = await queryGelatoApi(`tasks/GelatoMetaBox/${taskId}`, 'get')
-    console.log(`TaskId=${taskId}, data:`, data[0])
+    const taskLog = `TaskId=${taskId}, data: ${JSON.stringify(data[0])}`
+    if (lastTaskLog !== taskLog) {
+      console.log(taskLog)
+      lastTaskLog = taskLog
+    }
     if (data[0]?.taskState === 'ExecSuccess') {
       const txHash = data[0].execution?.transactionHash
       if (txHash) return txHash
