@@ -97,13 +97,18 @@ async function createRelayTask(relay, calldata, gasLimit) {
     });
     return taskId;
 }
+let lastTaskLog;
 async function waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs) {
     var _a, _b, _c, _d, _e, _f;
     let timeSlept = 0;
     let isExecPending = false;
     while (true) {
         const { data } = await queryGelatoApi(`tasks/GelatoMetaBox/${taskId}`, 'get');
-        console.log(`TaskId=${taskId}, data:`, data[0]);
+        const taskLog = `TaskId=${taskId}, data: ${JSON.stringify(data[0])}`;
+        if (lastTaskLog !== taskLog) {
+            console.log(taskLog);
+            lastTaskLog = taskLog;
+        }
         if (((_a = data[0]) === null || _a === void 0 ? void 0 : _a.taskState) === 'ExecSuccess') {
             const txHash = (_b = data[0].execution) === null || _b === void 0 ? void 0 : _b.transactionHash;
             if (txHash)
