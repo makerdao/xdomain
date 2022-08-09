@@ -225,6 +225,17 @@ contract DomainGuestTest is DSSTest {
         }
     }
 
+    function testOrdered() public {
+        bytes[] memory funcs = new bytes[](3);
+        funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 1, 0, 0);
+        funcs[1] = abi.encodeWithSelector(DomainGuest.rectify.selector, 1, 0, 0);
+        funcs[2] = abi.encodeWithSelector(DomainGuest.cage.selector, 1, 0, 0);
+
+        for (uint256 i = 0; i < funcs.length; i++) {
+            assertRevert(address(guest), funcs[i], "DomainGuest/out-of-order");
+        }
+    }
+
     function testLift() public {
         assertEq(guest.grain(), 0);
         assertEq(guest.line(), 0);

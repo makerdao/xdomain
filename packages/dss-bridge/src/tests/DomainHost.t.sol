@@ -174,6 +174,17 @@ contract DomainHostTest is DSSTest {
         }
     }
 
+    function testOrdered() public {
+        bytes[] memory funcs = new bytes[](3);
+        funcs[0] = abi.encodeWithSelector(DomainHost.release.selector, 1, 0, 0);
+        funcs[1] = abi.encodeWithSelector(DomainHost.push.selector, 1, 0, 0);
+        funcs[2] = abi.encodeWithSelector(DomainHost.tell.selector, 1, 0, 0);
+
+        for (uint256 i = 0; i < funcs.length; i++) {
+            assertRevert(address(host), funcs[i], "DomainHost/out-of-order");
+        }
+    }
+
     function testLift() public {
         // Set DC to 100
         vm.expectEmit(true, true, true, true);
