@@ -16,8 +16,10 @@
     "test:fix": "yarn lint:fix && yarn format:fix && yarn test && yarn typecheck",
     "typecheck": "yarn eth-sdk && tsc --noEmit",
     "build": "yarn eth-sdk && rm -rf ./dist && tsc -p ./tsconfig.build.json && cp -R ./src/sdk ./dist/sdk",
-    "demo:arbitrum": "yarn ts-node ./scripts/demo.arbitrum.ts | grep -v \"Duplicate definition of File\"",
-    "demo:optimism": "yarn ts-node ./scripts/demo.optimism.ts | grep -v \"Duplicate definition of File\""
+    "demo:arbitrum:rinkeby": "yarn ts-node ./scripts/demo.arbitrum-rinkeby.ts | grep -v \"Duplicate definition of File\"",
+    "demo:arbitrum:goerli": "yarn ts-node ./scripts/demo.arbitrum-goerli.ts | grep -v \"Duplicate definition of File\"",
+    "demo:optimism:kovan": "yarn ts-node ./scripts/demo.optimism-kovan.ts | grep -v \"Duplicate definition of File\"",
+    "demo:optimism:goerli": "yarn ts-node ./scripts/demo.optimism-goerli.ts | grep -v \"Duplicate definition of File\""
   },
   "types": "dist/index.d.ts",
   "dependencies": {
