@@ -61,6 +61,8 @@ abstract contract DomainGuest {
     mapping (bytes32 => uint256) public batchedDaiToFlush;
 
     EndLike public end;
+    uint256 public lid;         // Local ordering id
+    uint256 public rid;         // Remote ordering id
     int256  public line;        // Keep track of changes in line
     uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow [WAD]
     uint256 public live;
@@ -106,6 +108,11 @@ abstract contract DomainGuest {
 
     modifier isLive {
         require(live == 1, "DomainGuest/not-live");
+        _;
+    }
+
+    modifier ordered(uint256 _lid) {
+        require(lid++ == _lid, "DomainGuest/out-of-order");
         _;
     }
 
@@ -170,11 +177,12 @@ abstract contract DomainGuest {
     // --- MCD Support ---
 
     /// @notice Record changes in line and grain and update dss global debt ceiling if necessary
+    /// @param _lid Local ordering id
     /// @param dline The change in the line [RAD]
-    function lift(int256 dline) external hostOnly isLive {
+    function lift(uint256 _lid, int256 dline) external hostOnly isLive ordered(_lid) {
         line += dline;
         if (dline > 0) grain += uint256(dline) / RAY;
-        vat.file("Line", line > 0 ? uint256(line) : 0);
+        vat.file("Line", uint256(line));
 
         emit Lift(dline);
     }
@@ -188,7 +196,7 @@ abstract contract DomainGuest {
         uint256 burned = grain - limit;
         grain = limit;
 
-        payload = abi.encodeWithSelector(DomainHost.release.selector, burned);
+        payload = abi.encodeWithSelector(DomainHost.release.selector, rid++, burned);
 
         emit Release(burned);
     }
@@ -206,7 +214,7 @@ abstract contract DomainGuest {
 
             // Burn the DAI and unload on the other side
             vat.swell(address(this), -_int256(wad * RAY));
-            payload = abi.encodeWithSelector(DomainHost.push.selector, _int256(wad));
+            payload = abi.encodeWithSelector(DomainHost.push.selector, rid++, _int256(wad));
 
             emit Push(int256(wad));
         } else if (_dai < _sin) {
@@ -214,21 +222,24 @@ abstract contract DomainGuest {
             if (_dai > 0) vat.heal(_dai);
 
             int256 deficit = -_int256(_divup(_sin - _dai, RAY));    // Round up to overcharge for deficit
-            payload = abi.encodeWithSelector(DomainHost.push.selector, deficit);
+            payload = abi.encodeWithSelector(DomainHost.push.selector, rid++, deficit);
 
             emit Push(deficit);
         }
     }
 
     /// @notice Merge DAI into surplus
-    function rectify(uint256 wad) external hostOnly {
+    /// @param _lid Local ordering id
+    /// @param wad The amount of DAI that has been sent to this domain [WAD]
+    function rectify(uint256 _lid, uint256 wad) external hostOnly ordered(_lid) {
         vat.swell(address(this), _int256(wad * RAY));
 
         emit Rectify(wad);
     }
 
     /// @notice Trigger the end module
-    function cage() external hostOnly isLive {
+    /// @param _lid Local ordering id
+    function cage(uint256 _lid) external hostOnly isLive ordered(_lid) {
         live = 0;
         end.cage();
 
@@ -239,7 +250,7 @@ abstract contract DomainGuest {
     /// @dev Triggered during shutdown
     /// @param value Cure value [RAD]
     function _tell(uint256 value) internal auth returns (bytes memory payload) {
-        payload = abi.encodeWithSelector(DomainHost.tell.selector, value);
+        payload = abi.encodeWithSelector(DomainHost.tell.selector, rid++, value);
 
         emit Tell(value);
     }

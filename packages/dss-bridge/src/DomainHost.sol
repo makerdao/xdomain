@@ -70,6 +70,8 @@ abstract contract DomainHost {
     RouterLike  public immutable router;
 
     address public vow;
+    uint256 public lid;         // Local ordering id
+    uint256 public rid;         // Remote ordering id
     uint256 public line;        // Remote domain global debt ceiling [RAD]
     uint256 public grain;       // Keep track of the pre-minted DAI in the escrow [WAD]
     uint256 public sin;         // A running total of how much is required to re-capitalize the remote domain [WAD]
@@ -110,6 +112,11 @@ abstract contract DomainHost {
 
     modifier vatLive {
         require(vat.live() == 1, "DomainHost/vat-not-live");
+        _;
+    }
+
+    modifier ordered(uint256 _lid) {
+        require(lid++ == _lid, "DomainHost/out-of-order");
         _;
     }
 
@@ -179,13 +186,15 @@ abstract contract DomainHost {
 
         line = rad;
 
-        payload = abi.encodeWithSelector(DomainGuest.lift.selector, dline);
+        payload = abi.encodeWithSelector(DomainGuest.lift.selector, rid++, dline);
 
         emit Lift(wad);
     }
 
     /// @notice Withdraw pre-mint DAI from the remote domain
-    function release(uint256 wad) external guestOnly vatLive {
+    /// @param _lid Local ordering id
+    /// @param wad The amount of DAI to release [WAD]
+    function release(uint256 _lid, uint256 wad) external guestOnly vatLive ordered(_lid) {
         int256 amt = -_int256(wad);
 
         // Fix any permissionless repays that may have occurred
@@ -208,7 +217,9 @@ abstract contract DomainHost {
     }
 
     /// @notice Guest is pushing a surplus (or deficit)
-    function push(int256 wad) external guestOnly {
+    /// @param _lid Local ordering id
+    /// @param wad The amount of DAI to push (or pull) [WAD]
+    function push(uint256 _lid, int256 wad) external guestOnly ordered(_lid) {
         if (wad >= 0) {
             dai.transferFrom(address(escrow), address(this), uint256(wad));
             daiJoin.join(address(vow), uint256(wad));
@@ -230,7 +241,7 @@ abstract contract DomainHost {
         sin = 0;
         
         // Send ERC20 DAI to the remote DomainGuest
-        payload = abi.encodeWithSelector(DomainGuest.rectify.selector, wad);
+        payload = abi.encodeWithSelector(DomainGuest.rectify.selector, rid++, wad);
 
         emit Rectify(wad);
     }
@@ -243,13 +254,15 @@ abstract contract DomainHost {
 
         live = 0;
 
-        payload = abi.encodeWithSelector(DomainGuest.cage.selector);
+        payload = abi.encodeWithSelector(DomainGuest.cage.selector, rid++);
 
         emit Cage();
     }
 
     /// @notice Set this domain's cure value
-    function tell(uint256 value) external guestOnly {
+    /// @param _lid Local ordering id
+    /// @param value The value of the cure [RAD]
+    function tell(uint256 _lid, uint256 value) external guestOnly ordered(_lid) {
         require(live == 0, "DomainHost/live");
         require(!cureReported, "DomainHost/cure-reported");
         require(_divup(value, RAY) <= grain, "DomainHost/cure-bad-value");
