@@ -139,11 +139,11 @@ export function useMainButton(
         label: <>Initiating Teleport...</>,
         loading: true,
       })
-      const handleReceipt = (receipt: ethers.ContractReceipt) => {
+      const handleReceipt = (receipt: ethers.ContractReceipt, notificationType: 'success' | 'info') => {
         if (receipt.status === 1) {
           console.log(`DAI burn tx confirmed!`)
           setBurnConfirmed(true)
-          notification.success({
+          notification[notificationType]({
             message: 'Teleport Initiated',
           })
         } else if (receipt.status === 0) {
@@ -153,7 +153,7 @@ export function useMainButton(
       if (burnTx) {
         const waitForBurnTx = async () => {
           const receipt = await burnTx.wait()
-          handleReceipt(receipt)
+          handleReceipt(receipt, 'success')
         }
         waitForBurnTx().catch(console.error)
       } else if (!checkingBurnConfirmed) {
@@ -163,7 +163,7 @@ export function useMainButton(
           while (!receipt && attempt <= 10) {
             receipt = await ethersProvider?.getTransactionReceipt(burnTxHash)
             if (receipt) {
-              handleReceipt(receipt)
+              handleReceipt(receipt, 'info')
               return
             } else {
               // console.log(`burn tx receipt: ${receipt}`)

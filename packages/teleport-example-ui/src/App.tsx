@@ -52,11 +52,13 @@ function App() {
     useMainButton(connectWallet, srcChainId, account, maxAmount, amount, allowance, relayFee, walletChainId, provider)
 
   useEffect(() => {
-    if (guid) {
+    if (relayConfirmed) {
+      setAmount('0')
+    } else if (guid) {
       const am = formatEther(BigNumber.from(guid.amount))
       setAmount(am)
     }
-  }, [guid])
+  }, [guid, relayConfirmed])
   useEffect(() => {
     updateMaxAmount().catch(console.error)
   }, [gulpConfirmed, burnConfirmed])
