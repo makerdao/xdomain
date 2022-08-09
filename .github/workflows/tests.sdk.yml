@@ -41,6 +41,8 @@ jobs:
           touch .env
           echo RINKEBY_ARBITRUM_USER_PRIV_KEY="${{ secrets.SDK_USER_PRIV_KEY }}" >> .env
           echo KOVAN_OPTIMISM_USER_PRIV_KEY="${{ secrets.SDK_USER_PRIV_KEY }}" >> .env
+          echo GOERLI_ARBITRUM_USER_PRIV_KEY="${{ secrets.SDK_USER_PRIV_KEY }}" >> .env
+          echo GOERLI_OPTIMISM_USER_PRIV_KEY="${{ secrets.SDK_USER_PRIV_KEY }}" >> .env
 
       - run: yarn build
       - run: yarn test
