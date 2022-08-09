@@ -339,5 +339,5 @@ export function useMainButton(
     relayConfirmed,
   ])
 
-  return { mainButton, gulpConfirmed, approveConfirmed, burnConfirmed, relayConfirmed }
+  return { mainButton, gulpConfirmed, approveConfirmed, burnTxHash, burnConfirmed, guid, relayConfirmed }
 }

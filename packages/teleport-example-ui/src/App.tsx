@@ -1,6 +1,8 @@
 import './App.scss'
 
 import { Button, Col, Row } from 'antd'
+import { BigNumber } from 'ethers'
+import { formatEther } from 'ethers/lib/utils'
 import { useState } from 'react'
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -46,18 +48,15 @@ function App() {
     updateDstBalance,
     updateAllowance,
   } = useAmounts(srcChainId, account)
-  const { mainButton, gulpConfirmed, approveConfirmed, burnConfirmed, relayConfirmed } = useMainButton(
-    connectWallet,
-    srcChainId,
-    account,
-    maxAmount,
-    amount,
-    allowance,
-    relayFee,
-    walletChainId,
-    provider,
-  )
+  const { mainButton, gulpConfirmed, approveConfirmed, burnTxHash, guid, burnConfirmed, relayConfirmed } =
+    useMainButton(connectWallet, srcChainId, account, maxAmount, amount, allowance, relayFee, walletChainId, provider)
 
+  useEffect(() => {
+    if (guid) {
+      const am = formatEther(BigNumber.from(guid.amount))
+      setAmount(am)
+    }
+  }, [guid])
   useEffect(() => {
     updateMaxAmount().catch(console.error)
   }, [gulpConfirmed, burnConfirmed])
@@ -92,7 +91,7 @@ function App() {
                 domain={srcChainId}
                 onDomainChanged={(newChainId) => setSrcChainId(newChainId as SrcDomainChainId)}
                 onMaxAmountClicked={() => setAmount(maxAmount)}
-                onAmountChanged={setAmount}
+                onAmountChanged={(am) => !burnTxHash && setAmount(am)}
               />
               <DomainBox
                 amount={amountAfterFee}
