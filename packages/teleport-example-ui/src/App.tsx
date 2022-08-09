@@ -65,6 +65,7 @@ function App() {
     updateAllowance().catch(console.error)
   }, [approveConfirmed, burnConfirmed])
   useEffect(() => {
+    if (relayConfirmed) setAmount('0')
     updateDstBalance().catch(console.error)
   }, [relayConfirmed])
 

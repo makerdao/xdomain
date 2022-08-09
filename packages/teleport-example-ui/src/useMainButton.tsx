@@ -1,5 +1,6 @@
 import { notification } from 'antd'
 import { ethers } from 'ethers'
+import { ContractTransaction } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 import { ReactElement, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -32,10 +33,11 @@ export function useMainButton(
   walletChainId?: number,
   provider?: ethers.providers.Provider,
 ) {
-  const [burnConfirmed, setBurnConfirmed] = useState<boolean>(false)
-  const [checkingBurnConfirmed, setCheckingBurnConfirmed] = useState<boolean>(false)
   const [gulpConfirmed, setGulpConfirmed] = useState<boolean>(false)
   const [approveConfirmed, setApproveConfirmed] = useState<boolean>(false)
+  const [burnTx, setBurnTx] = useState<ContractTransaction | undefined>()
+  const [checkingBurnConfirmed, setCheckingBurnConfirmed] = useState<boolean>(false)
+  const [burnConfirmed, setBurnConfirmed] = useState<boolean>(false)
   const [attestationsRequested, setAttestationsRequested] = useState<boolean>(false)
   const [numSigs, setNumSigs] = useState<number | undefined>()
   const [threshold, setThreshold] = useState<number | undefined>()
@@ -61,7 +63,12 @@ export function useMainButton(
 
   function resetState() {
     setSearchParams({})
+    setGulpConfirmed(false)
+    setApproveConfirmed(false)
+    setBurnTx(undefined)
+    setCheckingBurnConfirmed(false)
     setBurnConfirmed(false)
+    setAttestationsRequested(false)
     setNumSigs(undefined)
     setThreshold(undefined)
     setSignatures(undefined)
@@ -99,7 +106,7 @@ export function useMainButton(
           }
         },
       })
-    } else if (!approveConfirmed && parseEther(allowance || '0').lt(parseEther(amount || '0'))) {
+    } else if (!burnTxHash && !approveConfirmed && parseEther(allowance || '0').lt(parseEther(amount || '0'))) {
       setMainButton({
         label: <>Approve Dai</>,
         onClick: async () => {
@@ -124,6 +131,7 @@ export function useMainButton(
           console.log(`DAI burn tx submitted on ${srcDomain}: ${tx!.hash}`)
           setPendingAmount(amount)
           setSearchParams({ txHash: tx!.hash, chainId: srcChainId.toString() })
+          if (tx) setBurnTx(tx)
         },
       })
     } else if (!burnConfirmed) {
@@ -131,35 +139,47 @@ export function useMainButton(
         label: <>Initiating Teleport...</>,
         loading: true,
       })
-      const waitForBurn = async () => {
-        let receipt = null
-        let attempt = 1
-        while (!receipt && attempt <= 10) {
-          receipt = await ethersProvider?.getTransactionReceipt(burnTxHash)
-          if (receipt) {
-            if (receipt.status === 1) {
-              console.log(`DAI burn tx confirmed!`)
-              setBurnConfirmed(true)
-              notification.success({
-                message: 'Teleport Initiated',
-              })
-              return
-            } else if (receipt.status === 0) {
-              throw new Error(`Dai burn tx failed: receipt=${receipt}`)
-            }
-          } else {
-            // console.log(`burn tx receipt: ${receipt}`)
-            await sleep(1000 * attempt)
-            attempt++
-          }
+      const handleReceipt = (receipt: ethers.ContractReceipt) => {
+        if (receipt.status === 1) {
+          console.log(`DAI burn tx confirmed!`)
+          setBurnConfirmed(true)
+          notification.success({
+            message: 'Teleport Initiated',
+          })
+        } else if (receipt.status === 0) {
+          throw new Error(`Dai burn tx failed: receipt=${receipt}`)
         }
-        console.error(
-          `getTransactionReceipt(burnTxHash=${burnTxHash}): no receipt after 10 attempts. Source domain probably incorrect.`,
-        )
       }
-      if (checkingBurnConfirmed) return
-      setCheckingBurnConfirmed(true)
-      waitForBurn().catch(console.error)
+      if (burnTx) {
+        const waitForBurnTx = async () => {
+          const receipt = await burnTx.wait()
+          handleReceipt(receipt)
+        }
+        waitForBurnTx().catch(console.error)
+      } else if (!checkingBurnConfirmed) {
+        const waitForBurnReceipt = async () => {
+          let receipt = null
+          let attempt = 1
+          while (!receipt && attempt <= 10) {
+            receipt = await ethersProvider?.getTransactionReceipt(burnTxHash)
+            if (receipt) {
+              handleReceipt(receipt)
+              return
+            } else {
+              // console.log(`burn tx receipt: ${receipt}`)
+              await sleep(1000 * attempt)
+              attempt++
+            }
+          }
+          console.error(
+            `getTransactionReceipt(burnTxHash=${burnTxHash}): no receipt after 10 attempts. Source domain probably incorrect.`,
+          )
+        }
+        setCheckingBurnConfirmed(true)
+        waitForBurnReceipt()
+          .catch(console.error)
+          .finally(() => setCheckingBurnConfirmed(false))
+      }
     } else if (!guid) {
       setMainButton({
         label: (
@@ -274,9 +294,12 @@ export function useMainButton(
     //   srcChainId,
     //   maxAmount,
     //   amount,
-    //   approveConfirmed,
     //   gulpConfirmed,
+    //   allowance,
+    //   approveConfirmed,
     //   burnTxHash,
+    //   burnTx,
+    //   checkingBurnConfirmed,
     //   burnConfirmed,
     //   numSigs,
     //   guid,
@@ -285,6 +308,7 @@ export function useMainButton(
     //   relayTxHash,
     //   relayConfirmed,
     // })
+
     if (!guid || pendingAmount === undefined) {
       doBurn()
     } else if (parseEther(pendingAmount).gt(0)) {
@@ -302,8 +326,10 @@ export function useMainButton(
     maxAmount,
     amount,
     gulpConfirmed,
+    allowance,
     approveConfirmed,
     burnTxHash,
+    burnTx,
     burnConfirmed,
     numSigs,
     guid,
