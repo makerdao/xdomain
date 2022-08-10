@@ -1,6 +1,13 @@
 import { getRinkebySdk } from '@dethcrypto/eth-sdk-client'
 import { sleep } from '@eth-optimism/core-utils'
 import { getOptionalEnv, getRequiredEnv } from '@makerdao/hardhat-utils'
+import {
+  depositToStandardBridge_Nitro,
+  getGasPriceBid,
+  getMaxGas_Nitro,
+  getMaxSubmissionPrice_Nitro,
+  waitToRelayTxsToL2_Nitro,
+} from 'arbitrum-dai-bridge'
 import { ContractReceipt, ContractTransaction, Wallet } from 'ethers'
 import { formatEther } from 'ethers/lib/utils'
 import { ethers } from 'hardhat'
@@ -9,17 +16,7 @@ import { L1AddTeleportArbitrumSpell__factory, L2AddTeleportDomainSpell__factory 
 import { deployUsingFactory, getContractFactory, waitForTx } from '../helpers'
 import { RetryProvider } from '../helpers/RetryProvider'
 import { deployTeleport, DomainSetupOpts, DomainSetupResult } from '../teleport'
-import {
-  deployArbitrumBaseBridge,
-  deployArbitrumTeleportBridge,
-  deployFakeArbitrumInbox,
-  depositToStandardBridge,
-  getGasPriceBid,
-  getMaxGas,
-  getMaxSubmissionPrice,
-  makeRelayTxToL1,
-  waitToRelayTxsToL2,
-} from '.'
+import { deployArbitrumBaseBridge, deployArbitrumTeleportBridge, deployFakeArbitrumInbox, makeRelayTxToL1 } from '.'
 
 const TTL = 300
 
@@ -102,7 +99,7 @@ export async function setupArbitrumTests({
   const relayTxToL1 = makeRelayTxToL1(teleportBridgeSdk.l2TeleportBridge, fakeOutbox)
   const relayTxToL2 = (
     l1Tx: Promise<ContractTransaction> | ContractTransaction | Promise<ContractReceipt> | ContractReceipt,
-  ) => waitToRelayTxsToL2(l1Tx, arbitrumRollupSdk.inbox.address, l1Provider, l2Provider)
+  ) => waitToRelayTxsToL2_Nitro(l1Tx, l2Signer)
 
   console.log('Deploy Arbitrum L2 spell...')
   const l2AddTeleportDomainSpell = await deployUsingFactory(
@@ -123,14 +120,13 @@ export async function setupArbitrumTests({
   ])
   const calldataLength = l2MessageCalldata.length
   const gasPriceBid = await getGasPriceBid(l2Provider)
-  const maxSubmissionCost = await getMaxSubmissionPrice(l2Provider, calldataLength)
-  const maxGas = await getMaxGas(
+
+  const maxSubmissionCost = await getMaxSubmissionPrice_Nitro(l1Provider, calldataLength, l1Sdk.arbitrum.inbox.address)
+  const maxGas = await getMaxGas_Nitro(
     l2Provider,
     baseBridgeSdk.l1GovRelay.address,
     baseBridgeSdk.l2GovRelay.address,
     baseBridgeSdk.l2GovRelay.address,
-    maxSubmissionCost,
-    gasPriceBid,
     l2MessageCalldata,
   )
   const ethValue = maxSubmissionCost.add(gasPriceBid.mul(maxGas))
@@ -161,11 +157,13 @@ export async function setupArbitrumTests({
   await waitForTx(makerSdk.dai.connect(l1Signer).transfer(l1User.address, l2DaiAmount))
   await waitForTx(makerSdk.dai.connect(l1User).approve(baseBridgeSdk.l1DaiTokenBridge.address, l2DaiAmount))
   await relayTxToL2(
-    depositToStandardBridge({
+    depositToStandardBridge_Nitro({
+      l1Provider: l1Provider,
       l2Provider: l2Provider,
       from: l1User,
       to: l1User.address,
       l1Gateway: baseBridgeSdk.l1DaiTokenBridge,
+      inboxAddress: l1Sdk.arbitrum.inbox.address,
       l1TokenAddress: makerSdk.dai.address,
       l2GatewayAddress: baseBridgeSdk.l2DaiTokenBridge.address,
       deposit: l2DaiAmount.toString(),

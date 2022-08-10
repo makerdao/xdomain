@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["arbitrum-helpers", "typechain-types", "arbitrum-helpers/**/*.json"]
+}

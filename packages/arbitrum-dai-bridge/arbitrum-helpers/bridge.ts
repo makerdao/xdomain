@@ -6,14 +6,15 @@ import { L1DaiGateway } from '../typechain-types'
 import { getArbitrumCoreContracts } from './contracts'
 import { BridgeDeployment, NetworkConfig } from './deploy'
 
-export async function getGasPriceBid(l2: ethers.providers.BaseProvider): Promise<BigNumber> {
+type L1ArbitrumGatewayLike = Pick<L1DaiGateway, 'outboundTransfer' | 'getOutboundCalldata' | 'address'> & {
+  connect(signerOrProvider: ethers.Signer | ethers.providers.Provider | string): L1ArbitrumGatewayLike
+}
+
+export async function getGasPriceBid(l2: ethers.providers.Provider): Promise<BigNumber> {
   return await l2.getGasPrice()
 }
 
-export async function getMaxSubmissionPrice(
-  l2: ethers.providers.BaseProvider,
-  calldataOrCalldataLength: string | number,
-) {
+export async function getMaxSubmissionPrice(l2: ethers.providers.Provider, calldataOrCalldataLength: string | number) {
   const calldataLength =
     typeof calldataOrCalldataLength === 'string' ? calldataOrCalldataLength.length : calldataOrCalldataLength
   const [submissionPrice] = await getArbitrumCoreContracts(l2).arbRetryableTx.getSubmissionPrice(calldataLength)
@@ -22,7 +23,7 @@ export async function getMaxSubmissionPrice(
 }
 
 export async function getMaxSubmissionPrice_Nitro(
-  l1: ethers.providers.BaseProvider,
+  l1: ethers.providers.Provider,
   calldataOrCalldataLength: string | number,
   inboxAddress: string,
 ) {
@@ -43,7 +44,7 @@ export async function getMaxSubmissionPrice_Nitro(
 }
 
 export async function getMaxGas(
-  l2: ethers.providers.BaseProvider,
+  l2: ethers.providers.Provider,
   sender: string,
   destination: string,
   refundDestination: string,
@@ -68,7 +69,7 @@ export async function getMaxGas(
 }
 
 export async function getMaxGas_Nitro(
-  l2: ethers.providers.BaseProvider,
+  l2: ethers.providers.Provider,
   sender: string,
   destination: string,
   refundDestination: string,
@@ -99,9 +100,9 @@ export async function depositToStandardBridge({
 }: {
   from: Wallet
   to: string
-  l2Provider: ethers.providers.BaseProvider
+  l2Provider: ethers.providers.Provider
   deposit: BigNumber | string
-  l1Gateway: L1DaiGateway
+  l1Gateway: L1ArbitrumGatewayLike
   l1TokenAddress: string
   l2GatewayAddress: string
 }) {
@@ -147,10 +148,10 @@ export async function depositToStandardBridge_Nitro({
 }: {
   from: Wallet
   to: string
-  l1Provider: ethers.providers.BaseProvider
-  l2Provider: ethers.providers.BaseProvider
+  l1Provider: ethers.providers.Provider
+  l2Provider: ethers.providers.Provider
   deposit: BigNumber | string
-  l1Gateway: L1DaiGateway
+  l1Gateway: L1ArbitrumGatewayLike
   inboxAddress: string
   l1TokenAddress: string
   l2GatewayAddress: string
@@ -188,7 +189,7 @@ export async function depositToStandardRouter({
 }: {
   from: Wallet
   to: string
-  l2Provider: ethers.providers.BaseProvider
+  l2Provider: ethers.providers.Provider
   deposit: BigNumber | string
   l1Router: any
   l1Gateway: L1DaiGateway
@@ -237,8 +238,8 @@ export async function depositToStandardRouter_Nitro({
 }: {
   from: Wallet
   to: string
-  l1Provider: ethers.providers.BaseProvider
-  l2Provider: ethers.providers.BaseProvider
+  l1Provider: ethers.providers.Provider
+  l2Provider: ethers.providers.Provider
   deposit: BigNumber | string
   l1Router: any
   l1Gateway: L1DaiGateway
@@ -270,7 +271,7 @@ export async function setGatewayForToken({
   l1Router,
   tokenGateway,
 }: {
-  l2Provider: ethers.providers.BaseProvider
+  l2Provider: ethers.providers.Provider
   l1Router: any
   tokenGateway: L1DaiGateway
 }) {
@@ -291,8 +292,8 @@ export async function setGatewayForToken_Nitro({
   tokenGateway,
   inboxAddress,
 }: {
-  l1Provider: ethers.providers.BaseProvider
-  l2Provider: ethers.providers.BaseProvider
+  l1Provider: ethers.providers.Provider
+  l2Provider: ethers.providers.Provider
   l1Router: any
   tokenGateway: L1DaiGateway
   inboxAddress: string

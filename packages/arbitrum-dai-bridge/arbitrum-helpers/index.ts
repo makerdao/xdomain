@@ -1,4 +1,4 @@
-export { depositToStandardBridge } from './bridge'
+export * from './bridge'
 export * from './deploy'
 export { waitToRelayTxsToL2, waitToRelayTxsToL2_Nitro } from './messaging'
 export { deployArbitrumContractMock } from './mocks'

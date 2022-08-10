@@ -5,6 +5,8 @@ typechain-types
 crytic-export/
 .env
 gasReporterOutput.json
+tmp
+dist
 
 # echidna
 crytic-export/
