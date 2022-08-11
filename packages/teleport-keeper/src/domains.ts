@@ -57,7 +57,7 @@ export async function makeFinalizeMessageForArbitrum(l1Signer: Signer, l2Signer:
     }
 
     console.log(`Message from tx ${txHash} ready to finalize.`)
-    const finalizeTx = await l2Message.execute(l2Signer.provider!, { gasLimit: 1000000 })
+    const finalizeTx = await l2Message.execute(l2Signer.provider!)
     await finalizeTx.wait()
     console.log(`Message from tx ${txHash} finalized in tx: ${finalizeTx.hash}`)
   }
