@@ -62,7 +62,6 @@ jobs:
       - run: yarn lint
       - run: yarn format
       - run: yarn build
-      - run: yarn typecheck
 
       - run: ./scripts/build-infra.sh
       - run: ./scripts/run-infra.sh&
