@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
+    "postinstall": "yarn build && yarn build:sdk",
     "build": "hardhat compile",
     "build:sdk": "rm -rf ./dist && yarn tsc -p ./tsconfig.build.json",
     "clean": "hardhat clean && rm -rf artifacts cache crytic-export corpus",
