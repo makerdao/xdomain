@@ -5,6 +5,7 @@ ROOT=$(cd $(dirname $(dirname "$0")) && pwd)
 echo "Setting up dss-teleport"
 cd "$ROOT/repos/dss-teleport"
 git submodule update --init --recursive
+nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_8_15
 nix-shell --argstr url "N/A" --run "dapp --use solc:0.8.15 build --rpc"
 
 echo "Setting up optimism-dai-bridge"
