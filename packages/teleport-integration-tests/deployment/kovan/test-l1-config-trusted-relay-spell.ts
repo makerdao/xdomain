@@ -10,7 +10,6 @@ import { deployUsingFactoryAndVerify, impersonateAccount, waitForTx } from '../.
 dotenv.config()
 
 import { TransactionReceipt } from '@ethersproject/abstract-provider'
-import { JsonRpcProvider } from '@ethersproject/providers'
 import { assert } from 'chai'
 import { Signer } from 'ethers'
 
