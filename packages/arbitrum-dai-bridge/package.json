@@ -70,7 +70,7 @@
     "solidity-coverage": "^0.7.17",
     "ts-essentials": "^7.0.1",
     "ts-node": "^9.0.0",
-    "typechain": "^6.0.3",
+    "typechain": "^8.1.0",
     "utf8": "^3.0.0"
   }
 }
