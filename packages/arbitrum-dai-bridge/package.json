@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "postinstall": "yarn build && yarn build:sdk",
+    "postinstall": "yarn build:sdk",
     "build": "hardhat compile",
     "build:sdk": "rm -rf ./dist && yarn tsc -p ./tsconfig.build.json",
-    "clean": "hardhat clean && rm -rf artifacts cache crytic-export corpus",
+    "clean": "hardhat clean && rm -rf cache crytic-export corpus",
     "coverage": "hardhat coverage && istanbul check-coverage --branches 95 --lines 99",
     "format": "prettier --check \"./**/*.{ts,sol}\"",
     "format:fix": "prettier --write \"./**/*.{ts,sol}\"",
@@ -29,7 +29,8 @@
   "dependencies": {
     "@arbitrum/sdk": "^2.0.11",
     "hardhat": "^2.10.1",
-    "typescript": "^4.0.2"
+    "typescript": "^4.0.2",
+    "typechain": "^8.1.0"
   },
   "devDependencies": {
     "@codechecks/client": "^0.1.11",
@@ -69,8 +70,7 @@
     "prettier-plugin-solidity": "^1.0.0-beta.17",
     "solidity-coverage": "^0.7.17",
     "ts-essentials": "^7.0.1",
-    "ts-node": "^9.0.0",
-    "typechain": "^8.1.0",
+    "ts-node": "^10.9.1",
     "utf8": "^3.0.0"
   }
 }
