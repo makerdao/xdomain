@@ -226,16 +226,16 @@ describe('bridge', () => {
 })
 
 export async function setupTest() {
-  const pkey = getRequiredEnv('E2E_TESTS_PKEY')
-  const l1Rpc = getRequiredEnv('E2E_TESTS_L1_RPC')
-  const l2Rpc = getRequiredEnv('E2E_TESTS_L2_RPC')
+  const pkey = getRequiredEnv('E2E_TESTS_RINKEBY_PKEY')
+  const l1Rpc = getRequiredEnv('E2E_TESTS_RINKEBY_L1_RPC')
+  const l2Rpc = getRequiredEnv('E2E_TESTS_RINKEBY_L2_RPC')
   const network = await getRinkebyNetworkConfig({ pkey, l1Rpc, l2Rpc })
 
   let bridgeDeployment: BridgeDeployment
   let routerDeployment: RouterDeployment
 
   // this is a mechanism to reuse old deployment -- speeds up development
-  const staticDeploymentString = getOptionalEnv('E2E_TESTS_DEPLOYMENT')
+  const staticDeploymentString = getOptionalEnv('E2E_TESTS_RINKEBY_DEPLOYMENT')
   if (staticDeploymentString) {
     console.log('Using static deployment...')
     const deployment = JSON.parse(staticDeploymentString)
