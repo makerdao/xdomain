@@ -84,7 +84,7 @@ jobs:
             yarn-
 
       - run: yarn --no-progress --non-interactive --frozen-lockfile
-
+      - run: yarn build
       - run: yarn test-e2e
         env:
           E2E_TESTS_RINKEBY_L1_RPC: ${{ secrets.RINKEBY_RPC_URL }}
