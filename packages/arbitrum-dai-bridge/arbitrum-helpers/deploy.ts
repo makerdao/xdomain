@@ -124,7 +124,13 @@ export async function deployBridge(
   expect(l2GovRelay.address).to.be.eq(l2GovRelayFutureAddr)
   console.log('Deployed l2GovernanceRelay at: ', l2GovRelay.address)
 
-  const { l1DaiGateway, l2DaiGateway } = await deployDaiGateways(deps, routerDeployment, l1Escrow, l2Dai, l2GovRelay)
+  const { l1DaiGateway, l2DaiGateway } = await deployDaiGateways(
+    deps,
+    routerDeployment,
+    l1Escrow as any,
+    l2Dai as any,
+    l2GovRelay as any,
+  )
 
   // permissions
   console.log('Setting permissions...')
@@ -223,22 +229,22 @@ export async function performSanityChecks(
     expect(normalizeAddresses(actualPermissions)).to.deep.eq(normalizeAddresses(expectedPermissions))
   }
 
-  await checkPermissions(bridgeDeployment.l1Escrow, l1BlockOfBeginningOfDeployment, [
+  await checkPermissions(bridgeDeployment.l1Escrow as any, l1BlockOfBeginningOfDeployment, [
     deps.l1.makerPauseProxy,
     deps.l1.makerESM,
   ])
-  await checkPermissions(bridgeDeployment.l1DaiGateway, l1BlockOfBeginningOfDeployment, [
+  await checkPermissions(bridgeDeployment.l1DaiGateway as any, l1BlockOfBeginningOfDeployment, [
     deps.l1.makerPauseProxy,
     deps.l1.makerESM,
   ])
-  await checkPermissions(bridgeDeployment.l1GovRelay, l1BlockOfBeginningOfDeployment, [
+  await checkPermissions(bridgeDeployment.l1GovRelay as any, l1BlockOfBeginningOfDeployment, [
     deps.l1.makerPauseProxy,
     deps.l1.makerESM,
   ])
-  await checkPermissions(bridgeDeployment.l2DaiGateway, l2BlockOfBeginningOfDeployment, [
+  await checkPermissions(bridgeDeployment.l2DaiGateway as any, l2BlockOfBeginningOfDeployment, [
     bridgeDeployment.l2GovRelay.address,
   ])
-  await checkPermissions(bridgeDeployment.l2Dai, l2BlockOfBeginningOfDeployment, [
+  await checkPermissions(bridgeDeployment.l2Dai as any, l2BlockOfBeginningOfDeployment, [
     bridgeDeployment.l2DaiGateway.address,
     bridgeDeployment.l2GovRelay.address,
   ])

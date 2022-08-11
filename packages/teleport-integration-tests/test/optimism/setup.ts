@@ -153,5 +153,5 @@ export async function setupOptimismTests({
 }
 
 async function forwardTimeToAfterFinalization(l1Provider: JsonRpcProvider) {
-  await forwardTime(l1Provider, TTL)
+  await forwardTime(l1Provider as any, TTL)
 }
