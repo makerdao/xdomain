@@ -45,7 +45,7 @@ jobs:
           echo KOVAN_RPC_URL="${{ secrets.KOVAN_RPC_URL }}" >> .env
           echo TEST_OPTIMISM_L1_RPC_URL="http://127.0.0.1:9545" >> .env
           echo TEST_OPTIMISM_L2_RPC_URL="http://127.0.0.1:8545" >> .env
-          echo DEPLOYER_PRIV_KEY="${{ secrets.TEST_DEPLOYER_PRIV_KEY }}" >> .env
+          echo DEPLOYER_PRIV_KEY="${{ secrets.INTEGRATION_TEST_DEPLOYER_PRIV_KEY }}" >> .env
           echo USER_PRIV_KEY="${{ secrets.TEST_USER_PRIV_KEY }}" >> .env
 
       - name: Cache Yarn dependencies

@@ -45,7 +45,7 @@ jobs:
           echo KOVAN_RPC_URL="${{ secrets.KOVAN_RPC_URL }}" >> .env
           echo TEST_ARBITRUM_L1_RPC_URL="${{ secrets.RINKEBY_RPC_URL }}" >> .env
           echo TEST_ARBITRUM_L2_RPC_URL="https://rinkeby.arbitrum.io/rpc" >> .env
-          echo DEPLOYER_PRIV_KEY="${{ secrets.TEST_DEPLOYER_PRIV_KEY }}" >> .env
+          echo DEPLOYER_PRIV_KEY="${{ secrets.INTEGRATION_TEST_DEPLOYER_PRIV_KEY }}" >> .env
           echo USER_PRIV_KEY="${{ secrets.TEST_USER_PRIV_KEY }}" >> .env
 
       - name: Cache Yarn dependencies
