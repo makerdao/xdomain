@@ -4,12 +4,14 @@ import { BigNumberish, ethers, providers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 
 import {
+  approveSrcGateway,
   DEFAULT_RPC_URLS,
   DomainDescription,
   getAmounts,
   getAmountsForTeleportGUID,
   getAttestations,
   getDefaultDstDomain,
+  getSrcGatewayAllowance,
   initRelayedTeleport,
   initTeleport,
   mintWithOracles,
@@ -57,6 +59,19 @@ export async function demo(
   console.log(`Expected Mintable: ${formatEther(expectedMintable)} DAI.`)
   console.log(`Expected Bridge Fees: ${formatEther(expectedBridgeFee)} DAI.`)
   RELAY_MINT && console.log(`Expected Relay Fees: ${formatEther(expectedRelayFee || '0')} DAI.`)
+
+  // *******************************************/
+  // **************  approve *******************/
+  // *******************************************/
+
+  const allowance = await getSrcGatewayAllowance({ userAddress: sender.address, srcDomain })
+  console.log(`\nSource gateway Dai allowance: ${formatEther(allowance)} DAI.`)
+  if (allowance.lt(amount)) {
+    console.log('Approving source gateway...')
+    const approveTx = await approveSrcGateway({ sender, srcDomain })
+    await approveTx.tx!.wait()
+    console.log('Approve tx confirmed.')
+  }
 
   // *******************************************/
   // ********  init(Relayed)Teleport ***********/
