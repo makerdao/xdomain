@@ -46,32 +46,10 @@ const config: HardhatUserConfig = {
     kovan: {
       url: 'https://parity0.kovan.makerfoundation.com:8545',
     },
-    goerli: {
-      url: process.env.L1_GOERLI_RPC_URL ?? '',
-    },
-    optimisticGoerli: {
-      url: 'https://goerli.optimism.io',
-    },
   },
-
   etherscan: {
-    apiKey: {
-      mainnet: process.env.ETHERSCAN_KEY ?? '',
-      goerli: process.env.ETHERSCAN_KEY ?? '',
-      optimisticGoerli: 'N/A',
-    },
-    customChains: [
-      {
-        network: 'optimisticGoerli',
-        chainId: 420,
-        urls: {
-          apiURL: 'https://blockscout.com/optimism/goerli/api',
-          browserURL: 'https://blockscout.com/optimism/goerli',
-        },
-      },
-    ],
+    apiKey: process.env.ETHERSCAN_KEY ?? '', // provide via env
   },
-
   gasReporter: {
     enabled: process.env.REPORT_GAS === '1',
     currency: 'USD',
