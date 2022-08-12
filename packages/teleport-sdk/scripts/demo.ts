@@ -61,7 +61,7 @@ export async function demo(
   RELAY_MINT && console.log(`Expected Relay Fees: ${formatEther(expectedRelayFee || '0')} DAI.`)
 
   // *******************************************/
-  // **************  approve *******************/
+  // ***********  approveSrcGateway ************/
   // *******************************************/
 
   const allowance = await getSrcGatewayAllowance({ userAddress: sender.address, srcDomain })
