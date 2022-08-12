@@ -30,7 +30,7 @@ import {
 
 const amount = parseUnits('7', 'ether')
 
-describe('bridge', () => {
+describe('rinkeby bridge', () => {
   let routerDeployment: RouterDeployment
   let bridgeDeployment: BridgeDeployment
   let network: NetworkConfig
