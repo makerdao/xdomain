@@ -15,6 +15,12 @@ export function getTeleportBridge(opts: DomainContext): TeleportBridge {
   return new TeleportBridge({ ...opts, srcDomain: getLikelyDomainId(opts.srcDomain) })
 }
 
+export function approveSrcGateway(
+  opts: { sender?: Signer; amount?: BigNumberish; overrides?: Overrides } & DomainContext,
+): ReturnType<TeleportBridge['approveSrcGateway']> {
+  return getTeleportBridge(opts).approveSrcGateway(opts.sender, opts.amount, opts.overrides)
+}
+
 export interface InitTeleportOpts {
   receiverAddress: string
   amount: BigNumberish
@@ -75,6 +81,12 @@ export function getDstBalance(
   opts: { userAddress: string } & DomainContext,
 ): ReturnType<TeleportBridge['getDstBalance']> {
   return getTeleportBridge(opts).getDstBalance(opts.userAddress)
+}
+
+export function getSrcGatewayAllowance(
+  opts: { userAddress: string } & DomainContext,
+): ReturnType<TeleportBridge['getSrcGatewayAllowance']> {
+  return getTeleportBridge(opts).getSrcGatewayAllowance(opts.userAddress)
 }
 
 export function getAmountsForTeleportGUID(

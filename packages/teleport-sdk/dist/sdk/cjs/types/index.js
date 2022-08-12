@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Outbox__factory = exports.FakeOutbox__factory = exports.Vat__factory = exports.TrustedRelay__factory = exports.TeleportOracleAuth__factory = exports.TeleportJoin__factory = exports.Multicall__factory = exports.BasicRelay__factory = exports.TeleportOutboundGateway__factory = exports.Faucet__factory = exports.Dai__factory = void 0;
+exports.Vat__factory = exports.TrustedRelay__factory = exports.TeleportOracleAuth__factory = exports.TeleportJoin__factory = exports.Outbox__factory = exports.Multicall__factory = exports.FakeOutbox__factory = exports.BasicRelay__factory = exports.TeleportOutboundGateway__factory = exports.Faucet__factory = exports.Dai__factory = void 0;
 var Dai__factory_1 = require("./factories/Dai__factory");
 Object.defineProperty(exports, "Dai__factory", { enumerable: true, get: function () { return Dai__factory_1.Dai__factory; } });
 var Faucet__factory_1 = require("./factories/Faucet__factory");
@@ -9,8 +9,12 @@ var TeleportOutboundGateway__factory_1 = require("./factories/TeleportOutboundGa
 Object.defineProperty(exports, "TeleportOutboundGateway__factory", { enumerable: true, get: function () { return TeleportOutboundGateway__factory_1.TeleportOutboundGateway__factory; } });
 var BasicRelay__factory_1 = require("./factories/BasicRelay__factory");
 Object.defineProperty(exports, "BasicRelay__factory", { enumerable: true, get: function () { return BasicRelay__factory_1.BasicRelay__factory; } });
+var FakeOutbox__factory_1 = require("./factories/FakeOutbox__factory");
+Object.defineProperty(exports, "FakeOutbox__factory", { enumerable: true, get: function () { return FakeOutbox__factory_1.FakeOutbox__factory; } });
 var Multicall__factory_1 = require("./factories/Multicall__factory");
 Object.defineProperty(exports, "Multicall__factory", { enumerable: true, get: function () { return Multicall__factory_1.Multicall__factory; } });
+var Outbox__factory_1 = require("./factories/Outbox__factory");
+Object.defineProperty(exports, "Outbox__factory", { enumerable: true, get: function () { return Outbox__factory_1.Outbox__factory; } });
 var TeleportJoin__factory_1 = require("./factories/TeleportJoin__factory");
 Object.defineProperty(exports, "TeleportJoin__factory", { enumerable: true, get: function () { return TeleportJoin__factory_1.TeleportJoin__factory; } });
 var TeleportOracleAuth__factory_1 = require("./factories/TeleportOracleAuth__factory");
@@ -19,7 +23,3 @@ var TrustedRelay__factory_1 = require("./factories/TrustedRelay__factory");
 Object.defineProperty(exports, "TrustedRelay__factory", { enumerable: true, get: function () { return TrustedRelay__factory_1.TrustedRelay__factory; } });
 var Vat__factory_1 = require("./factories/Vat__factory");
 Object.defineProperty(exports, "Vat__factory", { enumerable: true, get: function () { return Vat__factory_1.Vat__factory; } });
-var FakeOutbox__factory_1 = require("./factories/FakeOutbox__factory");
-Object.defineProperty(exports, "FakeOutbox__factory", { enumerable: true, get: function () { return FakeOutbox__factory_1.FakeOutbox__factory; } });
-var Outbox__factory_1 = require("./factories/Outbox__factory");
-Object.defineProperty(exports, "Outbox__factory", { enumerable: true, get: function () { return Outbox__factory_1.Outbox__factory; } });

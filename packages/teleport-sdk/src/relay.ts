@@ -17,6 +17,10 @@ const GELATO_ADDRESSES: { [chainId: number]: { service: string; gelato: string }
     service: '0x4F36f93F58d36DcbC1E60b9bdBE213482285C482',
     gelato: '0xDf592cB2d32445F8e831d211AB20D3233cA41bD8',
   },
+  5: {
+    service: '0x61BF11e6641C289d4DA1D59dC3E03E15D2BA971c',
+    gelato: '0x683913B3A32ada4F8100458A3E1675425BdAa7DF',
+  },
 }
 
 export type Relay = BasicRelay | TrustedRelay
@@ -40,7 +44,7 @@ async function queryGelatoApi(url: string, method: 'get' | 'post', params?: Obje
         const { response } = err
         const errorMsg = `Gelato API ${response?.status} error (attempt ${attempt}/5): "${response?.data?.message}"`
         if (attempt <= 5) {
-          console.error(errorMsg)
+          console.error((response?.status && errorMsg) || `Gelato API unknown error (attempt ${attempt}/5): ${err}`)
           await sleep(2000 * attempt)
           attempt++
         } else {
@@ -110,6 +114,7 @@ async function createRelayTask(relay: Relay, calldata: string, gasLimit: BigNumb
   return taskId
 }
 
+let lastTaskLog: string | undefined
 async function waitForRelayTaskConfirmation(
   taskId: string,
   pollingIntervalMs: number,
@@ -119,7 +124,11 @@ async function waitForRelayTaskConfirmation(
   let isExecPending = false
   while (true) {
     const { data } = await queryGelatoApi(`tasks/GelatoMetaBox/${taskId}`, 'get')
-    // console.log(`TaskId=${taskId}, data:`, data[0])
+    const taskLog = `TaskId=${taskId}, data: ${JSON.stringify(data[0])}`
+    if (lastTaskLog !== taskLog) {
+      console.log(taskLog)
+      lastTaskLog = taskLog
+    }
     if (data[0]?.taskState === 'ExecSuccess') {
       const txHash = data[0].execution?.transactionHash
       if (txHash) return txHash
@@ -171,6 +180,7 @@ async function getRelayGasLimit(
   const addresses = GELATO_ADDRESSES[chainId]
 
   const serviceAddress = addresses.service
+  if (!serviceAddress) throw new Error(`Missing "service" address for chainId ${chainId}`)
   const serviceInterface = new Interface([
     'function forwardCallSyncFee(address _target,bytes calldata _data,address _feeToken,uint256 _gas,uint256 _gelatoFee,bytes32 _taskId)',
   ])
@@ -184,6 +194,7 @@ async function getRelayGasLimit(
   ])
 
   const gelatoAddress = addresses.gelato
+  if (!gelatoAddress) throw new Error(`Missing "gelato" address for chainId ${chainId}`)
   const gelatoInterface = new Interface([
     'function exec(address _service,bytes calldata _data,address _creditToken) returns (uint256 credit,uint256 gasDebitInNativeToken,uint256 gasDebitInCreditToken,uint256 estimatedGasUsed)',
     'function executors() view returns (address[] memory)',

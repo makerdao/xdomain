@@ -21,6 +21,21 @@ import rinkebyRINKEBYMASTER1DaiAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-M
 import arbitrumTestnetRINKEBYSLAVEARBITRUM1TeleportOutboundGatewayAbi from '../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/TeleportOutboundGateway.json';
 import arbitrumTestnetRINKEBYSLAVEARBITRUM1FaucetAbi from '../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Faucet.json';
 import arbitrumTestnetRINKEBYSLAVEARBITRUM1DaiAbi from '../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Dai.json';
+import goerliETHGOERATeleportOracleAuthAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/TeleportOracleAuth.json';
+import goerliETHGOERATeleportJoinAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/TeleportJoin.json';
+import goerliETHGOERAVatAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/Vat.json';
+import goerliETHGOERAMulticallAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/Multicall.json';
+import goerliETHGOERAFakeOutboxAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/FakeOutbox.json';
+import goerliETHGOERAOutboxAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/Outbox.json';
+import goerliETHGOERABasicRelayAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/BasicRelay.json';
+import goerliETHGOERATrustedRelayAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/TrustedRelay.json';
+import goerliETHGOERADaiAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/Dai.json';
+import optimismGoerliTestnetOPTGOERATeleportOutboundGatewayAbi from '../../../eth-sdk/abis/optimismGoerliTestnet/OPT-GOER-A/TeleportOutboundGateway.json';
+import optimismGoerliTestnetOPTGOERAFaucetAbi from '../../../eth-sdk/abis/optimismGoerliTestnet/OPT-GOER-A/Faucet.json';
+import optimismGoerliTestnetOPTGOERADaiAbi from '../../../eth-sdk/abis/optimismGoerliTestnet/OPT-GOER-A/Dai.json';
+import arbitrumGoerliTestnetARBGOERATeleportOutboundGatewayAbi from '../../../eth-sdk/abis/arbitrumGoerliTestnet/ARB-GOER-A/TeleportOutboundGateway.json';
+import arbitrumGoerliTestnetARBGOERAFaucetAbi from '../../../eth-sdk/abis/arbitrumGoerliTestnet/ARB-GOER-A/Faucet.json';
+import arbitrumGoerliTestnetARBGOERADaiAbi from '../../../eth-sdk/abis/arbitrumGoerliTestnet/ARB-GOER-A/Dai.json';
 export function getContract(address, abi, defaultSigner) {
     return new Contract(address, abi, defaultSigner);
 }
@@ -67,6 +82,39 @@ export function getArbitrumTestnetSdk(defaultSigner) {
             "TeleportOutboundGateway": getContract('0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3', arbitrumTestnetRINKEBYSLAVEARBITRUM1TeleportOutboundGatewayAbi, defaultSigner),
             "Faucet": getContract('0xc72cfA99ef0aec40334A2df3E70eB1028402cceE', arbitrumTestnetRINKEBYSLAVEARBITRUM1FaucetAbi, defaultSigner),
             "Dai": getContract('0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15', arbitrumTestnetRINKEBYSLAVEARBITRUM1DaiAbi, defaultSigner),
+        },
+    };
+}
+export function getGoerliSdk(defaultSigner) {
+    return {
+        "ETH-GOER-A": {
+            "TeleportOracleAuth": getContract('0xe6c2b941d268cA7690c01F95Cd4bDD12360A0A4F', goerliETHGOERATeleportOracleAuthAbi, defaultSigner),
+            "TeleportJoin": getContract('0xd88310A476ee960487FDb2772CC4bd017dadEf6B', goerliETHGOERATeleportJoinAbi, defaultSigner),
+            "Vat": getContract('0x293D5AA7F26EF9A687880C4501871632d1015A82', goerliETHGOERAVatAbi, defaultSigner),
+            "Multicall": getContract('0xb8c864B60e9467398800Df34da39BF4f0c459461', goerliETHGOERAMulticallAbi, defaultSigner),
+            "FakeOutbox": getContract('0x95637Cabe684a324A8225C4b6Ce880D70074938d', goerliETHGOERAFakeOutboxAbi, defaultSigner),
+            "Outbox": getContract('0x45Af9Ed1D03703e480CE7d328fB684bb67DA5049', goerliETHGOERAOutboxAbi, defaultSigner),
+            "BasicRelay": getContract('0x0Cb8747982d99f4b8640EE27330ADD0c2b54d0e6', goerliETHGOERABasicRelayAbi, defaultSigner),
+            "TrustedRelay": getContract('0xB23Ab27F7B59B718ea1eEF536F66e1Db3F18ac8E', goerliETHGOERATrustedRelayAbi, defaultSigner),
+            "Dai": getContract('0x0089Ed33ED517F58a064D0ef56C9E89Dc01EE9A2', goerliETHGOERADaiAbi, defaultSigner),
+        },
+    };
+}
+export function getOptimismGoerliTestnetSdk(defaultSigner) {
+    return {
+        "OPT-GOER-A": {
+            "TeleportOutboundGateway": getContract('0xFF660111D2C6887D8F24B5378cceDbf465B33B6F', optimismGoerliTestnetOPTGOERATeleportOutboundGatewayAbi, defaultSigner),
+            "Faucet": getContract('0xD9e08dc985012296b9A80BEf4a587Ad72288D986', optimismGoerliTestnetOPTGOERAFaucetAbi, defaultSigner),
+            "Dai": getContract('0x8ea903081aa1137F11D51F64A1F372EDe67571a9', optimismGoerliTestnetOPTGOERADaiAbi, defaultSigner),
+        },
+    };
+}
+export function getArbitrumGoerliTestnetSdk(defaultSigner) {
+    return {
+        "ARB-GOER-A": {
+            "TeleportOutboundGateway": getContract('0xb586c1D27Ee93329B1da48B8F7F4436C173FCef8', arbitrumGoerliTestnetARBGOERATeleportOutboundGatewayAbi, defaultSigner),
+            "Faucet": getContract('0x9031Ab810C496FCF09B65851c736E9a37983B963', arbitrumGoerliTestnetARBGOERAFaucetAbi, defaultSigner),
+            "Dai": getContract('0x8ea903081aa1137F11D51F64A1F372EDe67571a9', arbitrumGoerliTestnetARBGOERADaiAbi, defaultSigner),
         },
     };
 }
