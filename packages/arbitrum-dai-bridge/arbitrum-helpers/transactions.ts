@@ -1,5 +1,5 @@
-import { ContractTransaction, providers } from 'ethers'
 import { sleep } from '@eth-optimism/core-utils'
+import { ContractTransaction, providers } from 'ethers'
 
 export async function waitForTx(
   tx: Promise<ContractTransaction>,
@@ -12,7 +12,7 @@ export async function waitForTx(
   for (let attempts = 1; attempts <= 12; attempts++) {
     try {
       const txReceipt = await resolvedTx.wait(confirmations)
-      if (txReceipt) return txReceipt
+      if (txReceipt as any) return txReceipt
       else console.log(`Transaction .wait() returned ${txReceipt}`)
     } catch (e) {
       console.log(`Transaction .wait() error: ${e}`)
