@@ -21,25 +21,25 @@ yarn test
 If you wish to quickly test some changes in smart contract code, just tweak source in `repos` dir and re-run
 `./scripts/setup.sh`.
 
-# Teleport test deployment
+# Teleport testnet deployments
 
-## Optimism & Arbitrum Goerli testnet
+## Optimism & Arbitrum Goerli test environment ("goerli-light")
 
 ### Instructions
 
-1. Set the name of the new ilk in `deployment/goerli/deploy-teleport.ts` then run
-   `yarn hardhat run deployment/goerli/deploy-teleport.ts` to deploy `dss-teleport`, `arbitrum-dai-bridge` Teleport
-   contracts and `optimism-dai-bridge` Teleport contracts.
+1. Set the name of the new ilk in `deployment/goerli-light/deploy-teleport.ts` then run
+   `yarn hardhat run deployment/goerli-light/deploy-teleport.ts` to deploy `dss-teleport`, `arbitrum-dai-bridge`
+   Teleport contracts and `optimism-dai-bridge` Teleport contracts.
 
 2. Set the addresses of the newly deployed `teleportJoin`, `router` (TeleportRouter), `oracleAuth` (TeleportOracleAuth),
    `constantFees` (TeleportConstantFees), `trustedRelay` (TrustedRelay), `optimismL1Bridge` (L1TeleportGateway) and
-   `arbitrumL1Bridge` (L1TeleportGateway) in `contracts/deploy/goerli/L1GoerliAddTeleportDomainSpell.sol`.
+   `arbitrumL1Bridge` (L1TeleportGateway) in `contracts/deploy/goerli-light/L1GoerliAddTeleportDomainSpell.sol`.
 
-3. Run `yarn hardhat run deployment/goerli/cast-l1-spell.ts` to deploy and cast the L1 spell on goerli.
+3. Run `yarn hardhat run deployment/goerli-light/cast-l1-spell.ts` to deploy and cast the L1 spell on goerli.
 
 4. To validate the resulting changes, copy the addresses of the newly deployed `oracleAuth` and `l2TeleportGateway` into
-   `deployment/goerli/test-e2e-[optimism|arbitrum].ts` and run
-   `yarn hardhat run deployment/goerli/test-e2e-[optimism|arbitrum].ts`.
+   `deployment/goerli-light/test-e2e-[optimism|arbitrum].ts` and run
+   `yarn hardhat run deployment/goerli-light/test-e2e-[optimism|arbitrum].ts`.
 
 ### Latest deployment
 
@@ -103,6 +103,73 @@ used for makerdao/spells-goerli).
 
    "GoerliLight Spell": {
       "l1": "0x29ADBE7cE6F650D56d8611Ab43a1153f5654fC01",
+   }
+}
+```
+
+## Optimism & Arbitrum Goerli staging environment ("canonical-goerli")
+
+### Instructions
+
+1. Set the name of the new ilk in `deployment/goerli/deploy-teleport.ts` then run
+   `yarn hardhat run deployment/goerli/deploy-teleport.ts` to deploy `dss-teleport`, `arbitrum-dai-bridge` Teleport
+   contracts and `optimism-dai-bridge` Teleport contracts.
+
+   2. An appropriate (spell)[https://github.com/makerdao/spells-goerli] needs to be written and cast. The test
+      environment spell in `contracts/deploy/goerli-light/L1GoerliAddTeleportDomainSpell.sol` can be used as a guide to
+      determine the necessary configuration operations to include in the spell.
+
+### Latest deployment
+
+```
+{
+   "Goerli MCD": {
+      "vat": "0xB966002DDAa2Baf48369f5015329750019736031",
+      "dai_join": "0x6a60b7070befb2bfc964F646efDF70388320f4E0",
+      "vow": "0x23f78612769b9013b3145E43896Fa1578cAa2c2a",
+      "pause_proxy": "0x5DCdbD3cCF9B09EAAD03bc5f50fA2B3d3ACA0121",
+      "esm": "0x023A960cb9BE7eDE35B433256f4AfE9013334b55",
+      "dai": "0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844",
+      "median_ethusd": "0xD81834Aa83504F6614caE3592fb033e4b8130380",
+   },
+
+   "Goerli Teleport": {
+      "join": "",
+      "oracleAuth": "",
+      "router": "",
+      "constantFee": "",
+      "basicRelay": "",
+      "trustedRelay": ""
+   }
+
+  "Optimism Goerli teleport gateways":  {
+      "l2TeleportGateway": "",
+      "l1TeleportGateway": ""
+   }
+
+   "Arbitrum Goerli teleport gateways":  {
+      "l2TeleportGateway": "",
+      "l1TeleportGateway": ""
+   },
+
+   "Legacy (slow) Goerli Optimism Dai bridge": {
+      "l2Dai": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      "l1Escrow": "0xbc892A208705862273008B2Fb7D01E968be42653",
+      "l1DAITokenBridge": "0x05a388Db09C2D44ec0b00Ee188cD42365c42Df23",
+      "l2DAITokenBridge": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
+      "l1GovernanceRelay": "0xD9b2835A5bFC8bD5f54DB49707CF48101C66793a",
+      "l2GovernanceRelay": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
+   },
+
+   "Legacy (slow) Goerli Arbitrum Dai bridge": {
+      "l2Dai": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      "l1Escrow": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      "l1DaiGateway": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
+      "l2DaiGateway": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
+      "l1GovernanceRelay": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
+      "l2GovernanceRelay": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
+      "l1GatewayRouter"": "0x4c7708168395aEa569453Fc36862D2ffcDaC588c",
+      "l2GatewayRouter"": "0xE5B9d8d42d656d1DcB8065A6c012FE3780246041",
    }
 }
 ```
