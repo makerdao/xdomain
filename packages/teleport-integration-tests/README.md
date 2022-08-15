@@ -115,7 +115,7 @@ used for makerdao/spells-goerli).
    `yarn hardhat run deployment/goerli/deploy-teleport.ts` to deploy `dss-teleport`, `arbitrum-dai-bridge` Teleport
    contracts and `optimism-dai-bridge` Teleport contracts.
 
-   2. An appropriate (spell)[https://github.com/makerdao/spells-goerli] needs to be written and cast. The test
+   2. An appropriate [spell](https://github.com/makerdao/spells-goerli) needs to be written and cast. The test
       environment spell in `contracts/deploy/goerli-light/L1GoerliAddTeleportDomainSpell.sol` can be used as a guide to
       determine the necessary configuration operations to include in the spell.
 
