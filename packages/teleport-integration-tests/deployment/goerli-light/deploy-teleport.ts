@@ -48,6 +48,7 @@ async function main() {
     joinDomain: l1Domain,
     globalFee: fee,
     globalFeeTTL: feeTTL,
+    globalFeeType: 'constant',
   })
 
   // Deploy Optimism Goerli Testnet Teleport

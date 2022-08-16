@@ -48,6 +48,7 @@ async function main() {
     joinDomain: masterDomain,
     globalFee: fee,
     globalFeeTTL: feeTTL,
+    globalFeeType: 'constant',
   })
 
   // Deploy a fake Arbitrum Inbox that allows relaying arbitrary L2>L1 messages without delay

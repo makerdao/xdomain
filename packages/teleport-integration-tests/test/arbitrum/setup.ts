@@ -73,6 +73,7 @@ export async function setupArbitrumTests({
     joinDomain: masterDomain,
     globalFee: fee,
     globalFeeTTL: TTL,
+    globalFeeType: 'constant',
   })
 
   const baseBridgeSdk = await deployArbitrumBaseBridge({
@@ -136,7 +137,7 @@ export async function setupArbitrumTests({
   const addTeleportDomainSpell = await L1AddTeleportArbitrumSpellFactory.deploy(
     domain,
     teleportSdk.join.address,
-    teleportSdk.constantFee.address,
+    teleportSdk.feeContract.address,
     line,
     teleportSdk.router.address,
     teleportBridgeSdk.l1TeleportBridge.address,

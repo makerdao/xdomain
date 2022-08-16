@@ -15,7 +15,7 @@ import { performSanityChecks } from '../../test/teleport/checks'
 const bytes32 = ethers.utils.formatBytes32String
 
 async function main() {
-  const fee = 0 // 0 fees
+  const fee = ethers.utils.parseEther('0.0001') // 0.01 % linear fee
   const feeTTL = 60 * 60 * 24 * 8 // flush should happen more or less, 1 day after initTeleport, and should take 7 days to finalize
   const ilk: string = bytes32('TELEPORT-FW-A')
   const l1Domain = bytes32('ETH-GOER-A')
@@ -43,6 +43,7 @@ async function main() {
     joinDomain: l1Domain,
     globalFee: fee,
     globalFeeTTL: feeTTL,
+    globalFeeType: 'linear',
   })
 
   // Deploy Optimism Goerli Testnet Teleport

@@ -10,6 +10,8 @@ import {
   TeleportConstantFee__factory,
   TeleportJoin,
   TeleportJoin__factory,
+  TeleportLinearFee,
+  TeleportLinearFee__factory,
   TeleportOracleAuth,
   TeleportOracleAuth__factory,
   TeleportRouter,
@@ -23,6 +25,7 @@ import { MakerSdk } from './setup'
 import { executeSpell } from './spell'
 
 export const OPTIMISTIC_ROLLUP_FLUSH_FINALIZATION_TIME = 60 * 60 * 24 * 8 // flush should happen more or less, 1 day after initTeleport, and should take 7 days to finalize
+export type FeeContractLike = TeleportConstantFee | TeleportLinearFee
 
 export async function deployTeleport({
   defaultSigner,
@@ -31,6 +34,7 @@ export async function deployTeleport({
   joinDomain,
   globalFee,
   globalFeeTTL,
+  globalFeeType,
 }: {
   defaultSigner: Signer
   makerSdk: MakerSdk
@@ -38,11 +42,12 @@ export async function deployTeleport({
   joinDomain: string
   globalFee: BigNumberish
   globalFeeTTL: BigNumberish
+  globalFeeType: 'constant' | 'linear'
 }): Promise<{
   join: TeleportJoin
   oracleAuth: TeleportOracleAuth
   router: TeleportRouter
-  constantFee: TeleportConstantFee
+  feeContract: FeeContractLike
   basicRelay: BasicRelay
   trustedRelay: TrustedRelay
 }> {
@@ -56,10 +61,18 @@ export async function deployTeleport({
   ])
   console.log('TeleportJoin deployed at: ', join.address)
 
-  console.log('Deploying constantFee...')
-  const ConstantFeeFactory = getContractFactory<TeleportConstantFee__factory>('TeleportConstantFee')
-  const constantFee = await deployUsingFactoryAndVerify(defaultSigner, ConstantFeeFactory, [globalFee, globalFeeTTL])
-  console.log('ConstantFee deployed at: ', constantFee.address)
+  let feeContract: FeeContractLike
+  if (globalFeeType === 'constant') {
+    console.log('Deploying constantFee...')
+    const ConstantFeeFactory = getContractFactory<TeleportConstantFee__factory>('TeleportConstantFee')
+    feeContract = await deployUsingFactoryAndVerify(defaultSigner, ConstantFeeFactory, [globalFee, globalFeeTTL])
+    console.log('ConstantFee deployed at: ', feeContract.address)
+  } else {
+    console.log('Deploying linearFee...')
+    const LinearFeeFactory = getContractFactory<TeleportLinearFee__factory>('TeleportLinearFee')
+    feeContract = await deployUsingFactoryAndVerify(defaultSigner, LinearFeeFactory, [globalFee, globalFeeTTL])
+    console.log('LinearFee deployed at: ', feeContract.address)
+  }
 
   console.log('Deploying oracleAuth...')
   const TeleportOracleAuthFactory = getContractFactory<TeleportOracleAuth__factory>('TeleportOracleAuth')
@@ -112,7 +125,7 @@ export async function deployTeleport({
   await waitForTx(trustedRelay.rely(makerSdk.esm.address))
   await waitForTx(trustedRelay.deny(await defaultSigner.getAddress()))
 
-  return { join, oracleAuth, router, constantFee, basicRelay, trustedRelay }
+  return { join, oracleAuth, router, feeContract, basicRelay, trustedRelay }
 }
 export type TeleportSdk = Awaited<ReturnType<typeof deployTeleport>>
 
