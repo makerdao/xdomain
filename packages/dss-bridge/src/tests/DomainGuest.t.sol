@@ -161,6 +161,7 @@ contract DomainGuestTest is DSSTest {
 
     function testFile() public {
         checkFileAddress(address(guest), "DomainGuest", ["end"]);
+        checkFileUint(address(guest), "DomainGuest", ["dust"]);
 
         // Also check the validDomains
         guest.file("validDomains", TARGET_DOMAIN, 0);
@@ -315,6 +316,7 @@ contract DomainGuestTest is DSSTest {
     }
 
     function testPushSurplus() public {
+        guest.file("dust", 100 * RAD);
         vat.suck(address(this), address(guest), 100 * RAD);
 
         assertEq(vat.dai(address(guest)), 100 * RAD);
@@ -352,7 +354,20 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.push.selector, 0, int256(100 ether)));
     }
 
+    function testPushSurplusDust() public {
+        guest.file("dust", 101 * RAD);
+        vat.suck(address(this), address(guest), 100 * RAD);
+
+        assertEq(vat.dai(address(guest)), 100 * RAD);
+        assertEq(vat.sin(address(guest)), 0);
+        assertEq(vat.surf(), 0);
+
+        vm.expectRevert("DomainGuest/dust");
+        guest.push();
+    }
+
     function testPushDeficit() public {
+        guest.file("dust", 100 * RAD);
         vat.suck(address(guest), address(this), 100 * RAD);
 
         assertEq(vat.dai(address(guest)), 0);
@@ -383,6 +398,17 @@ contract DomainGuestTest is DSSTest {
         assertEq(vat.sin(address(guest)), 25 * RAD);
         assertEq(guest.rid(), 1);
         assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.push.selector, 0, -int256(25 ether)));
+    }
+
+    function testPushDeficitDust() public {
+        guest.file("dust", 101 * RAD);
+        vat.suck(address(guest), address(this), 100 * RAD);
+
+        assertEq(vat.dai(address(guest)), 0);
+        assertEq(vat.sin(address(guest)), 100 * RAD);
+
+        vm.expectRevert("DomainGuest/dust");
+        guest.push();
     }
 
     function testRectify() public {

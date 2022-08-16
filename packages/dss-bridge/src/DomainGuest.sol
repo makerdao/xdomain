@@ -67,6 +67,7 @@ abstract contract DomainGuest {
     uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow [WAD]
     uint256 public live;
     uint80  public nonce;
+    uint256 public dust;        // The dust limit for initiating xchain transfers [RAD]
 
     bytes32     public immutable domain;
     VatLike     public immutable vat;
@@ -82,6 +83,7 @@ abstract contract DomainGuest {
     event Rely(address indexed usr);
     event Deny(address indexed usr);
     event File(bytes32 indexed what, address data);
+    event File(bytes32 indexed what, uint256 data);
     event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
     event Lift(int256 dline);
     event Release(uint256 burned);
@@ -163,6 +165,12 @@ abstract contract DomainGuest {
         emit File(what, data);
     }
 
+    function file(bytes32 what, uint256 data) external auth {
+        if (what == "dust") dust = data;
+        else revert("DomainGuest/file-unrecognized-param");
+        emit File(what, data);
+    }
+
     function file(bytes32 what, bytes32 _domain, uint256 data) external auth {
         if (what == "validDomains") {
             require(data <= 1, "DomainGuest/invalid-data");
@@ -206,7 +214,7 @@ abstract contract DomainGuest {
     function _push() internal isLive returns (bytes memory payload) {
         uint256 _dai = vat.dai(address(this));
         uint256 _sin = vat.sin(address(this));
-        if (_dai > _sin) {
+        if (_dai >= _sin + dust) {
             // We have a surplus
             if (_sin > 0) vat.heal(_sin);
 
@@ -217,7 +225,7 @@ abstract contract DomainGuest {
             payload = abi.encodeWithSelector(DomainHost.push.selector, rid++, _int256(wad));
 
             emit Push(int256(wad));
-        } else if (_dai < _sin) {
+        } else if (_sin >= _dai + dust) {
             // We have a deficit
             if (_dai > 0) vat.heal(_dai);
 
@@ -225,6 +233,8 @@ abstract contract DomainGuest {
             payload = abi.encodeWithSelector(DomainHost.push.selector, rid++, deficit);
 
             emit Push(deficit);
+        } else {
+            revert("DomainGuest/dust");
         }
     }
 
