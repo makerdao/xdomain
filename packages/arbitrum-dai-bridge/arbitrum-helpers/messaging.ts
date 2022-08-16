@@ -1,15 +1,17 @@
-import { L1ToL2MessageStatus, L1TransactionReceipt } from '@arbitrum/sdk'
+import { IL1ToL2MessageWriter, L1ToL2MessageStatus, L1TransactionReceipt } from '@arbitrum/sdk'
 import { expect } from 'chai'
-import { BigNumber, ethers, providers, Signer, utils } from 'ethers'
+import { BigNumber, ContractReceipt, ContractTransaction, ethers, providers, Signer, utils } from 'ethers'
 import hre from 'hardhat'
 
 export async function waitToRelayTxsToL2_Nitro(
-  inProgressL1Tx: Promise<providers.TransactionReceipt>,
+  l1Tx: Promise<ContractTransaction> | ContractTransaction | Promise<ContractReceipt> | ContractReceipt,
   l2Signer: ethers.Signer,
 ) {
-  const txnReceipt = await inProgressL1Tx
+  const awaitedTx: any = await l1Tx
+  const txnReceipt: ethers.ContractReceipt = awaitedTx.wait ? await awaitedTx.wait() : awaitedTx
+
   const l1TxnReceipt = new L1TransactionReceipt(txnReceipt)
-  const l1ToL2Message = (await l1TxnReceipt.getL1ToL2Messages(l2Signer))[0]
+  const l1ToL2Message = (await l1TxnReceipt.getL1ToL2Messages(l2Signer as any))[0] as IL1ToL2MessageWriter
   console.log('Waiting for L1 to L2 message status...')
   const res = await l1ToL2Message.waitForStatus()
 
@@ -19,6 +21,7 @@ export async function waitToRelayTxsToL2_Nitro(
     const receipt = await response.wait()
     if (receipt.status === 1) {
       console.log('Xchain message was succesfully redeemed.')
+      return receipt
     } else {
       throw new Error('Xchain message redemption failed')
     }

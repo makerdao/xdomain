@@ -1,10 +1,11 @@
 node_modules/
 /artifacts/
 /cache/
-typechain-types
 crytic-export/
 .env
 gasReporterOutput.json
+tmp
+dist
 
 # echidna
 crytic-export/

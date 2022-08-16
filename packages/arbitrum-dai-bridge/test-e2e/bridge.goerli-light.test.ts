@@ -30,7 +30,7 @@ import {
 
 const amount = parseUnits('7', 'ether')
 
-describe('bridge', () => {
+describe('goerli bridge', () => {
   let routerDeployment: RouterDeployment
   let bridgeDeployment: BridgeDeployment
   let network: NetworkConfig
@@ -214,10 +214,10 @@ describe('bridge', () => {
         l2Provider: network.l2.provider,
         from: network.l1.deployer,
         to: network.l1.deployer.address,
-        l1Gateway: bridgeDeployment.l1DaiGateway,
+        l1Gateway: l1DaiGatewayV2,
         inboxAddress: network.l1.inbox,
         l1TokenAddress: bridgeDeployment.l1Dai.address,
-        l2GatewayAddress: bridgeDeployment.l2DaiGateway.address,
+        l2GatewayAddress: l2DaiGatewayV2.address,
         deposit: amount,
       }),
       network.l2.deployer,

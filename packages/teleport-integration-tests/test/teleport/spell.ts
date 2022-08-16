@@ -1,4 +1,4 @@
-import { JsonRpcProvider, TransactionReceipt } from '@ethersproject/providers'
+import { TransactionReceipt } from '@ethersproject/providers'
 import { BigNumber, BigNumberish, Contract, Signer } from 'ethers'
 
 import {
@@ -135,5 +135,5 @@ export async function executeSpell(l1Signer: Signer, sdk: MakerSdk, spell: Contr
 export async function getPauseSigner(sdk: MakerSdk, l1Signer: Signer): Promise<Signer> {
   const pauseAddress = await sdk.pause_proxy.owner()
   if ((await l1Signer.getAddress()) === pauseAddress) return l1Signer // on rinkeby, the l1Signer is the owner of the pause_proxy
-  return await impersonateAccount(pauseAddress, l1Signer.provider as JsonRpcProvider) // on mainnet-fork, we impersonate the owner of the pause_proxy
+  return await impersonateAccount(pauseAddress, l1Signer.provider as any) // on mainnet-fork, we impersonate the owner of the pause_proxy
 }

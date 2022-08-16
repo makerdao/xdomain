@@ -10,7 +10,6 @@ import { deployUsingFactoryAndVerify, impersonateAccount, waitForTx } from '../.
 dotenv.config()
 
 import { TransactionReceipt } from '@ethersproject/abstract-provider'
-import { JsonRpcProvider } from '@ethersproject/providers'
 import { assert } from 'chai'
 import { Signer } from 'ethers'
 
@@ -50,7 +49,7 @@ async function executeDssSpell(
   mkrWhaleAddress: string,
 ): Promise<TransactionReceipt> {
   // execute spell using standard DssSpell procedure
-  const mkrWhale = await impersonateAccount(mkrWhaleAddress, l1Signer.provider as JsonRpcProvider)
+  const mkrWhale = await impersonateAccount(mkrWhaleAddress, l1Signer.provider as any)
   const pause = new Contract(pauseAddress, new Interface(['function authority() view returns (address)']), l1Signer)
   const chief = new Contract(
     await pause.authority(),

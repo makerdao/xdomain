@@ -19,25 +19,24 @@ import {
   RouterDeployment,
   useStaticDeployment,
   useStaticRouterDeployment,
-  waitToRelayTxsToL2,
+  waitToRelayTxsToL2_Nitro,
 } from '../arbitrum-helpers'
 import {
-  depositToStandardBridge,
-  depositToStandardRouter,
-  executeSpell,
-  setGatewayForToken,
+  depositToStandardBridge_Nitro,
+  depositToStandardRouter_Nitro,
+  executeSpell_Nitro,
+  setGatewayForToken_Nitro,
 } from '../arbitrum-helpers/bridge'
 
 const amount = parseUnits('7', 'ether')
 
-describe('bridge', () => {
+describe('rinkeby bridge', () => {
   let routerDeployment: RouterDeployment
   let bridgeDeployment: BridgeDeployment
   let network: NetworkConfig
   before(async () => {
     // bridge deployment is quite time consuming so we do it only once
     ;({ bridgeDeployment, network, routerDeployment } = await setupTest())
-    console.log({ bridgeDeployment, network, routerDeployment })
   })
 
   it('deposits funds', async () => {
@@ -45,22 +44,31 @@ describe('bridge', () => {
     const initialEscrowBalance = await bridgeDeployment.l1Dai.balanceOf(bridgeDeployment.l1Escrow.address)
     const initialL2Balance = await bridgeDeployment.l2Dai.balanceOf(network.l1.deployer.address)
 
-    await waitForTx(bridgeDeployment.l1Dai.approve(bridgeDeployment.l1DaiGateway.address, amount))
+    const allowance = await bridgeDeployment.l1Dai.allowance(
+      network.l1.deployer.address,
+      bridgeDeployment.l1DaiGateway.address,
+    )
+    if (allowance.lt(amount)) {
+      console.log('Approving l1DaiGateway...')
+      await waitForTx(
+        bridgeDeployment.l1Dai.approve(bridgeDeployment.l1DaiGateway.address, ethers.constants.MaxUint256),
+      )
+    }
 
-    console.log('depositing...')
-    await waitToRelayTxsToL2(
-      depositToStandardBridge({
+    console.log('Depositing to standard bridge...')
+    await waitToRelayTxsToL2_Nitro(
+      depositToStandardBridge_Nitro({
+        l1Provider: network.l1.provider,
         l2Provider: network.l2.provider,
         from: network.l1.deployer,
         to: network.l1.deployer.address,
         l1Gateway: bridgeDeployment.l1DaiGateway,
+        inboxAddress: network.l1.inbox,
         l1TokenAddress: bridgeDeployment.l1Dai.address,
         l2GatewayAddress: bridgeDeployment.l2DaiGateway.address,
         deposit: amount,
       }),
-      network.l1.inbox,
-      network.l1.provider,
-      network.l2.provider,
+      network.l2.deployer,
     )
 
     expect(await bridgeDeployment.l1Dai.balanceOf(network.l1.deployer.address)).to.be.eq(initialL1Balance.sub(amount))
@@ -89,21 +97,32 @@ describe('bridge', () => {
     const initialEscrowBalance = await bridgeDeployment.l1Dai.balanceOf(bridgeDeployment.l1Escrow.address)
     const initialL2Balance = await bridgeDeployment.l2Dai.balanceOf(network.l1.deployer.address)
 
-    await waitForTx(bridgeDeployment.l1Dai.approve(bridgeDeployment.l1DaiGateway.address, amount))
-    await waitToRelayTxsToL2(
-      depositToStandardRouter({
+    const allowance = await bridgeDeployment.l1Dai.allowance(
+      network.l1.deployer.address,
+      bridgeDeployment.l1DaiGateway.address,
+    )
+    if (allowance.lt(amount)) {
+      console.log('Approving l1DaiGateway...')
+      await waitForTx(
+        bridgeDeployment.l1Dai.approve(bridgeDeployment.l1DaiGateway.address, ethers.constants.MaxUint256),
+      )
+    }
+
+    console.log('Depositing to standard router...')
+    await waitToRelayTxsToL2_Nitro(
+      depositToStandardRouter_Nitro({
+        l1Provider: network.l1.provider,
         l2Provider: network.l2.provider,
         from: network.l1.deployer,
         to: network.l1.deployer.address,
         l1Gateway: bridgeDeployment.l1DaiGateway,
+        inboxAddress: network.l1.inbox,
         l1Router: routerDeployment.l1GatewayRouter,
         l1TokenAddress: bridgeDeployment.l1Dai.address,
         l2GatewayAddress: bridgeDeployment.l2DaiGateway.address,
         deposit: amount,
       }),
-      network.l1.inbox,
-      network.l1.provider,
-      network.l2.provider,
+      network.l2.deployer,
     )
 
     expect(await bridgeDeployment.l1Dai.balanceOf(network.l1.deployer.address)).to.be.eq(initialL1Balance.sub(amount))
@@ -184,24 +203,24 @@ describe('bridge', () => {
       l2DaiGatewayV2.address,
     ])
 
-    await executeSpell(network, bridgeDeployment, l2UpgradeSpell.address, spellCalldata)
+    await executeSpell_Nitro(network, bridgeDeployment, l2UpgradeSpell.address, spellCalldata)
 
     console.log('Bridge upgraded!')
 
     await waitForTx(bridgeDeployment.l1Dai.approve(l1DaiGatewayV2.address, amount))
-    await waitToRelayTxsToL2(
-      depositToStandardBridge({
+    await waitToRelayTxsToL2_Nitro(
+      depositToStandardBridge_Nitro({
+        l1Provider: network.l1.provider,
         l2Provider: network.l2.provider,
         from: network.l1.deployer,
         to: network.l1.deployer.address,
         l1Gateway: l1DaiGatewayV2,
+        inboxAddress: network.l1.inbox,
         l1TokenAddress: bridgeDeployment.l1Dai.address,
         l2GatewayAddress: l2DaiGatewayV2.address,
         deposit: amount,
       }),
-      network.l1.inbox,
-      network.l1.provider,
-      network.l2.provider,
+      network.l2.deployer,
     )
 
     expect(await bridgeDeployment.l1Dai.balanceOf(network.l1.deployer.address)).to.be.eq(initialL1Balance.sub(amount))
@@ -226,16 +245,16 @@ describe('bridge', () => {
 })
 
 export async function setupTest() {
-  const pkey = getRequiredEnv('E2E_TESTS_PKEY')
-  const l1Rpc = getRequiredEnv('E2E_TESTS_L1_RPC')
-  const l2Rpc = getRequiredEnv('E2E_TESTS_L2_RPC')
+  const pkey = getRequiredEnv('E2E_TESTS_RINKEBY_PKEY')
+  const l1Rpc = getRequiredEnv('E2E_TESTS_RINKEBY_L1_RPC')
+  const l2Rpc = getRequiredEnv('E2E_TESTS_RINKEBY_L2_RPC')
   const network = await getRinkebyNetworkConfig({ pkey, l1Rpc, l2Rpc })
 
   let bridgeDeployment: BridgeDeployment
   let routerDeployment: RouterDeployment
 
   // this is a mechanism to reuse old deployment -- speeds up development
-  const staticDeploymentString = getOptionalEnv('E2E_TESTS_DEPLOYMENT')
+  const staticDeploymentString = getOptionalEnv('E2E_TESTS_RINKEBY_DEPLOYMENT')
   if (staticDeploymentString) {
     console.log('Using static deployment...')
     const deployment = JSON.parse(staticDeploymentString)
@@ -245,10 +264,12 @@ export async function setupTest() {
     routerDeployment = await deployRouter(network)
     bridgeDeployment = await deployBridge(network, routerDeployment)
 
-    await setGatewayForToken({
+    await setGatewayForToken_Nitro({
       l1Router: routerDeployment.l1GatewayRouter,
+      l1Provider: network.l1.provider,
       l2Provider: network.l2.provider,
       tokenGateway: bridgeDeployment.l1DaiGateway,
+      inboxAddress: network.l1.inbox,
     })
   }
 

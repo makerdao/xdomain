@@ -54,7 +54,7 @@ async function main() {
 
   const optimismRollupSdk: OptimismRollupSdk = {
     l1StandardBridge: goerliSdk.optimism.l1StandardBridge,
-    l1XDomainMessenger: goerliSdk.optimism.xDomainMessenger,
+    l1XDomainMessenger: goerliSdk.optimism.xDomainMessenger as any,
     l1StateCommitmentChain: goerliSdk.optimism.stateCommitmentChain,
     l2StandardBridge: optimismGoerliTestnetSdk.optimism.l2StandardBridge,
     l2XDomainMessenger: optimismGoerliTestnetSdk.optimism.xDomainMessenger,
@@ -101,7 +101,7 @@ async function main() {
     l1DaiTokenBridge: goerliSdk.arbitrumDaiBridge.l1DaiGateway,
     l2Dai: arbitrumGoerliTestnetSdk.arbitrumDaiBridge.dai as any, // @todo: due to a problem in eth-sdk daiBridge.dai has l1Dai type...
     l2GovRelay: arbitrumGoerliTestnetSdk.arbitrumDaiBridge.l2GovernanceRelay as any, // @todo: due to a problem in eth-sdk daiBridge.l2GovernanceRelay has OptimismL2GovernanceRelay type...
-    l2DaiTokenBridge: arbitrumGoerliTestnetSdk.arbitrumDaiBridge.l2DaiGateway,
+    l2DaiTokenBridge: arbitrumGoerliTestnetSdk.arbitrumDaiBridge.l2DaiGateway as any,
   }
 
   // Deploy a fake Arbitrum Inbox that allows relaying arbitrary L2>L1 messages without delay

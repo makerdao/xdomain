@@ -1,4 +1,4 @@
-name: Tests
+name: optimism-dai-bridge Tests
 
 on:
   push:

@@ -25,9 +25,9 @@ export async function getRinkebyNetworkConfig({
     l1: {
       provider: l1,
       deployer: l1Deployer,
-      dai: '0xd9e66A2f546880EA4d800F189d6F12Cc15Bff281', // our own deployment
+      dai: '0x17B729a6Ac1f265090cbb4AecBdd53E34664C00e', // our own deployment
       inbox: '0x578BAde599406A8fE3d24Fd7f7211c0911F5B29e',
-      makerPauseProxy: '0x00edb63bc6f36a45fc18c98e03ad2d707652ab5c', // dummy EOA controlled by us
+      makerPauseProxy: '0x69751D2B168D99F5c5762B4E642eE6cC8778E1C6', // dummy EOA controlled by us
       makerESM: ethers.constants.AddressZero,
     },
     l2: {

@@ -1,4 +1,4 @@
-name: Teleport integration tests
+name: Teleport Arbitrum integration tests
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
       - master
 
 jobs:
-  teleport-integration-tests:
+  teleport-arb-int-tests:
     name: Tests
     defaults:
       run:
@@ -45,9 +45,7 @@ jobs:
           echo KOVAN_RPC_URL="${{ secrets.KOVAN_RPC_URL }}" >> .env
           echo TEST_ARBITRUM_L1_RPC_URL="${{ secrets.RINKEBY_RPC_URL }}" >> .env
           echo TEST_ARBITRUM_L2_RPC_URL="https://rinkeby.arbitrum.io/rpc" >> .env
-          echo TEST_OPTIMISM_L1_RPC_URL="http://127.0.0.1:9545" >> .env
-          echo TEST_OPTIMISM_L2_RPC_URL="http://127.0.0.1:8545" >> .env
-          echo DEPLOYER_PRIV_KEY="${{ secrets.TEST_DEPLOYER_PRIV_KEY }}" >> .env
+          echo DEPLOYER_PRIV_KEY="${{ secrets.INTEGRATION_TEST_DEPLOYER_PRIV_KEY }}" >> .env
           echo USER_PRIV_KEY="${{ secrets.TEST_USER_PRIV_KEY }}" >> .env
 
       - name: Cache Yarn dependencies
@@ -64,13 +62,4 @@ jobs:
       - run: yarn lint
       - run: yarn format
       - run: yarn build
-
-      - run: ./scripts/build-infra.sh
-      - run: ./scripts/run-infra.sh&
-      - run: yarn ts-node ./scripts/ensure-infra-up.ts
-      - run: sleep 60 # give it some time to initialize
-
-      - run: yarn test:optimism
-      - run: yarn test:arbitrum # todo: run in parallel
-      - run: yarn typecheck
-      # - run: ../../.github/workflows/no-git-changes.sh
+      - run: yarn test:arbitrum
