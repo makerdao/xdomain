@@ -38,7 +38,7 @@ async function main() {
 
   const teleportSdk = await deployTeleport({
     defaultSigner: l1Signer,
-    makerSdk: goerliSdk.canonicalMaker,
+    makerSdk: goerliSdk.canonical.maker,
     ilk,
     joinDomain: l1Domain,
     globalFee: fee,
@@ -56,16 +56,16 @@ async function main() {
   }
 
   const optimismBaseBridgeSdk: OptimismBaseBridgeSdk = {
-    l1Escrow: goerliSdk.canonicalOptimismDaiBridge.l1Escrow,
-    l1GovRelay: goerliSdk.canonicalOptimismDaiBridge.l1GovernanceRelay as any, // @todo: due to a problem in eth-sdk daiBridge.l1GovernanceRelay has ArbitrumL1GovernanceRelay type...
-    l1DaiTokenBridge: goerliSdk.canonicalOptimismDaiBridge.l1DAITokenBridge,
-    l2Dai: optimismGoerliTestnetSdk.canonicalOptimismDaiBridge.dai as any, // @todo: due to a problem in eth-sdk daiBridge.dai has l1Dai type...
-    l2GovRelay: optimismGoerliTestnetSdk.canonicalOptimismDaiBridge.l2GovernanceRelay as any,
-    l2DaiTokenBridge: optimismGoerliTestnetSdk.canonicalOptimismDaiBridge.l2DAITokenBridge,
+    l1Escrow: goerliSdk.canonical.optimismDaiBridge.l1Escrow,
+    l1GovRelay: goerliSdk.canonical.optimismDaiBridge.l1GovernanceRelay as any, // @todo: due to a problem in eth-sdk daiBridge.l1GovernanceRelay has ArbitrumL1GovernanceRelay type...
+    l1DaiTokenBridge: goerliSdk.canonical.optimismDaiBridge.l1DAITokenBridge,
+    l2Dai: optimismGoerliTestnetSdk.canonical.optimismDaiBridge.dai as any, // @todo: due to a problem in eth-sdk daiBridge.dai has l1Dai type...
+    l2GovRelay: optimismGoerliTestnetSdk.canonical.optimismDaiBridge.l2GovernanceRelay as any,
+    l2DaiTokenBridge: optimismGoerliTestnetSdk.canonical.optimismDaiBridge.l2DAITokenBridge,
   }
 
   const optimismTeleportBridgeSdk = await deployOptimismTeleportBridge({
-    makerSdk: goerliSdk.canonicalMaker,
+    makerSdk: goerliSdk.canonical.maker,
     l1Signer,
     l2Signer: l2OptimismSigner,
     teleportSdk,
@@ -77,7 +77,7 @@ async function main() {
 
   await performSanityChecks(
     l1Signer,
-    goerliSdk.canonicalMaker,
+    goerliSdk.canonical.maker,
     teleportSdk,
     optimismBaseBridgeSdk,
     optimismTeleportBridgeSdk,
@@ -91,16 +91,16 @@ async function main() {
   const arbitrumRollupSdk: ArbitrumRollupSdk = goerliSdk.arbitrum
 
   const arbitrumBaseBridgeSdk: ArbitrumBaseBridgeSdk = {
-    l1Escrow: goerliSdk.canonicalArbitrumDaiBridge.l1Escrow,
-    l1GovRelay: goerliSdk.canonicalArbitrumDaiBridge.l1GovernanceRelay as any,
-    l1DaiTokenBridge: goerliSdk.canonicalArbitrumDaiBridge.l1DaiGateway,
-    l2Dai: arbitrumGoerliTestnetSdk.canonicalArbitrumDaiBridge.dai as any, // @todo: due to a problem in eth-sdk daiBridge.dai has l1Dai type...
-    l2GovRelay: arbitrumGoerliTestnetSdk.canonicalArbitrumDaiBridge.l2GovernanceRelay as any, // @todo: due to a problem in eth-sdk daiBridge.l2GovernanceRelay has OptimismL2GovernanceRelay type...
-    l2DaiTokenBridge: arbitrumGoerliTestnetSdk.canonicalArbitrumDaiBridge.l2DaiGateway as any,
+    l1Escrow: goerliSdk.canonical.arbitrumDaiBridge.l1Escrow,
+    l1GovRelay: goerliSdk.canonical.arbitrumDaiBridge.l1GovernanceRelay as any,
+    l1DaiTokenBridge: goerliSdk.canonical.arbitrumDaiBridge.l1DaiGateway,
+    l2Dai: arbitrumGoerliTestnetSdk.canonical.arbitrumDaiBridge.dai as any, // @todo: due to a problem in eth-sdk daiBridge.dai has l1Dai type...
+    l2GovRelay: arbitrumGoerliTestnetSdk.canonical.arbitrumDaiBridge.l2GovernanceRelay as any, // @todo: due to a problem in eth-sdk daiBridge.l2GovernanceRelay has OptimismL2GovernanceRelay type...
+    l2DaiTokenBridge: arbitrumGoerliTestnetSdk.canonical.arbitrumDaiBridge.l2DaiGateway as any,
   }
 
   const arbitrumTeleportBridgeSdk = await deployArbitrumTeleportBridge({
-    makerSdk: goerliSdk.canonicalMaker,
+    makerSdk: goerliSdk.canonical.maker,
     l1Signer,
     l2Signer: l2ArbitrumSigner,
     teleportSdk,
@@ -112,7 +112,7 @@ async function main() {
 
   await performSanityChecks(
     l1Signer,
-    goerliSdk.canonicalMaker,
+    goerliSdk.canonical.maker,
     teleportSdk,
     arbitrumBaseBridgeSdk,
     arbitrumTeleportBridgeSdk,

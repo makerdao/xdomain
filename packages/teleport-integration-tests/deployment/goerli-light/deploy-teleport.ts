@@ -61,16 +61,16 @@ async function main() {
   }
 
   const optimismBaseBridgeSdk: OptimismBaseBridgeSdk = {
-    l1Escrow: goerliSdk.optimismDaiBridge.l1Escrow,
-    l1GovRelay: goerliSdk.optimismDaiBridge.l1GovernanceRelay as any, // @todo: due to a problem in eth-sdk daiBridge.l1GovernanceRelay has ArbitrumL1GovernanceRelay type...
-    l1DaiTokenBridge: goerliSdk.optimismDaiBridge.l1DAITokenBridge,
-    l2Dai: optimismGoerliTestnetSdk.optimismDaiBridge.dai as any, // @todo: due to a problem in eth-sdk daiBridge.dai has l1Dai type...
-    l2GovRelay: optimismGoerliTestnetSdk.optimismDaiBridge.l2GovernanceRelay as any,
-    l2DaiTokenBridge: optimismGoerliTestnetSdk.optimismDaiBridge.l2DAITokenBridge,
+    l1Escrow: goerliSdk.light.optimismDaiBridge.l1Escrow,
+    l1GovRelay: goerliSdk.light.optimismDaiBridge.l1GovernanceRelay as any, // @todo: due to a problem in eth-sdk daiBridge.l1GovernanceRelay has ArbitrumL1GovernanceRelay type...
+    l1DaiTokenBridge: goerliSdk.light.optimismDaiBridge.l1DAITokenBridge,
+    l2Dai: optimismGoerliTestnetSdk.light.optimismDaiBridge.dai as any, // @todo: due to a problem in eth-sdk daiBridge.dai has l1Dai type...
+    l2GovRelay: optimismGoerliTestnetSdk.light.optimismDaiBridge.l2GovernanceRelay as any,
+    l2DaiTokenBridge: optimismGoerliTestnetSdk.light.optimismDaiBridge.l2DAITokenBridge,
   }
 
   const optimismTeleportBridgeSdk = await deployOptimismTeleportBridge({
-    makerSdk: goerliSdk.maker,
+    makerSdk: goerliSdk.light.maker,
     l1Signer,
     l2Signer: l2OptimismSigner,
     teleportSdk,
@@ -82,7 +82,7 @@ async function main() {
 
   await performSanityChecks(
     l1Signer,
-    goerliSdk.maker,
+    goerliSdk.light.maker,
     teleportSdk,
     optimismBaseBridgeSdk,
     optimismTeleportBridgeSdk,
@@ -96,19 +96,19 @@ async function main() {
   const arbitrumRollupSdk: ArbitrumRollupSdk = goerliSdk.arbitrum
 
   const arbitrumBaseBridgeSdk: ArbitrumBaseBridgeSdk = {
-    l1Escrow: goerliSdk.arbitrumDaiBridge.l1Escrow,
-    l1GovRelay: goerliSdk.arbitrumDaiBridge.l1GovernanceRelay as any,
-    l1DaiTokenBridge: goerliSdk.arbitrumDaiBridge.l1DaiGateway,
-    l2Dai: arbitrumGoerliTestnetSdk.arbitrumDaiBridge.dai as any, // @todo: due to a problem in eth-sdk daiBridge.dai has l1Dai type...
-    l2GovRelay: arbitrumGoerliTestnetSdk.arbitrumDaiBridge.l2GovernanceRelay as any, // @todo: due to a problem in eth-sdk daiBridge.l2GovernanceRelay has OptimismL2GovernanceRelay type...
-    l2DaiTokenBridge: arbitrumGoerliTestnetSdk.arbitrumDaiBridge.l2DaiGateway as any,
+    l1Escrow: goerliSdk.light.arbitrumDaiBridge.l1Escrow,
+    l1GovRelay: goerliSdk.light.arbitrumDaiBridge.l1GovernanceRelay as any,
+    l1DaiTokenBridge: goerliSdk.light.arbitrumDaiBridge.l1DaiGateway,
+    l2Dai: arbitrumGoerliTestnetSdk.light.arbitrumDaiBridge.dai as any, // @todo: due to a problem in eth-sdk daiBridge.dai has l1Dai type...
+    l2GovRelay: arbitrumGoerliTestnetSdk.light.arbitrumDaiBridge.l2GovernanceRelay as any, // @todo: due to a problem in eth-sdk daiBridge.l2GovernanceRelay has OptimismL2GovernanceRelay type...
+    l2DaiTokenBridge: arbitrumGoerliTestnetSdk.light.arbitrumDaiBridge.l2DaiGateway as any,
   }
 
   // Deploy a fake Arbitrum Inbox that allows relaying arbitrary L2>L1 messages without delay
   const { fakeInbox } = await deployFakeArbitrumInbox({ l1Signer, arbitrumRollupSdk })
 
   const arbitrumTeleportBridgeSdk = await deployArbitrumTeleportBridge({
-    makerSdk: goerliSdk.maker,
+    makerSdk: goerliSdk.light.maker,
     l1Signer,
     l2Signer: l2ArbitrumSigner,
     teleportSdk,
@@ -120,7 +120,7 @@ async function main() {
 
   await performSanityChecks(
     l1Signer,
-    goerliSdk.maker,
+    goerliSdk.light.maker,
     teleportSdk,
     arbitrumBaseBridgeSdk,
     arbitrumTeleportBridgeSdk,
