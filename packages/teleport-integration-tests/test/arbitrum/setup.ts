@@ -1,13 +1,6 @@
 import { getRinkebySdk } from '@dethcrypto/eth-sdk-client'
 import { sleep } from '@eth-optimism/core-utils'
 import { getOptionalEnv, getRequiredEnv } from '@makerdao/hardhat-utils'
-import {
-  depositToStandardBridge_Nitro,
-  getGasPriceBid,
-  getMaxGas_Nitro,
-  getMaxSubmissionPrice_Nitro,
-  waitToRelayTxsToL2_Nitro,
-} from 'arbitrum-dai-bridge'
 import { ContractReceipt, ContractTransaction, providers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 
@@ -15,7 +8,17 @@ import { L1AddTeleportArbitrumSpell__factory, L2AddTeleportDomainSpell__factory 
 import { deployUsingFactory, getContractFactory, waitForTx } from '../helpers'
 import { RetryProvider } from '../helpers/RetryProvider'
 import { deployTeleport, DomainSetupOpts, DomainSetupResult } from '../teleport'
-import { deployArbitrumBaseBridge, deployArbitrumTeleportBridge, deployFakeArbitrumInbox, makeRelayTxToL1 } from '.'
+import {
+  deployArbitrumBaseBridge,
+  deployArbitrumTeleportBridge,
+  deployFakeArbitrumInbox,
+  depositToStandardBridge_Nitro,
+  getGasPriceBid,
+  getMaxGas_Nitro,
+  getMaxSubmissionPrice_Nitro,
+  makeRelayTxToL1,
+  waitToRelayTxsToL2_Nitro,
+} from '.'
 
 const TTL = 300
 
