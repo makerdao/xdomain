@@ -8,7 +8,7 @@ import {
   getMaxSubmissionPrice_Nitro,
   waitToRelayTxsToL2_Nitro,
 } from 'arbitrum-dai-bridge'
-import { ContractReceipt, ContractTransaction, providers,Wallet } from 'ethers'
+import { ContractReceipt, ContractTransaction, providers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 
 import { L1AddTeleportArbitrumSpell__factory, L2AddTeleportDomainSpell__factory } from '../../typechain'
