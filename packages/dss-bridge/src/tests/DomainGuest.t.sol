@@ -121,7 +121,7 @@ contract DomainGuestTest is DSSTest {
     event Rectify(uint256 wad);
     event Cage();
     event Tell(uint256 value);
-    event MintClaim(address indexed usr, uint256 claim);
+    event Exit(address indexed usr, uint256 wad);
     event Deposit(address indexed to, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
     event InitiateTeleport(TeleportGUID teleport);
@@ -203,7 +203,7 @@ contract DomainGuestTest is DSSTest {
         funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0, 0);
         funcs[1] = abi.encodeWithSelector(DomainGuest.rectify.selector, 0, 0, 0);
         funcs[2] = abi.encodeWithSelector(DomainGuest.cage.selector, 0, 0, 0);
-        funcs[3] = abi.encodeWithSelector(DomainGuest.mintClaim.selector, 0, 0, 0);
+        funcs[3] = abi.encodeWithSelector(DomainGuest.exit.selector, 0, 0, 0);
         funcs[4] = abi.encodeWithSelector(DomainGuest.deposit.selector, 0, 0, 0);
 
         for (uint256 i = 0; i < funcs.length; i++) {
@@ -422,12 +422,12 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.tell.selector, 0, 123));
     }
 
-    function testMintClaim() public {
+    function testExit() public {
         assertEq(claimToken.balanceOf(address(123)), 0);
 
         vm.expectEmit(true, true, true, true);
-        emit MintClaim(address(123), 100 ether);
-        guest.mintClaim(address(123), 100 ether);
+        emit Exit(address(123), 100 ether);
+        guest.exit(address(123), 100 ether);
 
         assertEq(claimToken.balanceOf(address(123)), 100 ether);
     }

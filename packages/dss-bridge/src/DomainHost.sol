@@ -283,11 +283,11 @@ abstract contract DomainHost {
 
         // Convert to actual debt amount
         // Round against the user
-        uint256 claim = wad * (grain - _divup(cure, RAY)) / grain;
+        uint256 claimAmount = wad * (grain - _divup(cure, RAY)) / grain;
         
-        payload = abi.encodeWithSelector(DomainGuest.mintClaim.selector, usr, claim);
+        payload = abi.encodeWithSelector(DomainGuest.exit.selector, usr, claimAmount);
 
-        emit Exit(usr, wad, claim);
+        emit Exit(usr, wad, claimAmount);
     }
 
     // --- Canonical DAI Support ---

@@ -56,7 +56,7 @@ This will trigger a call to `DomainHost.tell(uint256 value)`.
 
 Used during global settlement to provide DAI holders with a share claim on the remote collateral. Mints a claim token on the remote domain which can be used in the remote `end` to get access to the collateral.
 
-This will trigger a call to `DomainGuest.mintClaim(address usr, uint256 claim)`.
+This will trigger a call to `DomainGuest.exit(address usr, uint256 wad)`.
 
 ### `DomainHost.deposit(address to, uint256 amount)`
 

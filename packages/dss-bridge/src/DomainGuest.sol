@@ -89,7 +89,7 @@ abstract contract DomainGuest {
     event Rectify(uint256 wad);
     event Cage();
     event Tell(uint256 value);
-    event MintClaim(address indexed usr, uint256 claim);
+    event Exit(address indexed usr, uint256 wad);
     event Deposit(address indexed to, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
     event InitiateTeleport(TeleportGUID teleport);
@@ -258,11 +258,11 @@ abstract contract DomainGuest {
     /// @notice Mint a claim token for the given user
     /// @dev    Claim amount is in units of local debt.
     /// @param usr The destination to send the claim tokens to
-    /// @param claim The amount of claim tokens to mint
-    function mintClaim(address usr, uint256 claim) external hostOnly {
-        claimToken.mint(usr, claim);
+    /// @param wad The amount of claim tokens to mint
+    function exit(address usr, uint256 wad) external hostOnly {
+        claimToken.mint(usr, wad);
 
-        emit MintClaim(usr, claim);
+        emit Exit(usr, wad);
     }
 
     function heal(uint256 amount) external {

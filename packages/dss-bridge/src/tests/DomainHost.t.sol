@@ -471,7 +471,7 @@ contract DomainHostTest is DSSTest {
         emit Exit(address(123), 50 ether, 15 ether);
         host.exit(address(123), 50 ether);
 
-        assertEq(host.lastPayload(), abi.encodeWithSelector(DomainGuest.mintClaim.selector, address(123), 15 ether));     // 50% of 30 debt is 15
+        assertEq(host.lastPayload(), abi.encodeWithSelector(DomainGuest.exit.selector, address(123), 15 ether));     // 50% of 30 debt is 15
     }
 
     function testDeposit() public {
