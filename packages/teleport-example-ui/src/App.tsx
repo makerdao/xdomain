@@ -1,6 +1,6 @@
 import './App.scss'
 
-import { Button, Col, Row } from 'antd'
+import { Alert, Button, Col, Row } from 'antd'
 import { BigNumber } from 'ethers'
 import { formatEther } from 'ethers/lib/utils'
 import { useState } from 'react'
@@ -76,6 +76,16 @@ function App() {
     <div className="App">
       <Row justify="center">
         <Col xs={24} sm={24} md={24} lg={22} xl={20} xxl={18}>
+          <Row style={{ marginBottom: 20 }} justify="center">
+            <Col span={24}>
+              <Alert
+                message="This is an example UI and is not meant for use in production. This frontend is unaudited and may contain
+      critical bugs resulting in the loss of your funds. Use at your own risks!"
+                type="warning"
+                closable
+              />
+            </Col>
+          </Row>
           <Row justify="end" className="box top-bar">
             <Col flex="auto"></Col>
             <Col flex="100px">
