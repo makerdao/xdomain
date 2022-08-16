@@ -37,8 +37,8 @@ async function main() {
   const oracle = new Wallet(oraclePrivKey, l2Signer.provider)
   console.log('oracle:', oracle.address, 'receiver:', receiver.address)
 
-  const goerliSdk = getGoerliSdk(l1Signer)
-  const optimismGoerliSdk = getOptimismGoerliTestnetSdk(l2Signer)
+  const goerliSdk = getGoerliSdk(l1Signer).light
+  const optimismGoerliSdk = getOptimismGoerliTestnetSdk(l2Signer).light
 
   const senderBefore = await optimismGoerliSdk.optimismDaiBridge.dai.balanceOf(senderAddress)
   const receiverBefore = await goerliSdk.maker.dai.balanceOf(receiver.address)

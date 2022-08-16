@@ -43,7 +43,7 @@ async function main() {
 
   const teleportSdk = await deployTeleport({
     defaultSigner: l1Signer,
-    makerSdk: goerliSdk.maker,
+    makerSdk: goerliSdk.light.maker,
     ilk,
     joinDomain: l1Domain,
     globalFee: fee,
@@ -99,7 +99,7 @@ async function main() {
   const arbitrumBaseBridgeSdk: ArbitrumBaseBridgeSdk = {
     l1Escrow: goerliSdk.light.arbitrumDaiBridge.l1Escrow,
     l1GovRelay: goerliSdk.light.arbitrumDaiBridge.l1GovernanceRelay as any,
-    l1DaiTokenBridge: goerliSdk.light.arbitrumDaiBridge.l1DaiGateway,
+    l1DaiTokenBridge: goerliSdk.light.arbitrumDaiBridge.l1DaiGateway as any,
     l2Dai: arbitrumGoerliTestnetSdk.light.arbitrumDaiBridge.dai as any, // @todo: due to a problem in eth-sdk daiBridge.dai has l1Dai type...
     l2GovRelay: arbitrumGoerliTestnetSdk.light.arbitrumDaiBridge.l2GovernanceRelay as any, // @todo: due to a problem in eth-sdk daiBridge.l2GovernanceRelay has OptimismL2GovernanceRelay type...
     l2DaiTokenBridge: arbitrumGoerliTestnetSdk.light.arbitrumDaiBridge.l2DaiGateway as any,
