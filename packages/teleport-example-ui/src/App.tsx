@@ -22,6 +22,7 @@ const SRC_CHAINID_TO_DST_CHAINID: { [key in SrcDomainChainId]: DstDomainChainId 
 }
 
 function App() {
+  const [warningVisible, setWarningVisible] = useState<boolean>(true)
   const { connectWallet, disconnectWallet, account, chainId: walletChainId, provider } = useConnectedWallet()
 
   const [srcChainId, setSrcChainId] = useState<SrcDomainChainId>(421613)
@@ -76,13 +77,19 @@ function App() {
     <div className="App">
       <Row justify="center">
         <Col xs={24} sm={24} md={24} lg={22} xl={20} xxl={18}>
-          <Row style={{ marginBottom: 20 }} justify="center">
+          <Row style={{ marginBottom: warningVisible ? 20 : 10 }}>
             <Col span={24}>
               <Alert
-                message="This is an example UI and is not meant for use in production. This frontend is unaudited and may contain
-      critical bugs resulting in the loss of your funds. Use at your own risks!"
+                message={
+                  <>
+                    This is an example UI and is not meant for use in production. This frontend is{' '}
+                    <strong>unaudited</strong> and may contain critical bugs resulting in the{' '}
+                    <strong>loss of your funds</strong>. Use at your own risks!
+                  </>
+                }
                 type="warning"
                 closable
+                onClose={() => setWarningVisible(false)}
               />
             </Col>
           </Row>
