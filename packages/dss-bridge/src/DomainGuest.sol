@@ -67,7 +67,7 @@ abstract contract DomainGuest {
     uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow [WAD]
     uint256 public live;
     uint80  public nonce;
-    uint256 public dust;        // The dust limit for initiating xchain transfers [RAD]
+    uint256 public dust;        // The dust limit for preventing spam attacks [RAD]
 
     bytes32     public immutable domain;
     VatLike     public immutable vat;
