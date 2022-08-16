@@ -2,7 +2,7 @@ import { getActiveWards, getAddressOfNextDeployedContract } from '@makerdao/hard
 import { AuthableLike } from '@makerdao/hardhat-utils/dist/auth/AuthableContract'
 import { expect } from 'chai'
 import { providers, Signer, Wallet } from 'ethers'
-import { ethers } from 'hardhat'
+import hre, { ethers } from 'hardhat'
 import { compact } from 'lodash'
 import { assert, Awaited } from 'ts-essentials'
 
@@ -143,12 +143,15 @@ export async function deployBridge(
   await waitForTx(l1GovRelay.rely(deps.l1.makerPauseProxy))
   await waitForTx(l1GovRelay.rely(deps.l1.makerESM))
 
+  const daiArtifact = await hre.artifacts.readArtifact('Dai')
+  const l1Dai = (await ethers.getContractAtFromArtifact(daiArtifact, deps.l1.dai, deps.l1.deployer)) as Dai
+
   return {
     l1DaiGateway,
     l1Escrow,
     l2Dai,
     l2DaiGateway,
-    l1Dai: (await ethers.getContractAt('Dai', deps.l1.dai, deps.l1.deployer)) as Dai,
+    l1Dai,
     l1GovRelay,
     l2GovRelay,
   }
