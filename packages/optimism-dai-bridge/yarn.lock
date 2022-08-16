@@ -151,15 +151,6 @@
     ethers "^5.4.5"
     lodash "^4.17.21"
 
-"@eth-optimism/core-utils@^0.4.1":
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/@eth-optimism/core-utils/-/core-utils-0.4.4.tgz#7f393ae83671a19cea8704b51afce7fa215eb938"
-  integrity sha512-dax6Omy1+x9iAuAg34wirzW6fCdlrxosi5r0ilxj7JoD92zue8i9fdFa6OBmeJpWYdC8LReRuz+g13iMmHSZHw==
-  dependencies:
-    "@ethersproject/abstract-provider" "^5.0.9"
-    ethers "^5.0.31"
-    lodash "^4.17.21"
-
 "@eth-optimism/core-utils@^0.4.5":
   version "0.4.7"
   resolved "https://registry.yarnpkg.com/@eth-optimism/core-utils/-/core-utils-0.4.7.tgz#3eeec47222ccfad1d8f3d9539a368c9283b2df1e"
@@ -167,6 +158,15 @@
   dependencies:
     "@ethersproject/abstract-provider" "^5.0.9"
     ethers "^5.0.31"
+    lodash "^4.17.21"
+
+"@eth-optimism/core-utils@^0.5.1":
+  version "0.5.5"
+  resolved "https://registry.yarnpkg.com/@eth-optimism/core-utils/-/core-utils-0.5.5.tgz#0e2bb95b23965fb51adfb8ba6841c3afd26a6411"
+  integrity sha512-N/uyZjHltnvnQyBOE498EGlqeYvWRUQTW6BpXhexKljEXZpnria4J4MFO9s1lJOpogLXTaS+lhM1Ic8zUNj8Pg==
+  dependencies:
+    "@ethersproject/abstract-provider" "^5.4.1"
+    ethers "^5.4.5"
     lodash "^4.17.21"
 
 "@eth-optimism/message-relayer@^0.2.1":
@@ -184,12 +184,12 @@
     merkletreejs "^0.2.18"
     rlp "^2.2.6"
 
-"@eth-optimism/smock@^1.1.4":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@eth-optimism/smock/-/smock-1.1.4.tgz#6c4ad586a56ec36a3f2db21df318ce08cfe2aac1"
-  integrity sha512-UnNaVl2tvF8eVn4g3KY1IUiNDW2/nDlv16sgtamVuhPvOqq4+sOkDC/KFuK04mgDmtJyFZNkrYiqejRUXcUe5A==
+"@eth-optimism/smock@^1.1.10":
+  version "1.1.10"
+  resolved "https://registry.yarnpkg.com/@eth-optimism/smock/-/smock-1.1.10.tgz#98a6eefc994ccf707f52ab06849468f3cc57bdb7"
+  integrity sha512-XPx1x9odF/noTBHzIhRgL9ihhr769WgUhf9dOm6X7bjSWRAVsII3IqbdB4ssPycaoSuNSmv8HG1xTLgfgcyOYw==
   dependencies:
-    "@eth-optimism/core-utils" "^0.4.1"
+    "@eth-optimism/core-utils" "^0.5.1"
     bn.js "^5.2.0"
 
 "@ethereum-waffle/chai@^3.3.0":

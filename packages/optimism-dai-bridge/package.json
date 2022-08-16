@@ -23,7 +23,7 @@
   "dependencies": {
     "@codechecks/client": "0.1.10-beta",
     "@eth-optimism/contracts": "0.0.0-2021515174945",
-    "@eth-optimism/smock": "^1.1.4",
+    "@eth-optimism/smock": "^1.1.10",
     "@makerdao/hardhat-utils": "^0.1.1",
     "@nomiclabs/ethereumjs-vm": "^4.2.2",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
