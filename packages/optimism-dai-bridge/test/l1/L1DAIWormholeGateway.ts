@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
 import { Dai__factory, L1DaiTeleportGateway__factory, L1Escrow__factory } from '../../typechain-types'
-import { TeleportGUIDStruct } from '../../typechain-types/L1DaiTeleportGateway'
+import { TeleportGUIDStruct } from '../../typechain-types/contracts/l1/L1DaiTeleportGateway.sol/L1DaiTeleportGateway'
 import { addressToBytes32, deployAbstractMock, deployMock, deployOptimismContractMock } from '../helpers'
 
 const INITIAL_ESCROW_BALANCE = 3000
