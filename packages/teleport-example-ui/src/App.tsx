@@ -24,7 +24,7 @@ const SRC_CHAINID_TO_DST_CHAINID: { [key in SrcDomainChainId]: DstDomainChainId 
 function App() {
   const { connectWallet, disconnectWallet, account, chainId: walletChainId, provider } = useConnectedWallet()
 
-  const [srcChainId, setSrcChainId] = useState<SrcDomainChainId>(421611)
+  const [srcChainId, setSrcChainId] = useState<SrcDomainChainId>(421613)
   const [searchParams] = useSearchParams({})
   const urlChainId = Number(searchParams.get('chainId'))
 
