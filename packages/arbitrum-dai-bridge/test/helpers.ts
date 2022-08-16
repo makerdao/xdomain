@@ -2,7 +2,7 @@ import { smockit } from '@eth-optimism/smock'
 import { expect } from 'chai'
 import { ContractFactory, Wallet } from 'ethers'
 import { FunctionFragment } from 'ethers/lib/utils'
-import { ethers } from 'hardhat'
+import hre, { ethers } from 'hardhat'
 
 export async function deployMock<T extends ContractFactory>(
   name: string,
@@ -23,7 +23,8 @@ export async function deployAbstractMock<T extends ContractFactory>(
   } = {},
 ): Promise<ReturnType<T['deploy']> & { smocked: any }> {
   opts.address = opts.address || Wallet.createRandom().address
-  const contract = (await ethers.getContractAt(name, opts.address)) as any
+  const artifact = await hre.artifacts.readArtifact(name)
+  const contract = await ethers.getContractAtFromArtifact(artifact, opts.address)
   return await smockit(contract, opts)
 }
 
