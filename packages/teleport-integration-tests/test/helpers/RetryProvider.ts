@@ -41,7 +41,8 @@ export class RetryProvider extends providers.JsonRpcProvider {
   private async handleError(method: string, attempt: number, error: any): Promise<void> {
     if (
       (method === 'eth_sendRawTransaction' || method === 'sendTransaction') &&
-      !JSON.stringify(error).includes('replacement fee too low')
+      !JSON.stringify(error).includes('replacement fee too low') &&
+      !JSON.stringify(error).includes('replacement transaction underpriced')
     ) {
       // do not retry sendTransaction calls that are not nonce-related
       throw error
