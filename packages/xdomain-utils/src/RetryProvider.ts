@@ -1,4 +1,6 @@
 import { providers, utils } from "ethers";
+import { Deferrable } from "@ethersproject/properties";
+import { TransactionRequest } from "@ethersproject/providers";
 
 export function delay(time: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, time));
@@ -31,10 +33,14 @@ export class RetryProvider extends providers.JsonRpcProvider {
   public async perform(method: string, params: any): Promise<any> {
     let attempt = 0;
 
-    return utils.poll(async () => {
+    console.log(`RetryProvider method=${method} params=${params} poll`);
+    return await utils.poll(async () => {
       attempt++;
 
       try {
+        console.log(
+          `RetryProvider: method=${method} params=${params} perform attempt=${attempt}`
+        );
         return await super.perform(method, params);
       } catch (error: any) {
         console.log(
