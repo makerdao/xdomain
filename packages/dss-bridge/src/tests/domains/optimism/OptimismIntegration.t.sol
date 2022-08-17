@@ -316,7 +316,7 @@ contract OptimismIntegrationTest is DSSTest {
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
         assertEq(l1Eavesdrop.target(), address(guest));    
         assertEq(l1Eavesdrop.sender(), address(host)); 
-        assertEq(l1Eavesdrop.message(), abi.encodeWithSelector(DomainGuest.lift.selector, int256(100 * RAD), 100 * WAD));
+        assertEq(l1Eavesdrop.message(), abi.encodeWithSelector(DomainGuest.lift.selector, 0, int256(100 * RAD)));
         assertEq(ctc.getQueueLength(), ctclen + 1);  // Should queue up the CTC
 
         // Play the message on L2
@@ -364,7 +364,7 @@ contract OptimismIntegrationTest is DSSTest {
 
         assertEq(l2Eavesdrop.target(), address(host));    
         assertEq(l2Eavesdrop.sender(), address(guest)); 
-        assertEq(l2Eavesdrop.message(), abi.encodeWithSelector(DomainHost.release.selector, 50 * WAD));
+        assertEq(l2Eavesdrop.message(), abi.encodeWithSelector(DomainHost.release.selector, 0, 50 * WAD));
         assertEq(rmcd.vat().Line(), 50 * RAD);
         assertEq(rmcd.vat().debt(), 0);
 
@@ -399,25 +399,25 @@ contract OptimismIntegrationTest is DSSTest {
 
     function testPushSurplus() public {
         uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
+        uint256 vowDai = mcd.vat().dai(address(mcd.vow()));
+        uint256 vowSin = mcd.vat().sin(address(mcd.vow()));
 
         // Set global DC and add 50 DAI surplus + 20 DAI debt to vow
         host.lift(100 ether);
+        relayLastMessageL1toL2();
         rmcd.vat().suck(address(123), address(guest), 50 * RAD);
         rmcd.vat().suck(address(guest), address(123), 20 * RAD);
-
-        uint256 vowDai = mcd.vat().dai(address(mcd.vow()));
-        uint256 vowSin = mcd.vat().sin(address(mcd.vow()));
 
         assertEq(rmcd.vat().dai(address(guest)), 50 * RAD);
         assertEq(rmcd.vat().sin(address(guest)), 20 * RAD);
         assertEq(Vat(address(rmcd.vat())).surf(), 0);
-        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
 
         guest.push();
-
         assertEq(rmcd.vat().dai(address(guest)), 0);
         assertEq(rmcd.vat().sin(address(guest)), 0);
         assertEq(Vat(address(rmcd.vat())).surf(), -int256(30 * RAD));
+        relayLastMessageL2toL1();
+
         assertEq(mcd.vat().dai(address(mcd.vow())), vowDai + 30 * RAD);
         assertEq(mcd.vat().sin(address(mcd.vow())), vowSin);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 70 ether);
@@ -425,62 +425,65 @@ contract OptimismIntegrationTest is DSSTest {
 
     function testPushDeficit() public {
         uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
+        uint256 vowDai = mcd.vat().dai(address(mcd.vow()));
+        uint256 vowSin = mcd.vat().sin(address(mcd.vow()));
 
         // Set global DC and add 20 DAI surplus + 50 DAI debt to vow
         host.lift(100 ether);
+        relayLastMessageL1toL2();
         rmcd.vat().suck(address(123), address(guest), 20 * RAD);
         rmcd.vat().suck(address(guest), address(123), 50 * RAD);
-
-        uint256 vowDai = mcd.vat().dai(address(mcd.vow()));
-        uint256 vowSin = mcd.vat().sin(address(mcd.vow()));
 
         assertEq(rmcd.vat().dai(address(guest)), 20 * RAD);
         assertEq(rmcd.vat().sin(address(guest)), 50 * RAD);
         assertEq(Vat(address(rmcd.vat())).surf(), 0);
-        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
 
         guest.push();
+        relayLastMessageL2toL1();
 
+        cheats.selectFork(optimismFork);
         assertEq(rmcd.vat().dai(address(guest)), 0);
         assertEq(rmcd.vat().sin(address(guest)), 30 * RAD);
         assertEq(Vat(address(rmcd.vat())).surf(), 0);
+        cheats.selectFork(mainnetFork);
 
         host.rectify();
-
-        assertEq(Vat(address(rmcd.vat())).surf(), int256(30 * RAD));
-        assertEq(rmcd.vat().dai(address(guest)), 30 * RAD);
         assertEq(mcd.vat().dai(address(mcd.vow())), vowDai);
         assertEq(mcd.vat().sin(address(mcd.vow())), vowSin + 30 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 130 ether);
+        relayLastMessageL1toL2();
+
+        assertEq(Vat(address(rmcd.vat())).surf(), int256(30 * RAD));
+        assertEq(rmcd.vat().dai(address(guest)), 30 * RAD);
 
         guest.heal();
 
         assertEq(rmcd.vat().dai(address(guest)), 0);
         assertEq(rmcd.vat().sin(address(guest)), 0);
         assertEq(Vat(address(rmcd.vat())).surf(), int256(30 * RAD));
-        assertEq(mcd.vat().dai(address(mcd.vow())), vowDai);
-        assertEq(mcd.vat().sin(address(mcd.vow())), vowSin + 30 * RAD);
-        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 130 ether);
     }
 
     function testGlobalShutdown() public {
+        assertEq(host.live(), 1);
+        assertEq(mcd.vat().live(), 1);
+        assertEq(pip.read(), bytes32(WAD));
+
         // Set up some debt in the guest instance
         host.lift(100 ether);
+        relayLastMessageL1toL2();
         rmcd.initIlk(REMOTE_COLL_ILK);
         rmcd.vat().file(REMOTE_COLL_ILK, "line", 1_000_000 * RAD);
         rmcd.vat().slip(REMOTE_COLL_ILK, address(this), 40 ether);
         rmcd.vat().frob(REMOTE_COLL_ILK, address(this), address(this), address(this), 40 ether, 40 ether);
 
-        assertEq(mcd.vat().live(), 1);
         assertEq(guest.live(), 1);
-        assertEq(host.live(), 1);
         assertEq(rmcd.vat().live(), 1);
         assertEq(rmcd.vat().debt(), 40 * RAD);
         (uint256 ink, uint256 art) = rmcd.vat().urns(REMOTE_COLL_ILK, address(this));
         assertEq(ink, 40 ether);
         assertEq(art, 40 ether);
-        assertEq(pip.read(), bytes32(WAD));
 
+        cheats.selectFork(mainnetFork);
         mcd.end().cage();
         host.deny(address(this));       // Confirm cage can be done permissionlessly
         host.cage();
@@ -489,8 +492,9 @@ contract OptimismIntegrationTest is DSSTest {
         assertRevert(address(mcd.end()), abi.encodeWithSignature("cage(bytes32)", DOMAIN_ILK), "BridgeOracle/haz-not");
 
         assertEq(mcd.vat().live(), 0);
-        assertEq(guest.live(), 0);
         assertEq(host.live(), 0);
+        relayLastMessageL1toL2();
+        assertEq(guest.live(), 0);
         assertEq(rmcd.vat().live(), 0);
         assertEq(rmcd.vat().debt(), 40 * RAD);
         (ink, art) = rmcd.vat().urns(REMOTE_COLL_ILK, address(this));
@@ -513,11 +517,10 @@ contract OptimismIntegrationTest is DSSTest {
         vm.warp(block.timestamp + rmcd.end().wait());
 
         rmcd.end().thaw();
-
         assertEq(guest.grain(), 100 ether);
-        assertEq(host.cure(), 60 * RAD);    // 60 pre-mint dai is unused
-
         rmcd.end().flow(REMOTE_COLL_ILK);
+        relayLastMessageL2toL1();
+        assertEq(host.cure(), 60 * RAD);    // 60 pre-mint dai is unused
 
         // --- Settle out the Host instance ---
 
@@ -578,9 +581,9 @@ contract OptimismIntegrationTest is DSSTest {
         assertApproxEqRel(gems, 50 ether, WAD / 10000);
 
         // Exit to the remote domain
-        assertEq(claimToken.balanceOf(address(this)), 0);
         host.exit(address(this), gems);
         assertEq(mcd.vat().gem(DOMAIN_ILK, address(this)), 0);
+        relayLastMessageL1toL2();
         uint256 tokens = claimToken.balanceOf(address(this));
         assertApproxEqAbs(tokens, 20 ether, WAD / 10000);
 
@@ -603,13 +606,11 @@ contract OptimismIntegrationTest is DSSTest {
         mcd.dai().approve(address(host), 100 ether);
         uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
 
-        assertEq(Vat(address(rmcd.vat())).surf(), 0);
-        assertEq(rmcd.dai().balanceOf(address(123)), 0);
-
         host.deposit(address(123), 100 ether);
+        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
+        relayLastMessageL1toL2();
 
         assertEq(Vat(address(rmcd.vat())).surf(), int256(100 * RAD));
-        assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
         assertEq(rmcd.dai().balanceOf(address(123)), 100 ether);
     }
 
@@ -619,20 +620,21 @@ contract OptimismIntegrationTest is DSSTest {
         mcd.dai().mint(address(this), 100 ether);
         mcd.dai().approve(address(host), 100 ether);
         host.deposit(address(this), 100 ether);
-        rmcd.vat().hope(address(rmcd.daiJoin()));
-        rmcd.dai().approve(address(guest), 100 ether);
-
-        assertEq(Vat(address(rmcd.vat())).surf(), int256(100 * RAD));
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
         assertEq(mcd.dai().balanceOf(address(123)), 0);
+        relayLastMessageL1toL2();
+
+        rmcd.vat().hope(address(rmcd.daiJoin()));
+        rmcd.dai().approve(address(guest), 100 ether);
+        assertEq(Vat(address(rmcd.vat())).surf(), int256(100 * RAD));
         assertEq(rmcd.dai().balanceOf(address(this)), 100 ether);
 
         guest.withdraw(address(123), 100 ether);
-
         assertEq(Vat(address(rmcd.vat())).surf(), 0);
+        assertEq(rmcd.dai().balanceOf(address(this)), 0);
+        relayLastMessageL2toL1();
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai);
         assertEq(mcd.dai().balanceOf(address(123)), 100 ether);
-        assertEq(rmcd.dai().balanceOf(address(this)), 0);
     }
 
 }

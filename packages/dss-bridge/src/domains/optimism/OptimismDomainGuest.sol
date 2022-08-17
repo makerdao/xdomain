@@ -40,7 +40,7 @@ contract OptimismDomainGuest is DomainGuest {
     uint32 public glFlush;
 
     // --- Events ---
-    event File(bytes32 indexed what, uint32 data);
+    event FileGL(bytes32 indexed what, uint32 data);
 
     constructor(
         bytes32 _domain,
@@ -53,14 +53,14 @@ contract OptimismDomainGuest is DomainGuest {
         host = _host;
     }
 
-    function file(bytes32 what, uint32 data) external auth {
+    function filegl(bytes32 what, uint32 data) external auth {
         if (what == "glRelease") glRelease = data;
         else if (what == "glPush") glPush = data;
         else if (what == "glTell") glTell = data;
         else if (what == "glWithdraw") glWithdraw = data;
         else if (what == "glFlush") glFlush = data;
         else revert("OptimismDomainHost/file-unrecognized-param");
-        emit File(what, data);
+        emit FileGL(what, data);
     }
 
     function _isHost(address usr) internal override view returns (bool) {
