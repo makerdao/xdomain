@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.6;
+pragma solidity ^0.8.15;
 
 // Relay a message from L1 to L2GovernanceRelay
 
 /// @notice Indicator that the operation can interact with Rollup and Porter trees, or only with Rollup
-import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol";
-import "@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
+import "../../node_modules/@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol";
+import "../../node_modules/@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
 
 interface L2GovernanceRelayLike {
   function relay(address target, bytes calldata targetData) external;
@@ -79,7 +79,7 @@ contract L1GovernanceRelay {
     bytes memory data,
     uint256 ergsLimit
   ) internal {
-    ZkSyncLike zksync = IZkSync(zkSyncAddress);
+    IZkSync zksync = IZkSync(zkSyncAddress);
     zksync.requestL2Transaction{value: msg.value}(
       contractAddr,
       data,

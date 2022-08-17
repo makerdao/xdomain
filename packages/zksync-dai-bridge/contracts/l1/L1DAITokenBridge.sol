@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity >=0.7.6;
+pragma solidity ^0.8.15;
 
-import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol";
-import "@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
+import "../../node_modules/@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol";
+import "../../node_modules/@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
 
 interface TokenLike {
   function transferFrom(
@@ -52,6 +52,8 @@ contract L1DAITokenBridge {
     uint256 _amount,
     bytes _data
   );
+
+  event WithdrawalFinalized(address indexed _recipient, uint256 _amount);
 
   // --- Auth ---
   mapping(address => uint256) public wards;
@@ -163,7 +165,7 @@ contract L1DAITokenBridge {
     bytes memory data,
     uint256 ergsLimit
   ) internal {
-    ZkSyncLike zksync = IZkSync(zkSyncAddress);
+    IZkSync zksync = IZkSync(zkSyncAddress);
     zksync.requestL2Transaction{value: msg.value}(
       contractAddr,
       data,
@@ -182,22 +184,22 @@ contract L1DAITokenBridge {
     bytes calldata _message,
     bytes32[] calldata _proof,
     address l2Sender
-  ) {
-    require(!isWithdrawalProcessed(_l2BlockNumber, _index));
+  ) external {
+    require(!isWithdrawalProcessed[_l2BlockNumber][_index]);
 
-    IZkSync zksync = IZkSync(_zkSyncAddress);
-    L2Message message = L2Message({sender: l2Sender, data: _message});
+    IZkSync zksync = IZkSync(zkSyncAddress);
+    L2Message memory message = L2Message({sender: l2Sender, data: _message});
 
     bool success = zksync.proveL2MessageInclusion(_l2BlockNumber, _index, message, _proof);
     require(success, "Failed to prove message inclusion");
 
-    (l1Receipient, amount) = abi.decode(_message);
+    (address l1Recipient, uint256 amount) = abi.decode(_message, (address, uint256));
 
     // process message
-    TokenLike(l1Token).transferFrom(escrow, l1Recepient, amount);
+    TokenLike(l1Token).transferFrom(escrow, l1Recipient, amount);
 
-    isWithdrawalProcessed(_l2BlockNumber, _index) = true;
+    isWithdrawalProcessed[_l2BlockNumber][_index] = true;
 
-    emit LogWithdrawal(l1Receipient, amount);
+    emit WithdrawalFinalized(l1Recipient, amount);
   }
 }

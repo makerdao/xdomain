@@ -15,7 +15,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: '0.7.6',
+        version: '0.8.15',
         settings: {
           optimizer: {
             enabled: false,
@@ -25,7 +25,7 @@ const config: HardhatUserConfig = {
     ],
     overrides: {
       'contracts/l2/dai.sol': {
-        version: '0.7.6',
+        version: '0.8.15',
         settings: {
           optimizer: {
             enabled: true,

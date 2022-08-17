@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.15;
 
-import "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
+import "../../node_modules/@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
 
 interface Mintable {
   function mint(address usr, uint256 wad) external;
@@ -97,12 +97,11 @@ contract L2DAITokenBridge {
     address _l2Token,
     address _to,
     uint256 _amount,
-    uint32 _l1Gas,
     bytes calldata _data
-  ) external virtual override {
+  ) external {
     require(_l2Token == l2Token, "L2DAITokenBridge/token-not-dai");
 
-    _initiateWithdrawal(msg.sender, _to, _amount, _l1Gas, _data);
+    _initiateWithdrawal(msg.sender, _to, _amount, _data);
   }
 
   // When a withdrawal is initiated, we burn the withdrawer's funds to prevent subsequent L2 usage.
@@ -110,7 +109,6 @@ contract L2DAITokenBridge {
     address _from,
     address _to,
     uint256 _amount,
-    uint32 _l1Gas,
     bytes calldata _data
   ) internal {
     // do not allow initiaitng new xchain messages if bridge is closed
@@ -120,7 +118,7 @@ contract L2DAITokenBridge {
 
     bytes memory message = abi.encode(l1Token, l2Token, _from, _to, _amount, _data);
 
-    messageHash = L1_MESSENGER_CONTRACT.sendToL1(message);
+    L1_MESSENGER_CONTRACT.sendToL1(message);
 
     emit WithdrawalInitiated(l1Token, l2Token, msg.sender, _to, _amount, _data);
   }
