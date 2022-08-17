@@ -3,10 +3,10 @@ import { sleep } from '@eth-optimism/core-utils'
 import { getOptionalEnv, getRequiredEnv } from '@makerdao/hardhat-utils'
 import { ContractReceipt, ContractTransaction, providers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
+import { RetryProvider } from 'xdomain-utils'
 
 import { L1AddTeleportArbitrumSpell__factory, L2AddTeleportDomainSpell__factory } from '../../typechain'
 import { deployUsingFactory, getContractFactory, waitForTx } from '../helpers'
-import { RetryProvider } from '../helpers/RetryProvider'
 import { deployTeleport, DomainSetupOpts, DomainSetupResult } from '../teleport'
 import {
   deployArbitrumBaseBridge,

@@ -34,7 +34,7 @@ import {
   TeleportGUID,
 } from '../src'
 import { fundTestWallet } from './faucet'
-import { RetryProvider } from './RetryProvider'
+import { RetryProvider } from 'xdomain-utils'
 
 use(chaiAsPromised).use(waffleChai) // add support for expect() on ethers' BigNumber
 

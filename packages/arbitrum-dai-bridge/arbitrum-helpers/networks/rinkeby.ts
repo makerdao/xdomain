@@ -1,8 +1,8 @@
 import { assert } from 'console'
 import { ethers } from 'hardhat'
+import { RetryProvider } from 'xdomain-utils'
 
 import { NetworkConfig, useStaticRouterDeployment } from '..'
-import { RetryProvider } from './RetryProvider'
 
 export async function getRinkebyNetworkConfig({
   pkey,
