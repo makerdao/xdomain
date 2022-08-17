@@ -6,6 +6,10 @@ on:
       - master
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-teleport-sdk:
     name: Teleport SDK Unit Tests
@@ -14,11 +18,6 @@ jobs:
       run:
         working-directory: ./packages/teleport-sdk
     steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.10.0
-        with:
-          access_token: ${{ github.token }}
-
       - name: Check out Git repository
         uses: actions/checkout@v2
 
