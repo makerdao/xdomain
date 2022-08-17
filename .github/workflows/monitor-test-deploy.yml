@@ -100,7 +100,7 @@ jobs:
         working-directory: ./packages/teleport-monitoring
 
       - name: Update ECS Rinkeby service
-        id: service-update
+        id: service-update-rinkeby
         run: |
           aws ecs update-service --cluster ${{ env.CLUSTER_NAME }} \
                                 --service ${{ env.SERVICE_NAME_RINKEBY }} \
@@ -108,7 +108,7 @@ jobs:
                                 --region ${{ env.REGION }}
 
       - name: Update ECS Kovan service
-        id: service-update
+        id: service-update-kovan
         run: |
           aws ecs update-service --cluster ${{ env.CLUSTER_NAME }} \
                                 --service ${{ env.SERVICE_NAME_KOVAN }} \
