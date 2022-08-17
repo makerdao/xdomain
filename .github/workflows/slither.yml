@@ -19,7 +19,6 @@ jobs:
 
       - name: Run Slither
         uses: crytic/slither-action@v0.1.1
-        working-directory: ./packages/optimism-dai-bridge
         with:
           node-version: 16
   analyze-arbitrum-dai-bridge:
@@ -34,6 +33,5 @@ jobs:
 
       - name: Run Slither
         uses: crytic/slither-action@v0.1.1
-        working-directory: ./packages/arbitrum-dai-bridge
         with:
           node-version: 16
