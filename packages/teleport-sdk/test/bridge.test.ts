@@ -6,6 +6,7 @@ import { expect, use } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import { Contract, ContractTransaction, ethers, Wallet } from 'ethers'
 import { formatBytes32String, parseEther } from 'ethers/lib/utils'
+import { RetryProvider } from 'xdomain-utils'
 
 import {
   approveSrcGateway,
@@ -34,7 +35,6 @@ import {
   TeleportGUID,
 } from '../src'
 import { fundTestWallet } from './faucet'
-import { RetryProvider } from 'xdomain-utils'
 
 use(chaiAsPromised).use(waffleChai) // add support for expect() on ethers' BigNumber
 
