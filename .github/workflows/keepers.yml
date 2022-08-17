@@ -17,6 +17,10 @@ jobs:
         working-directory: ./packages/teleport-keeper
 
     steps:
+     - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.10.0
+        with:
+          access_token: ${{ github.token }}
       - name: Check out Git repository
         uses: actions/checkout@v2
       - name: Build keeper container
@@ -31,6 +35,10 @@ jobs:
       run:
         working-directory: ./packages/teleport-keeper
     steps:
+     - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.10.0
+        with:
+          access_token: ${{ github.token }}
       - name: Check out Git repository
         uses: actions/checkout@v2
       - name: Build keeper container

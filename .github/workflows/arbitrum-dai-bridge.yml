@@ -61,6 +61,10 @@ jobs:
         working-directory: ./packages/arbitrum-dai-bridge
 
     steps:
+     - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.10.0
+        with:
+          access_token: ${{ github.token }}
       - name: Check out Git repository
         uses: actions/checkout@v2
         with:
