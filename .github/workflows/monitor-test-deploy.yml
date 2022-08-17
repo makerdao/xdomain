@@ -1,4 +1,4 @@
-name: Teleport Monitoring
+name: Teleport Monitor Test Deploy
 
 on:
   push:
@@ -119,4 +119,4 @@ jobs:
         run: |
           aws ecs wait services-stable \
                     --cluster ${{ env.CLUSTER_NAME }} \
-                    --services '[ "${{ env.SERVICE_NAME_RINKEBY }}" "${{ env.SERVICE_NAME_KOVAN }}" ]'
+                    --services '[ "${{ env.SERVICE_NAME_RINKEBY }}", "${{ env.SERVICE_NAME_KOVAN }}" ]'
