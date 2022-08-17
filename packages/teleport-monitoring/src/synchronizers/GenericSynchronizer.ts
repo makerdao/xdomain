@@ -11,7 +11,7 @@ export interface SyncOptions {
 }
 
 export const defaultSyncOptions: SyncOptions = {
-  tipSyncDelay: 5_000,
+  tipSyncDelay: 100_000,
   safeDistanceFromTip: 0,
 }
 
