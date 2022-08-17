@@ -18,23 +18,23 @@ pragma solidity ^0.8.0;
 // Receive xchain message from L1 counterpart and execute given spell
 
 contract L2GovernanceRelay {
-    address public immutable l1GovernanceRelay;
+  address public immutable l1GovernanceRelay;
 
-    constructor(address _l1GovernanceRelay) {
-        l1GovernanceRelay = _l1GovernanceRelay;
-    }
+  constructor(address _l1GovernanceRelay) {
+    l1GovernanceRelay = _l1GovernanceRelay;
+  }
 
-    /**
-     * @dev Execute the call from L1.
-     */
-    function relay(address target, bytes calldata targetData) external {
-        // Ensure no storage changes in the delegate call
-        // Target address is trusted so this is mostly to avoid a human error
-        // Note: we don't check l1GovernanceRelay because it's immutable
-        require(msg.sender == l1GovernanceRelay);
+  /**
+   * @dev Execute the call from L1.
+   */
+  function relay(address target, bytes calldata targetData) external {
+    // Ensure no storage changes in the delegate call
+    // Target address is trusted so this is mostly to avoid a human error
+    // Note: we don't check l1GovernanceRelay because it's immutable
+    require(msg.sender == l1GovernanceRelay);
 
-        bool ok;
-        (ok, ) = target.delegatecall(targetData);
-        require(ok, "L2GovernanceRelay/delegatecall-error");
-    }
+    bool ok;
+    (ok, ) = target.delegatecall(targetData);
+    require(ok, "L2GovernanceRelay/delegatecall-error");
+  }
 }

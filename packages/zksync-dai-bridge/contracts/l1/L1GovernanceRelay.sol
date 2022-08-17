@@ -23,69 +23,69 @@ import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol"
 import "@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
 
 interface L2GovernanceRelayLike {
-    function relay(address target, bytes calldata targetData) external;
+  function relay(address target, bytes calldata targetData) external;
 }
 
 contract L1GovernanceRelay {
-    // --- Auth ---
-    mapping(address => uint256) public wards;
-    address public immutable zkSyncAddress;
+  // --- Auth ---
+  mapping(address => uint256) public wards;
+  address public immutable zkSyncAddress;
 
-    function rely(address usr) external auth {
-        wards[usr] = 1;
-        emit Rely(usr);
-    }
+  function rely(address usr) external auth {
+    wards[usr] = 1;
+    emit Rely(usr);
+  }
 
-    function deny(address usr) external auth {
-        wards[usr] = 0;
-        emit Deny(usr);
-    }
+  function deny(address usr) external auth {
+    wards[usr] = 0;
+    emit Deny(usr);
+  }
 
-    modifier auth() {
-        require(wards[msg.sender] == 1, "L1GovernanceRelay/not-authorized");
-        _;
-    }
+  modifier auth() {
+    require(wards[msg.sender] == 1, "L1GovernanceRelay/not-authorized");
+    _;
+  }
 
-    address public immutable l2GovernanceRelay;
+  address public immutable l2GovernanceRelay;
 
-    event Rely(address indexed usr);
-    event Deny(address indexed usr);
+  event Rely(address indexed usr);
+  event Deny(address indexed usr);
 
-    constructor(address _l2GovernanceRelay, address _zkSyncAddress) {
-        wards[msg.sender] = 1;
-        emit Rely(msg.sender);
+  constructor(address _l2GovernanceRelay, address _zkSyncAddress) {
+    wards[msg.sender] = 1;
+    emit Rely(msg.sender);
 
-        l2GovernanceRelay = _l2GovernanceRelay;
-        zkSyncAddress = _zkSyncAddress;
-    }
+    l2GovernanceRelay = _l2GovernanceRelay;
+    zkSyncAddress = _zkSyncAddress;
+  }
 
-    // Forward a call to be repeated on L2
-    function relay(
-        address target,
-        bytes calldata targetData,
-        uint256 ergsLimit
-    ) external payable auth {
-        bytes memory data = abi.encodeWithSelector(
-            L2GovernanceRelayLike.relay.selector,
-            target,
-            targetData
-        );
+  // Forward a call to be repeated on L2
+  function relay(
+    address target,
+    bytes calldata targetData,
+    uint256 ergsLimit
+  ) external payable auth {
+    bytes memory data = abi.encodeWithSelector(
+      L2GovernanceRelayLike.relay.selector,
+      target,
+      targetData
+    );
 
-        _callZkSync(l2GovernanceRelay, data, ergsLimit);
-    }
+    _callZkSync(l2GovernanceRelay, data, ergsLimit);
+  }
 
-    function _callZkSync(
-        address contractAddr,
-        bytes memory data,
-        uint256 ergsLimit
-    ) internal {
-        ZkSyncLike zksync = IZkSync(zkSyncAddress);
-        zksync.requestL2Transaction{value: msg.value}(
-            contractAddr,
-            data,
-            ergsLimit,
-            new bytes[](0),
-            QueueType.Deque
-        );
-    }
+  function _callZkSync(
+    address contractAddr,
+    bytes memory data,
+    uint256 ergsLimit
+  ) internal {
+    ZkSyncLike zksync = IZkSync(zkSyncAddress);
+    zksync.requestL2Transaction{value: msg.value}(
+      contractAddr,
+      data,
+      ergsLimit,
+      new bytes[](0),
+      QueueType.Deque
+    );
+  }
 }
