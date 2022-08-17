@@ -35,6 +35,9 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  paths: {
+    sources: './contracts/l1', // only L1 contracts should be compiled by solc
+  },
   networks: {
     hardhat: {
       blockGasLimit: 15000000,

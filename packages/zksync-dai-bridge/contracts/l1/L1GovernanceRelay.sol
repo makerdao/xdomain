@@ -19,8 +19,8 @@ pragma solidity ^0.8.15;
 // Relay a message from L1 to L2GovernanceRelay
 
 /// @notice Indicator that the operation can interact with Rollup and Porter trees, or only with Rollup
-import "../../node_modules/@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol";
-import "../../node_modules/@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
+import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol";
+import "@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
 
 interface L2GovernanceRelayLike {
   function relay(address target, bytes calldata targetData) external;

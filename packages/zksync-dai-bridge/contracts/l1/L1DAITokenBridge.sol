@@ -16,8 +16,8 @@
 
 pragma solidity ^0.8.15;
 
-import "../../node_modules/@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol";
-import "../../node_modules/@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
+import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol";
+import "@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
 
 interface TokenLike {
   function transferFrom(
