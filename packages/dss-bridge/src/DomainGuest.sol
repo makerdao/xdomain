@@ -49,6 +49,7 @@ interface DaiJoinLike {
 
 interface EndLike {
     function cage() external;
+    function debt() external view returns (uint256);
 }
 
 /// @title Support for xchain MCD, canonical DAI and Maker Teleport - remote instance
@@ -258,11 +259,15 @@ abstract contract DomainGuest {
 
     /// @notice Set the cure value for the host
     /// @dev Triggered during shutdown
-    /// @param value Cure value [RAD]
-    function _tell(uint256 value) internal auth returns (bytes memory payload) {
-        payload = abi.encodeWithSelector(DomainHost.tell.selector, rid++, value);
+    function _tell() internal returns (bytes memory payload) {
+        uint256 debt = end.debt();
+        require(debt > 0 || (vat.debt() == 0 && live == 0), "DomainGuest/end-debt-zero");
+        uint256 _grain = grain * RAY;
+        uint256 cure = _grain > debt ? _grain - debt : 0;
 
-        emit Tell(value);
+        payload = abi.encodeWithSelector(DomainHost.tell.selector, rid++, cure);
+
+        emit Tell(cure);
     }
 
     /// @notice Mint a claim token for the given user

@@ -126,8 +126,8 @@ contract SimpleDomainGuest is DomainGuest {
         (bool success, bytes memory response) = address(host).call(_push());
         revertNoSuccess(success, response);
     }
-    function tell(uint256 value) external {
-        (bool success, bytes memory response) = address(host).call(_tell(value));
+    function tell() external {
+        (bool success, bytes memory response) = address(host).call(_tell());
         revertNoSuccess(success, response);
     }
     function withdraw(address to, uint256 amount) external {
@@ -470,6 +470,7 @@ contract IntegrationTest is DSSTest {
         vm.warp(block.timestamp + rmcd.end().wait());
 
         rmcd.end().thaw();
+        guest.tell();
 
         assertEq(guest.grain(), 100 ether);
         assertEq(host.cure(), 60 * RAD);    // 60 pre-mint dai is unused

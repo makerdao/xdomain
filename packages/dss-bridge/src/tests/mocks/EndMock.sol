@@ -7,6 +7,7 @@ contract EndMock {
 
     VatMock public vat;
     uint256 public live = 1;
+    uint256 public debt;
 
     constructor(address _vat) {
         vat = VatMock(_vat);
@@ -15,6 +16,10 @@ contract EndMock {
     function cage() external {
         live = 0;
         vat.cage();
+    }
+
+    function setDebt(uint256 d) external {
+        debt = d;
     }
 
 }
