@@ -79,6 +79,7 @@ export async function setupOptimismTests({
     joinDomain: masterDomain,
     globalFee: fee,
     globalFeeTTL: TTL,
+    globalFeeType: 'constant',
   })
 
   const baseBridgeSdk = await deployOptimismBaseBridge({
@@ -112,7 +113,7 @@ export async function setupOptimismTests({
   const addTeleportDomainSpell = await L1AddTeleportOptimismSpellFactory.deploy(
     domain,
     teleportSdk.join.address,
-    teleportSdk.constantFee.address,
+    teleportSdk.feeContract.address,
     line,
     teleportSdk.router.address,
     teleportBridgeSdk.l1TeleportBridge.address,

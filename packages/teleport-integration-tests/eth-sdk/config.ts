@@ -93,26 +93,6 @@ export default defineConfig({
     },
 
     goerli: {
-      maker: {
-        // bespoke "light" MCD deployment where the pause_proxy is owned by the deployer EOA
-        vat: '0x293D5AA7F26EF9A687880C4501871632d1015A82',
-        dai_join: '0x53275153854358E12789307fD45Bbab0f5b575A0',
-        vow: '0xFF660111D2C6887D8F24B5378cceDbf465B33B6F',
-        pause_proxy: '0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce',
-        esm: '0x4EdB261c15EF5A895f449593CDC9Fc7D2Fb714c2',
-        dai: '0x0089Ed33ED517F58a064D0ef56C9E89Dc01EE9A2',
-        median_ethusd: '0xAdC6217F6D549dD4CBc7BF7B4f22769334C20f2D',
-      },
-      optimismDaiBridge: {
-        l1Escrow: '0xC2351e2a0Dd9f44bB1E3ECd523442473Fa5e46a0',
-        l1GovernanceRelay: '0x38BF0bBF7dEb5Eb17a5f453AfCED4ee3A992b08d',
-        l1DAITokenBridge: '0xd95CbA7F7be2984058f15e4a4e03C89845fD8EB2',
-      },
-      arbitrumDaiBridge: {
-        l1Escrow: '0xD9e08dc985012296b9A80BEf4a587Ad72288D986',
-        l1GovernanceRelay: '0xb07c5507Eff5A62F20418b3d0f0be843f640ce9A',
-        l1DaiGateway: '0x9C032F29427E185b52D02880131a3577484BE651',
-      },
       optimism: {
         xDomainMessenger: '0x5086d1eEF304eb5284A0f6720f79403b4e9bE294',
         l1StandardBridge: '0x636Af16bf2f682dD3109e60102b8E1A089FedAa8',
@@ -121,25 +101,100 @@ export default defineConfig({
       arbitrum: {
         inbox: '0x6BEbC4925716945D46F0Ec336D5C2564F419682C', // real inbox
       },
+
+      // goerli-light test environment:
+
+      light: {
+        maker: {
+          // bespoke "light" MCD deployment where the pause_proxy is owned by the deployer EOA
+          vat: '0x293D5AA7F26EF9A687880C4501871632d1015A82',
+          dai_join: '0x53275153854358E12789307fD45Bbab0f5b575A0',
+          vow: '0xFF660111D2C6887D8F24B5378cceDbf465B33B6F',
+          pause_proxy: '0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce',
+          esm: '0x4EdB261c15EF5A895f449593CDC9Fc7D2Fb714c2',
+          dai: '0x0089Ed33ED517F58a064D0ef56C9E89Dc01EE9A2',
+          median_ethusd: '0xAdC6217F6D549dD4CBc7BF7B4f22769334C20f2D',
+        },
+        optimismDaiBridge: {
+          l1Escrow: '0xC2351e2a0Dd9f44bB1E3ECd523442473Fa5e46a0',
+          l1GovernanceRelay: '0x38BF0bBF7dEb5Eb17a5f453AfCED4ee3A992b08d',
+          l1DAITokenBridge: '0xd95CbA7F7be2984058f15e4a4e03C89845fD8EB2',
+        },
+        arbitrumDaiBridge: {
+          l1Escrow: '0xD9e08dc985012296b9A80BEf4a587Ad72288D986',
+          l1GovernanceRelay: '0xb07c5507Eff5A62F20418b3d0f0be843f640ce9A',
+          l1DaiGateway: '0x9C032F29427E185b52D02880131a3577484BE651',
+        },
+      },
+
+      // canonical-goerli staging environment:
+
+      canonical: {
+        maker: {
+          vat: '0xB966002DDAa2Baf48369f5015329750019736031',
+          dai_join: '0x6a60b7070befb2bfc964F646efDF70388320f4E0',
+          vow: '0x23f78612769b9013b3145E43896Fa1578cAa2c2a',
+          pause_proxy: '0x5DCdbD3cCF9B09EAAD03bc5f50fA2B3d3ACA0121',
+          esm: '0x023A960cb9BE7eDE35B433256f4AfE9013334b55',
+          dai: '0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844',
+          median_ethusd: '0xD81834Aa83504F6614caE3592fb033e4b8130380',
+        },
+        optimismDaiBridge: {
+          l1Escrow: '0xbc892A208705862273008B2Fb7D01E968be42653',
+          l1GovernanceRelay: '0xD9b2835A5bFC8bD5f54DB49707CF48101C66793a',
+          l1DAITokenBridge: '0x05a388Db09C2D44ec0b00Ee188cD42365c42Df23',
+        },
+        arbitrumDaiBridge: {
+          l1Escrow: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
+          l1GovernanceRelay: '0x10E6593CDda8c58a1d0f14C5164B376352a55f2F',
+          l1DaiGateway: '0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65',
+        },
+      },
     },
 
     arbitrumGoerliTestnet: {
-      arbitrumDaiBridge: {
-        dai: '0x8ea903081aa1137F11D51F64A1F372EDe67571a9',
-        l2GovernanceRelay: '0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce',
-        l2DaiGateway: '0x2BD50836f3998D5952331f41C5c2395B7b825F50',
+      light: {
+        arbitrumDaiBridge: {
+          dai: '0x8ea903081aa1137F11D51F64A1F372EDe67571a9',
+          l2GovernanceRelay: '0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce',
+          l2DaiGateway: '0x2BD50836f3998D5952331f41C5c2395B7b825F50',
+        },
+      },
+      canonical: {
+        arbitrumDaiBridge: {
+          dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
+          l2GovernanceRelay: '0x10E6593CDda8c58a1d0f14C5164B376352a55f2F',
+          l2DaiGateway: '0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65',
+        },
       },
     },
     optimismGoerliTestnet: {
-      optimismDaiBridge: {
-        dai: '0x8ea903081aa1137F11D51F64A1F372EDe67571a9',
-        l2GovernanceRelay: '0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce',
-        l2DAITokenBridge: '0x293D5AA7F26EF9A687880C4501871632d1015A82',
+      light: {
+        optimismDaiBridge: {
+          dai: '0x8ea903081aa1137F11D51F64A1F372EDe67571a9',
+          l2GovernanceRelay: '0xeBdaFa7025c890e4abEDDc5160174A26F5F815ce',
+          l2DAITokenBridge: '0x293D5AA7F26EF9A687880C4501871632d1015A82',
+        },
+      },
+      canonical: {
+        optimismDaiBridge: {
+          dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
+          l2GovernanceRelay: '0x10E6593CDda8c58a1d0f14C5164B376352a55f2F',
+          l2DAITokenBridge: '0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65',
+        },
       },
       optimism: {
         xDomainMessenger: '0x4200000000000000000000000000000000000007',
         l2StandardBridge: '0x4200000000000000000000000000000000000010',
       },
     },
+  },
+  etherscanURLs: {
+    arbitrumGoerliTestnet: 'https://goerli-rollup-explorer.arbitrum.io/api',
+    optimismGoerliTestnet: 'https://blockscout.com/optimism/goerli/api',
+  },
+  rpc: {
+    arbitrumGoerliTestnet: 'https://goerli-rollup.arbitrum.io/rpc',
+    optimismGoerliTestnet: 'https://goerli.optimism.io',
   },
 })

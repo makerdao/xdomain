@@ -11,6 +11,35 @@ import { HardhatUserConfig } from 'hardhat/config'
 const testDir = process.env.TESTS_DIR ?? 'test'
 
 const config: HardhatUserConfig = {
+  networks: {
+    goerli: {
+      url: process.env.GOERLI_RPC_URL || '',
+    },
+    mainnet: {
+      url: process.env.MAINNET_RPC_URL || '',
+    },
+    arbitrumGoerli: {
+      url: 'https://goerli-rollup.arbitrum.io/rpc',
+    },
+  },
+
+  etherscan: {
+    apiKey: {
+      mainnet: process.env.ETHERSCAN_KEY ?? '',
+      goerli: process.env.ETHERSCAN_KEY ?? '',
+      arbitrumGoerli: 'N/A',
+    },
+    customChains: [
+      {
+        network: 'arbitrumGoerli',
+        chainId: 421613,
+        urls: {
+          apiURL: 'https://goerli-rollup-explorer.arbitrum.io/api',
+          browserURL: 'https://goerli-rollup-explorer.arbitrum.io',
+        },
+      },
+    ],
+  },
   mocha: {
     timeout: 50000,
   },

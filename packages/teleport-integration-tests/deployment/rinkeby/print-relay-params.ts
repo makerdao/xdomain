@@ -3,10 +3,11 @@ import 'dotenv/config'
 import { getRinkebySdk } from '@dethcrypto/eth-sdk-client'
 import { Provider } from '@ethersproject/providers'
 import { getRequiredEnv } from '@makerdao/hardhat-utils'
-import { getGasPriceBid, getMaxGas_Nitro, getMaxSubmissionPrice_Nitro } from 'arbitrum-dai-bridge'
 import { ethers } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 import { mapValues } from 'lodash'
+
+import { getGasPriceBid, getMaxGas_Nitro, getMaxSubmissionPrice_Nitro } from '../../test/arbitrum'
 
 const L1_GOV_RELAY_ADDR = '0x97057eF24d3C69D974Cc5348145b7258c5a503B6'
 const L2_GOV_RELAY_ADDR = '0x10039313055c5803D1820FEF2720ecC1Ff2F02f6'

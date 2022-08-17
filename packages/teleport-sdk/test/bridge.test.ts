@@ -34,6 +34,7 @@ import {
   TeleportGUID,
 } from '../src'
 import { fundTestWallet } from './faucet'
+import { RetryProvider } from './RetryProvider'
 
 use(chaiAsPromised).use(waffleChai) // add support for expect() on ethers' BigNumber
 
@@ -59,7 +60,7 @@ async function getTestWallets(srcDomainDescr: DomainDescription) {
   if (!pkey) throw new Error(`Missing ${pkeyEnvVar} in .env`)
   const dstDomain = getDefaultDstDomain(srcDomain)
   const l1Provider = new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[dstDomain])
-  const l2Provider = new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[srcDomain])
+  const l2Provider = new RetryProvider(10, DEFAULT_RPC_URLS[srcDomain])
   const l1User = new Wallet(pkey, l1Provider)
   const l2User = new Wallet(pkey, l2Provider)
 

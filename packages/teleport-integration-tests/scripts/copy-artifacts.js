@@ -63,6 +63,7 @@ fs.mkdirSync(output)
 // copy dss-teleport artifacts
 copyDappToolsArtifact(dappToolsArtifacts, 'src/TeleportJoin', output)
 copyDappToolsArtifact(dappToolsArtifacts, 'src/TeleportConstantFee', output)
+copyDappToolsArtifact(dappToolsArtifacts, 'src/TeleportLinearFee', output)
 copyDappToolsArtifact(dappToolsArtifacts, 'src/TeleportOracleAuth', output)
 copyDappToolsArtifact(dappToolsArtifacts, 'src/TeleportRouter', output)
 copyDappToolsArtifact(dappToolsArtifacts, 'src/relays/BasicRelay', output)

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.14;
+pragma solidity 0.8.15;
 
 import {DssExec} from "../common/DssExec.sol";
 import {DssAction} from "../common/DssAction.sol";
@@ -127,15 +127,11 @@ contract DssSpellAction is DssAction {
   }
 
   function actions() public override {
-    bytes32 masterDomain = "ETH-GOER-A";
     TeleportJoinLike teleportJoin = TeleportJoinLike(0xd88310A476ee960487FDb2772CC4bd017dadEf6B);
-    address vow = 0xFF660111D2C6887D8F24B5378cceDbf465B33B6F;
     VatLike vat = VatLike(0x293D5AA7F26EF9A687880C4501871632d1015A82);
     uint256 globalLine = 10000000000 * RAD;
     RouterLike router = RouterLike(0x9031Ab810C496FCF09B65851c736E9a37983B963);
 
-    teleportJoin.file(bytes32("vow"), vow);
-    router.file(bytes32("gateway"), masterDomain, address(teleportJoin));
     vat.rely(address(teleportJoin));
     bytes32 ilk = teleportJoin.ilk();
     vat.init(ilk);
