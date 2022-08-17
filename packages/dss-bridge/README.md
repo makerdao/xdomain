@@ -6,6 +6,8 @@ Connect an instance of MCD to a cross-chain guest instance. The `DomainHost` is 
 
 Each contract is abstract as it requires a chain-specific messaging service, so one of these needs to be extended for each unique message interface.
 
+We assume any messaging bridge will guarantee messages will be executed exactly once, but does not enforce the ordering of messages. Messaging ordering for sensitive operations is enforced at the application layer (`DomainHost` or `DomainGuest`). If the messaging bridge does not protect against censorship then we cannot provide gaurantees that the bridge will function correctly.
+
 ## Supported Operations
 
 ### `DomainHost.lift(uint256 wad)`
@@ -54,7 +56,7 @@ This will trigger a call to `DomainHost.tell(uint256 value)`.
 
 Used during global settlement to provide DAI holders with a share claim on the remote collateral. Mints a claim token on the remote domain which can be used in the remote `end` to get access to the collateral.
 
-This will trigger a call to `DomainGuest.mintClaim(address usr, uint256 claim)`.
+This will trigger a call to `DomainGuest.exit(address usr, uint256 wad)`.
 
 ### `DomainHost.deposit(address to, uint256 amount)`
 

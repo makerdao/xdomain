@@ -61,10 +61,13 @@ abstract contract DomainGuest {
     mapping (bytes32 => uint256) public batchedDaiToFlush;
 
     EndLike public end;
+    uint256 public lid;         // Local ordering id
+    uint256 public rid;         // Remote ordering id
     int256  public line;        // Keep track of changes in line
     uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow [WAD]
     uint256 public live;
     uint80  public nonce;
+    uint256 public dust;        // The dust limit for preventing spam attacks [RAD]
 
     bytes32     public immutable domain;
     VatLike     public immutable vat;
@@ -80,14 +83,15 @@ abstract contract DomainGuest {
     event Rely(address indexed usr);
     event Deny(address indexed usr);
     event File(bytes32 indexed what, address data);
+    event File(bytes32 indexed what, uint256 data);
     event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
-    event Lift(int256 dline, uint256 minted);
+    event Lift(int256 dline);
     event Release(uint256 burned);
     event Push(int256 surplus);
     event Rectify(uint256 wad);
     event Cage();
     event Tell(uint256 value);
-    event MintClaim(address indexed usr, uint256 claim);
+    event Exit(address indexed usr, uint256 wad);
     event Deposit(address indexed to, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
     event InitiateTeleport(TeleportGUID teleport);
@@ -106,6 +110,11 @@ abstract contract DomainGuest {
 
     modifier isLive {
         require(live == 1, "DomainGuest/not-live");
+        _;
+    }
+
+    modifier ordered(uint256 _lid) {
+        require(lid++ == _lid, "DomainGuest/out-of-order");
         _;
     }
 
@@ -156,6 +165,12 @@ abstract contract DomainGuest {
         emit File(what, data);
     }
 
+    function file(bytes32 what, uint256 data) external auth {
+        if (what == "dust") dust = data;
+        else revert("DomainGuest/file-unrecognized-param");
+        emit File(what, data);
+    }
+
     function file(bytes32 what, bytes32 _domain, uint256 data) external auth {
         if (what == "validDomains") {
             require(data <= 1, "DomainGuest/invalid-data");
@@ -170,14 +185,14 @@ abstract contract DomainGuest {
     // --- MCD Support ---
 
     /// @notice Record changes in line and grain and update dss global debt ceiling if necessary
+    /// @param _lid Local ordering id
     /// @param dline The change in the line [RAD]
-    /// @param minted The amount of DAI minted into the remote escrow
-    function lift(int256 dline, uint256 minted) external hostOnly isLive {
+    function lift(uint256 _lid, int256 dline) external hostOnly isLive ordered(_lid) {
         line += dline;
-        grain += minted;
-        vat.file("Line", line > 0 ? uint256(line) : 0);
+        if (dline > 0) grain += uint256(dline) / RAY;
+        vat.file("Line", uint256(line));
 
-        emit Lift(dline, minted);
+        emit Lift(dline);
     }
 
     /// @notice Will release remote DAI from the escrow when it is safe to do so
@@ -188,7 +203,7 @@ abstract contract DomainGuest {
         uint256 burned = grain - limit;
         grain = limit;
 
-        payload = abi.encodeWithSelector(DomainHost.release.selector, burned);
+        payload = abi.encodeWithSelector(DomainHost.release.selector, rid++, burned);
 
         emit Release(burned);
     }
@@ -198,7 +213,7 @@ abstract contract DomainGuest {
     function _push() internal isLive returns (bytes memory payload) {
         uint256 _dai = vat.dai(address(this));
         uint256 _sin = vat.sin(address(this));
-        if (_dai > _sin) {
+        if (_dai >= _sin + dust) {
             // We have a surplus
             if (_sin > 0) vat.heal(_sin);
 
@@ -206,29 +221,34 @@ abstract contract DomainGuest {
 
             // Burn the DAI and unload on the other side
             vat.swell(address(this), -_int256(wad * RAY));
-            payload = abi.encodeWithSelector(DomainHost.push.selector, _int256(wad));
+            payload = abi.encodeWithSelector(DomainHost.push.selector, rid++, _int256(wad));
 
             emit Push(int256(wad));
-        } else if (_dai < _sin) {
+        } else if (_sin >= _dai + dust) {
             // We have a deficit
             if (_dai > 0) vat.heal(_dai);
 
             int256 deficit = -_int256(_divup(_sin - _dai, RAY));    // Round up to overcharge for deficit
-            payload = abi.encodeWithSelector(DomainHost.push.selector, deficit);
+            payload = abi.encodeWithSelector(DomainHost.push.selector, rid++, deficit);
 
             emit Push(deficit);
+        } else {
+            revert("DomainGuest/dust");
         }
     }
 
     /// @notice Merge DAI into surplus
-    function rectify(uint256 wad) external hostOnly {
+    /// @param _lid Local ordering id
+    /// @param wad The amount of DAI that has been sent to this domain [WAD]
+    function rectify(uint256 _lid, uint256 wad) external hostOnly ordered(_lid) {
         vat.swell(address(this), _int256(wad * RAY));
 
         emit Rectify(wad);
     }
 
     /// @notice Trigger the end module
-    function cage() external hostOnly isLive {
+    /// @param _lid Local ordering id
+    function cage(uint256 _lid) external hostOnly isLive ordered(_lid) {
         live = 0;
         end.cage();
 
@@ -239,7 +259,7 @@ abstract contract DomainGuest {
     /// @dev Triggered during shutdown
     /// @param value Cure value [RAD]
     function _tell(uint256 value) internal auth returns (bytes memory payload) {
-        payload = abi.encodeWithSelector(DomainHost.tell.selector, value);
+        payload = abi.encodeWithSelector(DomainHost.tell.selector, rid++, value);
 
         emit Tell(value);
     }
@@ -247,11 +267,11 @@ abstract contract DomainGuest {
     /// @notice Mint a claim token for the given user
     /// @dev    Claim amount is in units of local debt.
     /// @param usr The destination to send the claim tokens to
-    /// @param claim The amount of claim tokens to mint
-    function mintClaim(address usr, uint256 claim) external hostOnly {
-        claimToken.mint(usr, claim);
+    /// @param wad The amount of claim tokens to mint
+    function exit(address usr, uint256 wad) external hostOnly {
+        claimToken.mint(usr, wad);
 
-        emit MintClaim(usr, claim);
+        emit Exit(usr, wad);
     }
 
     function heal(uint256 amount) external {

@@ -29,6 +29,8 @@ interface VatLike {
     function slip(bytes32 ilk, address usr, int256 wad) external;
     function frob(bytes32 i, address u, address v, address w, int dink, int dart) external;
     function suck(address u, address v, uint256 rad) external;
+    function urns(bytes32, address) external view returns (uint256, uint256);
+    function grab(bytes32, address, address, address, int256, int256) external;
 }
 
 interface DaiJoinLike {
@@ -68,6 +70,8 @@ abstract contract DomainHost {
     RouterLike  public immutable router;
 
     address public vow;
+    uint256 public lid;         // Local ordering id
+    uint256 public rid;         // Remote ordering id
     uint256 public line;        // Remote domain global debt ceiling [RAD]
     uint256 public grain;       // Keep track of the pre-minted DAI in the escrow [WAD]
     uint256 public sin;         // A running total of how much is required to re-capitalize the remote domain [WAD]
@@ -108,6 +112,11 @@ abstract contract DomainHost {
 
     modifier vatLive {
         require(vat.live() == 1, "DomainHost/vat-not-live");
+        _;
+    }
+
+    modifier ordered(uint256 _lid) {
+        require(lid++ == _lid, "DomainHost/out-of-order");
         _;
     }
 
@@ -177,14 +186,25 @@ abstract contract DomainHost {
 
         line = rad;
 
-        payload = abi.encodeWithSelector(DomainGuest.lift.selector, dline, minted);
+        payload = abi.encodeWithSelector(DomainGuest.lift.selector, rid++, dline);
 
         emit Lift(wad);
     }
 
     /// @notice Withdraw pre-mint DAI from the remote domain
-    function release(uint256 wad) external guestOnly vatLive {
+    /// @param _lid Local ordering id
+    /// @param wad The amount of DAI to release [WAD]
+    function release(uint256 _lid, uint256 wad) external guestOnly vatLive ordered(_lid) {
         int256 amt = -_int256(wad);
+
+        // Fix any permissionless repays that may have occurred
+        (uint256 ink, uint256 art) = vat.urns(ilk, address(this));
+        if (art < ink) {
+            address _vow = vow;
+            uint256 diff = ink - art;
+            vat.suck(_vow, _vow, diff * RAY); // This needs to be done to make sure we can deduct sin[vow] and vice in the next call
+            vat.grab(ilk, address(this), address(this), _vow, 0, _int256(diff));
+        }
 
         require(dai.transferFrom(escrow, address(this), wad), "DomainHost/transfer-failed");
         daiJoin.join(address(this), wad);
@@ -197,7 +217,9 @@ abstract contract DomainHost {
     }
 
     /// @notice Guest is pushing a surplus (or deficit)
-    function push(int256 wad) external guestOnly {
+    /// @param _lid Local ordering id
+    /// @param wad The amount of DAI to push (or pull) [WAD]
+    function push(uint256 _lid, int256 wad) external guestOnly ordered(_lid) {
         if (wad >= 0) {
             dai.transferFrom(address(escrow), address(this), uint256(wad));
             daiJoin.join(address(vow), uint256(wad));
@@ -209,7 +231,9 @@ abstract contract DomainHost {
     }
 
     /// @notice Move bad debt from the remote domain into the local vow
-    function _rectify() internal vatLive returns (bytes memory payload) {
+    /// @dev This is a potentially dangerous operation as a malicious domain can drain the entire surplus buffer
+    /// Because of this we require an authed party to perform this operation
+    function _rectify() internal auth vatLive returns (bytes memory payload) {
         uint256 wad = sin;
         require(sin > 0, "DomainHost/no-sin");
         vat.suck(vow, address(this), wad * RAY);
@@ -217,7 +241,7 @@ abstract contract DomainHost {
         sin = 0;
         
         // Send ERC20 DAI to the remote DomainGuest
-        payload = abi.encodeWithSelector(DomainGuest.rectify.selector, wad);
+        payload = abi.encodeWithSelector(DomainGuest.rectify.selector, rid++, wad);
 
         emit Rectify(wad);
     }
@@ -230,13 +254,15 @@ abstract contract DomainHost {
 
         live = 0;
 
-        payload = abi.encodeWithSelector(DomainGuest.cage.selector);
+        payload = abi.encodeWithSelector(DomainGuest.cage.selector, rid++);
 
         emit Cage();
     }
 
     /// @notice Set this domain's cure value
-    function tell(uint256 value) external guestOnly {
+    /// @param _lid Local ordering id
+    /// @param value The value of the cure [RAD]
+    function tell(uint256 _lid, uint256 value) external guestOnly ordered(_lid) {
         require(live == 0, "DomainHost/live");
         require(!cureReported, "DomainHost/cure-reported");
         require(_divup(value, RAY) <= grain, "DomainHost/cure-bad-value");
@@ -257,11 +283,11 @@ abstract contract DomainHost {
 
         // Convert to actual debt amount
         // Round against the user
-        uint256 claim = wad * (grain - _divup(cure, RAY)) / grain;
+        uint256 claimAmount = wad * (grain - _divup(cure, RAY)) / grain;
         
-        payload = abi.encodeWithSelector(DomainGuest.mintClaim.selector, usr, claim);
+        payload = abi.encodeWithSelector(DomainGuest.exit.selector, usr, claimAmount);
 
-        emit Exit(usr, wad, claim);
+        emit Exit(usr, wad, claimAmount);
     }
 
     // --- Canonical DAI Support ---
