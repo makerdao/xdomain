@@ -16,8 +16,38 @@
 
 pragma solidity ^0.8.15;
 
-import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol";
-import "@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
+//import "./interfaces/IL1Bridge.sol";
+//import "./interfaces/IL2Bridge.sol";
+
+//import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol";
+//import "@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
+
+interface IL1Bridge {
+  function deposit(
+    address _l2Receiver,
+    address _l1Token,
+    uint256 _amount,
+    QueueType _queueType
+  ) external payable returns (bytes32 txHash);
+
+  function claimFailedDeposit(
+    address _depositSender,
+    address _l1Token,
+    bytes32 _l2TxHash,
+    uint32 _l2BlockNumber,
+    uint256 _l2MessageIndex,
+    bytes32[] calldata _merkleProof
+  ) external;
+
+  function finalizeWithdrawal(
+    uint32 _l2BlockNumber,
+    uint256 _l2MessageIndex,
+    bytes calldata _message,
+    bytes32[] calldata _merkleProof
+  ) external;
+
+  function l2TokenAddress(address _l1Token) external view returns (address);
+}
 
 interface TokenLike {
   function transferFrom(
@@ -38,11 +68,61 @@ interface L2DAITokenBridgeLike {
   ) external;
 }
 
+interface IMailboxLike {
+  function proveL2LogInclusion(
+    uint32 _blockNumber,
+    uint256 _index,
+    L2Log memory _log,
+    bytes32[] calldata _proof
+  ) external view returns (bool);
+
+  function proveL2MessageInclusion(
+    uint32 _blockNumber,
+    uint256 _index,
+    L2Message calldata _message,
+    bytes32[] calldata _proof
+  ) external view returns (bool);
+
+  function requestL2Transaction(
+    address _contractAddressL2,
+    bytes calldata _calldata,
+    uint256 _ergsLimit,
+    bytes[] calldata _factoryDeps,
+    QueueType _queueType
+  ) external payable returns (bytes32 txHash);
+}
+
+enum QueueType {
+  Deque,
+  HeapBuffer,
+  Heap
+}
+
+struct L2Log {
+  address sender;
+  bytes32 key;
+  bytes32 value;
+}
+
+struct L2Message {
+  address sender;
+  bytes data;
+}
+
+uint160 constant SYSTEM_CONTRACTS_OFFSET = 0x8000; // 2^15
+address constant BOOTLOADER_ADDRESS = address(SYSTEM_CONTRACTS_OFFSET + 0x01);
+
 // Managed locked funds in L1Escrow and send / receive messages to L2DAITokenBridge counterpart
 // Note: when bridge is closed it will still process in progress messages
 
-contract L1DAITokenBridge {
+contract L1DAITokenBridge is IL1Bridge {
+  // TODO: evaluate constant
+  uint256 constant DEPOSIT_ERGS_LIMIT = 2097152;
+
+  // TODO: evaluate constant
+  uint256 constant DEPLOY_L2_BRIDGE_COUNTERPART_ERGS_LIMIT = 2097152;
   mapping(uint32 => mapping(uint256 => bool)) isWithdrawalProcessed;
+  mapping(address => mapping(bytes32 => uint256)) depositAmount; //TODO: do we need that ?
 
   event ERC20DepositInitiated(
     address indexed _l1Token,
@@ -80,7 +160,7 @@ contract L1DAITokenBridge {
   address public immutable l2DAITokenBridge;
   address public immutable l2Token;
   address public immutable escrow;
-  address public immutable zkSyncAddress;
+  IMailboxLike public immutable zkSyncMailbox;
   uint256 public isOpen = 1;
 
   event Closed();
@@ -90,7 +170,7 @@ contract L1DAITokenBridge {
     address _l2DAITokenBridge,
     address _l2Token,
     address _escrow,
-    address _zkSyncAddress
+    IMailboxLike _mailbox
   ) {
     wards[msg.sender] = 1;
     emit Rely(msg.sender);
@@ -99,7 +179,7 @@ contract L1DAITokenBridge {
     l2DAITokenBridge = _l2DAITokenBridge;
     l2Token = _l2Token;
     escrow = _escrow;
-    zkSyncAddress = _zkSyncAddress;
+    zkSyncMailbox = _mailbox;
   }
 
   function close() external auth {
@@ -108,98 +188,143 @@ contract L1DAITokenBridge {
     emit Closed();
   }
 
-  function depositERC20(
+  //TODO: Check if reentrancy guard is needed for all these methods
+  function deposit(
+    address _l2Receiver,
     address _l1Token,
-    address _l2Token,
     uint256 _amount,
-    uint32 _l2Gas,
-    bytes calldata _data
-  ) external payable {
-    require(_l1Token == l1Token && _l2Token == l2Token, "L1DAITokenBridge/token-not-dai");
-
-    _initiateERC20Deposit(msg.sender, msg.sender, _amount, _l2Gas, _data);
-  }
-
-  function depositERC20To(
-    address _l1Token,
-    address _l2Token,
-    address _to,
-    uint256 _amount,
-    uint32 _l2Gas,
-    bytes calldata _data
-  ) external payable {
-    require(_l1Token == l1Token && _l2Token == l2Token, "L1DAITokenBridge/token-not-dai");
-
-    _initiateERC20Deposit(msg.sender, _to, _amount, _l2Gas, _data);
-  }
-
-  function _initiateERC20Deposit(
-    address _from,
-    address _to,
-    uint256 _amount,
-    uint64 ergsLimit,
-    bytes calldata _data
-  ) internal {
-    // do not allow initiating new xchain messages if bridge is closed
+    QueueType _queueType
+  ) external payable returns (bytes32 txHash) {
+    require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
     require(isOpen == 1, "L1DAITokenBridge/closed");
+    require(_amount > 0, "1T");
+    // empty deposit amount  TODO: do we need that check ?
 
-    TokenLike(l1Token).transferFrom(_from, escrow, _amount);
-
-    bytes memory message = abi.encodeWithSelector(
+    TokenLike(l1Token).transferFrom(msg.sender, escrow, _amount);
+    bytes memory emptyBytes = "";
+    bytes memory l2TxCalldata = abi.encodeWithSelector(
       L2DAITokenBridgeLike.finalizeDeposit.selector,
-      l1Token,
-      l2Token,
-      _from,
-      _to,
+      msg.sender,
+      _l2Receiver,
+      _l1Token,
       _amount,
-      _data
+      abi.encode(emptyBytes, "0x") // TODO: ???
     );
 
-    _callZkSync(l2DAITokenBridge, message, ergsLimit);
+    txHash = zkSyncMailbox.requestL2Transaction{value: msg.value}(
+      l2DAITokenBridge,
+      l2TxCalldata,
+      DEPOSIT_ERGS_LIMIT,
+      new bytes[](0),
+      _queueType
+    );
 
-    emit ERC20DepositInitiated(l1Token, l2Token, _from, _to, _amount, _data);
+    depositAmount[msg.sender][txHash] = _amount; // TODO: do we need that ?
   }
 
-  function _callZkSync(
-    address contractAddr,
-    bytes memory data,
-    uint256 ergsLimit
-  ) internal {
-    IZkSync zksync = IZkSync(zkSyncAddress);
-    zksync.requestL2Transaction{value: msg.value}(
-      contractAddr,
-      data,
-      ergsLimit,
-      new bytes[](0),
-      QueueType.Deque
+  function claimFailedDeposit(
+    address _depositSender,
+    address _l1Token,
+    bytes32 _l2TxHash,
+    uint32 _l2BlockNumber,
+    uint256 _l2MessageIndex,
+    bytes32[] calldata _merkleProof
+  ) external {
+    L2Log memory l2Log = L2Log({sender: BOOTLOADER_ADDRESS, key: _l2TxHash, value: bytes32(0)});
+    bool success = zkSyncMailbox.proveL2LogInclusion(
+      _l2BlockNumber,
+      _l2MessageIndex,
+      l2Log,
+      _merkleProof
     );
+    require(success);
+
+    uint256 amount = depositAmount[_depositSender][_l2TxHash];
+    require(amount > 0);
+
+    depositAmount[_depositSender][_l2TxHash] = 0;
+    TokenLike(l1Token).transferFrom(escrow, _depositSender, amount);
   }
 
   // To withdraw, merkleproof must be presented by the user. This might be split
   // into two separate contracts - WithdrawRelayer and the Bridge
 
-  function withdraw(
+  function finalizeWithdrawal(
     uint32 _l2BlockNumber,
-    uint256 _index,
+    uint256 _l2MessageIndex,
     bytes calldata _message,
-    bytes32[] calldata _proof,
-    address l2Sender
+    bytes32[] calldata _merkleProof
   ) external {
-    require(!isWithdrawalProcessed[_l2BlockNumber][_index]);
+    require(
+      !isWithdrawalProcessed[_l2BlockNumber][_l2MessageIndex],
+      "Withdrawal already processed"
+    );
+    L2Message memory l2ToL1Message = L2Message({sender: l2DAITokenBridge, data: _message});
 
-    IZkSync zksync = IZkSync(zkSyncAddress);
-    L2Message memory message = L2Message({sender: l2Sender, data: _message});
+    (address l1Receiver, uint256 amount) = _parseL2WithdrawalMessage(l2ToL1Message.data);
+    bool success = zkSyncMailbox.proveL2MessageInclusion(
+      _l2BlockNumber,
+      _l2MessageIndex,
+      l2ToL1Message,
+      _merkleProof
+    );
+    require(success, "nq");
 
-    bool success = zksync.proveL2MessageInclusion(_l2BlockNumber, _index, message, _proof);
-    require(success, "Failed to prove message inclusion");
+    isWithdrawalProcessed[_l2BlockNumber][_l2MessageIndex] = true;
 
-    (address l1Recipient, uint256 amount) = abi.decode(_message, (address, uint256));
+    TokenLike(l1Token).transferFrom(escrow, l1Receiver, amount);
+  }
 
-    // process message
-    TokenLike(l1Token).transferFrom(escrow, l1Recipient, amount);
+  function readUint32(bytes memory _bytes, uint256 _start)
+    internal
+    pure
+    returns (uint32 result, uint256 offset)
+  {
+    assembly {
+      offset := add(_start, 4)
+      result := mload(add(_bytes, offset))
+    }
+  }
 
-    isWithdrawalProcessed[_l2BlockNumber][_index] = true;
+  function readUint256(bytes memory _bytes, uint256 _start)
+    internal
+    pure
+    returns (uint256 result, uint256 offset)
+  {
+    assembly {
+      offset := add(_start, 32)
+      result := mload(add(_bytes, offset))
+    }
+  }
 
-    emit WithdrawalFinalized(l1Recipient, amount);
+  function readAddress(bytes memory _bytes, uint256 _start)
+    internal
+    pure
+    returns (address result, uint256 offset)
+  {
+    assembly {
+      offset := add(_start, 20)
+      result := mload(add(_bytes, offset))
+    }
+  }
+
+  function _parseL2WithdrawalMessage(bytes memory _l2ToL1message)
+    internal
+    pure
+    returns (address l1Receiver, uint256 amount)
+  {
+    // Check that message length is correct.
+    // It should be equal to the length of the function signature + address  + uint256 = 4 + 20 + + 32 = 56 (bytes).
+    require(_l2ToL1message.length == 56, "kk");
+
+    (uint32 functionSignature, uint256 offset) = readUint32(_l2ToL1message, 0);
+    require(bytes4(functionSignature) == this.finalizeWithdrawal.selector, "nt");
+
+    (l1Receiver, offset) = readAddress(_l2ToL1message, offset);
+    (amount, offset) = readUint256(_l2ToL1message, offset);
+  }
+
+  function l2TokenAddress(address _l1Token) public view returns (address) {
+    return l2Token;
   }
 }
