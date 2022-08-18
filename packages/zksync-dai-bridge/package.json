@@ -53,6 +53,7 @@
   "devDependencies": {
     "istanbul": "^0.4.5",
     "prettier-plugin-solidity": "^1.0.0-beta.18",
-    "solidity-coverage": "^0.7.17"
+    "solidity-coverage": "^0.7.17",
+    "@eth-optimism/smock": "=1.1.9"
   }
 }
