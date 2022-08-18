@@ -52,6 +52,24 @@
     ts-node "^10.2.1"
     typechain "7.0.0"
 
+"@arbitrum/sdk@^2.0.13":
+  version "2.0.13"
+  resolved "https://registry.yarnpkg.com/@arbitrum/sdk/-/sdk-2.0.13.tgz#6c9c60c2fab0a6c1fd4fefc82fbb27e16ef0c8b1"
+  integrity sha512-C/ckSzQkX4e8SKAY5Lz3yfakM5Aj6sA2mB9Q7cvZR/NFsFb0R95DiA6l1VMFT6Z1S1v8W936x4j9rLsJaFd/gg==
+  dependencies:
+    "@arbitrum/sdk-classic" "npm:@arbitrum/sdk@1.1.13"
+    "@arbitrum/sdk-nitro" "npm:@arbitrum/sdk@3.0.0-beta.8"
+    "@ethersproject/address" "^5.0.8"
+    "@ethersproject/bignumber" "^5.1.1"
+    "@ethersproject/bytes" "^5.0.8"
+    "@typechain/ethers-v5" "9.0.0"
+    "@types/prompts" "^2.0.14"
+    "@types/yargs" "^17.0.9"
+    dotenv "^10.0.0"
+    ethers "^5.1.0"
+    ts-node "^10.2.1"
+    typechain "7.0.0"
+
 "@babel/code-frame@7.12.11":
   version "7.12.11"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.12.11.tgz#f4ad435aa263db935b8f10f2c552d23fb716a63f"
@@ -10991,6 +11009,7 @@ ws@^7.4.6:
 xdomain-utils@../xdomain-utils:
   version "0.0.1"
   dependencies:
+    "@arbitrum/sdk" "^2.0.13"
     ethers "^5.6.9"
 
 xhr-request-promise@^0.1.2:

@@ -9,6 +9,7 @@ import { expect } from 'chai'
 import { parseUnits } from 'ethers/lib/utils'
 import { ethers } from 'hardhat'
 import { mapValues } from 'lodash'
+import { waitToRelayTxToArbitrum } from 'xdomain-utils'
 
 import {
   BridgeDeployment,
@@ -19,12 +20,11 @@ import {
   RouterDeployment,
   useStaticDeployment,
   useStaticRouterDeployment,
-  waitToRelayTxsToL2_Nitro,
 } from '../arbitrum-helpers'
 import {
   depositToStandardBridge_Nitro,
   depositToStandardRouter_Nitro,
-  executeSpell_Nitro,
+  executeSpell,
   setGatewayForToken_Nitro,
 } from '../arbitrum-helpers/bridge'
 
@@ -56,7 +56,7 @@ describe('goerli bridge', () => {
     }
 
     console.log('Depositing to standard bridge...')
-    await waitToRelayTxsToL2_Nitro(
+    await waitToRelayTxToArbitrum(
       depositToStandardBridge_Nitro({
         l1Provider: network.l1.provider,
         l2Provider: network.l2.provider,
@@ -109,7 +109,7 @@ describe('goerli bridge', () => {
     }
 
     console.log('Depositing to standard router...')
-    await waitToRelayTxsToL2_Nitro(
+    await waitToRelayTxToArbitrum(
       depositToStandardRouter_Nitro({
         l1Provider: network.l1.provider,
         l2Provider: network.l2.provider,
@@ -203,12 +203,12 @@ describe('goerli bridge', () => {
       l2DaiGatewayV2.address,
     ])
 
-    await executeSpell_Nitro(network, bridgeDeployment, l2UpgradeSpell.address, spellCalldata)
+    await executeSpell(network, bridgeDeployment, l2UpgradeSpell.address, spellCalldata)
 
     console.log('Bridge upgraded!')
 
     await waitForTx(bridgeDeployment.l1Dai.approve(l1DaiGatewayV2.address, amount))
-    await waitToRelayTxsToL2_Nitro(
+    await waitToRelayTxToArbitrum(
       depositToStandardBridge_Nitro({
         l1Provider: network.l1.provider,
         l2Provider: network.l2.provider,

@@ -1,7 +1,8 @@
 import { BigNumber, ethers, Wallet } from 'ethers'
 import { defaultAbiCoder, Interface } from 'ethers/lib/utils'
+import { waitToRelayTxToArbitrum } from 'xdomain-utils'
 
-import { waitForTx, waitToRelayTxsToL2, waitToRelayTxsToL2_Nitro } from '../arbitrum-helpers'
+import { waitForTx } from '../arbitrum-helpers'
 import { L1DaiGateway } from '../typechain-types'
 import { getArbitrumCoreContracts } from './contracts'
 import { BridgeDeployment, NetworkConfig } from './deploy'
@@ -320,42 +321,6 @@ export async function executeSpell(
   const calldataLength = l2MessageCalldata.length
 
   const gasPriceBid = await getGasPriceBid(network.l2.provider)
-  const maxSubmissionPrice = await getMaxSubmissionPrice(network.l2.provider, calldataLength)
-  const maxGas = await getMaxGas(
-    network.l2.provider,
-    bridgeDeployment.l1GovRelay.address,
-    bridgeDeployment.l2GovRelay.address,
-    bridgeDeployment.l2GovRelay.address,
-    maxSubmissionPrice,
-    gasPriceBid,
-    l2MessageCalldata,
-  )
-  const ethValue = maxSubmissionPrice.add(gasPriceBid.mul(maxGas))
-
-  await network.l1.deployer.sendTransaction({ to: bridgeDeployment.l1GovRelay.address, value: ethValue })
-
-  await waitToRelayTxsToL2(
-    waitForTx(
-      bridgeDeployment.l1GovRelay
-        .connect(network.l1.deployer)
-        .relay(l2Spell, spellCalldata, ethValue, maxGas, gasPriceBid, maxSubmissionPrice),
-    ),
-    network.l1.inbox,
-    network.l1.provider,
-    network.l2.provider,
-  )
-}
-
-export async function executeSpell_Nitro(
-  network: NetworkConfig,
-  bridgeDeployment: BridgeDeployment,
-  l2Spell: string,
-  spellCalldata: string,
-) {
-  const l2MessageCalldata = bridgeDeployment.l2GovRelay.interface.encodeFunctionData('relay', [l2Spell, spellCalldata])
-  const calldataLength = l2MessageCalldata.length
-
-  const gasPriceBid = await getGasPriceBid(network.l2.provider)
   const maxSubmissionPrice = await getMaxSubmissionPrice_Nitro(network.l1.provider, calldataLength, network.l1.inbox)
   const maxGas = await getMaxGas_Nitro(
     network.l2.provider,
@@ -368,7 +333,7 @@ export async function executeSpell_Nitro(
 
   await network.l1.deployer.sendTransaction({ to: bridgeDeployment.l1GovRelay.address, value: ethValue })
 
-  await waitToRelayTxsToL2_Nitro(
+  await waitToRelayTxToArbitrum(
     waitForTx(
       bridgeDeployment.l1GovRelay
         .connect(network.l1.deployer)

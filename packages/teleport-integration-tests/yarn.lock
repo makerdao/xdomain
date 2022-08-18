@@ -34,7 +34,7 @@
     ts-node "^10.2.1"
     typechain "7.0.0"
 
-"@arbitrum/sdk@^2.0.11":
+"@arbitrum/sdk@^2.0.11", "@arbitrum/sdk@^2.0.13":
   version "2.0.13"
   resolved "https://registry.yarnpkg.com/@arbitrum/sdk/-/sdk-2.0.13.tgz#6c9c60c2fab0a6c1fd4fefc82fbb27e16ef0c8b1"
   integrity sha512-C/ckSzQkX4e8SKAY5Lz3yfakM5Aj6sA2mB9Q7cvZR/NFsFb0R95DiA6l1VMFT6Z1S1v8W936x4j9rLsJaFd/gg==
@@ -10898,6 +10898,7 @@ ws@^7.4.6:
 xdomain-utils@../xdomain-utils:
   version "0.0.1"
   dependencies:
+    "@arbitrum/sdk" "^2.0.13"
     ethers "^5.6.9"
 
 xhr-request-promise@^0.1.2:

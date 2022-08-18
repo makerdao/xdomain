@@ -1,9 +1,9 @@
 import { getRinkebySdk } from '@dethcrypto/eth-sdk-client'
 import { sleep } from '@eth-optimism/core-utils'
 import { getOptionalEnv, getRequiredEnv } from '@makerdao/hardhat-utils'
-import { ContractReceipt, ContractTransaction, providers, Wallet } from 'ethers'
+import { ContractReceipt, ContractTransaction, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
-import { RetryProvider } from 'xdomain-utils'
+import { RetryProvider, waitToRelayTxToArbitrum } from 'xdomain-utils'
 
 import { L1AddTeleportArbitrumSpell__factory, L2AddTeleportDomainSpell__factory } from '../../typechain'
 import { deployUsingFactory, getContractFactory, waitForTx } from '../helpers'
@@ -17,7 +17,6 @@ import {
   getMaxGas_Nitro,
   getMaxSubmissionPrice_Nitro,
   makeRelayTxToL1,
-  waitToRelayTxsToL2_Nitro,
 } from '.'
 
 const TTL = 300
@@ -102,7 +101,7 @@ export async function setupArbitrumTests({
   const relayTxToL1 = makeRelayTxToL1(teleportBridgeSdk.l2TeleportBridge, fakeOutbox)
   const relayTxToL2 = (
     l1Tx: Promise<ContractTransaction> | ContractTransaction | Promise<ContractReceipt> | ContractReceipt,
-  ) => waitToRelayTxsToL2_Nitro(l1Tx, l2Signer)
+  ) => waitToRelayTxToArbitrum(l1Tx, l2Signer)
 
   console.log('Deploy Arbitrum L2 spell...')
   const l2AddTeleportDomainSpell = await deployUsingFactory(
