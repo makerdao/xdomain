@@ -224,6 +224,8 @@ contract L1DAITokenBridge is IL1Bridge {
     uint256 _l2MessageIndex,
     bytes32[] calldata _merkleProof
   ) external {
+    require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
+
     L2Log memory l2Log = L2Log({sender: BOOTLOADER_ADDRESS, key: _l2TxHash, value: bytes32(0)});
     bool success = zkSyncMailbox.proveL2LogInclusion(
       _l2BlockNumber,
@@ -319,6 +321,8 @@ contract L1DAITokenBridge is IL1Bridge {
   }
 
   function l2TokenAddress(address _l1Token) public view returns (address) {
+    require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
+
     return l2Token;
   }
 }

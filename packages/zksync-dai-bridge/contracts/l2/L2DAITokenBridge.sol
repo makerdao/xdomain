@@ -15,7 +15,43 @@
 
 pragma solidity ^0.8.15;
 
-import "../../node_modules/@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
+interface IL1Bridge {
+  function finalizeWithdrawal(
+    uint32 _l2BlockNumber,
+    uint256 _l2MessageIndex,
+    bytes calldata _message,
+    bytes32[] calldata _merkleProof
+  ) external;
+}
+
+interface IL2Bridge {
+  function finalizeDeposit(
+    address _l1Sender,
+    address _l2Receiver,
+    address _l1Token,
+    uint256 _amount,
+    bytes calldata _data
+  ) external;
+
+  function withdraw(
+    address _l1Receiver,
+    address _l2Token,
+    uint256 _amount
+  ) external;
+
+  function l1TokenAddress(address _l2Token) external view returns (address);
+
+  function l2TokenAddress(address _l1Token) external view returns (address);
+
+  function l1Bridge() external view returns (address);
+}
+
+interface IL2Messanger {
+  function sendToL1(bytes memory _message) external returns (bytes32);
+}
+
+uint160 constant SYSTEM_CONTRACTS_OFFSET = 0x8000; // 2^15
+IL2Messanger constant L2_MESSANGER = IL2Messanger(address(SYSTEM_CONTRACTS_OFFSET + 0x08));
 
 interface Mintable {
   function mint(address usr, uint256 wad) external;
@@ -93,38 +129,29 @@ contract L2DAITokenBridge {
     emit Closed();
   }
 
-  function withdrawTo(
+  function withdraw(
+    address _l1Receiver,
     address _l2Token,
-    address _to,
-    uint256 _amount,
-    bytes calldata _data
+    uint256 _amount
   ) external {
     require(_l2Token == l2Token, "L2DAITokenBridge/token-not-dai");
 
-    _initiateWithdrawal(msg.sender, _to, _amount, _data);
+    _initiateWithdrawal(_l1Receiver, _amount);
   }
 
   // When a withdrawal is initiated, we burn the withdrawer's funds to prevent subsequent L2 usage.
-  function _initiateWithdrawal(
-    address _from,
-    address _to,
-    uint256 _amount,
-    bytes calldata _data
-  ) internal {
+  function _initiateWithdrawal(address _to, uint256 _amount) internal {
     // do not allow initiaitng new xchain messages if bridge is closed
     require(isOpen == 1, "L2DAITokenBridge/closed");
 
     Mintable(l2Token).burn(msg.sender, _amount);
 
-    bytes memory message = abi.encode(l1Token, l2Token, _from, _to, _amount, _data);
+    bytes memory message = abi.encodePacked(IL1Bridge.finalizeWithdrawal.selector, _to, _amount);
 
-    L1_MESSENGER_CONTRACT.sendToL1(message);
-
-    emit WithdrawalInitiated(l1Token, l2Token, msg.sender, _to, _amount, _data);
+    L2_MESSANGER.sendToL1(message);
   }
 
   // When a deposit is finalized, we credit the account on L2 with the same amount of tokens.
-  // TODO: need to check who can call this
 
   function finalizeDeposit(
     address _l1Token,
@@ -134,10 +161,20 @@ contract L2DAITokenBridge {
     uint256 _amount,
     bytes calldata _data
   ) external {
+    require(msg.sender == l1DAITokenBridge); // only L1 bridge can call
+
     require(_l1Token == l1Token && _l2Token == l2Token, "L2DAITokenBridge/token-not-dai");
 
     Mintable(l2Token).mint(_to, _amount);
 
     emit DepositFinalized(_l1Token, _l2Token, _from, _to, _amount, _data);
+  }
+
+  function l2TokenAddress(address) external view returns (address) {
+    return l2Token;
+  }
+
+  function l1TokenAddress(address) external view returns (address) {
+    return l1Token;
   }
 }
