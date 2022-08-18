@@ -1,5 +1,4 @@
-import { IL1ToL2MessageWriter, L1ToL2MessageStatus, L1TransactionReceipt } from '@arbitrum/sdk'
-import { ContractReceipt, ContractTransaction, ethers, providers } from 'ethers'
+import { ContractReceipt, ContractTransaction, providers } from 'ethers'
 
 import { FakeArbitrumOutbox } from '../../typechain'
 import { L2TeleportBridgeLike } from '../teleport'
