@@ -11,7 +11,8 @@
     "composite": false,
     "declaration": true,
     "incremental": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "types": ["mocha"]
   },
-  "include": ["src/**/*"]
+  "include": ["test/**/*", "src/**/*"]
 }

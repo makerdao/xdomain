@@ -8,9 +8,7 @@ function delay(time) {
 exports.delay = delay;
 const RETRYABLE_REASONS = [
     "replacement fee too low",
-    "replacement transaction underpriced",
     "nonce has already been used",
-    "nonce too low",
     "bad response",
     "upstream connect error",
 ];
@@ -24,7 +22,7 @@ class RetryProvider extends ethers_1.providers.JsonRpcProvider {
     }
     async perform(method, params) {
         let attempt = 0;
-        return ethers_1.utils.poll(async () => {
+        return await ethers_1.utils.poll(async () => {
             attempt++;
             try {
                 return await super.perform(method, params);

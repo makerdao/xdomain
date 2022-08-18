@@ -16,7 +16,7 @@ export async function getNovaNetworkConfig({
   l1Rpc: string
   l2Rpc: string
 }): Promise<NetworkConfig> {
-  const l1 = new ethers.providers.JsonRpcProvider(l1Rpc)
+  const l1 = new RetryProvider(5, l1Rpc)
   const l2 = new RetryProvider(5, l2Rpc) // arbitrum l2 can be very unstable so we use RetryProvider
   const l1Deployer = new ethers.Wallet(pkey, l1)
   const l2Deployer = new ethers.Wallet(pkey, l2)
