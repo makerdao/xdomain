@@ -16,12 +16,6 @@
 
 pragma solidity ^0.8.15;
 
-//import "./interfaces/IL1Bridge.sol";
-//import "./interfaces/IL2Bridge.sol";
-
-//import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol";
-//import "@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
-
 interface IL1Bridge {
   function deposit(
     address _l2Receiver,

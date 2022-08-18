@@ -18,18 +18,31 @@ pragma solidity ^0.8.15;
 
 // Relay a message from L1 to L2GovernanceRelay
 
-/// @notice Indicator that the operation can interact with Rollup and Porter trees, or only with Rollup
-import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IZkSync.sol";
-import "@matterlabs/zksync-contracts/l1/contracts/zksync/Operations.sol";
-
 interface L2GovernanceRelayLike {
   function relay(address target, bytes calldata targetData) external;
+}
+
+enum QueueType {
+  Deque,
+  HeapBuffer,
+  Heap
+}
+
+uint256 constant RELAY_ERGS_LIMIT = 2097152;
+
+interface IMailboxLike {
+  function requestL2Transaction(
+    address _contractAddressL2,
+    bytes calldata _calldata,
+    uint256 _ergsLimit,
+    bytes[] calldata _factoryDeps,
+    QueueType _queueType
+  ) external payable returns (bytes32 txHash);
 }
 
 contract L1GovernanceRelay {
   // --- Auth ---
   mapping(address => uint256) public wards;
-  address public immutable zkSyncAddress;
 
   function rely(address usr) external auth {
     wards[usr] = 1;
@@ -47,45 +60,38 @@ contract L1GovernanceRelay {
   }
 
   address public immutable l2GovernanceRelay;
+  IMailboxLike public immutable zkSyncMailbox;
 
   event Rely(address indexed usr);
   event Deny(address indexed usr);
 
-  constructor(address _l2GovernanceRelay, address _zkSyncAddress) {
+  constructor(address _l2GovernanceRelay, IMailboxLike _mailbox) {
     wards[msg.sender] = 1;
     emit Rely(msg.sender);
 
     l2GovernanceRelay = _l2GovernanceRelay;
-    zkSyncAddress = _zkSyncAddress;
+    zkSyncMailbox = _mailbox;
   }
 
   // Forward a call to be repeated on L2
   function relay(
     address target,
     bytes calldata targetData,
-    uint256 ergsLimit
-  ) external payable auth {
-    bytes memory data = abi.encodeWithSelector(
+    QueueType _queueType
+  ) external payable auth returns (bytes32 txHash) {
+    bytes memory l2TxCalldata = abi.encodeWithSelector(
       L2GovernanceRelayLike.relay.selector,
+      msg.sender,
       target,
       targetData
     );
 
-    _callZkSync(l2GovernanceRelay, data, ergsLimit);
-  }
-
-  function _callZkSync(
-    address contractAddr,
-    bytes memory data,
-    uint256 ergsLimit
-  ) internal {
-    IZkSync zksync = IZkSync(zkSyncAddress);
-    zksync.requestL2Transaction{value: msg.value}(
-      contractAddr,
-      data,
-      ergsLimit,
-      new bytes[](0),
-      QueueType.Deque
+    txHash = zkSyncMailbox.requestL2Transaction{value: msg.value}(
+      l2GovernanceRelay,
+      l2TxCalldata,
+      RELAY_ERGS_LIMIT,
+      new bytes[](0), // empty for transactions not deploying contracts
+      _queueType
     );
   }
 }
