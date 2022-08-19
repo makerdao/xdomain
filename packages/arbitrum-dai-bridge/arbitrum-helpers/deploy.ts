@@ -5,8 +5,8 @@ import { providers, Signer, Wallet } from 'ethers'
 import hre, { ethers } from 'hardhat'
 import { compact } from 'lodash'
 import { assert, Awaited } from 'ts-essentials'
-
 import { waitForTx } from 'xdomain-utils'
+
 import { Dai, L1DaiGateway, L1Escrow, L1GovernanceRelay, L2DaiGateway, L2GovernanceRelay } from '../typechain-types'
 import { getArbitrumArtifact, getArbitrumArtifactFactory } from './contracts'
 import { deployUsingFactoryAndVerify } from './deployment'
