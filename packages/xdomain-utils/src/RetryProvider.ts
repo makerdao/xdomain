@@ -4,12 +4,7 @@ export function delay(time: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, time));
 }
 
-const RETRYABLE_REASONS = [
-  "replacement fee too low",
-  "nonce has already been used",
-  "bad response",
-  "upstream connect error",
-];
+const RETRYABLE_REASONS = ["bad response", "upstream connect error"];
 
 /**
  * Custom ethers.js provider automatically retrying any errors coming from node
