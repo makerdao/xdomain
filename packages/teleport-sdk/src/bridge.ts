@@ -288,15 +288,11 @@ export class TeleportBridge {
       pollingIntervalMs,
       timeoutMs,
       onPayloadSigned,
-      onRelayTaskCreated
+      onRelayTaskCreated,
     )
   }
 
-  public async waitForRelayTask(
-    taskId: string,
-    pollingIntervalMs?: number,
-    timeoutMs?: number,
-  ): Promise<string> {
+  public async waitForRelayTask(taskId: string, pollingIntervalMs?: number, timeoutMs?: number): Promise<string> {
     return await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)
   }
 
