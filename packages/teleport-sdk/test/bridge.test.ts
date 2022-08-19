@@ -439,7 +439,7 @@ describe('TeleportBridge', () => {
     const initialDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
 
     let resolveRelayTaskCreationPromise: (value: string) => void
-    const relayTaskCreationPromise = new Promise<string>((resolve, _) => {
+    const relayTaskCreationPromise = new Promise<string>((resolve) => {
       resolveRelayTaskCreationPromise = resolve
     })
 
@@ -461,7 +461,7 @@ describe('TeleportBridge', () => {
           },
           onRelayTaskCreated: (taskId) => {
             console.log(`Relay taskId=${taskId}`)
-            waitForRelayTask({ taskId, srcDomain }).then((txHash) => {
+            void waitForRelayTask({ taskId, srcDomain }).then((txHash) => {
               resolveRelayTaskCreationPromise(txHash)
             })
           },
@@ -486,7 +486,7 @@ describe('TeleportBridge', () => {
           },
           (taskId) => {
             console.log(`Relay taskId=${taskId}`)
-            waitForRelayTask({ taskId, srcDomain }).then((txHash) => {
+            void waitForRelayTask({ taskId, srcDomain }).then((txHash) => {
               resolveRelayTaskCreationPromise(txHash)
             })
           },
