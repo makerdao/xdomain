@@ -12,10 +12,10 @@ import {
   deployArbitrumBaseBridge,
   deployArbitrumTeleportBridge,
   deployFakeArbitrumInbox,
-  depositToStandardBridge_Nitro,
+  depositToStandardBridge,
   getGasPriceBid,
-  getMaxGas_Nitro,
-  getMaxSubmissionPrice_Nitro,
+  getMaxGas,
+  getMaxSubmissionPrice,
   makeRelayTxToL1,
 } from '.'
 
@@ -123,8 +123,8 @@ export async function setupArbitrumTests({
   const calldataLength = l2MessageCalldata.length
   const gasPriceBid = await getGasPriceBid(l2Provider)
 
-  const maxSubmissionCost = await getMaxSubmissionPrice_Nitro(l1Provider, calldataLength, l1Sdk.arbitrum.inbox.address)
-  const maxGas = await getMaxGas_Nitro(
+  const maxSubmissionCost = await getMaxSubmissionPrice(l1Provider, calldataLength, l1Sdk.arbitrum.inbox.address)
+  const maxGas = await getMaxGas(
     l2Provider,
     baseBridgeSdk.l1GovRelay.address,
     baseBridgeSdk.l2GovRelay.address,
@@ -159,7 +159,7 @@ export async function setupArbitrumTests({
   await waitForTx(makerSdk.dai.connect(l1Signer).transfer(l1User.address, l2DaiAmount))
   await waitForTx(makerSdk.dai.connect(l1User).approve(baseBridgeSdk.l1DaiTokenBridge.address, l2DaiAmount))
   await relayTxToL2(
-    depositToStandardBridge_Nitro({
+    depositToStandardBridge({
       l1Provider: l1Provider,
       l2Provider: l2Provider,
       from: l1User,

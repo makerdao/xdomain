@@ -15,15 +15,7 @@ export async function getGasPriceBid(l2: ethers.providers.Provider): Promise<Big
   return await l2.getGasPrice()
 }
 
-export async function getMaxSubmissionPrice(l2: ethers.providers.Provider, calldataOrCalldataLength: string | number) {
-  const calldataLength =
-    typeof calldataOrCalldataLength === 'string' ? calldataOrCalldataLength.length : calldataOrCalldataLength
-  const [submissionPrice] = await getArbitrumCoreContracts(l2).arbRetryableTx.getSubmissionPrice(calldataLength)
-  const maxSubmissionPrice = submissionPrice.mul(4)
-  return maxSubmissionPrice
-}
-
-export async function getMaxSubmissionPrice_Nitro(
+export async function getMaxSubmissionPrice(
   l1: ethers.providers.Provider,
   calldataOrCalldataLength: string | number,
   inboxAddress: string,
@@ -49,31 +41,6 @@ export async function getMaxGas(
   sender: string,
   destination: string,
   refundDestination: string,
-  maxSubmissionPrice: BigNumber,
-  gasPriceBid: BigNumber,
-  calldata: string,
-): Promise<BigNumber> {
-  const [estimatedGas] = await getArbitrumCoreContracts(l2).nodeInterface.estimateRetryableTicket(
-    sender,
-    ethers.utils.parseEther('0.05'),
-    destination,
-    0,
-    maxSubmissionPrice,
-    refundDestination,
-    refundDestination,
-    0,
-    gasPriceBid,
-    calldata,
-  )
-  const maxGas = estimatedGas.mul(4)
-  return maxGas
-}
-
-export async function getMaxGas_Nitro(
-  l2: ethers.providers.Provider,
-  sender: string,
-  destination: string,
-  refundDestination: string,
   calldata: string,
 ): Promise<BigNumber> {
   const estimatedGas = await getArbitrumCoreContracts(l2).nodeInterface_Nitro.estimateGas.estimateRetryableTicket(
@@ -93,52 +60,6 @@ export async function getMaxGas_Nitro(
 export async function depositToStandardBridge({
   from,
   to,
-  l2Provider,
-  deposit,
-  l1Gateway,
-  l1TokenAddress,
-  l2GatewayAddress,
-}: {
-  from: Wallet
-  to: string
-  l2Provider: ethers.providers.Provider
-  deposit: BigNumber | string
-  l1Gateway: L1ArbitrumGatewayLike
-  l1TokenAddress: string
-  l2GatewayAddress: string
-}) {
-  const gasPriceBid = await getGasPriceBid(l2Provider)
-
-  const onlyData = '0x'
-  const depositCalldata = await l1Gateway.getOutboundCalldata(l1TokenAddress, from.address, to, deposit, onlyData)
-  const maxSubmissionPrice = await getMaxSubmissionPrice(l2Provider, depositCalldata)
-
-  const maxGas = await getMaxGas(
-    l2Provider,
-    l1Gateway.address,
-    l2GatewayAddress,
-    from.address,
-    maxSubmissionPrice,
-    gasPriceBid,
-    depositCalldata,
-  )
-  const defaultData = defaultAbiCoder.encode(['uint256', 'bytes'], [maxSubmissionPrice, onlyData])
-
-  const ethValue = maxSubmissionPrice.add(gasPriceBid.mul(maxGas))
-
-  console.log('Waiting for outboundTransfer...')
-  const txR = await waitForTx(
-    l1Gateway.connect(from).outboundTransfer(l1TokenAddress, to, deposit, maxGas, gasPriceBid, defaultData, {
-      value: ethValue,
-    }),
-  )
-  console.log('outboundTransfer confirmed on L1.')
-  return txR
-}
-
-export async function depositToStandardBridge_Nitro({
-  from,
-  to,
   l1Provider,
   l2Provider,
   deposit,
@@ -161,9 +82,9 @@ export async function depositToStandardBridge_Nitro({
 
   const onlyData = '0x'
   const depositCalldata = await l1Gateway.getOutboundCalldata(l1TokenAddress, from.address, to, deposit, onlyData)
-  const maxSubmissionPrice = await getMaxSubmissionPrice_Nitro(l1Provider, depositCalldata, inboxAddress)
+  const maxSubmissionPrice = await getMaxSubmissionPrice(l1Provider, depositCalldata, inboxAddress)
 
-  const maxGas = await getMaxGas_Nitro(l2Provider, l1Gateway.address, l2GatewayAddress, from.address, depositCalldata)
+  const maxGas = await getMaxGas(l2Provider, l1Gateway.address, l2GatewayAddress, from.address, depositCalldata)
   const defaultData = defaultAbiCoder.encode(['uint256', 'bytes'], [maxSubmissionPrice, onlyData])
 
   const ethValue = maxSubmissionPrice.add(gasPriceBid.mul(maxGas))
@@ -181,53 +102,6 @@ export async function depositToStandardBridge_Nitro({
 export async function depositToStandardRouter({
   from,
   to,
-  l2Provider,
-  deposit,
-  l1Gateway,
-  l1Router,
-  l1TokenAddress,
-  l2GatewayAddress,
-}: {
-  from: Wallet
-  to: string
-  l2Provider: ethers.providers.Provider
-  deposit: BigNumber | string
-  l1Router: any
-  l1Gateway: L1DaiGateway
-  l1TokenAddress: string
-  l2GatewayAddress: string
-}) {
-  const gasPriceBid = await getGasPriceBid(l2Provider)
-
-  const onlyData = '0x'
-  const depositCalldata = await l1Gateway.getOutboundCalldata(l1TokenAddress, from.address, to, deposit, onlyData)
-  const maxSubmissionPrice = await getMaxSubmissionPrice(l2Provider, depositCalldata)
-
-  const maxGas = await getMaxGas(
-    l2Provider,
-    l1Gateway.address,
-    l2GatewayAddress,
-    from.address,
-    maxSubmissionPrice,
-    gasPriceBid,
-    depositCalldata,
-  )
-  const defaultData = defaultAbiCoder.encode(['uint256', 'bytes'], [maxSubmissionPrice, onlyData])
-  const ethValue = await maxSubmissionPrice.add(gasPriceBid.mul(maxGas))
-
-  console.log('Waiting for outboundTransfer...')
-  const txR = await waitForTx(
-    l1Router.connect(from).outboundTransfer(l1TokenAddress, to, deposit, maxGas, gasPriceBid, defaultData, {
-      value: ethValue,
-    }),
-  )
-  console.log('outboundTransfer confirmed on L1.')
-  return txR
-}
-
-export async function depositToStandardRouter_Nitro({
-  from,
-  to,
   l1Provider,
   l2Provider,
   deposit,
@@ -252,8 +126,8 @@ export async function depositToStandardRouter_Nitro({
 
   const onlyData = '0x'
   const depositCalldata = await l1Gateway.getOutboundCalldata(l1TokenAddress, from.address, to, deposit, onlyData)
-  const maxSubmissionPrice = await getMaxSubmissionPrice_Nitro(l1Provider, depositCalldata, inboxAddress)
-  const maxGas = await getMaxGas_Nitro(l2Provider, l1Gateway.address, l2GatewayAddress, from.address, depositCalldata)
+  const maxSubmissionPrice = await getMaxSubmissionPrice(l1Provider, depositCalldata, inboxAddress)
+  const maxGas = await getMaxGas(l2Provider, l1Gateway.address, l2GatewayAddress, from.address, depositCalldata)
   const defaultData = defaultAbiCoder.encode(['uint256', 'bytes'], [maxSubmissionPrice.toString(), onlyData])
   const ethValue = await maxSubmissionPrice.add(gasPriceBid.mul(maxGas))
 
@@ -268,25 +142,6 @@ export async function depositToStandardRouter_Nitro({
 }
 
 export async function setGatewayForToken({
-  l2Provider,
-  l1Router,
-  tokenGateway,
-}: {
-  l2Provider: ethers.providers.Provider
-  l1Router: any
-  tokenGateway: L1DaiGateway
-}) {
-  const token = await tokenGateway.l1Dai()
-
-  const calldataLength = 300 + 20 * 2 // fixedOverheadLength + 2 * address
-  const gasPriceBid = await getGasPriceBid(l2Provider)
-  const maxSubmissionPrice = await getMaxSubmissionPrice(l2Provider, calldataLength)
-  await l1Router.setGateways([token], [tokenGateway.address], 0, gasPriceBid, maxSubmissionPrice, {
-    value: maxSubmissionPrice,
-  })
-}
-
-export async function setGatewayForToken_Nitro({
   l1Provider,
   l2Provider,
   l1Router,
@@ -303,7 +158,7 @@ export async function setGatewayForToken_Nitro({
 
   const calldataLength = 300 + 20 * 2 // fixedOverheadLength + 2 * address
   const gasPriceBid = await getGasPriceBid(l2Provider)
-  const maxSubmissionPrice = await getMaxSubmissionPrice_Nitro(l1Provider, calldataLength, inboxAddress)
+  const maxSubmissionPrice = await getMaxSubmissionPrice(l1Provider, calldataLength, inboxAddress)
   await waitForTx(
     l1Router.setGateways([token], [tokenGateway.address], 0, gasPriceBid, maxSubmissionPrice, {
       value: maxSubmissionPrice,
@@ -321,8 +176,8 @@ export async function executeSpell(
   const calldataLength = l2MessageCalldata.length
 
   const gasPriceBid = await getGasPriceBid(network.l2.provider)
-  const maxSubmissionPrice = await getMaxSubmissionPrice_Nitro(network.l1.provider, calldataLength, network.l1.inbox)
-  const maxGas = await getMaxGas_Nitro(
+  const maxSubmissionPrice = await getMaxSubmissionPrice(network.l1.provider, calldataLength, network.l1.inbox)
+  const maxGas = await getMaxGas(
     network.l2.provider,
     bridgeDeployment.l1GovRelay.address,
     bridgeDeployment.l2GovRelay.address,

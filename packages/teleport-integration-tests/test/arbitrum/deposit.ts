@@ -13,7 +13,7 @@ export async function getGasPriceBid(l2: ethers.providers.Provider): Promise<Big
   return await l2.getGasPrice()
 }
 
-export async function getMaxSubmissionPrice_Nitro(
+export async function getMaxSubmissionPrice(
   l1: ethers.providers.Provider,
   calldataOrCalldataLength: string | number,
   inboxAddress: string,
@@ -34,7 +34,7 @@ export async function getMaxSubmissionPrice_Nitro(
   return maxSubmissionPrice
 }
 
-export async function getMaxGas_Nitro(
+export async function getMaxGas(
   l2: ethers.providers.Provider,
   sender: string,
   destination: string,
@@ -55,7 +55,7 @@ export async function getMaxGas_Nitro(
   return maxGas
 }
 
-export async function depositToStandardBridge_Nitro({
+export async function depositToStandardBridge({
   from,
   to,
   l1Provider,
@@ -80,9 +80,9 @@ export async function depositToStandardBridge_Nitro({
 
   const onlyData = '0x'
   const depositCalldata = await l1Gateway.getOutboundCalldata(l1TokenAddress, from.address, to, deposit, onlyData)
-  const maxSubmissionPrice = await getMaxSubmissionPrice_Nitro(l1Provider, depositCalldata, inboxAddress)
+  const maxSubmissionPrice = await getMaxSubmissionPrice(l1Provider, depositCalldata, inboxAddress)
 
-  const maxGas = await getMaxGas_Nitro(l2Provider, l1Gateway.address, l2GatewayAddress, from.address, depositCalldata)
+  const maxGas = await getMaxGas(l2Provider, l1Gateway.address, l2GatewayAddress, from.address, depositCalldata)
   const defaultData = defaultAbiCoder.encode(['uint256', 'bytes'], [maxSubmissionPrice, onlyData])
 
   const ethValue = maxSubmissionPrice.add(gasPriceBid.mul(maxGas))
