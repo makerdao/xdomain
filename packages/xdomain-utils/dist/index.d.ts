@@ -1,3 +1,3 @@
-export * from "./arbitrum";
-export * from "./transactions";
+export { waitForTx, sleep } from "./transactions";
 export * from "./RetryProvider";
+export * from "./arbitrum";

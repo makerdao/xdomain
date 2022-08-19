@@ -1,11 +1,11 @@
-import { ContractTransaction, providers } from "ethers";
+import { ethers } from "ethers";
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const waitForTx = async (
-  tx: Promise<ContractTransaction>,
+  tx: Promise<ethers.ContractTransaction>,
   _confirmations?: number
-): Promise<providers.TransactionReceipt> => {
+): Promise<ethers.providers.TransactionReceipt> => {
   const resolvedTx = await tx;
   const confirmations =
     _confirmations ??
