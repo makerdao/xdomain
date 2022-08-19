@@ -15,6 +15,7 @@ import {
   requestFaucetDai,
   sleep,
   TeleportGUID,
+  waitForRelayTask,
 } from 'teleport-sdk'
 
 import { DomainChainId, DomainName, getSdkDomainId } from './domains'
@@ -56,6 +57,7 @@ export function useMainButton(
 
   const [searchParams, setSearchParams] = useSearchParams({})
   const burnTxHash = searchParams.get('txHash')
+  const relayTaskId = searchParams.get('taskId')
 
   const ethersProvider = provider && new ethers.providers.Web3Provider(provider as ethers.providers.ExternalProvider)
   const sender = ethersProvider?.getSigner()
@@ -231,15 +233,12 @@ export function useMainButton(
 
   function doRelay() {
     if (!guid) return
-    if (!payloadSigned) {
+    if (!payloadSigned && !relayTaskId) {
       setMainButton({
         label: <>Sign Relay Request</>,
         loading: false,
         onClick: async () => {
-          //   let attempt = 1
-          //   while (attempt <= 5) {
-          //     try {
-          const txHash = await relayMintWithOracles({
+          void relayMintWithOracles({
             srcDomain,
             receiver: sender!,
             teleportGUID: guid,
@@ -249,19 +248,23 @@ export function useMainButton(
               console.log(`Payload ${payload} signed: r=${r} s=${s} v=${v}`)
               setPayloadSigned(true)
             },
+            onRelayTaskCreated: (taskId) => {
+              setSearchParams({ txHash: burnTxHash!, chainId: srcChainId.toString(), taskId })
+            },
           })
-          console.log(`Relayed DAI mint tx submitted on L1: ${txHash}`)
-          setRelayTxHash(txHash)
-          //   break
-          // } catch (err) {
-          //   console.error(`Relay failed (attempt ${attempt}/5): ${err}`)
-          //   await sleep(5000)
-          //   attempt++
-          // }
-          //   }
         },
       })
+    } else if (!relayTaskId) {
+      setMainButton({
+        label: <>Creating Relay Task...</>,
+        loading: true,
+      })
     } else if (!relayTxHash) {
+      console.log(`Waiting for taskId: ${relayTaskId} ...`)
+      void waitForRelayTask({ taskId: relayTaskId, srcDomain }).then((txHash) => {
+        console.log(`Relayed DAI mint tx submitted on L1: ${txHash}`)
+        setRelayTxHash(txHash)
+      })
       setMainButton({
         label: <>Waiting for relayer...</>,
         loading: true,
@@ -335,6 +338,7 @@ export function useMainButton(
     guid,
     pendingAmount,
     payloadSigned,
+    relayTaskId,
     relayTxHash,
     relayConfirmed,
   ])
