@@ -7,7 +7,7 @@
     "postinstall": "yarn build:sdk",
     "build": "hardhat compile",
     "build:sdk": "rm -rf ./dist && yarn tsc -p ./tsconfig.build.json",
-    "clean": "hardhat clean && rm -rf cache crytic-export corpus",
+    "clean": "hardhat clean && rm -rf cache crytic-export corpus typechain-types",
     "coverage": "hardhat coverage && istanbul check-coverage --branches 95 --lines 99",
     "format": "prettier --check \"./**/*.{ts,sol}\"",
     "format:fix": "prettier --write \"./**/*.{ts,sol}\"",
