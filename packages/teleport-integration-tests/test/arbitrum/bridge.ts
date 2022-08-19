@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { constants, Signer } from 'ethers'
 import { formatBytes32String } from 'ethers/lib/utils'
-import { waitForTx } from 'xdomain-utils/src/transactions'
+import { waitForTx } from 'xdomain-utils'
 
 import {
   ArbitrumDai__factory,
