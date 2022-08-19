@@ -3,21 +3,20 @@ import { sleep } from '@eth-optimism/core-utils'
 import { getOptionalEnv, getRequiredEnv } from '@makerdao/hardhat-utils'
 import { ContractReceipt, ContractTransaction, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
-import { RetryProvider, waitToRelayTxToArbitrum } from 'xdomain-utils'
+import {
+  depositToArbitrumStandardBridge,
+  getArbitrumGasPriceBid,
+  getArbitrumMaxGas,
+  getArbitrumMaxSubmissionPrice,
+  RetryProvider,
+  waitForTx,
+  waitToRelayTxToArbitrum,
+} from 'xdomain-utils'
 
 import { L1AddTeleportArbitrumSpell__factory, L2AddTeleportDomainSpell__factory } from '../../typechain'
-import { deployUsingFactory, getContractFactory, waitForTx } from '../helpers'
+import { deployUsingFactory, getContractFactory } from '../helpers'
 import { deployTeleport, DomainSetupOpts, DomainSetupResult } from '../teleport'
-import {
-  deployArbitrumBaseBridge,
-  deployArbitrumTeleportBridge,
-  deployFakeArbitrumInbox,
-  depositToStandardBridge,
-  getGasPriceBid,
-  getMaxGas,
-  getMaxSubmissionPrice,
-  makeRelayTxToL1,
-} from '.'
+import { deployArbitrumBaseBridge, deployArbitrumTeleportBridge, deployFakeArbitrumInbox, makeRelayTxToL1 } from '.'
 
 const TTL = 300
 
@@ -121,10 +120,14 @@ export async function setupArbitrumTests({
     l2SpellCalldata,
   ])
   const calldataLength = l2MessageCalldata.length
-  const gasPriceBid = await getGasPriceBid(l2Provider)
+  const gasPriceBid = await getArbitrumGasPriceBid(l2Provider)
 
-  const maxSubmissionCost = await getMaxSubmissionPrice(l1Provider, calldataLength, l1Sdk.arbitrum.inbox.address)
-  const maxGas = await getMaxGas(
+  const maxSubmissionCost = await getArbitrumMaxSubmissionPrice(
+    l1Provider,
+    calldataLength,
+    l1Sdk.arbitrum.inbox.address,
+  )
+  const maxGas = await getArbitrumMaxGas(
     l2Provider,
     baseBridgeSdk.l1GovRelay.address,
     baseBridgeSdk.l2GovRelay.address,
@@ -159,7 +162,7 @@ export async function setupArbitrumTests({
   await waitForTx(makerSdk.dai.connect(l1Signer).transfer(l1User.address, l2DaiAmount))
   await waitForTx(makerSdk.dai.connect(l1User).approve(baseBridgeSdk.l1DaiTokenBridge.address, l2DaiAmount))
   await relayTxToL2(
-    depositToStandardBridge({
+    depositToArbitrumStandardBridge({
       l1Provider: l1Provider,
       l2Provider: l2Provider,
       from: l1User,

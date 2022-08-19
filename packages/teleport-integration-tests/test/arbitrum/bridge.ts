@@ -1,6 +1,7 @@
 import { expect } from 'chai'
 import { constants, Signer } from 'ethers'
 import { formatBytes32String } from 'ethers/lib/utils'
+import { waitForTx } from 'xdomain-utils'
 
 import {
   ArbitrumDai__factory,
@@ -15,7 +16,7 @@ import {
   FakeArbitrumInbox__factory,
   FakeArbitrumOutbox__factory,
 } from '../../typechain'
-import { deployUsingFactoryAndVerify, getContractFactory, waitForTx } from '../helpers'
+import { deployUsingFactoryAndVerify, getContractFactory } from '../helpers'
 import { getAddressOfNextDeployedContract } from '../pe-utils/address'
 import { MakerSdk } from '../teleport'
 import { TeleportSdk } from '../teleport/teleport'

@@ -2,7 +2,7 @@ import { ContractFactory, Signer } from 'ethers'
 import { ethers } from 'hardhat'
 import { isEmpty } from 'lodash'
 
-import { waitForTx } from '.'
+import { waitForTx } from 'xdomain-utils'
 
 export async function deployUsingFactory<T extends ContractFactory>(
   signer: Signer,

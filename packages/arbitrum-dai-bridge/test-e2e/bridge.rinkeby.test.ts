@@ -3,13 +3,18 @@ import {
   getAddressOfNextDeployedContract,
   getOptionalEnv,
   getRequiredEnv,
-  waitForTx,
 } from '@makerdao/hardhat-utils'
 import { expect } from 'chai'
 import { parseUnits } from 'ethers/lib/utils'
 import { ethers } from 'hardhat'
 import { mapValues } from 'lodash'
-import { waitToRelayTxToArbitrum } from 'xdomain-utils'
+import {
+  depositToArbitrumStandardBridge,
+  depositToArbitrumStandardRouter,
+  setArbitrumGatewayForToken,
+  waitForTx,
+  waitToRelayTxToArbitrum,
+} from 'xdomain-utils'
 
 import {
   BridgeDeployment,
@@ -21,12 +26,7 @@ import {
   useStaticDeployment,
   useStaticRouterDeployment,
 } from '../arbitrum-helpers'
-import {
-  depositToStandardBridge,
-  depositToStandardRouter,
-  executeSpell,
-  setGatewayForToken,
-} from '../arbitrum-helpers/bridge'
+import { executeSpell } from '../arbitrum-helpers/bridge'
 
 const amount = parseUnits('7', 'ether')
 
@@ -57,7 +57,7 @@ describe('rinkeby bridge', () => {
 
     console.log('Depositing to standard bridge...')
     await waitToRelayTxToArbitrum(
-      depositToStandardBridge({
+      depositToArbitrumStandardBridge({
         l1Provider: network.l1.provider,
         l2Provider: network.l2.provider,
         from: network.l1.deployer,
@@ -110,7 +110,7 @@ describe('rinkeby bridge', () => {
 
     console.log('Depositing to standard router...')
     await waitToRelayTxToArbitrum(
-      depositToStandardRouter({
+      depositToArbitrumStandardRouter({
         l1Provider: network.l1.provider,
         l2Provider: network.l2.provider,
         from: network.l1.deployer,
@@ -209,7 +209,7 @@ describe('rinkeby bridge', () => {
 
     await waitForTx(bridgeDeployment.l1Dai.approve(l1DaiGatewayV2.address, amount))
     await waitToRelayTxToArbitrum(
-      depositToStandardBridge({
+      depositToArbitrumStandardBridge({
         l1Provider: network.l1.provider,
         l2Provider: network.l2.provider,
         from: network.l1.deployer,
@@ -264,7 +264,7 @@ export async function setupTest() {
     routerDeployment = await deployRouter(network)
     bridgeDeployment = await deployBridge(network, routerDeployment)
 
-    await setGatewayForToken({
+    await setArbitrumGatewayForToken({
       l1Router: routerDeployment.l1GatewayRouter,
       l1Provider: network.l1.provider,
       l2Provider: network.l2.provider,

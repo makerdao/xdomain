@@ -3,9 +3,10 @@ import { expect } from 'chai'
 import { Wallet } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
 import { ethers } from 'hardhat'
+import { waitForTx } from 'xdomain-utils'
 
 import { BasicRelay, TeleportJoin, TeleportOracleAuth, TeleportRouter, TrustedRelay } from '../typechain'
-import { toEthersBigNumber, toRad, toRay, toWad, waitForTx } from './helpers'
+import { toEthersBigNumber, toRad, toRay, toWad } from './helpers'
 import {
   callBasicRelay,
   callTrustedRelay,

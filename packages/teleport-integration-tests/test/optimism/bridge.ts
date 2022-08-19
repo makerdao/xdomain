@@ -1,6 +1,7 @@
 import { expect } from 'chai'
 import { constants, ethers, Signer } from 'ethers'
 import { formatBytes32String } from 'ethers/lib/utils'
+import { waitForTx } from 'xdomain-utils'
 
 import {
   OptimismDai__factory,
@@ -13,7 +14,6 @@ import {
   OptimismL2GovernanceRelay__factory,
 } from '../../typechain'
 import { deployUsingFactoryAndVerify, getContractFactory, mintEther } from '../helpers'
-import { waitForTx } from '../helpers'
 import { getAddressOfNextDeployedContract } from '../pe-utils/address'
 import { MakerSdk } from '../teleport'
 import { TeleportSdk } from '../teleport/teleport'
