@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "outDir": "dist",
     "composite": false,
-    "declaration": true,
+    "declaration": false,
     "incremental": true,
     "moduleResolution": "node",
     "types": ["mocha"]
