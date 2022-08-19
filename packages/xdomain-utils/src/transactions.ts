@@ -2,10 +2,10 @@ import { ContractTransaction, providers } from "ethers";
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function waitForTx(
+export const waitForTx = async (
   tx: Promise<ContractTransaction>,
   _confirmations?: number
-): Promise<providers.TransactionReceipt> {
+): Promise<providers.TransactionReceipt> => {
   const resolvedTx = await tx;
   const confirmations =
     _confirmations ??
@@ -26,7 +26,7 @@ export async function waitForTx(
   throw new Error(
     `Transaction .wait(${confirmations}) didn't succeed after several attempts. Transaction: ${resolvedTx}`
   );
-}
+};
 
 function chainIdToConfirmationsNeededForFinalization(chainId: number): number {
   const defaultWhenReorgsPossible = 3;

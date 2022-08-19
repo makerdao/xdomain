@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.waitForTx = exports.sleep = void 0;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 exports.sleep = sleep;
-async function waitForTx(tx, _confirmations) {
+const waitForTx = async (tx, _confirmations) => {
     const resolvedTx = await tx;
     const confirmations = _confirmations !== null && _confirmations !== void 0 ? _confirmations : chainIdToConfirmationsNeededForFinalization(resolvedTx.chainId);
     // we retry .wait b/c sometimes it fails for the first time
@@ -22,7 +22,7 @@ async function waitForTx(tx, _confirmations) {
         await (0, exports.sleep)(10000);
     }
     throw new Error(`Transaction .wait(${confirmations}) didn't succeed after several attempts. Transaction: ${resolvedTx}`);
-}
+};
 exports.waitForTx = waitForTx;
 function chainIdToConfirmationsNeededForFinalization(chainId) {
     const defaultWhenReorgsPossible = 3;
