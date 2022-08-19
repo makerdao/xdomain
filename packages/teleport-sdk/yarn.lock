@@ -2,6 +2,38 @@
 # yarn lockfile v1
 
 
+"@arbitrum/sdk-classic@npm:@arbitrum/sdk@1.1.13":
+  version "1.1.13"
+  resolved "https://registry.yarnpkg.com/@arbitrum/sdk/-/sdk-1.1.13.tgz#5221c61e951b53535d5226d67e99adc398b4bf4f"
+  integrity sha512-XnivIDij4ZLx/Yk1KJj77QwzwcbakU3R1pjzWqv548Nzj8Cg8o15nSg4PQGdwEtsv1VWFhabFHSwZMsmIX37GA==
+  dependencies:
+    "@ethersproject/address" "^5.0.8"
+    "@ethersproject/bignumber" "^5.1.1"
+    "@ethersproject/bytes" "^5.0.8"
+    "@typechain/ethers-v5" "9.0.0"
+    "@types/prompts" "^2.0.14"
+    "@types/yargs" "^17.0.9"
+    dotenv "^10.0.0"
+    ethers "^5.1.0"
+    ts-node "^10.2.1"
+    typechain "7.0.0"
+
+"@arbitrum/sdk-nitro@npm:@arbitrum/sdk@3.0.0-beta.8":
+  version "3.0.0-beta.8"
+  resolved "https://registry.yarnpkg.com/@arbitrum/sdk/-/sdk-3.0.0-beta.8.tgz#639981b0772309552576a61ce66edcb98505a97c"
+  integrity sha512-wSjzilBc2rSAPqJXvr5tIs/1W8SAqBdi/XseH3IwziUiXLcZdZ+yHanN6FfNtwk0Ij6HY9D4Qt3ZLhW0E+LM7A==
+  dependencies:
+    "@ethersproject/address" "^5.0.8"
+    "@ethersproject/bignumber" "^5.1.1"
+    "@ethersproject/bytes" "^5.0.8"
+    "@typechain/ethers-v5" "9.0.0"
+    "@types/prompts" "^2.0.14"
+    "@types/yargs" "^17.0.9"
+    dotenv "^10.0.0"
+    ethers "^5.1.0"
+    ts-node "^10.2.1"
+    typechain "7.0.0"
+
 "@arbitrum/sdk@1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@arbitrum/sdk/-/sdk-1.1.2.tgz#3c29a4d333791781dbd61410fe635a57b595aa71"
@@ -16,6 +48,24 @@
     arb-bridge-eth "0.7.5"
     arb-bridge-peripherals "1.0.6"
     arbos-precompiles "1.0.2"
+    dotenv "^10.0.0"
+    ethers "^5.1.0"
+    ts-node "^10.2.1"
+    typechain "7.0.0"
+
+"@arbitrum/sdk@^2.0.13":
+  version "2.0.13"
+  resolved "https://registry.yarnpkg.com/@arbitrum/sdk/-/sdk-2.0.13.tgz#6c9c60c2fab0a6c1fd4fefc82fbb27e16ef0c8b1"
+  integrity sha512-C/ckSzQkX4e8SKAY5Lz3yfakM5Aj6sA2mB9Q7cvZR/NFsFb0R95DiA6l1VMFT6Z1S1v8W936x4j9rLsJaFd/gg==
+  dependencies:
+    "@arbitrum/sdk-classic" "npm:@arbitrum/sdk@1.1.13"
+    "@arbitrum/sdk-nitro" "npm:@arbitrum/sdk@3.0.0-beta.8"
+    "@ethersproject/address" "^5.0.8"
+    "@ethersproject/bignumber" "^5.1.1"
+    "@ethersproject/bytes" "^5.0.8"
+    "@typechain/ethers-v5" "9.0.0"
+    "@types/prompts" "^2.0.14"
+    "@types/yargs" "^17.0.9"
     dotenv "^10.0.0"
     ethers "^5.1.0"
     ts-node "^10.2.1"
@@ -4513,6 +4563,14 @@ ws@^7.4.6:
 xdomain-utils@../xdomain-utils:
   version "0.0.1"
   dependencies:
+    "@arbitrum/sdk" "^2.0.13"
+    ethers "^5.6.9"
+
+"xdomain-utils@https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?75db9a4560fc9ee274092b0e2096aadc22f2e3d9":
+  version "0.0.1"
+  resolved "https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?75db9a4560fc9ee274092b0e2096aadc22f2e3d9#cc93dc7aaf2bb95fd5369c795ac5376f5de930a4"
+  dependencies:
+    "@arbitrum/sdk" "^2.0.13"
     ethers "^5.6.9"
 
 xtend@^4.0.1, xtend@^4.0.2, xtend@~4.0.0:

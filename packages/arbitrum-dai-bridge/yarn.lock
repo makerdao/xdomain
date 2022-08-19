@@ -10064,11 +10064,6 @@ typescript@^4.0.2, typescript@^4.3.4:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.3.4.tgz#3f85b986945bcf31071decdd96cf8bfa65f9dcbc"
   integrity sha512-uauPG7XZn9F/mo+7MrsRjyvbxFpzemRjKEZXS4AK83oP2KKOJPvb+9cO/gmnv8arWZvhnjVOXz7B49m1l0e9Ew==
 
-typescript@^4.7.4:
-  version "4.7.4"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.7.4.tgz#1a88596d1cf47d59507a1bcdfb5b9dfe4d488235"
-  integrity sha512-C0WQT0gezHuw6AdY1M2jxUO83Rjf0HP7Sk1DtXj6j1EwkQNZrHAg2XPWlq62oqEhYvONq5pkC2Y9oPljWToLmQ==
-
 typewise-core@^1.2, typewise-core@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/typewise-core/-/typewise-core-1.2.0.tgz#97eb91805c7f55d2f941748fa50d315d991ef195"
@@ -11011,12 +11006,12 @@ ws@^7.4.6:
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.1.tgz#44fc000d87edb1d9c53e51fbc69a0ac1f6871d66"
   integrity sha512-2c6faOUH/nhoQN6abwMloF7Iyl0ZS2E9HGtsiLrWn0zOOMWlhtDmdf/uihDt6jnuCxgtwGBNy6Onsoy2s2O2Ow==
 
-xdomain-utils@../xdomain-utils:
+"xdomain-utils@https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?75db9a4560fc9ee274092b0e2096aadc22f2e3d9":
   version "0.0.1"
+  resolved "https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?75db9a4560fc9ee274092b0e2096aadc22f2e3d9#cc93dc7aaf2bb95fd5369c795ac5376f5de930a4"
   dependencies:
     "@arbitrum/sdk" "^2.0.13"
     ethers "^5.6.9"
-    typescript "^4.7.4"
 
 xhr-request-promise@^0.1.2:
   version "0.1.3"
