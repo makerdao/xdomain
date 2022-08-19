@@ -12,8 +12,7 @@
     "declaration": true,
     "incremental": true,
     "moduleResolution": "node",
-    "types": ["mocha"],
-    "baseUrl": "."
+    "types": ["mocha"]
   },
   "include": ["test/**/*", "src/**/*"]
 }

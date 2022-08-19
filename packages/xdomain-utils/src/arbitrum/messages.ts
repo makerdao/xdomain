@@ -3,7 +3,7 @@ import {
   L1ToL2MessageStatus,
   L1TransactionReceipt,
 } from "@arbitrum/sdk";
-import { ContractReceipt, ContractTransaction, ethers } from "ethers";
+import { ContractReceipt, ContractTransaction, Signer } from "ethers";
 
 export async function waitToRelayTxToArbitrum(
   l1Tx:
@@ -11,10 +11,10 @@ export async function waitToRelayTxToArbitrum(
     | ContractTransaction
     | Promise<ContractReceipt>
     | ContractReceipt,
-  l2Signer: ethers.Signer
-) {
+  l2Signer: Signer
+): Promise<ContractReceipt | undefined> {
   const awaitedTx: any = await l1Tx;
-  const txnReceipt: ethers.ContractReceipt = awaitedTx.wait
+  const txnReceipt: ContractReceipt = awaitedTx.wait
     ? await awaitedTx.wait()
     : awaitedTx;
 
