@@ -4,7 +4,6 @@
   "version": "0.0.1",
   "main": "dist/index.js",
   "scripts": {
-    "postinstall": "yarn build",
     "build": "rm -rf ./dist && yarn tsc -p ./tsconfig.build.json",
     "test": "mocha --require ts-node/register test/**/*.ts"
   },
