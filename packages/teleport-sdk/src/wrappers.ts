@@ -160,6 +160,7 @@ export interface RelayMintWithOraclesOpts {
   pollingIntervalMs?: number
   timeoutMs?: number
   onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void
+  onRelayTaskCreated?: (taskId: string) => void
 }
 
 export function relayMintWithOracles(
@@ -178,7 +179,14 @@ export function relayMintWithOracles(
     opts.pollingIntervalMs,
     opts.timeoutMs,
     opts.onPayloadSigned,
+    opts.onRelayTaskCreated,
   )
+}
+
+export function waitForRelayTask(
+  opts: { taskId: string; pollingIntervalMs?: number; timeoutMs?: number } & DomainContext,
+): ReturnType<TeleportBridge['waitForRelayTask']> {
+  return getTeleportBridge(opts).waitForRelayTask(opts.taskId, opts.pollingIntervalMs, opts.timeoutMs)
 }
 
 export function canMintWithoutOracle(

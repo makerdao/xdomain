@@ -87,8 +87,14 @@ export interface RelayMintWithOraclesOpts {
     pollingIntervalMs?: number;
     timeoutMs?: number;
     onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void;
+    onRelayTaskCreated?: (taskId: string) => void;
 }
 export declare function relayMintWithOracles(opts: RelayMintWithOraclesOpts & DomainContext): ReturnType<TeleportBridge['relayMintWithOracles']>;
+export declare function waitForRelayTask(opts: {
+    taskId: string;
+    pollingIntervalMs?: number;
+    timeoutMs?: number;
+} & DomainContext): ReturnType<TeleportBridge['waitForRelayTask']>;
 export declare function canMintWithoutOracle(opts: {
     txHash: string;
 } & DomainContext): ReturnType<TeleportBridge['canMintWithoutOracle']>;

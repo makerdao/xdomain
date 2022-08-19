@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mintWithoutOracles = exports.canMintWithoutOracle = exports.relayMintWithOracles = exports.mintWithOracles = exports.requestFaucetDai = exports.getAmounts = exports.getAmountsForTeleportGUID = exports.getSrcGatewayAllowance = exports.getDstBalance = exports.getSrcBalance = exports.getAttestations = exports.initRelayedTeleport = exports.initTeleport = exports.approveSrcGateway = exports.getTeleportBridge = void 0;
+exports.mintWithoutOracles = exports.canMintWithoutOracle = exports.waitForRelayTask = exports.relayMintWithOracles = exports.mintWithOracles = exports.requestFaucetDai = exports.getAmounts = exports.getAmountsForTeleportGUID = exports.getSrcGatewayAllowance = exports.getDstBalance = exports.getSrcBalance = exports.getAttestations = exports.initRelayedTeleport = exports.initTeleport = exports.approveSrcGateway = exports.getTeleportBridge = void 0;
 const _1 = require(".");
 function getTeleportBridge(opts) {
     return new _1.TeleportBridge({ ...opts, srcDomain: (0, _1.getLikelyDomainId)(opts.srcDomain) });
@@ -51,9 +51,13 @@ function mintWithOracles(opts) {
 }
 exports.mintWithOracles = mintWithOracles;
 function relayMintWithOracles(opts) {
-    return getTeleportBridge(opts).relayMintWithOracles(opts.receiver, opts.teleportGUID, opts.signatures, opts.relayFee, opts.maxFeePercentage, opts.expiry, opts.to, opts.data, opts.relayAddress, opts.pollingIntervalMs, opts.timeoutMs, opts.onPayloadSigned);
+    return getTeleportBridge(opts).relayMintWithOracles(opts.receiver, opts.teleportGUID, opts.signatures, opts.relayFee, opts.maxFeePercentage, opts.expiry, opts.to, opts.data, opts.relayAddress, opts.pollingIntervalMs, opts.timeoutMs, opts.onPayloadSigned, opts.onRelayTaskCreated);
 }
 exports.relayMintWithOracles = relayMintWithOracles;
+function waitForRelayTask(opts) {
+    return getTeleportBridge(opts).waitForRelayTask(opts.taskId, opts.pollingIntervalMs, opts.timeoutMs);
+}
+exports.waitForRelayTask = waitForRelayTask;
 function canMintWithoutOracle(opts) {
     return getTeleportBridge(opts).canMintWithoutOracle(opts.txHash);
 }

@@ -33,6 +33,7 @@ import {
   relayMintWithOracles,
   TeleportBridge,
   TeleportGUID,
+  waitForRelayTask,
 } from '../src'
 import { fundTestWallet } from './faucet'
 
@@ -437,6 +438,11 @@ describe('TeleportBridge', () => {
 
     const initialDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
 
+    let resolveRelayTaskCreationPromise: (value: string) => void
+    const relayTaskCreationPromise = new Promise<string>((resolve, _) => {
+      resolveRelayTaskCreationPromise = resolve
+    })
+
     if (useRelay) {
       let txHash
       if (useWrapper) {
@@ -452,6 +458,12 @@ describe('TeleportBridge', () => {
             expect(payload).to.satisfy((h: string) => h.startsWith('0x'))
             expect(r).to.satisfy((h: string) => h.startsWith('0x'))
             expect(s).to.satisfy((h: string) => h.startsWith('0x'))
+          },
+          onRelayTaskCreated: (taskId) => {
+            console.log(`Relay taskId=${taskId}`)
+            waitForRelayTask({ taskId, srcDomain }).then((txHash) => {
+              resolveRelayTaskCreationPromise(txHash)
+            })
           },
         })
       } else {
@@ -472,12 +484,22 @@ describe('TeleportBridge', () => {
             expect(r).to.satisfy((h: string) => h.startsWith('0x'))
             expect(s).to.satisfy((h: string) => h.startsWith('0x'))
           },
+          (taskId) => {
+            console.log(`Relay taskId=${taskId}`)
+            waitForRelayTask({ taskId, srcDomain }).then((txHash) => {
+              resolveRelayTaskCreationPromise(txHash)
+            })
+          },
         )
       }
 
       expect(txHash)
         .to.have.lengthOf(66)
         .and.satisfy((h: string) => h.startsWith('0x'))
+
+      const callbackTxHash = await relayTaskCreationPromise
+      expect(callbackTxHash).to.be.eq(txHash)
+
       return
     }
 

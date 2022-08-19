@@ -6,6 +6,7 @@ import { getGuidHash, sleep, TeleportGUID } from '.'
 import { BasicRelay, BasicRelayInterface } from './sdk/esm/types/BasicRelay'
 import { TrustedRelay, TrustedRelayInterface } from './sdk/esm/types/TrustedRelay'
 
+const DEFAULT_POLLING_INTERVAL_MS = 2000
 const GELATO_API_URL = 'https://relay.gelato.digital'
 const ETHEREUM_DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f'
 const GELATO_ADDRESSES: { [chainId: number]: { service: string; gelato: string } } = {
@@ -115,11 +116,13 @@ async function createRelayTask(relay: Relay, calldata: string, gasLimit: BigNumb
 }
 
 let lastTaskLog: string | undefined
-async function waitForRelayTaskConfirmation(
+export async function waitForRelayTaskConfirmation(
   taskId: string,
-  pollingIntervalMs: number,
+  pollingIntervalMs?: number,
   timeoutMs?: number,
 ): Promise<string> {
+  pollingIntervalMs ||= DEFAULT_POLLING_INTERVAL_MS
+
   let timeSlept = 0
   let isExecPending = false
   while (true) {
@@ -264,8 +267,9 @@ export async function waitForRelay(
   pollingIntervalMs?: number,
   timeoutMs?: number,
   onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
+  onRelayTaskCreated?: (taskId: string) => void,
 ): Promise<string> {
-  pollingIntervalMs ||= 2000
+  pollingIntervalMs ||= DEFAULT_POLLING_INTERVAL_MS
 
   if (BigNumber.from(teleportGUID.amount).lt(relayFee)) {
     throw new Error(
@@ -288,6 +292,7 @@ export async function waitForRelay(
     onPayloadSigned,
   )
   const taskId = await createRelayTask(relay, relayData, getEstimatedRelayGasLimit(relay))
+  onRelayTaskCreated?.(taskId)
   const txHash = await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)
   return txHash
 }

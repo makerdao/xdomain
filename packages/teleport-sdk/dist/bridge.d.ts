@@ -64,7 +64,8 @@ export declare class TeleportBridge {
         to?: string;
         data?: string;
     }, relayAddress?: string): Promise<string>;
-    relayMintWithOracles(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, relayAddress?: string, pollingIntervalMs?: number, timeoutMs?: number, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void): Promise<string>;
+    relayMintWithOracles(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, relayAddress?: string, pollingIntervalMs?: number, timeoutMs?: number, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void, onRelayTaskCreated?: (taskId: string) => void): Promise<string>;
+    waitForRelayTask(taskId: string, pollingIntervalMs?: number, timeoutMs?: number): Promise<string>;
     canMintWithoutOracle(txHash: string): Promise<boolean>;
     mintWithoutOracles(sender: Signer, txHash: string, overrides?: Overrides): Promise<ContractTransaction>;
 }

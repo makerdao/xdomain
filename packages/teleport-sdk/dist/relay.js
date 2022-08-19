@@ -3,11 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.waitForRelay = exports.getRelayGasFee = void 0;
+exports.waitForRelay = exports.getRelayGasFee = exports.waitForRelayTaskConfirmation = void 0;
 const axios_1 = __importDefault(require("axios"));
 const ethers_1 = require("ethers");
 const utils_1 = require("ethers/lib/utils");
 const _1 = require(".");
+const DEFAULT_POLLING_INTERVAL_MS = 2000;
 const GELATO_API_URL = 'https://relay.gelato.digital';
 const ETHEREUM_DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f';
 const GELATO_ADDRESSES = {
@@ -100,6 +101,7 @@ async function createRelayTask(relay, calldata, gasLimit) {
 let lastTaskLog;
 async function waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs) {
     var _a, _b, _c, _d, _e, _f;
+    pollingIntervalMs || (pollingIntervalMs = DEFAULT_POLLING_INTERVAL_MS);
     let timeSlept = 0;
     let isExecPending = false;
     while (true) {
@@ -128,6 +130,7 @@ async function waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs
         timeSlept += pollingIntervalMs;
     }
 }
+exports.waitForRelayTaskConfirmation = waitForRelayTaskConfirmation;
 async function getRelayGasLimit(relay, relayParams, onPayloadSigned) {
     if (!relayParams)
         return getEstimatedRelayGasLimit(relay);
@@ -187,13 +190,14 @@ async function getRelayGasFee(relay, isHighPriority, relayParams) {
     return estimatedFee;
 }
 exports.getRelayGasFee = getRelayGasFee;
-async function waitForRelay(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned) {
-    pollingIntervalMs || (pollingIntervalMs = 2000);
+async function waitForRelay(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated) {
+    pollingIntervalMs || (pollingIntervalMs = DEFAULT_POLLING_INTERVAL_MS);
     if (ethers_1.BigNumber.from(teleportGUID.amount).lt(relayFee)) {
         throw new Error(`Amount transferred (${(0, utils_1.formatEther)(teleportGUID.amount)} DAI) must be greater than relay fee (${(0, utils_1.formatEther)(relayFee)} DAI)`);
     }
     const relayData = await getRelayCalldata(relay.interface, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, onPayloadSigned);
     const taskId = await createRelayTask(relay, relayData, getEstimatedRelayGasLimit(relay));
+    onRelayTaskCreated === null || onRelayTaskCreated === void 0 ? void 0 : onRelayTaskCreated(taskId);
     const txHash = await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs);
     return txHash;
 }

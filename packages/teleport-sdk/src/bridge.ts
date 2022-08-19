@@ -18,6 +18,7 @@ import {
   TeleportGUID,
   waitForAttestations,
   waitForRelay,
+  waitForRelayTaskConfirmation,
 } from '.'
 
 const bytes32 = ethers.utils.formatBytes32String
@@ -271,6 +272,7 @@ export class TeleportBridge {
     pollingIntervalMs?: number,
     timeoutMs?: number,
     onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
+    onRelayTaskCreated?: (taskId: string) => void,
   ): Promise<string> {
     const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
     return await waitForRelay(
@@ -286,7 +288,16 @@ export class TeleportBridge {
       pollingIntervalMs,
       timeoutMs,
       onPayloadSigned,
+      onRelayTaskCreated
     )
+  }
+
+  public async waitForRelayTask(
+    taskId: string,
+    pollingIntervalMs?: number,
+    timeoutMs?: number,
+  ): Promise<string> {
+    return await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)
   }
 
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {
