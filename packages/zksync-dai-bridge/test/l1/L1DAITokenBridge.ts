@@ -9,7 +9,7 @@ import { deployZkSyncContractMock } from '../../zksync-helpers/mocks'
 
 const initialTotalL1Supply = 3000
 const depositAmount = 100
-const defaultGas = 0
+const defaultErgLimit = 2097152
 const defaultData = '0x'
 
 const errorMessages = {
@@ -34,39 +34,100 @@ describe('L1DAITokenBridge', () => {
     expect(await l1DAITokenBridge.l2DAITokenBridge()).to.be.eq(l2DaiGateway.address)
   }) */
 
-  describe('depositERC20()', () => {
+  describe('deposit()', () => {
     it('escrows funds and sends xchain message on deposit', async () => {
-      const [zkSyncImpersonator, user1] = await ethers.getSigners()
+      const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
       const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupTest({
         zkSyncImpersonator,
         user1,
       })
 
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
-      const depositTx = await l1DAITokenBridge
-        .connect(user1)
-        .depositERC20(l1Dai.address, l2Dai.address, depositAmount, defaultGas, defaultData)
+      const depositTx = await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount, 0) // TODO: Add QueueType ???
       const depositCallToMessengerCall = zkSyncMock.smocked.requestL2Transaction.calls[0]
 
-      /* expect(await l1Dai.balanceOf(user1.address)).to.be.eq(initialTotalL1Supply - depositAmount)
+      expect(await l1Dai.balanceOf(user1.address)).to.be.eq(initialTotalL1Supply - depositAmount)
       expect(await l1Dai.balanceOf(l1DAITokenBridge.address)).to.be.eq(0)
       expect(await l1Dai.balanceOf(l1Escrow.address)).to.be.eq(depositAmount)
 
-      expect(depositCallToMessengerCall._target).to.equal(l2DAITokenBridge.address)
-      expect(depositCallToMessengerCall._message).to.equal(
+      expect(depositCallToMessengerCall._contractAddressL2).to.equal(l2DAITokenBridge.address)
+      expect(depositCallToMessengerCall._calldata).to.equal(
         l2DAITokenBridge.interface.encodeFunctionData('finalizeDeposit', [
+          user1.address,
+          user2.address,
           l1Dai.address,
-          l2Dai.address,
-          user1.address,
-          user1.address,
           depositAmount,
           defaultData,
         ]),
       )
-      expect(depositCallToMessengerCall._gasLimit).to.equal(defaultGas)
-      await expect(depositTx)
-        .to.emit(l1DAITokenBridge, 'ERC20DepositInitiated')
-        .withArgs(l1Dai.address, l2Dai.address, user1.address, user1.address, depositAmount, defaultData)*/
+      expect(depositCallToMessengerCall._ergsLimit).to.equal(defaultErgLimit)
+    })
+
+    it('reverts when called with a different token', async () => {
+      const [zkSyncImpersonator, user1, user2, dummyL1Erc20] = await ethers.getSigners()
+      const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      await expect(
+        l1DAITokenBridge.connect(user1).deposit(user2.address, dummyL1Erc20.address, depositAmount, 0),
+      ).to.be.revertedWith(errorMessages.tokenMismatch)
+    })
+
+    it('reverts when approval is too low', async () => {
+      const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
+      const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      await l1Dai.connect(user1).approve(l1DAITokenBridge.address, 0)
+      await expect(
+        l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount, 0),
+      ).to.be.revertedWith(errorMessages.daiInsufficientAllowance)
+    })
+
+    it('reverts when funds too low', async () => {
+      const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
+      const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      await l1Dai.connect(user2).approve(l1DAITokenBridge.address, depositAmount)
+      await expect(
+        l1DAITokenBridge.connect(user2).deposit(user2.address, l1Dai.address, depositAmount, 0),
+      ).to.be.revertedWith(errorMessages.daiInsufficientBalance)
+    })
+
+    it('reverts when bridge is closed', async () => {
+      const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
+      const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      await l1DAITokenBridge.close()
+
+      await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
+
+      await expect(
+        l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount, 0),
+      ).to.be.revertedWith(errorMessages.bridgeClosed)
+    })
+  })
+
+  describe('finalizeWithdrawal', () => {
+    const withdrawAmount = 100
+
+    it('sends funds from the escrow', async () => {
+      const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
+      const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupTest({
+        zkSyncImpersonator,
+        user1,
+      })
+      // TODO: wite withdrawal test
     })
   })
 
@@ -127,7 +188,7 @@ describe('L1DAITokenBridge', () => {
       expect(await l1DAITokenBridge.l2Token()).to.eq(l2Dai.address)
       expect(await l1DAITokenBridge.l2DAITokenBridge()).to.eq(l2DAITokenBridgeMock.address)
       expect(await l1DAITokenBridge.escrow()).to.eq(l1Escrow.address)
-      expect(await l1DAITokenBridge.zkSyncAddress()).to.eq(zkSyncMock.address)
+      expect(await l1DAITokenBridge.zkSyncMailbox()).to.eq(zkSyncMock.address)
     })
   })
 
@@ -143,8 +204,8 @@ describe('L1DAITokenBridge', () => {
 })
 
 async function setupTest(signers: { zkSyncImpersonator: SignerWithAddress; user1: SignerWithAddress }) {
-  const l2DAITokenBridge = await deployMock('L2DAITokenBridge')
-  const zkSyncMock = await deployZkSyncContractMock({ address: signers.zkSyncImpersonator.address })
+  const l2DAITokenBridge = await deployZkSyncContractMock('L2DAITokenBridge')
+  const zkSyncMock = await deployZkSyncContractMock('IZkSync', { address: signers.zkSyncImpersonator.address })
 
   const l1Dai = await simpleDeploy<Dai__factory>('Dai', [])
   const l2Dai = await simpleDeploy<Dai__factory>('Dai', [])

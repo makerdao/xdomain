@@ -53,10 +53,9 @@ interface TokenLike {
 
 interface L2DAITokenBridgeLike {
   function finalizeDeposit(
-    address _l1Token,
-    address _l2Token,
     address _from,
     address _to,
+    address _l1Token,
     uint256 _amount,
     bytes calldata _data
   ) external;
@@ -117,15 +116,6 @@ contract L1DAITokenBridge is IL1Bridge {
   uint256 constant DEPLOY_L2_BRIDGE_COUNTERPART_ERGS_LIMIT = 2097152;
   mapping(uint32 => mapping(uint256 => bool)) isWithdrawalProcessed;
   mapping(address => mapping(bytes32 => uint256)) depositAmount; //TODO: do we need that ?
-
-  event ERC20DepositInitiated(
-    address indexed _l1Token,
-    address indexed _l2Token,
-    address indexed _from,
-    address _to,
-    uint256 _amount,
-    bytes _data
-  );
 
   event WithdrawalFinalized(address indexed _recipient, uint256 _amount);
 
@@ -195,14 +185,14 @@ contract L1DAITokenBridge is IL1Bridge {
     // empty deposit amount  TODO: do we need that check ?
 
     TokenLike(l1Token).transferFrom(msg.sender, escrow, _amount);
-    bytes memory emptyBytes = "";
+    //bytes memory emptyBytes = "";
     bytes memory l2TxCalldata = abi.encodeWithSelector(
       L2DAITokenBridgeLike.finalizeDeposit.selector,
       msg.sender,
       _l2Receiver,
       _l1Token,
       _amount,
-      abi.encode(emptyBytes, "0x") // TODO: ???
+      "" // TODO: Do we pass empty bytes here ?
     );
 
     txHash = zkSyncMailbox.requestL2Transaction{value: msg.value}(

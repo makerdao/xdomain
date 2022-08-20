@@ -154,20 +154,17 @@ contract L2DAITokenBridge {
   // When a deposit is finalized, we credit the account on L2 with the same amount of tokens.
 
   function finalizeDeposit(
-    address _l1Token,
-    address _l2Token,
     address _from,
     address _to,
+    address _l1Token,
     uint256 _amount,
     bytes calldata _data
   ) external {
     require(msg.sender == l1DAITokenBridge); // only L1 bridge can call
 
-    require(_l1Token == l1Token && _l2Token == l2Token, "L2DAITokenBridge/token-not-dai");
+    require(_l1Token == l1Token, "L2DAITokenBridge/token-not-dai");
 
     Mintable(l2Token).mint(_to, _amount);
-
-    emit DepositFinalized(_l1Token, _l2Token, _from, _to, _amount, _data);
   }
 
   function l2TokenAddress(address) external view returns (address) {
