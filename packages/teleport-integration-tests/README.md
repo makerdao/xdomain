@@ -21,6 +21,75 @@ yarn test
 If you wish to quickly test some changes in smart contract code, just tweak source in `repos` dir and re-run
 `./scripts/setup.sh`.
 
+# Teleport mainnet deployment
+
+## Optimism & Arbitrum
+
+### Instructions
+
+1. Set the name of the new ilk in `deployment/mainnet/deploy-teleport.ts` then run
+   `yarn hardhat run deployment/mainnet/deploy-teleport.ts` to deploy `dss-teleport`, `arbitrum-dai-bridge` Teleport
+   contracts and `optimism-dai-bridge` Teleport contracts.
+
+   2. An appropriate [spell](https://github.com/makerdao/spells-mainnet) needs to be written and cast. The test
+      environment spell in `contracts/deploy/goerli-light/L1GoerliAddTeleportDomainSpell.sol` can be used as a guide to
+      determine the necessary configuration operations to include in the spell.
+
+### Latest deployment
+
+```
+{
+   "Mainnet MCD": {
+      "vat": "0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B",
+      "dai_join": "0x9759A6Ac90977b93B58547b4A71c78317f391A28",
+      "vow": "0xA950524441892A31ebddF91d3cEEFa04Bf454466",
+      "pause_proxy": "0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB",
+      "esm": "0x09e05fF6142F2f9de8B6B65855A1d56B6cfE4c58",
+      "dai": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+      "median_ethusd": "0x64DE91F5A373Cd4c28de3600cB34C7C6cE410C85",
+   },
+
+   "Mainnet Teleport": {
+      "join": "0xF4B72741D114a49706877366300b3053a03E7f25",
+      "oracleAuth": "0xFb7b4427Fb77ad4AC24519725153CDD2C92Fc4e0",
+      "router": "0x0E18ab2b7cAA7ae841bC2e0Dd819Af87A8bF8b75",
+      "feeContract": "0xE3AEA9052Aca6b8ec4CF160B5771716765f99aA5",
+      "basicRelay": "0x49486814d8DC7dB8DE95Ee9B65acA621d392096F",
+      "trustedRelay": "0x626E65367122ee1Fd1733Aea4e910661C353837A"
+   }
+
+  "Optimism Mainnet teleport gateways":  {
+      "l2TeleportGateway": "0x67A45c2163798d47c32Fc2bcD5Dc0ABc6dCDFe78",
+      "l1TeleportGateway": "0x3c27390F61058152552613a563aC0195aDc7f169"
+   }
+
+   "Arbitrum Mainnet teleport gateways":  {
+      "l2TeleportGateway": "0x67A45c2163798d47c32Fc2bcD5Dc0ABc6dCDFe78",
+      "l1TeleportGateway": "0x0B6359A8E138A86f2B5df2cbe3f97222B4f19b4a"
+   },
+
+   "Legacy (slow) Mainnet Optimism Dai bridge": {
+      "l2Dai": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      "l1Escrow": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
+      "l1DAITokenBridge": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
+      "l2DAITokenBridge": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
+      "l1GovernanceRelay": "0x09B354CDA89203BB7B3131CC728dFa06ab09Ae2F",
+      "l2GovernanceRelay": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
+   },
+
+   "Legacy (slow) Mainnet Arbitrum Dai bridge": {
+      "l2Dai": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      "l1Escrow": "0xA10c7CE4b876998858b1a9E12b10092229539400",
+      "l1DaiGateway": "0xD3B5b60020504bc3489D6949d545893982BA3011",
+      "l2DaiGateway": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
+      "l1GovernanceRelay": "0x9ba25c289e351779E0D481Ba37489317c34A899d",
+      "l2GovernanceRelay": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
+      "l1GatewayRouter"": "0x72Ce9c846789fdB6fC1f34aC4AD25Dd9ef7031ef",
+      "l2GatewayRouter"": "0x5288c571Fd7aD117beA99bF60FE0846C4E84F933",
+   }
+}
+```
+
 # Teleport testnet deployments
 
 ## Optimism & Arbitrum Goerli test environment ("goerli-light")
