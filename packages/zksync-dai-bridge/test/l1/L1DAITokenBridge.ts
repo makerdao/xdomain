@@ -123,12 +123,41 @@ describe('L1DAITokenBridge', () => {
 
     it('sends funds from the escrow', async () => {
       const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
-      const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupTest({
+      const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupWithdrawTest({
         zkSyncImpersonator,
         user1,
       })
-      // TODO: wite withdrawal test
+
+      // bytes memory message = abi.encodePacked(IL1Bridge.finalizeWithdrawal.selector, _to, _amount);
+
+      const blockNumber = 200
+      const messageIndex = 100
+      const selector = l1DAITokenBridge.interface.getSighash('finalizeWithdrawal')
+      const L2toL1message = ethers.utils.solidityPack(
+        ['bytes', 'address', 'uint256'],
+        [selector, user2.address, withdrawAmount],
+      )
+      const proof: any[] = []
+
+      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof always OK
+
+      const finalizeWithdrawalTx = await l1DAITokenBridge.connect(zkSyncImpersonator).finalizeWithdrawal(
+        blockNumber, // blockNumber
+        messageIndex, // messageIndex
+        L2toL1message, // message that I want to proof
+        proof, // merkle Proof
+      )
+
+      expect(await l1Dai.balanceOf(user2.address)).to.be.equal(withdrawAmount)
+      expect(await l1Dai.balanceOf(l1Escrow.address)).to.be.equal(initialTotalL1Supply - withdrawAmount)
     })
+
+    it('does not allow to withdraw twice', async () => {})
+    it('allows to withdraw even if closed', async () => {})
+    it('reverts if wrong L2toL1 message', async () => {})
+    it('reverts if wrong proof', async () => {})
+    it('reverts if L2toL1 message sent from wrong address', async () => {})
+    it('reverts when escrow access was revoked', async () => {})
   })
 
   describe('close()', () => {
@@ -221,8 +250,8 @@ async function setupTest(signers: { zkSyncImpersonator: SignerWithAddress; user1
 
   return { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow }
 }
-/*
-async function setupWithdrawTest(signers: { l1MessengerImpersonator: SignerWithAddress; user1: SignerWithAddress }) {
+
+async function setupWithdrawTest(signers: { zkSyncImpersonator: SignerWithAddress; user1: SignerWithAddress }) {
   const contracts = await setupTest(signers)
   await contracts.l1Escrow.approve(
     contracts.l1Dai.address,
@@ -233,4 +262,3 @@ async function setupWithdrawTest(signers: { l1MessengerImpersonator: SignerWithA
 
   return contracts
 }
-*/
