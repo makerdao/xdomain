@@ -223,10 +223,10 @@ contract L1DAITokenBridge is IL1Bridge {
       l2Log,
       _merkleProof
     );
-    require(success);
+    require(success, "Wrong proof");
 
     uint256 amount = depositAmount[_depositSender][_l2TxHash];
-    require(amount > 0);
+    require(amount > 0, "Claiming non-deposited DAI");
 
     depositAmount[_depositSender][_l2TxHash] = 0;
     TokenLike(l1Token).transferFrom(escrow, _depositSender, amount);
