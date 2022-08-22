@@ -81,7 +81,6 @@ contract L1GovernanceRelay {
   ) external payable auth returns (bytes32 txHash) {
     bytes memory l2TxCalldata = abi.encodeWithSelector(
       L2GovernanceRelayLike.relay.selector,
-      msg.sender,
       target,
       targetData
     );
