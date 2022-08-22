@@ -5,6 +5,7 @@ export function DomainBox({
   isSourceDomain,
   domain,
   supportedDomains,
+  enabledDomains,
   amount,
   maxAmount,
   onDomainChanged,
@@ -14,6 +15,7 @@ export function DomainBox({
   isSourceDomain: boolean
   domain: DomainChainId
   supportedDomains?: Array<DomainChainId>
+  enabledDomains?: Array<DomainChainId>
   amount?: string
   maxAmount?: string
   onDomainChanged?: (chainId: DomainChainId) => void
@@ -42,7 +44,7 @@ export function DomainBox({
                 onChange={(chainId: DomainChainId) => onDomainChanged?.(chainId)}
               >
                 {(supportedDomains ?? []).map((chainId) => (
-                  <Select.Option value={chainId} key={chainId}>
+                  <Select.Option value={chainId} key={chainId} disabled={enabledDomains?.includes(chainId) === false}>
                     <DomainName chainId={chainId} />
                   </Select.Option>
                 ))}

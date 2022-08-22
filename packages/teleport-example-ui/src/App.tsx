@@ -107,6 +107,7 @@ function App() {
                 maxAmount={maxAmount}
                 isSourceDomain={true}
                 supportedDomains={SRC_CHAIN_IDS as Array<DomainChainId>}
+                enabledDomains={urlChainId ? [srcChainId] : (SRC_CHAIN_IDS as Array<DomainChainId>)}
                 domain={srcChainId}
                 onDomainChanged={(newChainId) => setSrcChainId(newChainId as SrcDomainChainId)}
                 onMaxAmountClicked={() => setAmount(maxAmount)}
