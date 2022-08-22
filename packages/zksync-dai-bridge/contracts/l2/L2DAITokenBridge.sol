@@ -160,7 +160,7 @@ contract L2DAITokenBridge {
     uint256 _amount,
     bytes calldata _data
   ) external {
-    require(msg.sender == l1DAITokenBridge); // only L1 bridge can call
+    require(msg.sender == l1DAITokenBridge, "only L1 token bridge can call"); // only L1 bridge can call
 
     require(_l1Token == l1Token, "L2DAITokenBridge/token-not-dai");
 
