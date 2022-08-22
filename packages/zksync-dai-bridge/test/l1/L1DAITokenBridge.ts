@@ -121,6 +121,13 @@ describe('L1DAITokenBridge', () => {
   describe('finalizeWithdrawal', () => {
     const withdrawAmount = 100
 
+    const errorMessages = {
+      wrongProof: 'nq',
+      wrongL2toL1message: 'nt',
+      withdrawalProcessed: 'Withdrawal already processed',
+      daiInsufficientAllowance: 'Dai/insufficient-allowance',
+    }
+
     it('sends funds from the escrow', async () => {
       const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
       const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupWithdrawTest({
@@ -141,7 +148,7 @@ describe('L1DAITokenBridge', () => {
 
       zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof always OK
 
-      const finalizeWithdrawalTx = await l1DAITokenBridge.connect(zkSyncImpersonator).finalizeWithdrawal(
+      const finalizeWithdrawalTx = await l1DAITokenBridge.connect(user1).finalizeWithdrawal(
         blockNumber, // blockNumber
         messageIndex, // messageIndex
         L2toL1message, // message that I want to proof
@@ -152,12 +159,167 @@ describe('L1DAITokenBridge', () => {
       expect(await l1Dai.balanceOf(l1Escrow.address)).to.be.equal(initialTotalL1Supply - withdrawAmount)
     })
 
-    it('does not allow to withdraw twice', async () => {})
-    it('allows to withdraw even if closed', async () => {})
-    it('reverts if wrong L2toL1 message', async () => {})
-    it('reverts if wrong proof', async () => {})
-    it('reverts if L2toL1 message sent from wrong address', async () => {})
-    it('reverts when escrow access was revoked', async () => {})
+    it('does not allow to withdraw twice', async () => {
+      const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
+      const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupWithdrawTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      // bytes memory message = abi.encodePacked(IL1Bridge.finalizeWithdrawal.selector, _to, _amount);
+
+      const blockNumber = 200
+      const messageIndex = 100
+      const selector = l1DAITokenBridge.interface.getSighash('finalizeWithdrawal')
+      const L2toL1message = ethers.utils.solidityPack(
+        ['bytes', 'address', 'uint256'],
+        [selector, user2.address, withdrawAmount],
+      )
+      const proof: any[] = []
+
+      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof always OK
+
+      const finalizeWithdrawalTx = await l1DAITokenBridge.connect(user1).finalizeWithdrawal(
+        blockNumber, // blockNumber
+        messageIndex, // messageIndex
+        L2toL1message, // message that I want to proof
+        proof, // merkle Proof
+      )
+
+      expect(await l1Dai.balanceOf(user2.address)).to.be.equal(withdrawAmount)
+      expect(await l1Dai.balanceOf(l1Escrow.address)).to.be.equal(initialTotalL1Supply - withdrawAmount)
+
+      await expect(
+        l1DAITokenBridge.connect(user1).finalizeWithdrawal(
+          blockNumber, // blockNumber
+          messageIndex, // messageIndex
+          L2toL1message, // message that I want to proof
+          proof, // merkle Proof
+        ),
+      ).to.be.revertedWith(errorMessages.withdrawalProcessed)
+    })
+    it('allows to withdraw even if closed', async () => {
+      const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
+      const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupWithdrawTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      // bytes memory message = abi.encodePacked(IL1Bridge.finalizeWithdrawal.selector, _to, _amount);
+
+      const blockNumber = 200
+      const messageIndex = 100
+      const selector = l1DAITokenBridge.interface.getSighash('finalizeWithdrawal')
+      const L2toL1message = ethers.utils.solidityPack(
+        ['bytes', 'address', 'uint256'],
+        [selector, user2.address, withdrawAmount],
+      )
+      const proof: any[] = []
+
+      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof always OK
+
+      await l1DAITokenBridge.close()
+
+      const finalizeWithdrawalTx = await l1DAITokenBridge.connect(user1).finalizeWithdrawal(
+        blockNumber, // blockNumber
+        messageIndex, // messageIndex
+        L2toL1message, // message that I want to proof
+        proof, // merkle Proof
+      )
+
+      expect(await l1Dai.balanceOf(user2.address)).to.be.equal(withdrawAmount)
+      expect(await l1Dai.balanceOf(l1Escrow.address)).to.be.equal(initialTotalL1Supply - withdrawAmount)
+    })
+    it('reverts if wrong L2toL1 message', async () => {
+      const [user1, zkSyncImpersonator] = await ethers.getSigners()
+      const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupWithdrawTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      // bytes memory message = abi.encodePacked(IL1Bridge.finalizeWithdrawal.selector, _to, _amount);
+
+      const blockNumber = 200
+      const messageIndex = 100
+      const selector = l1DAITokenBridge.interface.getSighash('deposit') // wrong message
+      const L2toL1message = ethers.utils.solidityPack(
+        ['bytes', 'address', 'uint256'],
+        [selector, user1.address, withdrawAmount],
+      )
+      const proof: any[] = []
+
+      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof rejected
+
+      await expect(
+        l1DAITokenBridge.connect(user1).finalizeWithdrawal(
+          blockNumber, // blockNumber
+          messageIndex, // messageIndex
+          L2toL1message, // message that I want to proof
+          proof, // merkle Proof
+        ),
+      ).to.be.revertedWith(errorMessages.wrongL2toL1message)
+    })
+
+    it('reverts if wrong proof', async () => {
+      const [user1, zkSyncImpersonator] = await ethers.getSigners()
+      const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupWithdrawTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      // bytes memory message = abi.encodePacked(IL1Bridge.finalizeWithdrawal.selector, _to, _amount);
+
+      const blockNumber = 200
+      const messageIndex = 100
+      const selector = l1DAITokenBridge.interface.getSighash('finalizeWithdrawal')
+      const L2toL1message = ethers.utils.solidityPack(
+        ['bytes', 'address', 'uint256'],
+        [selector, user1.address, withdrawAmount],
+      )
+      const proof: any[] = []
+
+      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(false) //inclusion proof rejected
+
+      await expect(
+        l1DAITokenBridge.connect(user1).finalizeWithdrawal(
+          blockNumber, // blockNumber
+          messageIndex, // messageIndex
+          L2toL1message, // message that I want to proof
+          proof, // merkle Proof
+        ),
+      ).to.be.revertedWith(errorMessages.wrongProof)
+    })
+    it('reverts if L2toL1 message sent from wrong address', async () => {}) // TODO: how this is enforced ?
+    it('reverts when escrow access was revoked', async () => {
+      const [user1, zkSyncImpersonator] = await ethers.getSigners()
+      const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupWithdrawTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      // bytes memory message = abi.encodePacked(IL1Bridge.finalizeWithdrawal.selector, _to, _amount);
+
+      const blockNumber = 200
+      const messageIndex = 100
+      const selector = l1DAITokenBridge.interface.getSighash('finalizeWithdrawal')
+      const L2toL1message = ethers.utils.solidityPack(
+        ['bytes', 'address', 'uint256'],
+        [selector, user1.address, withdrawAmount],
+      )
+      const proof: any[] = []
+      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) // proof OK
+
+      await l1Escrow.approve(l1Dai.address, l1DAITokenBridge.address, 0)
+
+      await expect(
+        l1DAITokenBridge.connect(user1).finalizeWithdrawal(
+          blockNumber, // blockNumber
+          messageIndex, // messageIndex
+          L2toL1message, // message that I want to proof
+          proof, // merkle Proof
+        ),
+      ).to.be.revertedWith(errorMessages.daiInsufficientAllowance)
+    })
   })
 
   describe('close()', () => {
