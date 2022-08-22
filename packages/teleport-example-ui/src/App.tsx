@@ -5,7 +5,7 @@ import { BigNumber } from 'ethers'
 import { formatEther } from 'ethers/lib/utils'
 import { useState } from 'react'
 import { useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { DomainBox, DomainChainId, DstDomainChainId, SrcDomainChainId } from './domains'
 import { useAmounts } from './useAmounts'
@@ -27,12 +27,13 @@ function App() {
 
   const [srcChainId, setSrcChainId] = useState<SrcDomainChainId>(421613)
   const [searchParams] = useSearchParams({})
-  const urlChainId = Number(searchParams.get('chainId'))
+  const urlChainIdString = searchParams.get('chainId')
+  const urlChainId = urlChainIdString ? Number(urlChainIdString) : undefined
 
   useEffect(() => {
-    if (SRC_CHAIN_IDS.includes(urlChainId)) {
+    if (urlChainId !== undefined && SRC_CHAIN_IDS.includes(urlChainId)) {
       setSrcChainId(urlChainId as SrcDomainChainId)
-    } else if (walletChainId && SRC_CHAIN_IDS.includes(walletChainId)) {
+    } else if (walletChainId !== undefined && SRC_CHAIN_IDS.includes(walletChainId)) {
       setSrcChainId(walletChainId as SrcDomainChainId)
     }
   }, [walletChainId, urlChainId])
@@ -94,7 +95,20 @@ function App() {
             </Col>
           </Row>
           <Row justify="end" className="box top-bar">
-            <Col flex="auto"></Col>
+            <Col flex="auto">
+              {urlChainId !== undefined && (
+                <Row justify="start">
+                  <Col flex="100px">
+                    <Button type="link" className="new-teleport">
+                      <Link to="/" target="_blank">
+                        New Teleport
+                      </Link>
+                    </Button>
+                  </Col>
+                  <Col flex="auto"> </Col>
+                </Row>
+              )}
+            </Col>
             <Col flex="100px">
               <ConnectWalletButton {...{ connectWallet, disconnectWallet, account }} />
             </Col>
@@ -107,7 +121,7 @@ function App() {
                 maxAmount={maxAmount}
                 isSourceDomain={true}
                 supportedDomains={SRC_CHAIN_IDS as Array<DomainChainId>}
-                enabledDomains={urlChainId ? [srcChainId] : (SRC_CHAIN_IDS as Array<DomainChainId>)}
+                enabledDomains={urlChainId !== undefined ? [srcChainId] : (SRC_CHAIN_IDS as Array<DomainChainId>)}
                 domain={srcChainId}
                 onDomainChanged={(newChainId) => setSrcChainId(newChainId as SrcDomainChainId)}
                 onMaxAmountClicked={() => setAmount(maxAmount)}
