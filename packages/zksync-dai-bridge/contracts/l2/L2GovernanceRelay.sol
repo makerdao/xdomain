@@ -31,7 +31,7 @@ contract L2GovernanceRelay {
     // Ensure no storage changes in the delegate call
     // Target address is trusted so this is mostly to avoid a human error
     // Note: we don't check l1GovernanceRelay because it's immutable
-    require(msg.sender == l1GovernanceRelay);
+    require(msg.sender == l1GovernanceRelay, "Only l1GovRelay can call");
 
     bool ok;
     (ok, ) = target.delegatecall(targetData);
