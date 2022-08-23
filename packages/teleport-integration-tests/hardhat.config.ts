@@ -27,6 +27,15 @@ const config: HardhatUserConfig = {
     rinkeby: {
       url: process.env.RINKEBY_RPC_URL || '',
     },
+    mainnet: {
+      url: process.env.MAINNET_RPC_URL || '',
+    },
+    optimism: {
+      url: process.env.MAINNET_OPTIMISM_L2_RPC || '',
+    },
+    arbitrum: {
+      url: process.env.MAINNET_ARBITRUM_L2_RPC || '',
+    },
   },
   mocha: {
     timeout: 15_000_000,

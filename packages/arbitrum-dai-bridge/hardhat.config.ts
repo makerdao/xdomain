@@ -6,7 +6,10 @@ import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-web3'
 import '@typechain/hardhat'
 
+import * as dotenv from 'dotenv'
 import { HardhatUserConfig } from 'hardhat/config'
+
+dotenv.config()
 
 const testDir = process.env.TESTS_DIR ?? 'test'
 
@@ -18,6 +21,9 @@ const config: HardhatUserConfig = {
     mainnet: {
       url: process.env.MAINNET_RPC_URL || '',
     },
+    arbitrumOne: {
+      url: process.env.ARBITRUM_RPC_URL || '',
+    },
     arbitrumGoerli: {
       url: 'https://goerli-rollup.arbitrum.io/rpc',
     },
@@ -26,6 +32,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_KEY ?? '',
+      arbitrumOne: process.env.ARBISCAN_KEY ?? '',
       goerli: process.env.ETHERSCAN_KEY ?? '',
       arbitrumGoerli: 'N/A',
     },

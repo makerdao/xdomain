@@ -6,7 +6,10 @@ import '@nomiclabs/hardhat-web3'
 import '@typechain/hardhat'
 import 'solidity-coverage'
 
+import * as dotenv from 'dotenv'
 import { HardhatUserConfig } from 'hardhat/config'
+
+dotenv.config()
 
 const config: HardhatUserConfig = {
   mocha: {
@@ -52,11 +55,18 @@ const config: HardhatUserConfig = {
     optimisticGoerli: {
       url: 'https://goerli.optimism.io',
     },
+    mainnet: {
+      url: process.env.MAINNET_RPC_URL || '',
+    },
+    optimisticEthereum: {
+      url: process.env.OPTIMISM_RPC_URL || '',
+    },
   },
 
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_KEY ?? '',
+      optimisticEthereum: process.env.OPTIMISTIC_ETHERSCAN_KEY ?? '',
       goerli: process.env.ETHERSCAN_KEY ?? '',
       optimisticGoerli: 'N/A',
     },

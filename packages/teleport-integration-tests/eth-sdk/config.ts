@@ -9,21 +9,46 @@ export default defineConfig({
         vow: '0xA950524441892A31ebddF91d3cEEFa04Bf454466',
         dai: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
         pause_proxy: '0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB',
-        esm: '0x29CfBd381043D00a98fD9904a431015Fef07af2f',
+        esm: '0x09e05fF6142F2f9de8B6B65855A1d56B6cfE4c58',
         median_ethusd: '0x64DE91F5A373Cd4c28de3600cB34C7C6cE410C85',
+      },
+      optimismDaiBridge: {
+        l1Escrow: '0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65',
+        l1GovernanceRelay: '0x09B354CDA89203BB7B3131CC728dFa06ab09Ae2F',
+        l1DAITokenBridge: '0x10E6593CDda8c58a1d0f14C5164B376352a55f2F',
+      },
+      arbitrumDaiBridge: {
+        l1Escrow: '0xA10c7CE4b876998858b1a9E12b10092229539400',
+        l1GovernanceRelay: '0x9ba25c289e351779E0D481Ba37489317c34A899d',
+        l1DaiGateway: '0xD3B5b60020504bc3489D6949d545893982BA3011',
+      },
+      arbitrum: {
+        inbox: '0x4Dbd4fc535Ac27206064B68FfCf827b0A60BAB3f',
       },
       optimism: {
         xDomainMessenger: '0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1',
         l1StandardBridge: '0x99C9fc46f92E8a1c0deC1b1747d010903E884bE1',
+        stateCommitmentChain: '0xBe5dAb4A2e9cd0F27300dB4aB94BeE3A233AEB19',
       },
     },
 
     optimism: {
-      dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
-      governanceRelay: '0x10E6593CDda8c58a1d0f14C5164B376352a55f2F',
+      optimismDaiBridge: {
+        dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
+        l2GovernanceRelay: '0x10E6593CDda8c58a1d0f14C5164B376352a55f2F',
+        l2DAITokenBridge: '0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65',
+      },
       optimism: {
         xDomainMessenger: '0x4200000000000000000000000000000000000007',
         l2StandardBridge: '0x4200000000000000000000000000000000000010',
+      },
+    },
+
+    arbitrumOne: {
+      arbitrumDaiBridge: {
+        dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
+        l2GovernanceRelay: '0x10E6593CDda8c58a1d0f14C5164B376352a55f2F',
+        l2DaiGateway: '0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65',
       },
     },
 
@@ -168,6 +193,7 @@ export default defineConfig({
         },
       },
     },
+
     optimismGoerliTestnet: {
       light: {
         optimismDaiBridge: {
@@ -194,6 +220,8 @@ export default defineConfig({
     optimismGoerliTestnet: 'https://blockscout.com/optimism/goerli/api',
   },
   rpc: {
+    optimism: 'https://mainnet.optimism.io',
+    arbitrumOne: 'https://arb1.arbitrum.io/rpc',
     arbitrumGoerliTestnet: 'https://goerli-rollup.arbitrum.io/rpc',
     optimismGoerliTestnet: 'https://goerli.optimism.io',
   },
