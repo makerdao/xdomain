@@ -4,9 +4,9 @@ import { waffleChai } from '@ethereum-waffle/chai'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { expect, use } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { Contract, ContractTransaction, ethers, Wallet } from 'ethers'
+import { Contract, ContractTransaction, ethers } from 'ethers'
 import { formatBytes32String, parseEther } from 'ethers/lib/utils'
-import { RetryProvider } from 'xdomain-utils'
+import { RetryProvider, RetryWallet } from 'xdomain-utils'
 
 import {
   approveSrcGateway,
@@ -61,8 +61,8 @@ async function getTestWallets(srcDomainDescr: DomainDescription) {
   const dstDomain = getDefaultDstDomain(srcDomain)
   const l1Provider = new RetryProvider(10, DEFAULT_RPC_URLS[dstDomain])
   const l2Provider = new RetryProvider(10, DEFAULT_RPC_URLS[srcDomain])
-  const l1User = new Wallet(pkey, l1Provider)
-  const l2User = new Wallet(pkey, l2Provider)
+  const l1User = new RetryWallet(10, pkey, l1Provider)
+  const l2User = new RetryWallet(10, pkey, l2Provider)
 
   await fundTestWallet(l1User, l2User, srcDomain, dstDomain, amount)
 

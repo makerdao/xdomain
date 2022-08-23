@@ -9,6 +9,7 @@ import {
   getArbitrumMaxGas,
   getArbitrumMaxSubmissionPrice,
   RetryProvider,
+  RetryWallet,
   waitForTx,
   waitToRelayTxToArbitrum,
 } from 'xdomain-utils'
@@ -41,9 +42,9 @@ export async function setupArbitrumTests({
   console.log('Current L1 block: ', l1StartingBlock)
   console.log('Current L2 block: ', l2StartingBlock)
 
-  const l1Signer = new Wallet(pkey, l1Provider)
-  const l2Signer = new Wallet(pkey, l2Provider)
-  const l1User = pkey2 ? new Wallet(pkey2, l1Provider) : Wallet.createRandom().connect(l1Provider)
+  const l1Signer = new RetryWallet(10, pkey, l1Provider)
+  const l2Signer = new RetryWallet(10, pkey, l2Provider)
+  const l1User = pkey2 ? new RetryWallet(10, pkey2, l1Provider) : Wallet.createRandom().connect(l1Provider)
   const l2User = l1User.connect(l2Provider)
   console.log('l1Signer:', l1Signer.address)
   console.log('l1User:', l1User.address)
