@@ -24,7 +24,7 @@ class RetryWallet extends ethers_1.Wallet {
                 return await super.sendTransaction(transaction);
             }
             catch (error) {
-                console.log(`Got error (attempt: ${attempt}/${this.maxAttempts}): ${error}, \nerroneous transaction: ${JSON.stringify(transaction)}`);
+                console.log(`RetryWallet: Got error (attempt: ${attempt}/${this.maxAttempts}): ${error}, \nerroneous transaction: ${JSON.stringify(transaction)}`);
                 await this.handleError(attempt, error);
             }
         });
@@ -35,10 +35,11 @@ class RetryWallet extends ethers_1.Wallet {
     async handleError(attempt, error) {
         if (!WALLET_RETRYABLE_REASONS.some((reason) => JSON.stringify(error).includes(reason))) {
             // do not retry sendTransaction calls that do not have a valid retryable reason
+            console.log("RetryWallet: failing.");
             throw error;
         }
         else if (attempt >= this.maxAttempts) {
-            console.log("Got error, failing...", JSON.stringify(error));
+            console.log("RetryWallet: failing after max attempts reached.");
             throw error;
         }
         else {
@@ -66,19 +67,20 @@ class RetryProvider extends ethers_1.providers.JsonRpcProvider {
                 return await super.perform(method, params);
             }
             catch (error) {
-                console.log(`Got error (attempt: ${attempt}/${this.maxAttempts}): ${error}, \nerroneous request: ${JSON.stringify(method, params)}`);
+                console.log(`RetryProvider: Got error (attempt: ${attempt}/${this.maxAttempts}): ${error}, \nerroneous request: ${JSON.stringify(method, params)}`);
                 await this.handleError(method, attempt, error);
             }
         });
     }
     async handleError(method, attempt, error) {
-        if (["eth_sendRawTransaction", "sendTransaction"].includes(method) &&
+        if (["estimateGas", "sendTransaction"].includes(method) &&
             !PROVIDER_RETRYABLE_REASONS.some((reason) => JSON.stringify(error).includes(reason))) {
-            // do not retry send[Raw]Transaction calls that do not have a valid retryable reason
+            // do not retry estimateGas or sendTransaction queries that do not have a valid retryable reason
+            console.log("RetryProvider: failing.");
             throw error;
         }
         else if (attempt >= this.maxAttempts) {
-            console.log("Got error, failing...", JSON.stringify(error));
+            console.log("RetryProvider: failing after max attempts reached.");
             throw error;
         }
         else if (error && error.statusCode) {
