@@ -36,7 +36,7 @@ export class RetryWallet extends Wallet {
         return await super.sendTransaction(transaction);
       } catch (error: any) {
         console.log(
-          `Got error (attempt: ${attempt}/${
+          `RetryWallet: Got error (attempt: ${attempt}/${
             this.maxAttempts
           }): ${error}, \nerroneous transaction: ${JSON.stringify(transaction)}`
         );
@@ -95,7 +95,7 @@ export class RetryProvider extends providers.JsonRpcProvider {
         return await super.perform(method, params);
       } catch (error: any) {
         console.log(
-          `Got error (attempt: ${attempt}/${
+          `RetryProvider: Got error (attempt: ${attempt}/${
             this.maxAttempts
           }): ${error}, \nerroneous request: ${JSON.stringify(method, params)}`
         );
