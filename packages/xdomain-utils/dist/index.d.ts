@@ -1,3 +1,3 @@
 export * from "./transactions";
-export * from "./RetryProvider";
+export * from "./retry";
 export * from "./arbitrum";
