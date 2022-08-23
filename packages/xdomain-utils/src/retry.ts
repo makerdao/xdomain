@@ -56,9 +56,10 @@ export class RetryWallet extends Wallet {
       )
     ) {
       // do not retry sendTransaction calls that do not have a valid retryable reason
+      console.log("RetryWallet: failing.");
       throw error;
     } else if (attempt >= this.maxAttempts) {
-      console.log("Got error, failing...", JSON.stringify(error));
+      console.log("RetryWallet: failing after max attempts reached.");
       throw error;
     } else {
       // just retry if error is not critical
@@ -117,9 +118,10 @@ export class RetryProvider extends providers.JsonRpcProvider {
       )
     ) {
       // do not retry estimateGas or sendTransaction queries that do not have a valid retryable reason
+      console.log("RetryProvider: failing.");
       throw error;
     } else if (attempt >= this.maxAttempts) {
-      console.log("Got error, failing...", JSON.stringify(error));
+      console.log("RetryProvider: failing after max attempts reached.");
       throw error;
     } else if (error && error.statusCode) {
       // if we are hitting the api limit retry faster
