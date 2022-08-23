@@ -64,8 +64,8 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
    }
 
    "Arbitrum Mainnet teleport gateways":  {
-      "l2TeleportGateway": "0x67A45c2163798d47c32Fc2bcD5Dc0ABc6dCDFe78",
-      "l1TeleportGateway": "0x0B6359A8E138A86f2B5df2cbe3f97222B4f19b4a"
+      "l2TeleportGateway": "0x35d152cd86C455D08bB10cB1F36fe97b2C4127E3",
+      "l1TeleportGateway": "0x39Fb4f2c0658BCE77863288d12413B23C2c2D6df"
    },
 
    "Legacy (slow) Mainnet Optimism Dai bridge": {
