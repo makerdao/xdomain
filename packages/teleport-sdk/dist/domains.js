@@ -24,7 +24,7 @@ exports.DEFAULT_RPC_URLS = {
     'ARB-GOER-A': 'https://goerli-rollup.arbitrum.io/rpc',
     'ETH-GOER-A': 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
     //   "OPT-MAIN-A": "https://optimism.io/",
-    //   "ARB-MAIN-A": "https://arb1.arbitrum.io/rpc",
+    //   "ARB-ONE-A": "https://arb1.arbitrum.io/rpc",
     //   "ETH-MAIN-A": "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
 };
 const descriptionsToDomainIds = {
