@@ -111,12 +111,12 @@ export class RetryProvider extends providers.JsonRpcProvider {
     error: any
   ): Promise<void> {
     if (
-      ["eth_sendRawTransaction", "sendTransaction"].includes(method) &&
+      ["estimateGas", "sendTransaction"].includes(method) &&
       !PROVIDER_RETRYABLE_REASONS.some((reason) =>
         JSON.stringify(error).includes(reason)
       )
     ) {
-      // do not retry send[Raw]Transaction calls that do not have a valid retryable reason
+      // do not retry estimateGas or sendTransaction queries that do not have a valid retryable reason
       throw error;
     } else if (attempt >= this.maxAttempts) {
       console.log("Got error, failing...", JSON.stringify(error));
