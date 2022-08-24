@@ -41,8 +41,8 @@ export async function setupOptimismTests({
   const pkey = getRequiredEnv('DEPLOYER_PRIV_KEY')
   const pkey2 = getOptionalEnv('USER_PRIV_KEY')
 
-  const l1Provider = new RetryProvider(10, l1Rpc)
-  const l2Provider = new RetryProvider(10, l2Rpc)
+  const l1Provider = new ethers.providers.JsonRpcProvider(l1Rpc)
+  const l2Provider = new RetryProvider(5, l2Rpc)
   const l1StartingBlock = await l1Provider.getBlockNumber()
   const l2StartingBlock = await l2Provider.getBlockNumber()
   console.log('Current L1 block: ', l1StartingBlock)
