@@ -132,10 +132,15 @@ export async function waitForRelayTaskConfirmation(
       console.log(taskLog)
       lastTaskLog = taskLog
     }
-    if (data[0]?.taskState === 'ExecSuccess') {
-      const txHash = data[0].execution?.transactionHash
-      if (txHash) return txHash
-    } else if (data[0]?.taskState === 'ExecPending') {
+    if (data[0]?.lastTransactionHash) return data[0].lastTransactionHash
+
+    // TODO: check updated Gelato API
+    // if (data[0]?.taskState === 'ExecSuccess') {
+    //   const txHash = data[0].execution?.transactionHash
+    //   if (txHash) return txHash
+    // } else
+
+    if (data[0]?.taskState === 'ExecPending') {
       isExecPending = true
     }
     if (!isExecPending && data[0]?.lastCheck?.message?.toLowerCase().includes('error')) {
