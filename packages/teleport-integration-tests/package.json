@@ -63,6 +63,6 @@
     "ts-node": "^10.9.1",
     "typechain": "^8.0.0",
     "typescript": "^4.7.4",
-    "xdomain-utils": "https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?988276232a4e39d33c957aaf325c1c5fa881a014"
+    "xdomain-utils": "https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?a12278fa7ad187a73ac98c9fcad7b3e507e9796e"
   }
 }
