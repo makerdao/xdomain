@@ -20,7 +20,6 @@ const TeleportJoin_json_2 = __importDefault(require("../../../eth-sdk/abis/rinke
 const Vat_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Vat.json"));
 const Multicall_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Multicall.json"));
 const FakeOutbox_json_1 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/FakeOutbox.json"));
-const Outbox_json_1 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Outbox.json"));
 const BasicRelay_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/BasicRelay.json"));
 const TrustedRelay_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TrustedRelay.json"));
 const Dai_json_3 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Dai.json"));
@@ -32,7 +31,6 @@ const TeleportJoin_json_3 = __importDefault(require("../../../eth-sdk/abis/goerl
 const Vat_json_3 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/Vat.json"));
 const Multicall_json_3 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/Multicall.json"));
 const FakeOutbox_json_2 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/FakeOutbox.json"));
-const Outbox_json_2 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/Outbox.json"));
 const BasicRelay_json_3 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/BasicRelay.json"));
 const TrustedRelay_json_3 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/TrustedRelay.json"));
 const Dai_json_5 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/Dai.json"));
@@ -78,7 +76,6 @@ function getRinkebySdk(defaultSigner) {
             "Vat": getContract('0x66b3D63621FDD5967603A824114Da95cc3A35107', Vat_json_2.default, defaultSigner),
             "Multicall": getContract('0x86d3b107386756208154a5c9100a0d4557280747', Multicall_json_2.default, defaultSigner),
             "FakeOutbox": getContract('0x4A2D3d40c14c10Df50a15A3f1359Fb0F5C893899', FakeOutbox_json_1.default, defaultSigner),
-            "Outbox": getContract('0x2360A33905dc1c72b12d975d975F42BaBdcef9F3', Outbox_json_1.default, defaultSigner),
             "BasicRelay": getContract('0xC35787975484A858B878032B045B6E0B6EfE2e2c', BasicRelay_json_2.default, defaultSigner),
             "TrustedRelay": getContract('0xef4dF54E711e0d42754a12e85fD4186f8fF2c7A7', TrustedRelay_json_2.default, defaultSigner),
             "Dai": getContract('0x17B729a6Ac1f265090cbb4AecBdd53E34664C00e', Dai_json_3.default, defaultSigner),
@@ -104,7 +101,6 @@ function getGoerliSdk(defaultSigner) {
             "Vat": getContract('0x293D5AA7F26EF9A687880C4501871632d1015A82', Vat_json_3.default, defaultSigner),
             "Multicall": getContract('0xb8c864B60e9467398800Df34da39BF4f0c459461', Multicall_json_3.default, defaultSigner),
             "FakeOutbox": getContract('0x95637Cabe684a324A8225C4b6Ce880D70074938d', FakeOutbox_json_2.default, defaultSigner),
-            "Outbox": getContract('0x45Af9Ed1D03703e480CE7d328fB684bb67DA5049', Outbox_json_2.default, defaultSigner),
             "BasicRelay": getContract('0x0Cb8747982d99f4b8640EE27330ADD0c2b54d0e6', BasicRelay_json_3.default, defaultSigner),
             "TrustedRelay": getContract('0xB23Ab27F7B59B718ea1eEF536F66e1Db3F18ac8E', TrustedRelay_json_3.default, defaultSigner),
             "Dai": getContract('0x0089Ed33ED517F58a064D0ef56C9E89Dc01EE9A2', Dai_json_5.default, defaultSigner),

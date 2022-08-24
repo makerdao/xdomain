@@ -102,15 +102,15 @@ class TeleportBridge {
         return await (0, _1.requestAndWaitForRelay)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated);
     }
     async canMintWithoutOracle(txHash) {
-        if (this.srcDomain === 'RINKEBY-SLAVE-ARBITRUM-1') {
+        if (this.srcDomain === 'ARB-GOER-A') {
             if (this.settings.useFakeArbitrumOutbox)
                 return true;
-            return await (0, _1.isArbitrumMessageInOutbox)(txHash, this.dstDomain, this.srcDomainProvider, this.dstDomainProvider);
+            return await (0, _1.isArbitrumMessageInOutbox)(txHash, this.srcDomainProvider, this.dstDomainProvider);
         }
         return false;
     }
     async mintWithoutOracles(sender, txHash, overrides) {
-        if (this.srcDomain === 'RINKEBY-SLAVE-ARBITRUM-1') {
+        if (this.srcDomain === 'ARB-GOER-A') {
             return await (0, _1.relayArbitrumMessage)(txHash, sender.connect(this.dstDomainProvider), this.dstDomain, this.srcDomainProvider, this.settings.useFakeArbitrumOutbox, overrides);
         }
         throw new Error(`mintWithoutOracles not yet supported for source domain ${this.srcDomain}`);

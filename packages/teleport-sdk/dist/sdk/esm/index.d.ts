@@ -29,7 +29,6 @@ export declare function getRinkebySdk(defaultSigner: Signer): {
         Vat: types.Vat;
         Multicall: types.Multicall;
         FakeOutbox: types.FakeOutbox;
-        Outbox: types.Outbox;
         BasicRelay: types.BasicRelay;
         TrustedRelay: types.TrustedRelay;
         Dai: types.Dai;
@@ -51,7 +50,6 @@ export declare function getGoerliSdk(defaultSigner: Signer): {
         Vat: types.Vat;
         Multicall: types.Multicall;
         FakeOutbox: types.FakeOutbox;
-        Outbox: types.Outbox;
         BasicRelay: types.BasicRelay;
         TrustedRelay: types.TrustedRelay;
         Dai: types.Dai;

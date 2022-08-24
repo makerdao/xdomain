@@ -14,7 +14,6 @@ import rinkebyRINKEBYMASTER1TeleportJoinAbi from '../../../eth-sdk/abis/rinkeby/
 import rinkebyRINKEBYMASTER1VatAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Vat.json';
 import rinkebyRINKEBYMASTER1MulticallAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Multicall.json';
 import rinkebyRINKEBYMASTER1FakeOutboxAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/FakeOutbox.json';
-import rinkebyRINKEBYMASTER1OutboxAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Outbox.json';
 import rinkebyRINKEBYMASTER1BasicRelayAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/BasicRelay.json';
 import rinkebyRINKEBYMASTER1TrustedRelayAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TrustedRelay.json';
 import rinkebyRINKEBYMASTER1DaiAbi from '../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Dai.json';
@@ -26,7 +25,6 @@ import goerliETHGOERATeleportJoinAbi from '../../../eth-sdk/abis/goerli/ETH-GOER
 import goerliETHGOERAVatAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/Vat.json';
 import goerliETHGOERAMulticallAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/Multicall.json';
 import goerliETHGOERAFakeOutboxAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/FakeOutbox.json';
-import goerliETHGOERAOutboxAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/Outbox.json';
 import goerliETHGOERABasicRelayAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/BasicRelay.json';
 import goerliETHGOERATrustedRelayAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/TrustedRelay.json';
 import goerliETHGOERADaiAbi from '../../../eth-sdk/abis/goerli/ETH-GOER-A/Dai.json';
@@ -69,7 +67,6 @@ export function getRinkebySdk(defaultSigner) {
             "Vat": getContract('0x66b3D63621FDD5967603A824114Da95cc3A35107', rinkebyRINKEBYMASTER1VatAbi, defaultSigner),
             "Multicall": getContract('0x86d3b107386756208154a5c9100a0d4557280747', rinkebyRINKEBYMASTER1MulticallAbi, defaultSigner),
             "FakeOutbox": getContract('0x4A2D3d40c14c10Df50a15A3f1359Fb0F5C893899', rinkebyRINKEBYMASTER1FakeOutboxAbi, defaultSigner),
-            "Outbox": getContract('0x2360A33905dc1c72b12d975d975F42BaBdcef9F3', rinkebyRINKEBYMASTER1OutboxAbi, defaultSigner),
             "BasicRelay": getContract('0xC35787975484A858B878032B045B6E0B6EfE2e2c', rinkebyRINKEBYMASTER1BasicRelayAbi, defaultSigner),
             "TrustedRelay": getContract('0xef4dF54E711e0d42754a12e85fD4186f8fF2c7A7', rinkebyRINKEBYMASTER1TrustedRelayAbi, defaultSigner),
             "Dai": getContract('0x17B729a6Ac1f265090cbb4AecBdd53E34664C00e', rinkebyRINKEBYMASTER1DaiAbi, defaultSigner),
@@ -93,7 +90,6 @@ export function getGoerliSdk(defaultSigner) {
             "Vat": getContract('0x293D5AA7F26EF9A687880C4501871632d1015A82', goerliETHGOERAVatAbi, defaultSigner),
             "Multicall": getContract('0xb8c864B60e9467398800Df34da39BF4f0c459461', goerliETHGOERAMulticallAbi, defaultSigner),
             "FakeOutbox": getContract('0x95637Cabe684a324A8225C4b6Ce880D70074938d', goerliETHGOERAFakeOutboxAbi, defaultSigner),
-            "Outbox": getContract('0x45Af9Ed1D03703e480CE7d328fB684bb67DA5049', goerliETHGOERAOutboxAbi, defaultSigner),
             "BasicRelay": getContract('0x0Cb8747982d99f4b8640EE27330ADD0c2b54d0e6', goerliETHGOERABasicRelayAbi, defaultSigner),
             "TrustedRelay": getContract('0xB23Ab27F7B59B718ea1eEF536F66e1Db3F18ac8E', goerliETHGOERATrustedRelayAbi, defaultSigner),
             "Dai": getContract('0x0089Ed33ED517F58a064D0ef56C9E89Dc01EE9A2', goerliETHGOERADaiAbi, defaultSigner),

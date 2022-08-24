@@ -342,20 +342,15 @@ export class TeleportBridge {
   }
 
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {
-    if (this.srcDomain === 'RINKEBY-SLAVE-ARBITRUM-1') {
+    if (this.srcDomain === 'ARB-GOER-A') {
       if (this.settings.useFakeArbitrumOutbox) return true
-      return await isArbitrumMessageInOutbox(
-        txHash,
-        this.dstDomain as ArbitrumDstDomainId,
-        this.srcDomainProvider,
-        this.dstDomainProvider,
-      )
+      return await isArbitrumMessageInOutbox(txHash, this.srcDomainProvider, this.dstDomainProvider)
     }
     return false
   }
 
   public async mintWithoutOracles(sender: Signer, txHash: string, overrides?: Overrides): Promise<ContractTransaction> {
-    if (this.srcDomain === 'RINKEBY-SLAVE-ARBITRUM-1') {
+    if (this.srcDomain === 'ARB-GOER-A') {
       return await relayArbitrumMessage(
         txHash,
         sender.connect(this.dstDomainProvider),

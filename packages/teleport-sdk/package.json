@@ -23,7 +23,7 @@
   },
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@arbitrum/sdk": "1.1.2",
+    "@arbitrum/sdk": "^2.0.15",
     "axios": "^0.26.0",
     "ethers": "^5.5.4",
     "ts-essentials": "^9.1.2"
