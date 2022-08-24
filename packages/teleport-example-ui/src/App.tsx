@@ -13,7 +13,7 @@ import { useMainButton } from './useMainButton'
 import { ConnectWalletButton } from './wallet/ConnectWalletButton'
 import { useConnectedWallet } from './wallet/useConnectedWallet'
 
-const SRC_CHAIN_IDS = [421611, 421613, 69, 420]
+const SRC_CHAIN_IDS = [421613, 420]
 const SRC_CHAINID_TO_DST_CHAINID: { [key in SrcDomainChainId]: DstDomainChainId } = {
   69: 42,
   421611: 4,
