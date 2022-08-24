@@ -2,9 +2,10 @@ import "dotenv/config";
 
 import { RetryProvider, RetryWallet } from "../src";
 import { Wallet, providers } from "ethers";
+import { assert } from "chai";
 
 describe("RetryProvider", () => {
-  it("works", async () => {
+  it("retries calls", async () => {
     const provider = new RetryProvider(5, process.env.GOERLI_RPC_URL);
     const validImpl = provider.prepareRequest.bind(provider);
     let corrupt = true;
@@ -24,7 +25,7 @@ describe("RetryProvider", () => {
   });
 });
 describe("RetryWallet", () => {
-  it("works", async () => {
+  it("retries sendTransaction", async () => {
     const txs = [];
     for (let i = 0; i < 3; i++) {
       const provider = new providers.JsonRpcProvider(
@@ -38,5 +39,16 @@ describe("RetryWallet", () => {
       txs.push(tx);
     }
     await Promise.all(txs.map(async (tx) => (await tx).wait()));
+  });
+
+  it("can connect to new provider", async () => {
+    const provider = new providers.JsonRpcProvider(process.env.GOERLI_RPC_URL);
+    const user = new RetryWallet(10, process.env.TEST_PRIVKEY!, provider);
+    const newProvider = new providers.JsonRpcProvider(
+      process.env.MAINNET_RPC_URL
+    );
+    const newUser = user.connect(newProvider);
+    assert(newUser.provider === newProvider);
+    assert(newUser.maxAttempts === user.maxAttempts);
   });
 });
