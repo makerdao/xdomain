@@ -15,6 +15,9 @@ class RetryWallet extends ethers_1.Wallet {
         super(privateKey, provider);
         this.maxAttempts = attempts;
     }
+    connect(provider) {
+        return new RetryWallet(this.maxAttempts, this.privateKey, provider);
+    }
     // Populates all fields in a transaction, signs it and sends it to the network
     async sendTransaction(transaction) {
         let attempt = 0;

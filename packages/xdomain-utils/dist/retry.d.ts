@@ -5,6 +5,7 @@ export declare function delay(time: number): Promise<void>;
 export declare class RetryWallet extends Wallet {
     maxAttempts: number;
     constructor(attempts: number, privateKey: BytesLike | ExternallyOwnedAccount | SigningKey, provider?: providers.Provider);
+    connect(provider: providers.Provider): RetryWallet;
     sendTransaction(transaction: Deferrable<providers.TransactionRequest>): Promise<providers.TransactionResponse>;
     private handleError;
 }

@@ -23,6 +23,10 @@ export class RetryWallet extends Wallet {
     this.maxAttempts = attempts;
   }
 
+  connect(provider: providers.Provider): RetryWallet {
+    return new RetryWallet(this.maxAttempts, this.privateKey, provider);
+  }
+
   // Populates all fields in a transaction, signs it and sends it to the network
   async sendTransaction(
     transaction: Deferrable<providers.TransactionRequest>
