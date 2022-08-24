@@ -15,7 +15,8 @@ import {
   initRelayedTeleport,
   initTeleport,
   mintWithOracles,
-  relayMintWithOracles,
+  requestRelay,
+  waitForRelayTask,
 } from '../src/index'
 import { fundTestWallet } from '../test/faucet'
 
@@ -134,7 +135,7 @@ export async function demo(
   if (RELAY_MINT) {
     console.log(`Relay Fees: ${formatEther(relayFee || '0')} DAI.`)
     console.log(`\nRelaying minting of ${formatEther(mintable)} DAI on ${dstDomain} ...`)
-    const mintTxHash = await relayMintWithOracles({
+    const taskId = await requestRelay({
       receiver: sender,
       srcDomain,
       teleportGUID: teleportGUID!,
@@ -143,6 +144,7 @@ export async function demo(
       relayFee: relayFee || '0',
       relayAddress,
     })
+    const mintTxHash = await waitForRelayTask({ srcDomain, taskId })
     console.log(`Relayed minting tx submitted: ${dstDomainEtherscan}${mintTxHash}`)
     const dstProvider = new providers.JsonRpcProvider(DEFAULT_RPC_URLS[getDefaultDstDomain(srcDomain)])
     await dstProvider.getTransactionReceipt(mintTxHash)

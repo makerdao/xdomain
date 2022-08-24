@@ -74,7 +74,13 @@ export declare function requestFaucetDai(opts: {
     overrides?: Overrides;
 } & DomainContext): ReturnType<TeleportBridge['requestFaucetDai']>;
 export declare function mintWithOracles(opts: MintWithOraclesOpts & DomainContext): ReturnType<TeleportBridge['mintWithOracles']>;
-export interface RelayMintWithOraclesOpts {
+export interface WaitForMintOpts {
+    teleportGUIDorGUIDHash: TeleportGUID | string;
+    pollingIntervalMs?: number;
+    timeoutMs?: number;
+}
+export declare function waitForMint(opts: WaitForMintOpts & DomainContext): ReturnType<TeleportBridge['waitForMint']>;
+export interface RequestRelayOpts {
     receiver: Signer;
     teleportGUID: TeleportGUID;
     signatures: string;
@@ -84,11 +90,14 @@ export interface RelayMintWithOraclesOpts {
     to?: string;
     data?: string;
     relayAddress?: string;
+    onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void;
+}
+export declare function requestRelay(opts: RequestRelayOpts & DomainContext): ReturnType<TeleportBridge['requestRelay']>;
+export declare type RelayMintWithOraclesOpts = RequestRelayOpts & {
     pollingIntervalMs?: number;
     timeoutMs?: number;
-    onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void;
     onRelayTaskCreated?: (taskId: string) => void;
-}
+};
 export declare function relayMintWithOracles(opts: RelayMintWithOraclesOpts & DomainContext): ReturnType<TeleportBridge['relayMintWithOracles']>;
 export declare function waitForRelayTask(opts: {
     taskId: string;

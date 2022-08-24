@@ -4,6 +4,7 @@ export * from './attestations';
 export * from './bridge';
 export * from './domains';
 export * from './guid';
+export * from './mint';
 export * from './multicall';
 export * from './relay';
 export * from './utils';

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.waitForRelay = exports.getRelayGasFee = exports.waitForRelayTaskConfirmation = void 0;
+exports.requestAndWaitForRelay = exports.signAndCreateRelayTask = exports.getRelayGasFee = exports.waitForRelayTaskConfirmation = void 0;
 const axios_1 = __importDefault(require("axios"));
 const ethers_1 = require("ethers");
 const utils_1 = require("ethers/lib/utils");
@@ -190,16 +190,20 @@ async function getRelayGasFee(relay, isHighPriority, relayParams) {
     return estimatedFee;
 }
 exports.getRelayGasFee = getRelayGasFee;
-async function waitForRelay(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated) {
-    pollingIntervalMs || (pollingIntervalMs = DEFAULT_POLLING_INTERVAL_MS);
+async function signAndCreateRelayTask(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, onPayloadSigned) {
     if (ethers_1.BigNumber.from(teleportGUID.amount).lt(relayFee)) {
         throw new Error(`Amount transferred (${(0, utils_1.formatEther)(teleportGUID.amount)} DAI) must be greater than relay fee (${(0, utils_1.formatEther)(relayFee)} DAI)`);
     }
     const relayData = await getRelayCalldata(relay.interface, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, onPayloadSigned);
     const taskId = await createRelayTask(relay, relayData, getEstimatedRelayGasLimit(relay));
+    return taskId;
+}
+exports.signAndCreateRelayTask = signAndCreateRelayTask;
+async function requestAndWaitForRelay(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated) {
+    const taskId = await signAndCreateRelayTask(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, onPayloadSigned);
     onRelayTaskCreated === null || onRelayTaskCreated === void 0 ? void 0 : onRelayTaskCreated(taskId);
     const txHash = await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs);
     return txHash;
 }
-exports.waitForRelay = waitForRelay;
+exports.requestAndWaitForRelay = requestAndWaitForRelay;
 //# sourceMappingURL=relay.js.map

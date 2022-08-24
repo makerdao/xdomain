@@ -82,16 +82,24 @@ class TeleportBridge {
         const oracleAuth = sdk.TeleportOracleAuth;
         return await _optionallySendTx(shouldSendTx, oracleAuth, 'requestMint', [teleportGUID, signatures, maxFeePercentage || 0, operatorFee || 0], overrides);
     }
+    async waitForMint(teleportGUIDorGUIDHash, pollingIntervalMs, timeoutMs) {
+        return await (0, _1.waitForMintConfirmation)(this.srcDomain, this.dstDomain, this.dstDomainProvider, teleportGUIDorGUIDHash, pollingIntervalMs, timeoutMs);
+    }
     async getRelayFee(isHighPriority, relayParams, relayAddress) {
         const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
         return await (0, _1.getRelayGasFee)(relay, isHighPriority, relayParams);
     }
-    async relayMintWithOracles(receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, relayAddress, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated) {
+    async requestRelay(receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, relayAddress, onPayloadSigned) {
         const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
-        return await (0, _1.waitForRelay)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated);
+        return await (0, _1.signAndCreateRelayTask)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, onPayloadSigned);
     }
     async waitForRelayTask(taskId, pollingIntervalMs, timeoutMs) {
         return await (0, _1.waitForRelayTaskConfirmation)(taskId, pollingIntervalMs, timeoutMs);
+    }
+    // TODO: deprecate
+    async relayMintWithOracles(receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, relayAddress, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated) {
+        const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
+        return await (0, _1.requestAndWaitForRelay)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated);
     }
     async canMintWithoutOracle(txHash) {
         if (this.srcDomain === 'RINKEBY-SLAVE-ARBITRUM-1') {

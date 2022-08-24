@@ -147,7 +147,17 @@ export function mintWithOracles(
   )
 }
 
-export interface RelayMintWithOraclesOpts {
+export interface WaitForMintOpts {
+  teleportGUIDorGUIDHash: TeleportGUID | string
+  pollingIntervalMs?: number
+  timeoutMs?: number
+}
+
+export function waitForMint(opts: WaitForMintOpts & DomainContext): ReturnType<TeleportBridge['waitForMint']> {
+  return getTeleportBridge(opts).waitForMint(opts.teleportGUIDorGUIDHash, opts.pollingIntervalMs, opts.timeoutMs)
+}
+
+export interface RequestRelayOpts {
   receiver: Signer
   teleportGUID: TeleportGUID
   signatures: string
@@ -157,9 +167,27 @@ export interface RelayMintWithOraclesOpts {
   to?: string
   data?: string
   relayAddress?: string
+  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void
+}
+
+export function requestRelay(opts: RequestRelayOpts & DomainContext): ReturnType<TeleportBridge['requestRelay']> {
+  return getTeleportBridge(opts).requestRelay(
+    opts.receiver,
+    opts.teleportGUID,
+    opts.signatures,
+    opts.relayFee,
+    opts.maxFeePercentage,
+    opts.expiry,
+    opts.to,
+    opts.data,
+    opts.relayAddress,
+    opts.onPayloadSigned,
+  )
+}
+
+export type RelayMintWithOraclesOpts = RequestRelayOpts & {
   pollingIntervalMs?: number
   timeoutMs?: number
-  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void
   onRelayTaskCreated?: (taskId: string) => void
 }
 

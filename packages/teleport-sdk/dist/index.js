@@ -20,6 +20,7 @@ __exportStar(require("./attestations"), exports);
 __exportStar(require("./bridge"), exports);
 __exportStar(require("./domains"), exports);
 __exportStar(require("./guid"), exports);
+__exportStar(require("./mint"), exports);
 __exportStar(require("./multicall"), exports);
 __exportStar(require("./relay"), exports);
 __exportStar(require("./utils"), exports);

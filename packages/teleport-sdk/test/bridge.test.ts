@@ -30,9 +30,10 @@ import {
   initTeleport,
   mintWithOracles,
   mintWithoutOracles,
-  relayMintWithOracles,
+  requestRelay,
   TeleportBridge,
   TeleportGUID,
+  waitForMint,
   waitForRelayTask,
 } from '../src'
 import { fundTestWallet } from './faucet'
@@ -94,12 +95,6 @@ describe('TeleportBridge', () => {
       )
     }
 
-    it('should auto-fill default RPC URLs and dstDomain (kovan-optimism)', () => {
-      testDefaults('KOVAN-SLAVE-OPTIMISM-1')
-    })
-    it('should auto-fill default RPC URLs and dstDomain (rinkeby-arbitrum)', () => {
-      testDefaults('RINKEBY-SLAVE-ARBITRUM-1')
-    })
     it('should auto-fill default RPC URLs and dstDomain (goerli-optimism)', () => {
       testDefaults('OPT-GOER-A')
     })
@@ -173,22 +168,6 @@ describe('TeleportBridge', () => {
   }
 
   describe('Init Teleport', async () => {
-    it.skip('should initiate withdrawal (kovan-optimism)', async () => {
-      await testInitTeleport({ srcDomain: 'optimism-testnet' })
-    })
-
-    it.skip('should initiate withdrawal (kovan-optimism, build-only)', async () => {
-      await testInitTeleport({ srcDomain: 'optimism-testnet', buildOnly: true })
-    })
-
-    it.skip('should initiate withdrawal (rinkeby-arbitrum)', async () => {
-      await testInitTeleport({ srcDomain: 'arbitrum-testnet' })
-    })
-
-    it.skip('should initiate withdrawal (rinkeby-arbitrum, wrapper)', async () => {
-      await testInitTeleport({ srcDomain: 'arbitrum-testnet', useWrapper: true })
-    })
-
     it.skip('should initiate withdrawal (goerli-optimism)', async () => {
       await testInitTeleport({ srcDomain: 'optimism-goerli-testnet' })
     })
@@ -261,18 +240,6 @@ describe('TeleportBridge', () => {
   }
 
   describe('Get Attestations', async () => {
-    it.skip('should produce attestations (kovan-optimism)', async () => {
-      await testGetAttestations({ srcDomain: 'optimism-testnet' })
-    })
-
-    it.skip('should produce attestations (rinkeby-arbitrum)', async () => {
-      await testGetAttestations({ srcDomain: 'arbitrum-testnet' })
-    })
-
-    it.skip('should produce attestations (rinkeby-arbitrum, wrapper)', async () => {
-      await testGetAttestations({ srcDomain: 'arbitrum-testnet', useWrapper: true })
-    })
-
     it.skip('should produce attestations (goerli-optimism)', async () => {
       await testGetAttestations({ srcDomain: 'optimism-goerli-testnet' })
     })
@@ -285,40 +252,42 @@ describe('TeleportBridge', () => {
       await testGetAttestations({ srcDomain: 'arbitrum-goerli-testnet', useWrapper: true })
     })
 
-    it('should produce attestations for a tx initiating multiple withdrawals (rinkeby-arbitrum, wrapper)', async () => {
-      const srcDomain: DomainDescription = 'arbitrum-testnet'
+    // TODO: recreate following test on arbitrum-goerli-testnet or optimism-goerli-testnet
+    //
+    // it('should produce attestations for a tx initiating multiple withdrawals (rinkeby-arbitrum, wrapper)', async () => {
+    //   const srcDomain: DomainDescription = 'arbitrum-testnet'
 
-      const { l2User, dstDomain } = await getTestWallets(srcDomain)
-      const dai = new Contract(
-        '0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15',
-        ['function approve(address,uint256)'],
-        l2User,
-      )
-      // this L2 contract can initiate two teleports
-      const multiWorm = new Contract(
-        '0xc905d0b8b1993d37e8a7058f24fb9a677caf1479',
-        ['function initiateWormhole(bytes32,address,uint128,uint256)'],
-        l2User,
-      )
-      await (await dai.approve(multiWorm.address, ethers.constants.MaxUint256)).wait()
-      const tx = await multiWorm.initiateWormhole(formatBytes32String(dstDomain), l2User.address, 1, 1)
-      const txHash = tx.hash
-      const txReceipt = await tx.wait()
-      const guids = (txReceipt.logs as { topics: string[]; data: string }[])
-        .filter(({ topics }) => topics[0] === '0x46d7dfb96bf7f7e8bb35ab641ff4632753a1411e3c8b30bec93e045e22f576de')
-        .map(({ data }) => decodeTeleportData(data))
+    //   const { l2User, dstDomain } = await getTestWallets(srcDomain)
+    //   const dai = new Contract(
+    //     '0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15',
+    //     ['function approve(address,uint256)'],
+    //     l2User,
+    //   )
+    //   // this L2 contract can initiate two teleports
+    //   const multiWorm = new Contract(
+    //     '0xc905d0b8b1993d37e8a7058f24fb9a677caf1479',
+    //     ['function initiateWormhole(bytes32,address,uint128,uint256)'],
+    //     l2User,
+    //   )
+    //   await (await dai.approve(multiWorm.address, ethers.constants.MaxUint256)).wait()
+    //   const tx = await multiWorm.initiateWormhole(formatBytes32String(dstDomain), l2User.address, 1, 1)
+    //   const txHash = tx.hash
+    //   const txReceipt = await tx.wait()
+    //   const guids = (txReceipt.logs as { topics: string[]; data: string }[])
+    //     .filter(({ topics }) => topics[0] === '0x46d7dfb96bf7f7e8bb35ab641ff4632753a1411e3c8b30bec93e045e22f576de')
+    //     .map(({ data }) => decodeTeleportData(data))
 
-      // check that we can get attestation for the first teleport
-      const { teleportGUID: guid } = await testGetAttestations({ srcDomain, txHash, teleportGUID: guids[0] })
-      expect(guid).to.deep.equal(guids[0])
+    //   // check that we can get attestation for the first teleport
+    //   const { teleportGUID: guid } = await testGetAttestations({ srcDomain, txHash, teleportGUID: guids[0] })
+    //   expect(guid).to.deep.equal(guids[0])
 
-      // check that we can get attestation for the second teleport
-      const { teleportGUID: guid2 } = await testGetAttestations({ srcDomain, txHash, teleportGUID: guids[1] })
-      expect(guid2).to.deep.equal(guids[1])
-    })
+    //   // check that we can get attestation for the second teleport
+    //   const { teleportGUID: guid2 } = await testGetAttestations({ srcDomain, txHash, teleportGUID: guids[1] })
+    //   expect(guid2).to.deep.equal(guids[1])
+    // })
 
-    it('should throw when attestations timeout (kovan-optimism)', async () => {
-      await expect(testGetAttestations({ srcDomain: 'optimism-testnet', timeoutMs: 1 })).to.be.rejectedWith(
+    it('should throw when attestations timeout (goerli-optimism)', async () => {
+      await expect(testGetAttestations({ srcDomain: 'optimism-goerli-testnet', timeoutMs: 1 })).to.be.rejectedWith(
         'Did not receive required number of signatures',
       )
     })
@@ -372,24 +341,16 @@ describe('TeleportBridge', () => {
       expect(relayFee).to.eq(1)
     }
 
-    it('should return fees and mintable amounts (kovan-optimism, with teleportGUID)', async () => {
-      await testGetAmountsForTeleportGUID({ srcDomain: 'optimism-testnet' })
-    })
-
-    it('should return fees and mintable amounts (kovan-optimism, wrapper, with teleportGUID)', async () => {
-      await testGetAmountsForTeleportGUID({ srcDomain: 'optimism-testnet', useWrapper: true })
-    })
-
-    it('should return fees and mintable amounts (rinkeby-arbitrum, without teleportGUID)', async () => {
-      await testGetAmounts({ srcDomain: 'arbitrum-testnet' })
-    })
-
-    it('should return fees and mintable amounts (rinkeby-arbitrum, wrapper, without teleportGUID)', async () => {
-      await testGetAmounts({ srcDomain: 'arbitrum-testnet', useWrapper: true })
+    it('should return fees and mintable amounts (goerli-optimism, with teleportGUID)', async () => {
+      await testGetAmountsForTeleportGUID({ srcDomain: 'optimism-goerli-testnet' })
     })
 
     it('should return fees and mintable amounts (goerli-optimism, wrapper, with teleportGUID)', async () => {
       await testGetAmountsForTeleportGUID({ srcDomain: 'optimism-goerli-testnet', useWrapper: true })
+    })
+
+    it('should return fees and mintable amounts (goerli-arbitrum, without teleportGUID)', async () => {
+      await testGetAmounts({ srcDomain: 'arbitrum-goerli-testnet' })
     })
 
     it('should return fees and mintable amounts (goerli-arbitrum, wrapper, without teleportGUID)', async () => {
@@ -403,12 +364,14 @@ describe('TeleportBridge', () => {
     useWrapper,
     usePreciseRelayFeeEstimation,
     buildOnly,
+    waitForRelayTaskConfirmation,
   }: {
     srcDomain: DomainDescription
     useRelay?: boolean | 'BasicRelay' | 'TrustedRelay'
     useWrapper?: boolean
     usePreciseRelayFeeEstimation?: boolean
     buildOnly?: boolean
+    waitForRelayTaskConfirmation?: boolean
   }) {
     const { l1User, dstDomain } = await getTestWallets(srcDomain)
     const sender = buildOnly ? undefined : l1User
@@ -438,15 +401,10 @@ describe('TeleportBridge', () => {
 
     const initialDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
 
-    let resolveRelayTaskCreationPromise: (value: string) => void
-    const relayTaskCreationPromise = new Promise<string>((resolve) => {
-      resolveRelayTaskCreationPromise = resolve
-    })
-
     if (useRelay) {
       let txHash
       if (useWrapper) {
-        txHash = await relayMintWithOracles({
+        const taskId = await requestRelay({
           srcDomain,
           receiver: l1User,
           teleportGUID: teleportGUID!,
@@ -459,15 +417,16 @@ describe('TeleportBridge', () => {
             expect(r).to.satisfy((h: string) => h.startsWith('0x'))
             expect(s).to.satisfy((h: string) => h.startsWith('0x'))
           },
-          onRelayTaskCreated: (taskId) => {
-            console.log(`Relay taskId=${taskId}`)
-            void waitForRelayTask({ taskId, srcDomain }).then((txHash) => {
-              resolveRelayTaskCreationPromise(txHash)
-            })
-          },
         })
+        console.log(`Relay taskId=${taskId}`)
+        txHash = await waitForMint({ srcDomain, teleportGUIDorGUIDHash: teleportGUID })
+
+        if (waitForRelayTaskConfirmation === true) {
+          const relayTaskTxHash = await waitForRelayTask({ srcDomain, taskId })
+          expect(relayTaskTxHash).to.be.eq(txHash)
+        }
       } else {
-        txHash = await bridge!.relayMintWithOracles(
+        const taskId = await bridge!.requestRelay(
           l1User,
           teleportGUID!,
           signatures,
@@ -477,28 +436,24 @@ describe('TeleportBridge', () => {
           undefined,
           undefined,
           relayAddress,
-          undefined,
-          undefined,
           (payload, r, s) => {
             expect(payload).to.satisfy((h: string) => h.startsWith('0x'))
             expect(r).to.satisfy((h: string) => h.startsWith('0x'))
             expect(s).to.satisfy((h: string) => h.startsWith('0x'))
           },
-          (taskId) => {
-            console.log(`Relay taskId=${taskId}`)
-            void waitForRelayTask({ taskId, srcDomain }).then((txHash) => {
-              resolveRelayTaskCreationPromise(txHash)
-            })
-          },
         )
+        console.log(`Relay taskId=${taskId}`)
+        txHash = await bridge!.waitForMint(teleportGUID)
+
+        if (waitForRelayTaskConfirmation === true) {
+          const relayTaskTxHash = await bridge!.waitForRelayTask(taskId)
+          expect(relayTaskTxHash).to.be.eq(txHash)
+        }
       }
 
       expect(txHash)
         .to.have.lengthOf(66)
         .and.satisfy((h: string) => h.startsWith('0x'))
-
-      const callbackTxHash = await relayTaskCreationPromise
-      expect(callbackTxHash).to.be.eq(txHash)
 
       return
     }
@@ -543,53 +498,29 @@ describe('TeleportBridge', () => {
   }
 
   describe('Direct mints', async () => {
-    it('should mint with oracles (kovan-optimism)', async () => {
-      await testMintWithOracles({ srcDomain: 'optimism-testnet' })
+    it('should mint with oracles (goerli-optimism, build-only)', async () => {
+      await testMintWithOracles({ srcDomain: 'optimism-goerli-testnet', buildOnly: true })
     })
 
-    it('should mint with oracles (kovan-optimism, build-only)', async () => {
-      await testMintWithOracles({ srcDomain: 'optimism-testnet', buildOnly: true })
-    })
-
-    it('should mint with oracles (rinkeby-arbitrum)', async () => {
-      await testMintWithOracles({ srcDomain: 'arbitrum-testnet' })
-    })
-
-    it('should mint with oracles (rinkeby-arbitrum, wrapper)', async () => {
-      await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useWrapper: true })
-    })
-
-    it('should mint with oracles (goerli-arbitrum, wrapper)', async () => {
-      await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet', useWrapper: true })
+    it('should mint with oracles (goerli-optimism)', async () => {
+      await testMintWithOracles({ srcDomain: 'optimism-goerli-testnet' })
     })
 
     it('should mint with oracles (goerli-optimism, wrapper)', async () => {
       await testMintWithOracles({ srcDomain: 'optimism-goerli-testnet', useWrapper: true })
     })
+
+    it('should mint with oracles (goerli-arbitrum)', async () => {
+      await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet' })
+    })
+
+    it('should mint with oracles (goerli-arbitrum, wrapper)', async () => {
+      await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet', useWrapper: true })
+    })
   })
 
   describe('Relayed mints', async () => {
     async function testRelayMint({ useRelay }: { useRelay: boolean | 'BasicRelay' | 'TrustedRelay' }) {
-      it('should relay a mint with oracles (rinkeby-arbitrum, precise relayFee)', async () => {
-        await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay, usePreciseRelayFeeEstimation: true })
-      })
-
-      it('should relay a mint with oracles (rinkeby-arbitrum, non-precise relayFee)', async () => {
-        await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay })
-      })
-
-      it('should relay a mint with oracles (rinkeby-arbitrum, wrapper, non-precise relayFee)', async () => {
-        await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useRelay, useWrapper: true })
-      })
-
-      it('should relay a mint with oracles (kovan-optimism, precise relayFee)', async () => {
-        await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay, usePreciseRelayFeeEstimation: true })
-      })
-
-      it('should relay a mint with oracles (kovan-optimism, non-precise relayFee)', async () => {
-        await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay })
-      })
-
       it('should relay a mint with oracles (goerli-optimism, precise relayFee)', async () => {
         await testMintWithOracles({
           srcDomain: 'optimism-goerli-testnet',
@@ -612,6 +543,18 @@ describe('TeleportBridge', () => {
 
       it('should relay a mint with oracles (goerli-arbitrum, non-precise relayFee)', async () => {
         await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet', useRelay })
+      })
+
+      it('should relay a mint with oracles (goerli-arbitrum, wrapper, non-precise relayFee)', async () => {
+        await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet', useRelay, useWrapper: true })
+      })
+
+      it('should relay a mint with oracles (goerli-arbitrum, non-precise relayFee, waitForRelayTask)', async () => {
+        await testMintWithOracles({
+          srcDomain: 'arbitrum-goerli-testnet',
+          useRelay,
+          waitForRelayTaskConfirmation: true,
+        })
       })
     }
 
@@ -666,25 +609,25 @@ describe('TeleportBridge', () => {
       }
     }
 
-    it('should mint without oracles (fake outbox, rinkeby-arbitrum)', async () => {
-      await testMintWithoutOracles({ srcDomain: 'arbitrum-testnet', settings: { useFakeArbitrumOutbox: true } })
+    it('should mint without oracles (fake outbox, goerli-arbitrum)', async () => {
+      await testMintWithoutOracles({ srcDomain: 'arbitrum-goerli-testnet', settings: { useFakeArbitrumOutbox: true } })
     })
 
-    it('should mint without oracles (fake outbox, rinkeby-arbitrum, wrapper)', async () => {
+    it('should mint without oracles (fake outbox, goerli-arbitrum, wrapper)', async () => {
       await testMintWithoutOracles({
-        srcDomain: 'arbitrum-testnet',
+        srcDomain: 'arbitrum-goerli-testnet',
         settings: { useFakeArbitrumOutbox: true },
         useWrapper: true,
       })
     })
 
-    it('should not allow minting without oracles before end of security period (real outbox, rinkeby-arbitrum)', async () => {
-      await testMintWithoutOracles({ srcDomain: 'arbitrum-testnet', settings: { useFakeArbitrumOutbox: false } })
+    it('should not allow minting without oracles before end of security period (real outbox, goerli-arbitrum)', async () => {
+      await testMintWithoutOracles({ srcDomain: 'arbitrum-goerli-testnet', settings: { useFakeArbitrumOutbox: false } })
     })
 
-    it('should not allow minting without oracles before end of security period (real outbox, rinkeby-arbitrum, wrapper)', async () => {
+    it('should not allow minting without oracles before end of security period (real outbox, goerli-arbitrum, wrapper)', async () => {
       await testMintWithoutOracles({
-        srcDomain: 'arbitrum-testnet',
+        srcDomain: 'arbitrum-goerli-testnet',
         settings: { useFakeArbitrumOutbox: false },
         useWrapper: true,
       })

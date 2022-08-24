@@ -13,4 +13,5 @@ export declare function getRelayGasFee(relay: Relay, isHighPriority?: boolean, r
     to?: string;
     data?: string;
 }): Promise<string>;
-export declare function waitForRelay(relay: Relay, receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, pollingIntervalMs?: number, timeoutMs?: number, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void, onRelayTaskCreated?: (taskId: string) => void): Promise<string>;
+export declare function signAndCreateRelayTask(relay: Relay, receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void): Promise<string>;
+export declare function requestAndWaitForRelay(relay: Relay, receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, pollingIntervalMs?: number, timeoutMs?: number, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void, onRelayTaskCreated?: (taskId: string) => void): Promise<string>;

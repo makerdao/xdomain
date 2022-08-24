@@ -254,7 +254,7 @@ export async function getRelayGasFee(
   return estimatedFee
 }
 
-export async function waitForRelay(
+export async function signAndCreateRelayTask(
   relay: Relay,
   receiver: Signer,
   teleportGUID: TeleportGUID,
@@ -264,13 +264,8 @@ export async function waitForRelay(
   expiry?: BigNumberish,
   to?: string,
   data?: string,
-  pollingIntervalMs?: number,
-  timeoutMs?: number,
   onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
-  onRelayTaskCreated?: (taskId: string) => void,
 ): Promise<string> {
-  pollingIntervalMs ||= DEFAULT_POLLING_INTERVAL_MS
-
   if (BigNumber.from(teleportGUID.amount).lt(relayFee)) {
     throw new Error(
       `Amount transferred (${formatEther(teleportGUID.amount)} DAI) must be greater than relay fee (${formatEther(
@@ -292,6 +287,36 @@ export async function waitForRelay(
     onPayloadSigned,
   )
   const taskId = await createRelayTask(relay, relayData, getEstimatedRelayGasLimit(relay))
+  return taskId
+}
+
+export async function requestAndWaitForRelay(
+  relay: Relay,
+  receiver: Signer,
+  teleportGUID: TeleportGUID,
+  signatures: string,
+  relayFee: BigNumberish,
+  maxFeePercentage?: BigNumberish,
+  expiry?: BigNumberish,
+  to?: string,
+  data?: string,
+  pollingIntervalMs?: number,
+  timeoutMs?: number,
+  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
+  onRelayTaskCreated?: (taskId: string) => void,
+): Promise<string> {
+  const taskId = await signAndCreateRelayTask(
+    relay,
+    receiver,
+    teleportGUID,
+    signatures,
+    relayFee,
+    maxFeePercentage,
+    expiry,
+    to,
+    data,
+    onPayloadSigned,
+  )
   onRelayTaskCreated?.(taskId)
   const txHash = await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)
   return txHash

@@ -55,6 +55,7 @@ export declare class TeleportBridge {
     }>;
     requestFaucetDai(sender: Signer, overrides?: Overrides): Promise<ContractTransaction>;
     mintWithOracles(teleportGUID: TeleportGUID, signatures: string, maxFeePercentage?: BigNumberish, operatorFee?: BigNumberish, sender?: Signer, overrides?: Overrides): Promise<Call>;
+    waitForMint(teleportGUIDorGUIDHash: TeleportGUID | string, pollingIntervalMs?: number, timeoutMs?: number): Promise<string>;
     getRelayFee(isHighPriority?: boolean, relayParams?: {
         receiver: Signer;
         teleportGUID: TeleportGUID;
@@ -64,8 +65,9 @@ export declare class TeleportBridge {
         to?: string;
         data?: string;
     }, relayAddress?: string): Promise<string>;
-    relayMintWithOracles(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, relayAddress?: string, pollingIntervalMs?: number, timeoutMs?: number, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void, onRelayTaskCreated?: (taskId: string) => void): Promise<string>;
+    requestRelay(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, relayAddress?: string, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void): Promise<string>;
     waitForRelayTask(taskId: string, pollingIntervalMs?: number, timeoutMs?: number): Promise<string>;
+    relayMintWithOracles(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, relayAddress?: string, pollingIntervalMs?: number, timeoutMs?: number, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void, onRelayTaskCreated?: (taskId: string) => void): Promise<string>;
     canMintWithoutOracle(txHash: string): Promise<boolean>;
     mintWithoutOracles(sender: Signer, txHash: string, overrides?: Overrides): Promise<ContractTransaction>;
 }

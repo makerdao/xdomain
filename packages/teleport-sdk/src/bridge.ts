@@ -15,9 +15,11 @@ import {
   isArbitrumMessageInOutbox,
   Relay,
   relayArbitrumMessage,
+  requestAndWaitForRelay,
+  signAndCreateRelayTask,
   TeleportGUID,
   waitForAttestations,
-  waitForRelay,
+  waitForMintConfirmation,
   waitForRelayTaskConfirmation,
 } from '.'
 
@@ -242,6 +244,21 @@ export class TeleportBridge {
     )
   }
 
+  public async waitForMint(
+    teleportGUIDorGUIDHash: TeleportGUID | string,
+    pollingIntervalMs?: number,
+    timeoutMs?: number,
+  ): Promise<string> {
+    return await waitForMintConfirmation(
+      this.srcDomain,
+      this.dstDomain,
+      this.dstDomainProvider,
+      teleportGUIDorGUIDHash,
+      pollingIntervalMs,
+      timeoutMs,
+    )
+  }
+
   public async getRelayFee(
     isHighPriority?: boolean,
     relayParams?: {
@@ -259,6 +276,38 @@ export class TeleportBridge {
     return await getRelayGasFee(relay, isHighPriority, relayParams)
   }
 
+  public async requestRelay(
+    receiver: Signer,
+    teleportGUID: TeleportGUID,
+    signatures: string,
+    relayFee: BigNumberish,
+    maxFeePercentage?: BigNumberish,
+    expiry?: BigNumberish,
+    to?: string,
+    data?: string,
+    relayAddress?: string,
+    onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
+  ): Promise<string> {
+    const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
+    return await signAndCreateRelayTask(
+      relay,
+      receiver,
+      teleportGUID,
+      signatures,
+      relayFee,
+      maxFeePercentage,
+      expiry,
+      to,
+      data,
+      onPayloadSigned,
+    )
+  }
+
+  public async waitForRelayTask(taskId: string, pollingIntervalMs?: number, timeoutMs?: number): Promise<string> {
+    return await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)
+  }
+
+  // TODO: deprecate
   public async relayMintWithOracles(
     receiver: Signer,
     teleportGUID: TeleportGUID,
@@ -275,7 +324,7 @@ export class TeleportBridge {
     onRelayTaskCreated?: (taskId: string) => void,
   ): Promise<string> {
     const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
-    return await waitForRelay(
+    return await requestAndWaitForRelay(
       relay,
       receiver,
       teleportGUID,
@@ -290,10 +339,6 @@ export class TeleportBridge {
       onPayloadSigned,
       onRelayTaskCreated,
     )
-  }
-
-  public async waitForRelayTask(taskId: string, pollingIntervalMs?: number, timeoutMs?: number): Promise<string> {
-    return await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)
   }
 
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {
