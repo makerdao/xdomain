@@ -1,4 +1,4 @@
-import { notification } from 'antd'
+import { Button, Col, notification, Row } from 'antd'
 import { ethers } from 'ethers'
 import { ContractTransaction } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
@@ -18,8 +18,15 @@ import {
   waitForRelayTask,
 } from 'teleport-sdk'
 
-import { DomainChainId, DomainName, getSdkDomainId } from './domains'
-import { switchChain } from './utils'
+import {
+  DomainChainId,
+  DomainName,
+  getExplorerURL,
+  getSdkDomainId,
+  SRC_CHAINID_TO_DST_CHAINID,
+  SrcDomainChainId,
+} from './domains'
+import { switchChain, truncateAddress } from './utils'
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 
@@ -79,6 +86,32 @@ export function useMainButton(
     setPayloadSigned(false)
     setRelayTxHash(undefined)
     setRelayConfirmed(false)
+  }
+
+  function getTxDescription() {
+    function getTxHashRow(label: string, chainId: DomainChainId, txHash: string) {
+      return (
+        txHash && (
+          <Row>
+            <Col>
+              <span>
+                {label}{' '}
+                <Button type="link" target="_blank" href={getExplorerURL(chainId, txHash)} style={{ paddingLeft: 0 }}>
+                  {truncateAddress(txHash, 8, 0)}
+                </Button>
+              </span>
+            </Col>
+          </Row>
+        )
+      )
+    }
+    const dstChainId = SRC_CHAINID_TO_DST_CHAINID[srcChainId as SrcDomainChainId]
+    return (
+      <>
+        {getTxHashRow('L2 Dai Burned:', srcChainId, burnTxHash!)}
+        {getTxHashRow('L1 Dai Minted:', dstChainId, relayTxHash!)}
+      </>
+    )
   }
 
   function doBurn() {
@@ -147,6 +180,7 @@ export function useMainButton(
           setBurnConfirmed(true)
           notification[notificationType]({
             message: 'Teleport Initiated',
+            description: getTxDescription(),
           })
         } else if (receipt.status === 0) {
           throw new Error(`Dai burn tx failed: receipt=${receipt}`)
@@ -280,6 +314,7 @@ export function useMainButton(
         setRelayConfirmed(true)
         notification.success({
           message: 'Teleport complete!',
+          description: getTxDescription(),
           duration: null,
         })
       }

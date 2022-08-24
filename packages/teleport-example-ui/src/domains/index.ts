@@ -1,3 +1,3 @@
 export * from './DomainBox'
-export * from './DomainName'
+export * from './metadata'
 export * from './sdk'

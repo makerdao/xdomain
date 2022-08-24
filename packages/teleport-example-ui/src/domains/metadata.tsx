@@ -6,18 +6,22 @@ const SRC_DOMAIN_DATA = {
   69: {
     name: 'Optimism Kovan',
     logo: Optimism,
+    explorer: 'https://kovan-optimistic.etherscan.io/tx/',
   },
   420: {
     name: 'Optimism Goerli',
     logo: Optimism,
+    explorer: 'https://blockscout.com/optimism/goerli/tx/',
   },
   421611: {
     name: 'Arbitrum Rinkeby',
     logo: Arbitrum,
+    explorer: 'https://testnet.arbiscan.io/tx/',
   },
   421613: {
     name: 'Arbitrum Goerli',
     logo: Arbitrum,
+    explorer: 'https://goerli-rollup-explorer.arbitrum.io/tx/',
   },
 }
 
@@ -25,14 +29,17 @@ const DST_DOMAIN_DATA = {
   4: {
     name: 'Rinkeby Testnet',
     logo: Ethereum,
+    explorer: 'https://rinkeby.etherscan.io/tx/',
   },
   42: {
     name: 'Kovan Testnet',
     logo: Ethereum,
+    explorer: 'https://kovan.etherscan.io/tx/',
   },
   5: {
     name: 'Goerli Testnet',
     logo: Ethereum,
+    explorer: 'https://goerli.etherscan.io/tx/',
   },
 }
 
@@ -42,6 +49,13 @@ export type SrcDomainChainId = keyof typeof SRC_DOMAIN_DATA
 export type DstDomainChainId = keyof typeof DST_DOMAIN_DATA
 export type DomainChainId = SrcDomainChainId | DstDomainChainId
 
+export const SRC_CHAINID_TO_DST_CHAINID: { [key in SrcDomainChainId]: DstDomainChainId } = {
+  69: 42,
+  421611: 4,
+  420: 5,
+  421613: 5,
+}
+
 export function DomainName({ chainId }: { chainId: DomainChainId }) {
   return (
     <>
@@ -49,4 +63,8 @@ export function DomainName({ chainId }: { chainId: DomainChainId }) {
       {DOMAIN_DATA[chainId].name}
     </>
   )
+}
+
+export function getExplorerURL(chainId: DomainChainId, txHash: string) {
+  return DOMAIN_DATA[chainId].explorer + txHash
 }

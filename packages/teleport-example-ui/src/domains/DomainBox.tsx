@@ -1,6 +1,6 @@
 import { Button, Col, InputNumber, Row, Select } from 'antd'
 
-import { DomainChainId, DomainName } from './DomainName'
+import { DomainChainId, DomainName } from './metadata'
 export function DomainBox({
   isSourceDomain,
   domain,

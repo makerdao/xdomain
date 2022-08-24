@@ -7,19 +7,13 @@ import { useState } from 'react'
 import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
-import { DomainBox, DomainChainId, DstDomainChainId, SrcDomainChainId } from './domains'
+import { DomainBox, DomainChainId, SRC_CHAINID_TO_DST_CHAINID,SrcDomainChainId } from './domains'
 import { useAmounts } from './useAmounts'
 import { useMainButton } from './useMainButton'
 import { ConnectWalletButton } from './wallet/ConnectWalletButton'
 import { useConnectedWallet } from './wallet/useConnectedWallet'
 
 const SRC_CHAIN_IDS = [421613, 420]
-const SRC_CHAINID_TO_DST_CHAINID: { [key in SrcDomainChainId]: DstDomainChainId } = {
-  69: 42,
-  421611: 4,
-  420: 5,
-  421613: 5,
-}
 
 function App() {
   const [warningVisible, setWarningVisible] = useState<boolean>(true)
