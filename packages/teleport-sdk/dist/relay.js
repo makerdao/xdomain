@@ -100,7 +100,7 @@ async function createRelayTask(relay, calldata, gasLimit) {
 }
 let lastTaskLog;
 async function waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e;
     pollingIntervalMs || (pollingIntervalMs = DEFAULT_POLLING_INTERVAL_MS);
     let timeSlept = 0;
     let isExecPending = false;
@@ -111,15 +111,17 @@ async function waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs
             console.log(taskLog);
             lastTaskLog = taskLog;
         }
-        if (((_a = data[0]) === null || _a === void 0 ? void 0 : _a.taskState) === 'ExecSuccess') {
-            const txHash = (_b = data[0].execution) === null || _b === void 0 ? void 0 : _b.transactionHash;
-            if (txHash)
-                return txHash;
-        }
-        else if (((_c = data[0]) === null || _c === void 0 ? void 0 : _c.taskState) === 'ExecPending') {
+        if ((_a = data[0]) === null || _a === void 0 ? void 0 : _a.lastTransactionHash)
+            return data[0].lastTransactionHash;
+        // TODO: check updated Gelato API
+        // if (data[0]?.taskState === 'ExecSuccess') {
+        //   const txHash = data[0].execution?.transactionHash
+        //   if (txHash) return txHash
+        // } else
+        if (((_b = data[0]) === null || _b === void 0 ? void 0 : _b.taskState) === 'ExecPending') {
             isExecPending = true;
         }
-        if (!isExecPending && ((_f = (_e = (_d = data[0]) === null || _d === void 0 ? void 0 : _d.lastCheck) === null || _e === void 0 ? void 0 : _e.message) === null || _f === void 0 ? void 0 : _f.toLowerCase().includes('error'))) {
+        if (!isExecPending && ((_e = (_d = (_c = data[0]) === null || _c === void 0 ? void 0 : _c.lastCheck) === null || _d === void 0 ? void 0 : _d.message) === null || _e === void 0 ? void 0 : _e.toLowerCase().includes('error'))) {
             const { message, reason } = data[0].lastCheck;
             throw new Error(`Gelato relay failed. TaskId=${taskId} ${message}: "${reason}"`);
         }
