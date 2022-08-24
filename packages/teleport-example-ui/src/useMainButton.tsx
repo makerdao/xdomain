@@ -11,8 +11,8 @@ import {
   getAttestations,
   getDefaultDstDomain,
   initRelayedTeleport,
+  relayMintWithOracles,
   requestFaucetDai,
-  requestRelay,
   sleep,
   TeleportGUID,
   waitForRelayTask,
@@ -238,7 +238,7 @@ export function useMainButton(
         label: <>Sign Relay Request</>,
         loading: false,
         onClick: async () => {
-          const taskId = await requestRelay({
+          void relayMintWithOracles({
             srcDomain,
             receiver: sender!,
             teleportGUID: guid,
@@ -248,8 +248,10 @@ export function useMainButton(
               console.log(`Payload ${payload} signed: r=${r} s=${s} v=${v}`)
               setPayloadSigned(true)
             },
+            onRelayTaskCreated: (taskId) => {
+              setSearchParams({ txHash: burnTxHash!, chainId: srcChainId.toString(), taskId })
+            },
           })
-          setSearchParams({ txHash: burnTxHash!, chainId: srcChainId.toString(), taskId })
         },
       })
     } else if (!relayTaskId) {
