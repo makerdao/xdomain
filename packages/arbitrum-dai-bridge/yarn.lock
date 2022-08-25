@@ -11006,9 +11006,9 @@ ws@^7.4.6:
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.1.tgz#44fc000d87edb1d9c53e51fbc69a0ac1f6871d66"
   integrity sha512-2c6faOUH/nhoQN6abwMloF7Iyl0ZS2E9HGtsiLrWn0zOOMWlhtDmdf/uihDt6jnuCxgtwGBNy6Onsoy2s2O2Ow==
 
-"xdomain-utils@https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?a12278fa7ad187a73ac98c9fcad7b3e507e9796e":
+"xdomain-utils@https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?154687086580ebd29bf44cbbab4a30fee47fcd8f":
   version "0.0.1"
-  resolved "https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?a12278fa7ad187a73ac98c9fcad7b3e507e9796e#84bb25e0df1812e8ea4c0f05c1849c8e04991749"
+  resolved "https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?154687086580ebd29bf44cbbab4a30fee47fcd8f#c68d124d2e5bfbdd18ff67602ff079df1c2c8f3f"
   dependencies:
     "@arbitrum/sdk" "^2.0.13"
     ethers "^5.6.9"
