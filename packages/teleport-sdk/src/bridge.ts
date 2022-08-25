@@ -171,7 +171,7 @@ export class TeleportBridge {
     const amount = hexZeroPad(BigNumber.from(withdrawn).toHexString(), 32)
     const sdk = getSdk(this.dstDomain, this.dstDomainProvider)
     const relay = sdk.BasicRelay && _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
-    const timestamp = hexZeroPad(hexlify(Date.now() / 1000), 32)
+    const timestamp = hexZeroPad(hexlify(Math.floor(Date.now() / 1000)), 32)
     const { mintable, bridgeFee, relayFee } = await getFeesAndMintableAmounts(
       this.srcDomain,
       this.dstDomain,
