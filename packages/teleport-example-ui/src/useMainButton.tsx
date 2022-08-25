@@ -323,6 +323,7 @@ export function useMainButton(
             duration: null,
           })
           setSearchParams({ txHash: burnTxHash!, chainId: srcChainId.toString() }) // remove taskId from url
+          setPayloadSigned(false)
         })
       setMainButton({
         label: <>Waiting for relayer...</>,
