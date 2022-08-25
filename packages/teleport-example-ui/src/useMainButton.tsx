@@ -1,7 +1,7 @@
 import { Button, Col, notification, Row } from 'antd'
 import { ethers } from 'ethers'
 import { ContractTransaction } from 'ethers'
-import { formatEther, parseEther } from 'ethers/lib/utils'
+import { formatEther, getAddress, hexStripZeros, hexZeroPad, parseEther } from 'ethers/lib/utils'
 import { ReactElement, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -268,19 +268,29 @@ export function useMainButton(
 
   function doRelay() {
     if (!guid) return
-    if (!payloadSigned && !relayTaskId) {
+    const receiverAddress = getAddress(hexZeroPad(hexStripZeros(guid.receiver), 20))
+    if (!relayTaskId && !payloadSigned && (!account || getAddress(account) !== receiverAddress)) {
+      setMainButton({
+        label: <>Please Connect Account {truncateAddress(receiverAddress)}</>,
+        loading: false,
+        disabled: true,
+      })
+    } else if (!payloadSigned && !relayTaskId) {
       setMainButton({
         label: <>Sign Relay Request</>,
         loading: false,
         onClick: async () => {
+          const maxFeePercentage = parseEther(amount || '0').eq(0)
+            ? 0
+            : parseEther(bridgeFee || '0')
+                .mul(parseEther('1'))
+                .div(parseEther(amount!))
           const taskId = await requestRelay({
             srcDomain,
             receiver: sender!,
             teleportGUID: guid,
             signatures: signatures!,
-            maxFeePercentage: parseEther(bridgeFee || '0')
-              .mul(parseEther('1'))
-              .div(parseEther(amount || '0')),
+            maxFeePercentage,
             relayFee: parseEther(relayFee || '0'),
             onPayloadSigned: (payload, r, s, v) => {
               console.log(`Payload ${payload} signed: r=${r} s=${s} v=${v}`)
