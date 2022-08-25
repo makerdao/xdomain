@@ -57,7 +57,8 @@ class TeleportBridge {
         const amount = (0, utils_1.hexZeroPad)(ethers_1.BigNumber.from(withdrawn).toHexString(), 32);
         const sdk = (0, _1.getSdk)(this.dstDomain, this.dstDomainProvider);
         const relay = sdk.BasicRelay && _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
-        const { mintable, bridgeFee, relayFee } = await (0, _1.getFeesAndMintableAmounts)(this.srcDomain, this.dstDomain, this.dstDomainProvider, { sourceDomain: zero, targetDomain: zero, receiver: zero, operator: zero, amount, nonce: zero, timestamp: zero }, relay, isHighPriority);
+        const timestamp = (0, utils_1.hexZeroPad)((0, utils_1.hexlify)(Date.now() / 1000), 32);
+        const { mintable, bridgeFee, relayFee } = await (0, _1.getFeesAndMintableAmounts)(this.srcDomain, this.dstDomain, this.dstDomainProvider, { sourceDomain: zero, targetDomain: zero, receiver: zero, operator: zero, amount, nonce: zero, timestamp }, relay, isHighPriority);
         return { mintable, bridgeFee, relayFee };
     }
     async getAmountsForTeleportGUID(teleportGUID, isHighPriority, relayParams, relayAddress) {
