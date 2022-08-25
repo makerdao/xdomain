@@ -23,7 +23,7 @@
     "react-router-dom": "6",
     "react-scripts": "^4.0.3",
     "sass": "^1.53.0",
-    "teleport-sdk": "https://gitpkg.now.sh/makerdao/xdomain/packages/teleport-sdk?e3f1cde77f043f19795a75941138821ab98db97e",
+    "teleport-sdk": "https://gitpkg.now.sh/makerdao/xdomain/packages/teleport-sdk?df26a48d7cf540145e1d6244c3a7cc525a9014cc",
     "typescript": "^4.7.4",
     "web3modal": "^1.9.8"
   },
