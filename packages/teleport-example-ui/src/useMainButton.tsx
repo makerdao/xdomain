@@ -277,6 +277,7 @@ export function useMainButton(
             receiver: sender!,
             teleportGUID: guid,
             signatures: signatures!,
+            maxFeePercentage: parseEther('1'),
             relayFee: parseEther(relayFee || '0'),
             onPayloadSigned: (payload, r, s, v) => {
               console.log(`Payload ${payload} signed: r=${r} s=${s} v=${v}`)
@@ -293,10 +294,33 @@ export function useMainButton(
       })
     } else if (!relayTxHash) {
       console.log(`Waiting for taskId: ${relayTaskId} ...`)
-      void waitForRelayTask({ taskId: relayTaskId, srcDomain }).then((txHash) => {
-        console.log(`Relayed DAI mint tx submitted on L1: ${txHash}`)
-        setRelayTxHash(txHash)
-      })
+      void waitForRelayTask({ taskId: relayTaskId, srcDomain })
+        .then((txHash) => {
+          console.log(`Relayed DAI mint tx submitted on L1: ${txHash}`)
+          setRelayTxHash(txHash)
+        })
+        .catch((error) => {
+          console.error(error)
+          notification.error({
+            message: 'Relay failed 😞',
+            description: (
+              <>
+                Gelato Task
+                <Button
+                  type="link"
+                  target="_blank"
+                  href={`https://relay.gelato.digital/tasks/GelatoMetaBox/${relayTaskId}`}
+                  style={{ paddingLeft: 6, paddingRight: 6 }}
+                >
+                  {truncateAddress(relayTaskId, 8, 0)}
+                </Button>
+                Failed
+              </>
+            ),
+            duration: null,
+          })
+          setSearchParams({ txHash: burnTxHash!, chainId: srcChainId.toString() }) // remove taskId from url
+        })
       setMainButton({
         label: <>Waiting for relayer...</>,
         loading: true,
