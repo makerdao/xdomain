@@ -37,6 +37,7 @@ export function useMainButton(
   maxAmount?: string,
   amount?: string,
   allowance?: string,
+  bridgeFee?: string,
   relayFee?: string,
   walletChainId?: number,
   provider?: ethers.providers.Provider,
@@ -277,7 +278,9 @@ export function useMainButton(
             receiver: sender!,
             teleportGUID: guid,
             signatures: signatures!,
-            maxFeePercentage: parseEther('1'),
+            maxFeePercentage: parseEther(bridgeFee || '0')
+              .mul(parseEther('1'))
+              .div(parseEther(amount || '0')),
             relayFee: parseEther(relayFee || '0'),
             onPayloadSigned: (payload, r, s, v) => {
               console.log(`Payload ${payload} signed: r=${r} s=${s} v=${v}`)

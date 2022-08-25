@@ -11,6 +11,7 @@ export function useAmounts(srcChainId: DomainChainId, account?: string) {
   const [allowance, setAllowance] = useState<string | undefined>('0')
   const [fee, setFee] = useState<string | undefined>('0')
   const [relayFee, setRelayFee] = useState<string | undefined>('0')
+  const [bridgeFee, setBridgeFee] = useState<string | undefined>('0')
 
   let valid = true
 
@@ -77,6 +78,8 @@ export function useAmounts(srcChainId: DomainChainId, account?: string) {
         srcDomain,
       })
 
+      setBridgeFee(formatEther(bridgeFee))
+
       if (relayFee === undefined) {
         setRelayFee(undefined)
         setFee(undefined)
@@ -101,6 +104,7 @@ export function useAmounts(srcChainId: DomainChainId, account?: string) {
     maxAmount,
     dstBalance,
     relayFee,
+    bridgeFee,
     fee,
     amountAfterFee,
     allowance,

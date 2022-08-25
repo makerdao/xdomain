@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
-import { DomainBox, DomainChainId, SRC_CHAINID_TO_DST_CHAINID,SrcDomainChainId } from './domains'
+import { DomainBox, DomainChainId, SRC_CHAINID_TO_DST_CHAINID, SrcDomainChainId } from './domains'
 import { useAmounts } from './useAmounts'
 import { useMainButton } from './useMainButton'
 import { ConnectWalletButton } from './wallet/ConnectWalletButton'
@@ -36,6 +36,7 @@ function App() {
     amount,
     maxAmount,
     dstBalance,
+    bridgeFee,
     relayFee,
     amountAfterFee,
     allowance,
@@ -45,7 +46,18 @@ function App() {
     updateAllowance,
   } = useAmounts(srcChainId, account)
   const { mainButton, gulpConfirmed, approveConfirmed, burnTxHash, guid, burnConfirmed, relayConfirmed } =
-    useMainButton(connectWallet, srcChainId, account, maxAmount, amount, allowance, relayFee, walletChainId, provider)
+    useMainButton(
+      connectWallet,
+      srcChainId,
+      account,
+      maxAmount,
+      amount,
+      allowance,
+      bridgeFee,
+      relayFee,
+      walletChainId,
+      provider,
+    )
 
   useEffect(() => {
     if (relayConfirmed) {
