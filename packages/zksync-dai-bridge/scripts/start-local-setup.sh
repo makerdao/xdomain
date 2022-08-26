@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-
-cd node_modules/local-setup
+git clone https://github.com/matter-labs/local-setup.git
+cd local-setup
 
 mkdir -p ./volumes
 mkdir -p ./volumes/postgres ./volumes/geth ./volumes/zksync/env/dev ./volumes/zksync/data

@@ -10,6 +10,7 @@ cache-zk
 tmp
 gasReporterOutput.json
 coverage*
+local-setup
 
 # echidna
 crytic-export/

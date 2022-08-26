@@ -39,6 +39,7 @@ jobs:
             yarn-
 
       - run: yarn --no-progress --non-interactive --frozen-lockfile
+      - run: yarn build:unit
       - run: yarn test
       - run: yarn coverage
       - name: Archive code coverage results
@@ -78,6 +79,6 @@ jobs:
       - name: Install Dependencies
         run: yarn --no-progress --non-interactive --frozen-lockfile
 
-      - run: yarn local-setup:daemon
+      - run: yarn local-setup
       - run: yarn build
       - run: yarn test-e2e
