@@ -81,5 +81,5 @@ jobs:
 
       - run: yarn local-setup
       - run: yarn build
-      - run: ./scripts/wait-for-local-setup.sh && sleep 300
+      - run: ./scripts/wait-for-local-setup.sh && sleep 60
       - run: yarn test-e2e
