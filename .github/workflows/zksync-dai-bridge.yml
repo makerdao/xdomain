@@ -1,0 +1,79 @@
+name: zksync-dai-bridge Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  test-zksync-dai-bridge:
+    name: zksync-dai-bridge Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/zksync-dai-bridge
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16.x
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Cache YARN dependencies
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-
+
+      - run: yarn --no-progress --non-interactive --frozen-lockfile
+      - run: yarn test
+      - run: yarn coverage
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v2
+        with:
+          name: code-coverage-artifacts
+          path: |
+            coverage
+            coverage.json
+  test-e2e-zksync-dai-bridge:
+    name: zksync-dai-bridge Integration Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/zksync-dai-bridge
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16.x
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Cache YARN dependencies
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            yarn-
+
+      - name: Install Dependencies
+        run: yarn --no-progress --non-interactive --frozen-lockfile
+
+      - run: yarn local-setup:daemon
+      - run: yarn build
+      - run: yarn test-e2e

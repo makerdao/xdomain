@@ -28,7 +28,7 @@ const config: HardhatUserConfig = {
     settings: {
       experimental: {
         dockerImage: 'matterlabs/zksolc',
-        tag: 'v1.1.3', // note: 1.1.4 & 1.1.5 generates faulty artifacts that can't be eth_call'ed
+        tag: 'v1.1.3', // note: 1.1.4 & 1.1.5 generate faulty artifacts that can't be eth_call'ed
       },
     },
   },
