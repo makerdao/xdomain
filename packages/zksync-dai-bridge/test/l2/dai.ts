@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import { hexConcat, hexZeroPad, keccak256, toUtf8Bytes } from 'ethers/lib/utils'
 import { ethers, web3 } from 'hardhat'
 
-import { Dai, Dai__factory } from '../../typechain-types'
+import { Dai, Dai__factory } from '../../typechain-types/unit'
 
 const { signERC2612Permit } = require('./eth-permit/eth-permit')
 

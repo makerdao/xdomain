@@ -3,7 +3,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
-import { Dai__factory, L2DAITokenBridge__factory } from '../../typechain-types'
+import { Dai__factory, L2DAITokenBridge__factory } from '../../typechain-types/unit'
 const defaultData = '0x'
 
 const errorMessages = {

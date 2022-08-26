@@ -1,14 +1,39 @@
-import 'hardhat-gas-reporter'
+import '@matterlabs/hardhat-zksync-deploy'
+import '@matterlabs/hardhat-zksync-solc'
 import '@nomiclabs/hardhat-etherscan'
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-web3'
 import '@typechain/hardhat'
+import 'hardhat-gas-reporter'
 import 'solidity-coverage'
 
 import { HardhatUserConfig } from 'hardhat/config'
 
+const zkSyncDeploy =
+  process.env.TEST_ENV === 'local'
+    ? {
+        zkSyncNetwork: 'http://localhost:3050',
+        ethNetwork: 'http://localhost:8545',
+      }
+    : {
+        zkSyncNetwork: 'https://zksync2-testnet.zksync.dev',
+        ethNetwork: process.env.GOERLI_RPC_URL || '',
+      }
+
 const config: HardhatUserConfig = {
+  zksolc: {
+    version: '1.1.3',
+    compilerSource: 'docker',
+    settings: {
+      experimental: {
+        dockerImage: 'matterlabs/zksolc',
+        tag: 'v1.1.3', // note: 1.1.4 & 1.1.5 generates faulty artifacts that can't be eth_call'ed
+      },
+    },
+  },
+  zkSyncDeploy,
+
   mocha: {
     timeout: 50000,
   },
@@ -23,37 +48,38 @@ const config: HardhatUserConfig = {
         },
       },
     ],
-    overrides: {
-      'contracts/l2/dai.sol': {
-        version: '0.8.15',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
-    },
+  },
+  paths: {
+    sources: process.env.UNIT_TESTS
+      ? './contracts'
+      : process.env.NETWORK === 'zksync'
+      ? './contracts/l2'
+      : './contracts/l1',
   },
   networks: {
     hardhat: {
-      blockGasLimit: 15000000,
-      forking: {
-        enabled: process.env.FORKMODE === '1', // this is workaround, only main network can be run in forkmode but we don't need it for most things
-        url: 'https://parity-mainnet.makerfoundation.com:8545',
-      },
+      zksync: !process.env.UNIT_TESTS, // unit tests use EVM
     },
-    kovan: {
-      url: 'https://parity0.kovan.makerfoundation.com:8545',
+    zksync: {
+      zksync: true,
+      url: zkSyncDeploy.zkSyncNetwork,
+    },
+    goerli: {
+      zksync: false,
+      url: zkSyncDeploy.ethNetwork,
     },
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_KEY ?? '', // provide via env
+    apiKey: process.env.ETHERSCAN_KEY ?? '',
   },
-  gasReporter: {
-    enabled: process.env.REPORT_GAS === '1',
-    currency: 'USD',
-    gasPrice: 50,
+
+  typechain: {
+    outDir: process.env.UNIT_TESTS
+      ? './typechain-types/unit'
+      : process.env.NETWORK === 'zksync'
+      ? './typechain-types/l2'
+      : './typechain-types/l1',
+    externalArtifacts: process.env.UNIT_TESTS ? [] : ['artifacts-zk/*.json'],
   },
 }
 

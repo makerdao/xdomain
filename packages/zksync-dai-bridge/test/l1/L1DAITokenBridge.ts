@@ -3,7 +3,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
-import { Dai__factory, L1DAITokenBridge__factory, L1Escrow__factory } from '../../typechain-types'
+import { Dai__factory, L1DAITokenBridge__factory, L1Escrow__factory } from '../../typechain-types/unit'
 import { deployMock } from '../helpers'
 import { deployZkSyncContractMock } from '../../zksync-helpers/mocks'
 
