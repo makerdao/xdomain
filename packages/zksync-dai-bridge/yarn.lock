@@ -82,10 +82,10 @@
     ethers "^5.4.5"
     lodash "^4.17.21"
 
-"@eth-optimism/smock@=1.1.9":
-  version "1.1.9"
-  resolved "https://registry.yarnpkg.com/@eth-optimism/smock/-/smock-1.1.9.tgz#1b30dd8a5b2ddaeb6d79cb6a9c3c883b1dffebbe"
-  integrity sha512-xC0eLH7gSB/XwpdKQ/CC937HDsXgDVXOJV/G99weGDmPnHXnF8hOYR6jqP++Ojd9fmF3iJTVZ51ln8xHAjHrxg==
+"@eth-optimism/smock@=1.1.10":
+  version "1.1.10"
+  resolved "https://registry.yarnpkg.com/@eth-optimism/smock/-/smock-1.1.10.tgz#98a6eefc994ccf707f52ab06849468f3cc57bdb7"
+  integrity sha512-XPx1x9odF/noTBHzIhRgL9ihhr769WgUhf9dOm6X7bjSWRAVsII3IqbdB4ssPycaoSuNSmv8HG1xTLgfgcyOYw==
   dependencies:
     "@eth-optimism/core-utils" "^0.5.1"
     bn.js "^5.2.0"

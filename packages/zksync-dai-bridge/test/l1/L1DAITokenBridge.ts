@@ -1,10 +1,9 @@
-import { assertPublicMutableMethods, getRandomAddresses, simpleDeploy, testAuth } from '@makerdao/hardhat-utils'
+import { getRandomAddresses, simpleDeploy, testAuth } from '@makerdao/hardhat-utils'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address'
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
 import { Dai__factory, L1DAITokenBridge__factory, L1Escrow__factory } from '../../typechain-types/unit'
-import { deployMock } from '../helpers'
 import { deployZkSyncContractMock } from '../../zksync-helpers/mocks'
 
 const initialTotalL1Supply = 3000

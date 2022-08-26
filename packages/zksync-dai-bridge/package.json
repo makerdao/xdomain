@@ -22,7 +22,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@eth-optimism/smock": "=1.1.9",
+    "@eth-optimism/smock": "=1.1.10",
     "@makerdao/hardhat-utils": "^0.1.3",
     "@matterlabs/hardhat-zksync-deploy": "^0.4.0",
     "@matterlabs/hardhat-zksync-solc": "^0.3.6",
