@@ -4,13 +4,13 @@ import * as zk from 'zksync-web3'
 import { IZkSync } from 'zksync-web3/build/typechain'
 import { ethers } from 'hardhat'
 import * as hre from 'hardhat'
-import { BigNumber, Wallet, Contract } from 'ethers'
+import { BigNumber, Wallet, Contract, ContractReceipt, providers } from 'ethers'
 import { Deployer } from '@matterlabs/hardhat-zksync-deploy'
 
 import { L1DAITokenBridge, L1Escrow, L1GovernanceRelay } from '../typechain-types/l1'
 import { Dai, L2DAITokenBridge, L2GovernanceRelay, TestBridgeUpgradeSpell } from '../typechain-types/l2'
 import { getActiveWards, getAddressOfNextDeployedContract, waitForTx } from '@makerdao/hardhat-utils'
-import { parseEther } from 'ethers/lib/utils'
+import { Interface, parseEther } from 'ethers/lib/utils'
 
 const RICH_WALLET_PK = '0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110'
 const depositAmount = ethers.utils.parseEther('5')
@@ -141,9 +141,7 @@ describe('bridge', function () {
     console.log('Setup done.')
   })
 
-  it('moves l1 tokens to l2', async function () {
-    await waitForTx(l1Dai.approve(l1DAITokenBridge.address, depositAmount, { gasLimit: 200000 }))
-    const l2DaiBefore = await l2Dai.balanceOf(l2Signer.address)
+  async function depositToL2(): Promise<providers.TransactionReceipt> {
     const l2Calldata = l2DAITokenBridge.interface.encodeFunctionData('finalizeDeposit', [
       l1Signer.address,
       l2Signer.address,
@@ -167,9 +165,45 @@ describe('bridge', function () {
     })
     await tx.wait()
     const l2Response = await l2Signer.provider.getL2TransactionFromPriorityOp(tx)
-    await l2Response.wait()
+    return await l2Response.wait()
+  }
+
+  it('moves l1 tokens to l2', async function () {
+    await waitForTx(l1Dai.approve(l1DAITokenBridge.address, depositAmount, { gasLimit: 200000 }))
+    const l2DaiBefore = await l2Dai.balanceOf(l2Signer.address)
+
+    await depositToL2()
 
     const l2DaiAfter = await l2Dai.balanceOf(l2Signer.address)
     expect(l2DaiAfter.sub(l2DaiBefore).toString()).to.be.eq(depositAmount.toString())
+  })
+
+  it('moves l2 tokens to l1', async () => {
+    await depositToL2()
+
+    const l2DaiBefore = await l2Dai.balanceOf(l2Signer.address)
+
+    const tx = await l2DAITokenBridge.withdraw(l1Signer.address, l2Dai.address, depositAmount)
+    const receipt = (await (tx as zk.types.TransactionResponse).waitFinalize()) as ContractReceipt
+
+    const l2DaiAfter = await l2Dai.balanceOf(l2Signer.address)
+    expect(l2DaiBefore.sub(l2DaiAfter).toString()).to.be.eq(depositAmount.toString())
+
+    const l1DaiBefore = await l1Dai.balanceOf(l1Signer.address)
+
+    const iface = new Interface(['event L1MessageSent(address indexed _sender, bytes32 indexed _hash, bytes _message)'])
+    const msgSentEvent = receipt.events?.find((ev) => ev.topics[0] === iface.getEventTopic('L1MessageSent'))
+    expect(msgSentEvent).to.include.all.keys('topics', 'data')
+    const { _hash: hash, _message: message } = iface.parseLog(msgSentEvent!).args
+    const msgProof = await l2Signer.provider.getMessageProof(receipt.blockNumber, l2DAITokenBridge.address, hash)
+    expect(msgProof).to.include.all.keys('id', 'proof')
+    const { id, proof } = msgProof!
+    const l1Tx = await l1DAITokenBridge.finalizeWithdrawal(receipt.blockNumber, id, message, proof, {
+      gasLimit: 500000,
+    })
+    await l1Tx.wait()
+
+    const l1DaiAfter = await l1Dai.balanceOf(l1Signer.address)
+    expect(l1DaiAfter.sub(l1DaiBefore).toString()).to.be.eq(depositAmount.toString())
   })
 })

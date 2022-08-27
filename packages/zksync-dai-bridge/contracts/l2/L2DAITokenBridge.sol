@@ -46,12 +46,12 @@ interface IL2Bridge {
   function l1Bridge() external view returns (address);
 }
 
-interface IL2Messanger {
+interface IL2Messenger {
   function sendToL1(bytes memory _message) external returns (bytes32);
 }
 
 uint160 constant SYSTEM_CONTRACTS_OFFSET = 0x8000; // 2^15
-IL2Messanger constant L2_MESSANGER = IL2Messanger(address(SYSTEM_CONTRACTS_OFFSET + 0x08));
+IL2Messenger constant L2_MESSENGER = IL2Messenger(address(SYSTEM_CONTRACTS_OFFSET + 0x08));
 
 interface Mintable {
   function mint(address usr, uint256 wad) external;
@@ -102,13 +102,12 @@ contract L2DAITokenBridge {
 
   event Rely(address indexed usr);
   event Deny(address indexed usr);
+  event Closed();
 
   address public immutable l1Token;
   address public immutable l2Token;
   address public immutable l1DAITokenBridge;
   uint256 public isOpen = 1;
-
-  event Closed();
 
   constructor(
     address _l2Token,
@@ -148,7 +147,7 @@ contract L2DAITokenBridge {
 
     bytes memory message = abi.encodePacked(IL1Bridge.finalizeWithdrawal.selector, _to, _amount);
 
-    L2_MESSANGER.sendToL1(message);
+    L2_MESSENGER.sendToL1(message);
   }
 
   // When a deposit is finalized, we credit the account on L2 with the same amount of tokens.
