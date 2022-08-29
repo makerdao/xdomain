@@ -114,6 +114,17 @@ export async function setupTest({
     line,
   })
 
+  await performSanityChecks(
+    l1Signer,
+    makerSdk,
+    teleportSdk,
+    baseBridgeSdk,
+    teleportBridgeSdk,
+    l1StartingBlock,
+    l2StartingBlock,
+    false,
+  )
+
   await configureTeleport({
     makerSdk,
     teleportSdk,
@@ -125,17 +136,6 @@ export async function setupTest({
     relayTxToL2,
     addTeleportDomainSpell,
   })
-
-  await performSanityChecks(
-    l1Signer,
-    makerSdk,
-    teleportSdk,
-    baseBridgeSdk,
-    teleportBridgeSdk,
-    l1StartingBlock,
-    l2StartingBlock,
-    false,
-  )
 
   console.log('Setup complete.')
 
