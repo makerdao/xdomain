@@ -132,6 +132,8 @@ async function setupSigners() {
   const l2OptimismRpc = getRequiredEnv('MAINNET_OPTIMISM_L2_RPC')
   const l2ArbitrumRpc = getRequiredEnv('MAINNET_ARBITRUM_L2_RPC')
   const deployerPrivKey = getRequiredEnv('MAINNET_DEPLOYER_PRIV_KEY')
+  const optimismdeployerPrivKey = getRequiredEnv('MAINNET_OPTIMISM_DEPLOYER_PRIV_KEY')
+  const arbitrumdeployerPrivKey = getRequiredEnv('MAINNET_ARBITRUM_DEPLOYER_PRIV_KEY')
   const l1Provider = new ethers.providers.JsonRpcProvider(l1Rpc)
   const l2OptimismProvider = new ethers.providers.JsonRpcProvider(l2OptimismRpc)
   const l2ArbitrumProvider = new ethers.providers.JsonRpcProvider(l2ArbitrumRpc)
@@ -141,8 +143,8 @@ async function setupSigners() {
   expect((await l2ArbitrumProvider.getNetwork()).chainId).to.eq(42161, 'Not Arbitrum One Mainnet!')
 
   const l1Signer = new ethers.Wallet(deployerPrivKey, l1Provider)
-  const l2OptimismSigner = new ethers.Wallet(deployerPrivKey, l2OptimismProvider)
-  const l2ArbitrumSigner = new ethers.Wallet(deployerPrivKey, l2ArbitrumProvider)
+  const l2OptimismSigner = new ethers.Wallet(optimismdeployerPrivKey, l2OptimismProvider)
+  const l2ArbitrumSigner = new ethers.Wallet(arbitrumdeployerPrivKey, l2ArbitrumProvider)
 
   return { l1Signer, l2OptimismSigner, l2ArbitrumSigner }
 }
