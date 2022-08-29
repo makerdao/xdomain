@@ -109,6 +109,23 @@ contract DssSpellAction is DssAction {
     return false;
   }
 
+  function setupAuth(
+    VatLike vat,
+    TeleportJoinLike teleportJoin,
+    OracleAuthLike oracleAuth,
+    RouterLike router,
+    TrustedRelayLike trustedRelay
+  ) internal {
+    address esm = 0x4EdB261c15EF5A895f449593CDC9Fc7D2Fb714c2;
+    teleportJoin.rely(esm);
+    teleportJoin.rely(address(oracleAuth));
+    teleportJoin.rely(address(router));
+    oracleAuth.rely(esm);
+    router.rely(esm);
+    trustedRelay.rely(esm);
+    vat.rely(address(teleportJoin));
+  }
+
   function setupOracleAuth(OracleAuthLike oracleAuth) internal {
     address[] memory oracles = new address[](5);
     oracles[0] = 0xC4756A9DaE297A046556261Fa3CD922DFC32Db78; // OCU
@@ -128,6 +145,30 @@ contract DssSpellAction is DssAction {
     median.kiss(address(trustedRelay));
   }
 
+  function setupOptimism(TeleportJoinLike teleportJoin, RouterLike router, address dai, address fees) internal {
+    bytes32 optimismDomain = "OPT-GOER-A";
+    uint256 optimismLine = 100 * RAD;
+    address optimismL1Bridge = 0x1FD5a4A2b5572A8697E93b5164dE73E52686228B;
+    L1EscrowLike optimismL1Escrow = L1EscrowLike(0xC2351e2a0Dd9f44bB1E3ECd523442473Fa5e46a0);
+
+    router.file(bytes32("gateway"), optimismDomain, optimismL1Bridge);
+    teleportJoin.file(bytes32("fees"), optimismDomain, fees);
+    teleportJoin.file(bytes32("line"), optimismDomain, optimismLine);
+    optimismL1Escrow.approve(dai, optimismL1Bridge, type(uint256).max);
+  }
+
+  function setupArbitrum(TeleportJoinLike teleportJoin, RouterLike router, address dai, address fees) internal {
+    bytes32 arbitrumDomain = "ARB-GOER-A";
+    uint256 arbitrumLine = 100 * RAD;
+    address arbitrumL1Bridge = 0x350d78BfE252a81cc03407Fe781052E020dCd456;
+    L1EscrowLike arbitrumL1Escrow = L1EscrowLike(0xD9e08dc985012296b9A80BEf4a587Ad72288D986);
+
+    router.file(bytes32("gateway"), arbitrumDomain, arbitrumL1Bridge);
+    teleportJoin.file(bytes32("fees"), arbitrumDomain, fees);
+    teleportJoin.file(bytes32("line"), arbitrumDomain, arbitrumLine);
+    arbitrumL1Escrow.approve(dai, arbitrumL1Bridge, type(uint256).max);
+  }
+
   function actions() public override {
     bytes32 masterDomain = "ETH-GOER-A";
     TeleportJoinLike teleportJoin = TeleportJoinLike(0xd88310A476ee960487FDb2772CC4bd017dadEf6B);
@@ -137,17 +178,12 @@ contract DssSpellAction is DssAction {
     RouterLike router = RouterLike(0x9031Ab810C496FCF09B65851c736E9a37983B963);
     OracleAuthLike oracleAuth = OracleAuthLike(0xe6c2b941d268cA7690c01F95Cd4bDD12360A0A4F);
     TrustedRelayLike trustedRelay = TrustedRelayLike(0xB23Ab27F7B59B718ea1eEF536F66e1Db3F18ac8E);
-    address esm = 0x4EdB261c15EF5A895f449593CDC9Fc7D2Fb714c2;
 
-    teleportJoin.rely(esm);
-    oracleAuth.rely(esm);
-    router.rely(esm);
-    trustedRelay.rely(esm);
-    teleportJoin.rely(address(oracleAuth));
-    teleportJoin.rely(address(router));
+    setupAuth(vat, teleportJoin, oracleAuth, router, trustedRelay);
+
     teleportJoin.file(bytes32("vow"), vow);
     router.file(bytes32("gateway"), masterDomain, address(teleportJoin));
-    vat.rely(address(teleportJoin));
+    
     bytes32 ilk = teleportJoin.ilk();
     vat.init(ilk);
     vat.file(ilk, bytes32("spot"), RAY);
@@ -159,28 +195,10 @@ contract DssSpellAction is DssAction {
     address dai = 0x0089Ed33ED517F58a064D0ef56C9E89Dc01EE9A2;
 
     // configure Optimism teleport
-
-    bytes32 optimismDomain = "OPT-GOER-A";
-    uint256 optimismLine = 100 * RAD;
-    address optimismL1Bridge = 0x1FD5a4A2b5572A8697E93b5164dE73E52686228B;
-    L1EscrowLike optimismL1Escrow = L1EscrowLike(0xC2351e2a0Dd9f44bB1E3ECd523442473Fa5e46a0);
-
-    router.file(bytes32("gateway"), optimismDomain, optimismL1Bridge);
-    teleportJoin.file(bytes32("fees"), optimismDomain, constantFees);
-    teleportJoin.file(bytes32("line"), optimismDomain, optimismLine);
-    optimismL1Escrow.approve(dai, optimismL1Bridge, type(uint256).max);
+    setupOptimism(teleportJoin, router, dai, constantFees);
 
     // configure Arbitrum teleport
-
-    bytes32 arbitrumDomain = "ARB-GOER-A";
-    uint256 arbitrumLine = 100 * RAD;
-    address arbitrumL1Bridge = 0x350d78BfE252a81cc03407Fe781052E020dCd456;
-    L1EscrowLike arbitrumL1Escrow = L1EscrowLike(0xD9e08dc985012296b9A80BEf4a587Ad72288D986);
-
-    router.file(bytes32("gateway"), arbitrumDomain, arbitrumL1Bridge);
-    teleportJoin.file(bytes32("fees"), arbitrumDomain, constantFees);
-    teleportJoin.file(bytes32("line"), arbitrumDomain, arbitrumLine);
-    arbitrumL1Escrow.approve(dai, arbitrumL1Bridge, type(uint256).max);
+    setupArbitrum(teleportJoin, router, dai, constantFees);
   }
 }
 
