@@ -29,6 +29,8 @@ interface VatLike {
 }
 
 interface TeleportJoinLike {
+  function rely(address usr) external;
+
   function file(bytes32 what, address val) external;
 
   function ilk() external returns (bytes32);
@@ -93,6 +95,9 @@ contract L1ConfigureTeleportSpell {
   function execute() external {
     teleportJoin.file(bytes32("vow"), vow);
     router.file(bytes32("gateway"), masterDomain, address(teleportJoin));
+
+    teleportJoin.rely(address(oracleAuth));
+    teleportJoin.rely(address(router));
 
     vat.rely(address(teleportJoin));
     bytes32 ilk = teleportJoin.ilk();
