@@ -33,6 +33,7 @@ interface VatLike {
 
 interface TeleportJoinLike {
   function rely(address usr) external;
+
   function file(bytes32 what, address val) external;
 
   function file(
@@ -52,6 +53,7 @@ interface TeleportJoinLike {
 
 interface OracleAuthLike {
   function rely(address usr) external;
+
   function file(bytes32 what, uint256 data) external;
 
   function addSigners(address[] calldata signers_) external;
@@ -59,6 +61,7 @@ interface OracleAuthLike {
 
 interface RouterLike {
   function rely(address usr) external;
+
   function file(
     bytes32 what,
     bytes32 domain,
@@ -68,6 +71,7 @@ interface RouterLike {
 
 interface TrustedRelayLike {
   function rely(address usr) external;
+
   function file(bytes32 what, uint256 data) external;
 
   function kiss(address usr) external;
@@ -145,7 +149,12 @@ contract DssSpellAction is DssAction {
     median.kiss(address(trustedRelay));
   }
 
-  function setupOptimism(TeleportJoinLike teleportJoin, RouterLike router, address dai, address fees) internal {
+  function setupOptimism(
+    TeleportJoinLike teleportJoin,
+    RouterLike router,
+    address dai,
+    address fees
+  ) internal {
     bytes32 optimismDomain = "OPT-GOER-A";
     uint256 optimismLine = 100 * RAD;
     address optimismL1Bridge = 0x1FD5a4A2b5572A8697E93b5164dE73E52686228B;
@@ -157,7 +166,12 @@ contract DssSpellAction is DssAction {
     optimismL1Escrow.approve(dai, optimismL1Bridge, type(uint256).max);
   }
 
-  function setupArbitrum(TeleportJoinLike teleportJoin, RouterLike router, address dai, address fees) internal {
+  function setupArbitrum(
+    TeleportJoinLike teleportJoin,
+    RouterLike router,
+    address dai,
+    address fees
+  ) internal {
     bytes32 arbitrumDomain = "ARB-GOER-A";
     uint256 arbitrumLine = 100 * RAD;
     address arbitrumL1Bridge = 0x350d78BfE252a81cc03407Fe781052E020dCd456;
@@ -183,7 +197,7 @@ contract DssSpellAction is DssAction {
 
     teleportJoin.file(bytes32("vow"), vow);
     router.file(bytes32("gateway"), masterDomain, address(teleportJoin));
-    
+
     bytes32 ilk = teleportJoin.ilk();
     vat.init(ilk);
     vat.file(ilk, bytes32("spot"), RAY);
