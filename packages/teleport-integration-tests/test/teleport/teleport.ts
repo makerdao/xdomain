@@ -24,7 +24,6 @@ import { RelayTxToL2Function } from './messages'
 import { MakerSdk } from './setup'
 import { executeSpell } from './spell'
 
-const bytes32 = ethers.utils.formatBytes32String
 export const OPTIMISTIC_ROLLUP_FLUSH_FINALIZATION_TIME = 60 * 60 * 24 * 8 // flush should happen more or less, 1 day after initTeleport, and should take 7 days to finalize
 export type FeeContractLike = TeleportConstantFee | TeleportLinearFee
 
