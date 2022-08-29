@@ -32,6 +32,7 @@ interface VatLike {
 }
 
 interface TeleportJoinLike {
+  function rely(address usr) external;
   function file(bytes32 what, address val) external;
 
   function file(
@@ -50,12 +51,14 @@ interface TeleportJoinLike {
 }
 
 interface OracleAuthLike {
+  function rely(address usr) external;
   function file(bytes32 what, uint256 data) external;
 
   function addSigners(address[] calldata signers_) external;
 }
 
 interface RouterLike {
+  function rely(address usr) external;
   function file(
     bytes32 what,
     bytes32 domain,
@@ -105,8 +108,7 @@ contract DssSpellAction is DssAction {
     return false;
   }
 
-  function setupOracleAuth() internal {
-    OracleAuthLike oracleAuth = OracleAuthLike(0xe6c2b941d268cA7690c01F95Cd4bDD12360A0A4F);
+  function setupOracleAuth(OracleAuthLike oracleAuth) internal {
     address[] memory oracles = new address[](5);
     oracles[0] = 0xC4756A9DaE297A046556261Fa3CD922DFC32Db78; // OCU
     oracles[1] = 0x23ce419DcE1De6b3647Ca2484A25F595132DfBd2; // OCU
@@ -117,8 +119,7 @@ contract DssSpellAction is DssAction {
     oracleAuth.addSigners(oracles);
   }
 
-  function setupTrustedRelay() internal {
-    TrustedRelayLike trustedRelay = TrustedRelayLike(0xB23Ab27F7B59B718ea1eEF536F66e1Db3F18ac8E);
+  function setupTrustedRelay(TrustedRelayLike trustedRelay) internal {
     trustedRelay.file(bytes32("margin"), 15000);
     // trustedRelay.kiss(0x0000000000000000000000000000000000000000); // authorise integrator's account
 
@@ -127,18 +128,31 @@ contract DssSpellAction is DssAction {
   }
 
   function actions() public override {
+    bytes32 masterDomain = "ETH-GOER-A";
     TeleportJoinLike teleportJoin = TeleportJoinLike(0xd88310A476ee960487FDb2772CC4bd017dadEf6B);
+    address vow = 0xFF660111D2C6887D8F24B5378cceDbf465B33B6F;
     VatLike vat = VatLike(0x293D5AA7F26EF9A687880C4501871632d1015A82);
     uint256 globalLine = 10000000000 * RAD;
     RouterLike router = RouterLike(0x9031Ab810C496FCF09B65851c736E9a37983B963);
+    OracleAuthLike oracleAuth = OracleAuthLike(0xe6c2b941d268cA7690c01F95Cd4bDD12360A0A4F);
+    TrustedRelayLike trustedRelay = TrustedRelayLike(0xB23Ab27F7B59B718ea1eEF536F66e1Db3F18ac8E);
+    address esm = 0x4EdB261c15EF5A895f449593CDC9Fc7D2Fb714c2;
 
+    teleportJoin.rely(esm);
+    oracleAuth.rely(esm);
+    router.rely(esm);
+    trustedRelay.rely(esm);
+    teleportJoin.rely(address(oracleAuth));
+    teleportJoin.rely(address(router));
+    teleportJoin.file(bytes32("vow"), vow);
+    router.file(bytes32("gateway"), masterDomain, address(teleportJoin));
     vat.rely(address(teleportJoin));
     bytes32 ilk = teleportJoin.ilk();
     vat.init(ilk);
     vat.file(ilk, bytes32("spot"), RAY);
     vat.file(ilk, bytes32("line"), globalLine);
-    setupOracleAuth();
-    setupTrustedRelay();
+    setupOracleAuth(oracleAuth);
+    setupTrustedRelay(trustedRelay);
 
     address constantFees = 0x19EeED0950e8AD1Ac6dde969df0c230C31e5479C;
     address dai = 0x0089Ed33ED517F58a064D0ef56C9E89Dc01EE9A2;

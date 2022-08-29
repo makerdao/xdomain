@@ -27,24 +27,10 @@ export async function performSanityChecks(
     expect(normalizeAddresses(actualPermissions)).to.deep.eq(normalizeAddresses(expectedPermissions))
   }
 
-  await checkPermissions(teleportSdk.join, l1BlockOfBeginningOfDeployment, [
-    teleportSdk.oracleAuth.address,
-    teleportSdk.router.address,
-    makerSdk.pause_proxy.address,
-    makerSdk.esm.address,
-  ])
-  await checkPermissions(teleportSdk.oracleAuth, l1BlockOfBeginningOfDeployment, [
-    makerSdk.pause_proxy.address,
-    makerSdk.esm.address,
-  ])
-  await checkPermissions(teleportSdk.router, l1BlockOfBeginningOfDeployment, [
-    makerSdk.pause_proxy.address,
-    makerSdk.esm.address,
-  ])
-  await checkPermissions(teleportSdk.trustedRelay, l1BlockOfBeginningOfDeployment, [
-    makerSdk.pause_proxy.address,
-    makerSdk.esm.address,
-  ])
+  await checkPermissions(teleportSdk.join, l1BlockOfBeginningOfDeployment, [makerSdk.pause_proxy.address])
+  await checkPermissions(teleportSdk.oracleAuth, l1BlockOfBeginningOfDeployment, [makerSdk.pause_proxy.address])
+  await checkPermissions(teleportSdk.router, l1BlockOfBeginningOfDeployment, [makerSdk.pause_proxy.address])
+  await checkPermissions(teleportSdk.trustedRelay, l1BlockOfBeginningOfDeployment, [makerSdk.pause_proxy.address])
 
   await checkPermissions(teleportBridgeSdk.l2TeleportBridge, l2BlockOfBeginningOfDeployment, [
     baseBridgeSdk.l2GovRelay.address,
