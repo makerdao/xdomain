@@ -67,6 +67,7 @@ interface RouterLike {
 }
 
 interface TrustedRelayLike {
+  function rely(address usr) external;
   function file(bytes32 what, uint256 data) external;
 
   function kiss(address usr) external;
