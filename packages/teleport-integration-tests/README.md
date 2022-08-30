@@ -50,22 +50,22 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
    },
 
    "Mainnet Teleport": {
-      "join": "0xF4B72741D114a49706877366300b3053a03E7f25",
-      "oracleAuth": "0xFb7b4427Fb77ad4AC24519725153CDD2C92Fc4e0",
-      "router": "0x0E18ab2b7cAA7ae841bC2e0Dd819Af87A8bF8b75",
-      "feeContract": "0xE3AEA9052Aca6b8ec4CF160B5771716765f99aA5",
-      "basicRelay": "0x49486814d8DC7dB8DE95Ee9B65acA621d392096F",
-      "trustedRelay": "0x626E65367122ee1Fd1733Aea4e910661C353837A"
+      "join": "0x41Ca7a7Aa2Be78Cf7CB80C0F4a9bdfBC96e81815",
+      "oracleAuth": "0x324a895625E7AE38Fc7A6ae91a71e7E937Caa7e6",
+      "router": "0xeEf8B35eD538b6Ef7DbA82236377aDE4204e5115",
+      "feeContract": "0xA7C088AAD64512Eff242901E33a516f2381b8823",
+      "basicRelay": "0x0b627300c5f06C5510243081fc66868A0F440d62",
+      "trustedRelay": "0xFabFEd371884ddBd4704867484EB0B419C7fC967"
    }
 
   "Optimism Mainnet teleport gateways":  {
-      "l2TeleportGateway": "0x67A45c2163798d47c32Fc2bcD5Dc0ABc6dCDFe78",
-      "l1TeleportGateway": "0x3c27390F61058152552613a563aC0195aDc7f169"
+      "l2TeleportGateway": "0x18d2CF2296c5b29343755E6B7e37679818913f88",
+      "l1TeleportGateway": "0x920347f49a9dbe50865EB6161C3B2774AC046A7F"
    }
 
    "Arbitrum Mainnet teleport gateways":  {
-      "l2TeleportGateway": "0x35d152cd86C455D08bB10cB1F36fe97b2C4127E3",
-      "l1TeleportGateway": "0x39Fb4f2c0658BCE77863288d12413B23C2c2D6df"
+      "l2TeleportGateway": "0x5dBaf6F2bEDebd414F8d78d13499222347e59D5E",
+      "l1TeleportGateway": "0x22218359E78bC34E532B653198894B639AC3ed72"
    },
 
    "Legacy (slow) Mainnet Optimism Dai bridge": {
