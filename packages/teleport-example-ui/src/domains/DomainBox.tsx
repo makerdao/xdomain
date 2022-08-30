@@ -1,4 +1,5 @@
 import { Button, Col, InputNumber, Row, Select } from 'antd'
+import { ethers } from 'ethers'
 
 import { DomainChainId, DomainName } from './metadata'
 export function DomainBox({
@@ -79,7 +80,13 @@ export function DomainBox({
           // precision={18}
           value={amount}
           style={{ width: '100%' }}
-          onChange={(val) => onAmountChanged?.(val || '0')}
+          onChange={(val) => {
+            try {
+              ethers.FixedNumber.fromString(val, 'ufixed128x18')
+              onAmountChanged?.(val || '0')
+              return true
+            } catch (e) {}
+          }}
         />
       </div>
     </div>
