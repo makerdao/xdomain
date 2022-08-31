@@ -36,12 +36,18 @@ interface AllBridgeSettings {
 
 export type BridgeSettings = Partial<AllBridgeSettings>
 
+/**
+ * Represents a contract call
+ */
 export interface Call {
   tx?: ContractTransaction
   to: string
   data: string
 }
 
+/**
+ * Teleport Options
+ */
 export interface TeleportBridgeOpts {
   srcDomain: DomainDescription
   dstDomain?: DomainId
@@ -50,6 +56,13 @@ export interface TeleportBridgeOpts {
   settings?: BridgeSettings
 }
 
+/**
+ * Main Teleport Bridge implementation
+ * @remarks
+ * This is the enrypoint for all Teleport operations
+ * 
+ * @public
+ */
 export class TeleportBridge {
   srcDomain: DomainId
   dstDomain: DomainId
@@ -66,6 +79,13 @@ export class TeleportBridge {
     this.settings = { useFakeArbitrumOutbox: false, ...settings }
   }
 
+  /**
+   * Approve the source domain's Gateway contract to spend tokens.
+   * @param sender - address from wchich tokens will be teleported
+   * @param amount - amount to approve
+   * @param overrides - ethers.js transaction overrides
+   * @returns Promise containing a contract call
+   */
   public async approveSrcGateway(sender?: Signer, amount?: BigNumberish, overrides?: Overrides): Promise<Call> {
     const shouldSendTx = Boolean(sender)
     const sdk = getSdk(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender))
@@ -78,6 +98,19 @@ export class TeleportBridge {
     )
   }
 
+  /**
+   * Initiate manual token teleportation
+   * @remarks
+   * This call assumes that the token `allowance` for the gateway has already been set
+   * to the appropriate value before initiating a token teleportation.
+   * 
+   * @param receiverAddress - address that will receive tokens on the target domain
+   * @param amount - amount of tokens to teleport
+   * @param operatorAddress - address that can relay the mint request on the target domain
+   * @param sender - address from which the tokens will be taken on the source domain
+   * @param overrides - ethers.js transaction overrides
+   * @returns Promise containing the call to the Teleport contracts
+   */
   public async initTeleport(
     receiverAddress: string,
     amount: BigNumberish,
@@ -113,6 +146,19 @@ export class TeleportBridge {
     )
   }
 
+  /**
+   * Helper for initiating a relayed teleportation.
+   * @public
+   * @remarks
+   * Functionally identical to {@link initTeleport}, but filling out
+   * the `operatorAddress` with a relayer's known address.
+   * @param receiverAddress - address that will receive tokens on the target domain
+   * @param amount - amount of tokens to teleport
+   * @param sender - address from which the tokens will be teleported
+   * @param relayAddress - address of the relayer
+   * @param overrides - ethers.js transaction overrides
+   * @returns 
+   */
   public async initRelayedTeleport(
     receiverAddress: string,
     amount: BigNumberish,
@@ -124,6 +170,16 @@ export class TeleportBridge {
     return await this.initTeleport(receiverAddress, amount, relay.address, sender, overrides)
   }
 
+  /**
+   * Collect oracle attestations for a given transaciton
+   * @public
+   * @param txHash - transaction hash to attest
+   * @param onNewSignatureReceived - callback
+   * @param timeoutMs 
+   * @param pollingIntervalMs 
+   * @param teleportGUID - {@link TeleportGUID} linked to the passed `txHash`
+   * @returns Promise containing all collected oracle attestations and the linked {@link TeleportGUID}
+   */
   public async getAttestations(
     txHash: string,
     onNewSignatureReceived?: (numSignatures: number, threshold: number, guid?: TeleportGUID) => void,
@@ -150,20 +206,49 @@ export class TeleportBridge {
     )
   }
 
+  /**
+   * Get the user's token balance on the Source Domain
+   * @public
+   * @param userAddress - address to check
+   * @returns Promise containing token balance
+   */
   public async getSrcBalance(userAddress: string): Promise<BigNumber> {
     return await _getDaiBalance(userAddress, this.srcDomain, this.srcDomainProvider)
   }
 
+  /**
+   * Get the user's token balance on the Destination Domain
+   * @public
+   * @param userAddress - address to check
+   * @returns Promise containing token balance
+   */
   public async getDstBalance(userAddress: string): Promise<BigNumber> {
     return await _getDaiBalance(userAddress, this.dstDomain, this.dstDomainProvider)
   }
 
+  /**
+   * Get the user's token allowance set to the Source Domain's Gateway contract
+   * @param userAddress - address to check
+   * @returns Promise containing user's token allowance
+   */
   public async getSrcGatewayAllowance(userAddress: string): Promise<BigNumber> {
     const sdk = getSdk(this.srcDomain, this.srcDomainProvider)
     const allowance = await sdk.Dai!.allowance(userAddress, sdk.TeleportOutboundGateway!.address)
     return allowance
   }
 
+  /**
+   * Calculate received token amounts on the target domain and fees to be paid
+   * both to the bridge and the relayer
+   * @public
+   * @remarks
+   * The fees will change depending on the source/target domain combination and 
+   * whether expedited teleportation is indicated
+   * @param withdrawn - amount of tokens to be taken from the user's address
+   * @param isHighPriority - whether this teleportation is to be expedited
+   * @param relayAddress - relayer's address
+   * @returns Promise containing detailed amounts for both mintable amount and fees to be paid
+   */
   public async getAmounts(
     withdrawn: BigNumberish,
     isHighPriority?: boolean,
@@ -189,6 +274,14 @@ export class TeleportBridge {
     return { mintable, bridgeFee, relayFee }
   }
 
+  /**
+   * 
+   * @param teleportGUID 
+   * @param isHighPriority 
+   * @param relayParams 
+   * @param relayAddress 
+   * @returns 
+   */
   public async getAmountsForTeleportGUID(
     teleportGUID: TeleportGUID,
     isHighPriority?: boolean,
@@ -222,6 +315,12 @@ export class TeleportBridge {
     return teleportGUID
   }
 
+  /**
+   * 
+   * @param sender 
+   * @param overrides 
+   * @returns 
+   */
   public async requestFaucetDai(sender: Signer, overrides?: Overrides): Promise<ContractTransaction> {
     const sdk = getSdk(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender))
     if (!sdk.Faucet) throw new Error(`No faucet setup for source domain ${this.srcDomain}!`)
@@ -232,6 +331,16 @@ export class TeleportBridge {
     return tx
   }
 
+  /**
+   * 
+   * @param teleportGUID 
+   * @param signatures 
+   * @param maxFeePercentage 
+   * @param operatorFee 
+   * @param sender 
+   * @param overrides 
+   * @returns 
+   */
   public async mintWithOracles(
     teleportGUID: TeleportGUID,
     signatures: string,
@@ -267,6 +376,13 @@ export class TeleportBridge {
     )
   }
 
+  /**
+   * 
+   * @param isHighPriority 
+   * @param relayParams 
+   * @param relayAddress 
+   * @returns 
+   */
   public async getRelayFee(
     isHighPriority?: boolean,
     relayParams?: RelayParams,
@@ -286,6 +402,20 @@ export class TeleportBridge {
     return await signRelayPayload(receiver, teleportGUID, relayFee, maxFeePercentage, expiry)
   }
 
+  /**
+   * Request a transaction relay from a relayer
+   * @param receiver receiver of the finds
+   * @param teleportGUID 
+   * @param signatures set of oracle attestations
+   * @param relayFee fee to be paid to the relayer
+   * @param maxFeePercentage maximum fee specified by the user
+   * @param expiry expiration date of the teleportation action
+   * @param to extra call receiver
+   * @param data extra call data
+   * @param relayAddress address of the relayer
+   * @param onPayloadSigned callback
+   * @returns promise containing relay task ID
+   */
   public async requestRelay(
     receiver: Signer,
     teleportGUID: TeleportGUID,
@@ -313,11 +443,34 @@ export class TeleportBridge {
     )
   }
 
+  /**
+   * Wait for a relayed transaction to go through
+   * @param taskId relayer task ID
+   * @param pollingIntervalMs
+   * @param timeoutMs 
+   * @returns 
+   */
   public async waitForRelayTask(taskId: string, pollingIntervalMs?: number, timeoutMs?: number): Promise<string> {
     return await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)
   }
 
   // TODO: deprecate
+  /**
+   * 
+   * @param receiver 
+   * @param teleportGUID 
+   * @param signatures 
+   * @param relayFee 
+   * @param maxFeePercentage 
+   * @param expiry 
+   * @param to 
+   * @param data 
+   * @param relayAddress 
+   * @param pollingIntervalMs 
+   * @param timeoutMs 
+   * @param onPayloadSigned 
+   * @returns 
+   */
   public async relayMintWithOracles(
     receiver: Signer,
     teleportGUID: TeleportGUID,
@@ -351,6 +504,11 @@ export class TeleportBridge {
     )
   }
 
+  /**
+   * 
+   * @param txHash 
+   * @returns 
+   */
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {
     try {
       const teleportGUID = await getTeleportGuid(
@@ -388,6 +546,13 @@ export class TeleportBridge {
     return false
   }
 
+  /**
+   * 
+   * @param sender 
+   * @param txHash 
+   * @param overrides 
+   * @returns 
+   */
   public async mintWithoutOracles(sender: Signer, txHash: string, overrides?: Overrides): Promise<ContractTransaction> {
     if (['ARB-GOER-A', 'ARB-ONE-A'].includes(this.srcDomain)) {
       return await relayArbitrumMessage(
@@ -440,6 +605,14 @@ async function _optionallySendTx(
   }
 }
 
+/**
+ * Get the dai balance of an address in a domain
+ * @internal
+ * @param userAddress
+ * @param domain 
+ * @param domainProvider 
+ * @returns Promise containing dai balance
+ */
 async function _getDaiBalance(userAddress: string, domain: DomainDescription, domainProvider: any): Promise<BigNumber> {
   const sdk = getSdk(domain, domainProvider)
   const balance = await sdk.Dai!.balanceOf(userAddress)

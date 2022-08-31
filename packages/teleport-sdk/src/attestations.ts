@@ -18,6 +18,9 @@ export const ORACLE_API_URLS: { [domain in DomainId]: string } = {
   'ARB-ONE-A': '',
 }
 
+/**
+ * Represents oracle signatures for a particular event on some domain
+ */
 interface OracleData {
   data: { event: string; hash: string }
   signatures: {
@@ -28,6 +31,9 @@ interface OracleData {
   }
 }
 
+/**
+ * Oracle attestation for a particular {@link TeleportGUID}
+ */
 interface Attestation {
   signatures: string
   teleportGUID: TeleportGUID
@@ -37,6 +43,12 @@ interface Attestation {
   }>
 }
 
+/**
+ * Fetch attestations from the Oracle network.
+ * @internal
+ * @param txHash - transaction hash to be attested
+ * @returns Promise containing oracle attestations
+ */
 async function fetchAttestations(txHash: string, dstDomain: DomainId): Promise<Attestation[]> {
   const response = await axios.get(ORACLE_API_URLS[dstDomain], {
     params: {
@@ -67,6 +79,18 @@ async function fetchAttestations(txHash: string, dstDomain: DomainId): Promise<A
   return Array.from(teleports.values())
 }
 
+/**
+ * Collect attestations for a transaction from the Oracle network
+ * @public
+ * @param txHash - hash of the transaction to attest
+ * @param threshold - number of signatures to collect
+ * @param isValidAttestation - callback to check if an oracle signature is valid
+ * @param pollingIntervalMs 
+ * @param teleportGUID - {@link TeleportGUID} created by the `txHash` transaction
+ * @param timeoutMs 
+ * @param onNewSignatureReceived - callback
+ * @returns Promise containing oracle attestations, and the attested {@link TeleportGUID}
+ */
 export async function waitForAttestations(
   dstDomain: DomainId,
   txHash: string,
