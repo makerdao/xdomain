@@ -16,6 +16,8 @@
     "test:fix": "yarn lint:fix && yarn format:fix && yarn test && yarn typecheck",
     "typecheck": "yarn eth-sdk && tsc --noEmit",
     "build": "yarn eth-sdk && rm -rf ./dist && tsc -p ./tsconfig.build.json && cp -R ./src/sdk ./dist/sdk",
+    "docs:init": "api-extractor init",
+    "docs:build": "api-extractor run --local && api-documenter markdown --input-folder temp",
     "demo:arbitrum:rinkeby": "yarn ts-node ./scripts/demo.arbitrum-rinkeby.ts | grep -v \"Duplicate definition of File\"",
     "demo:arbitrum:goerli": "yarn ts-node ./scripts/demo.arbitrum-goerli.ts | grep -v \"Duplicate definition of File\"",
     "demo:optimism:kovan": "yarn ts-node ./scripts/demo.optimism-kovan.ts | grep -v \"Duplicate definition of File\"",
@@ -32,6 +34,8 @@
   "devDependencies": {
     "@dethcrypto/eth-sdk": "0.3.1",
     "@ethereum-waffle/chai": "^4.0.0-alpha.0",
+    "@microsoft/api-documenter": "^7.19.9",
+    "@microsoft/api-extractor": "^7.29.5",
     "@types/chai": "^4.3.0",
     "@types/chai-as-promised": "^7.1.5",
     "@types/mocha": "^9.1.0",
