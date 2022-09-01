@@ -1,7 +1,5 @@
 import { deployContractMock } from '@makerdao/hardhat-utils'
-import { smockit } from '@eth-optimism/smock'
-
-import { ContractFactory, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { join } from 'path'
 
 export function deployZkSyncContractMock(
