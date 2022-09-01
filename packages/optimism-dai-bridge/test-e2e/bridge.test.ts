@@ -177,7 +177,7 @@ describe('bridge', () => {
     console.log('L2 Bridge Upgrade Spell: ', l2UpgradeSpell.address)
 
     // Close L1 bridge V1
-    await l1DAITokenBridge.connect(l1Signer).close(ZERO_GAS_OPTS)
+    await waitForTx(l1DAITokenBridge.connect(l1Signer).close(ZERO_GAS_OPTS))
     console.log('L1 Bridge Closed')
 
     // Close L2 bridge V1
