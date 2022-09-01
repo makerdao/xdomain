@@ -316,10 +316,11 @@ export class TeleportBridge {
   }
 
   /**
-   * 
-   * @param sender 
-   * @param overrides 
-   * @returns 
+   * Request some tokens from the registered faucet for the source domain
+   * @public
+   * @param sender - address that will get the tokens
+   * @param overrides - ethers.js transaction overrides
+   * @returns Promise containing the faucet transaction
    */
   public async requestFaucetDai(sender: Signer, overrides?: Overrides): Promise<ContractTransaction> {
     const sdk = getSdk(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender))
@@ -332,14 +333,18 @@ export class TeleportBridge {
   }
 
   /**
-   * 
-   * @param teleportGUID 
-   * @param signatures 
-   * @param maxFeePercentage 
-   * @param operatorFee 
-   * @param sender 
-   * @param overrides 
-   * @returns 
+   * Mint tokens using oracle attestations on the target domain
+   * @remarks
+   * This *requires* oracle attestations for the teleport action to be collected
+   * via the use of {@link getAttestations} 
+   * @public
+   * @param teleportGUID - attested {@link TeleportGUID}
+   * @param signatures - oracle signatures
+   * @param maxFeePercentage - maximum fee determined by the user
+   * @param operatorFee - fee paid to relayer
+   * @param sender - address that will get the tokens on the target domain
+   * @param overrides - ethers.js transaction overrides
+   * @returns Promise containing call to the Teleport contracts
    */
   public async mintWithOracles(
     teleportGUID: TeleportGUID,
@@ -377,11 +382,12 @@ export class TeleportBridge {
   }
 
   /**
-   * 
-   * @param isHighPriority 
-   * @param relayParams 
-   * @param relayAddress 
-   * @returns 
+   * Get the relayer fee for a certain transaction
+   * @public
+   * @param isHighPriority - whether this transaction is to be expedited
+   * @param relayParams - parameters for the relaid transaction
+   * @param relayAddress - relayer's address
+   * @returns Promise containing the token fee (in wei) to be paid to the relayer
    */
   public async getRelayFee(
     isHighPriority?: boolean,
@@ -456,20 +462,24 @@ export class TeleportBridge {
 
   // TODO: deprecate
   /**
-   * 
-   * @param receiver 
-   * @param teleportGUID 
-   * @param signatures 
-   * @param relayFee 
-   * @param maxFeePercentage 
-   * @param expiry 
-   * @param to 
-   * @param data 
-   * @param relayAddress 
+   * Relay a mint transaction on the target domain using oracle attestations
+   * @remarks
+   * Functionally identical to {@link mintWithOracles}, but relaying the transaction
+   * on the target domain
+   * @public
+   * @param receiver - address that will receive funds on the target domain
+   * @param teleportGUID - linked {@link TeleportGUID}
+   * @param signatures - oracle signatures from {@link getAttestations}
+   * @param relayFee - fee to be paid to the relayer from {@link getRelayFee}
+   * @param maxFeePercentage - maximum fee specified by the user
+   * @param expiry - expiration timestamp for this teleport action
+   * @param to - address to call after token minting (only available when using a {@link TrustedRelay}
+   * @param data - data to call contract at `to` with
+   * @param relayAddress - relayer's address
    * @param pollingIntervalMs 
    * @param timeoutMs 
-   * @param onPayloadSigned 
-   * @returns 
+   * @param onPayloadSigned - callback
+   * @returns Promise containing relayed transaction's hash
    */
   public async relayMintWithOracles(
     receiver: Signer,
@@ -505,9 +515,13 @@ export class TeleportBridge {
   }
 
   /**
-   * 
-   * @param txHash 
-   * @returns 
+   * Check if a teleport action can be completed without oracle attestations
+   * @remarks
+   * This is usually due to the initiating transaction being already confirmed in a target domain block
+   * and valid only for L2 -> L1 transactions, such as Arbitrum -> Ethereum Mainnet
+   * @public
+   * @param txHash - hash of the initiating transaction on the source domain
+   * @returns whether the teleportation can be completed without oracle attestastions
    */
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {
     try {
@@ -547,11 +561,14 @@ export class TeleportBridge {
   }
 
   /**
-   * 
-   * @param sender 
-   * @param txHash 
-   * @param overrides 
-   * @returns 
+   * Mint tokens on the target domain without collecting oracle attestations
+   * @remarks
+   * This is only possible if {@link canMintWithoutOracle} returns `true`
+   * @public
+   * @param sender - address that will initiate the mint transaction
+   * @param txHash - hash of the original transaction on teh source domain
+   * @param overrides - ethers.js transaction overrides
+   * @returns Promise containing the transaction sent to the Teleport contracts on the target domain
    */
   public async mintWithoutOracles(sender: Signer, txHash: string, overrides?: Overrides): Promise<ContractTransaction> {
     if (['ARB-GOER-A', 'ARB-ONE-A'].includes(this.srcDomain)) {
