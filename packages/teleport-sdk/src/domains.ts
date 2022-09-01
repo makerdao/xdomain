@@ -38,6 +38,9 @@ export interface TeleportSdk {
   Dai?: Dai
 }
 
+/**
+ * Teleport's supported domains
+ */
 export const DOMAINS = [
   'RINKEBY-SLAVE-ARBITRUM-1',
   'RINKEBY-MASTER-1',
@@ -79,6 +82,9 @@ export const DEFAULT_RPC_URLS: Dictionary<string, DomainId> = {
   'ETH-MAIN-A': 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
 }
 
+/**
+ * Accepted aliases for domains
+ */
 export type DomainDescription =
   | DomainId
   | 'optimism-testnet'
@@ -88,6 +94,9 @@ export type DomainDescription =
   | 'optimism'
   | 'arbitrum'
 
+/**
+ * Conversion table for domain aliases
+ */
 const descriptionsToDomainIds: Dictionary<DomainId, DomainDescription> = {
   'optimism-testnet': 'KOVAN-SLAVE-OPTIMISM-1',
   'arbitrum-testnet': 'RINKEBY-SLAVE-ARBITRUM-1',
@@ -99,10 +108,24 @@ const descriptionsToDomainIds: Dictionary<DomainId, DomainDescription> = {
   ...(Object.assign({}, ...DOMAINS.map((d) => ({ [d]: d }))) as Dictionary<DomainId, DomainId>),
 }
 
+/**
+ * Convert a domain alias into its {@link DomainId}
+ * @public
+ * @param srcDomain - domain alias from {@link DomainDescription}
+ * @returns the un-aliased {@link DomainId}
+ */
 export function getLikelyDomainId(srcDomain: DomainDescription): DomainId {
   return descriptionsToDomainIds[srcDomain]
 }
 
+/**
+ * Get the default target domain for a given source domain
+ * @remarks
+ * This usually means L2 -> L1 for rollup chains on Ethereum
+ * @public
+ * @param srcDomain - source domain's {@link DomainId}
+ * @returns target domain's {@link DomainId}
+ */
 export function getDefaultDstDomain(srcDomain: DomainDescription): DomainId {
   const domainId = getLikelyDomainId(srcDomain)
   if (domainId.includes('KOVAN')) {
@@ -120,6 +143,12 @@ export function getDefaultDstDomain(srcDomain: DomainDescription): DomainId {
   throw new Error(`No default destination domain for source domain "${srcDomain}"`)
 }
 
+/**
+ * Get an ethers.js bundle containing contracts and a provider connected to a given domain
+ * @param domain - domain to connect to
+ * @param signerOrProvider - ethers.js signer or provider for the given domain
+ * @returns
+ */
 export function getSdk(domain: DomainDescription, signerOrProvider: Signer | Provider): TeleportSdk {
   const sdkProviders: Dictionary<Function, DomainId> = {
     'RINKEBY-MASTER-1': getRinkebySdk,
