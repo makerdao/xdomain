@@ -1,16 +1,16 @@
-import fs from 'fs'
+import { getActiveWards, getAddressOfNextDeployedContract, waitForTx } from '@makerdao/hardhat-utils'
+import { Deployer } from '@matterlabs/hardhat-zksync-deploy'
 import { expect } from 'chai'
-import * as zk from 'zksync-web3'
-import { IZkSync } from 'zksync-web3/build/typechain'
+import { BigNumber, BigNumberish,Contract, ContractReceipt, Overrides, providers, Wallet } from 'ethers'
+import { Interface, parseEther } from 'ethers/lib/utils'
+import fs from 'fs'
 import { ethers } from 'hardhat'
 import * as hre from 'hardhat'
-import { BigNumber, Wallet, Contract, ContractReceipt, providers } from 'ethers'
-import { Deployer } from '@matterlabs/hardhat-zksync-deploy'
+import * as zk from 'zksync-web3'
+import { IZkSync } from 'zksync-web3/build/typechain'
 
-import { L1DAITokenBridge, L1Escrow, L1GovernanceRelay } from '../typechain-types/l1'
+import { L1Dai, L1DAITokenBridge, L1Escrow, L1GovernanceRelay } from '../typechain-types/l1'
 import { Dai, L2DAITokenBridge, L2GovernanceRelay, TestBridgeUpgradeSpell } from '../typechain-types/l2'
-import { getActiveWards, getAddressOfNextDeployedContract, waitForTx } from '@makerdao/hardhat-utils'
-import { Interface, parseEther } from 'ethers/lib/utils'
 
 const RICH_WALLET_PK = '0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110'
 const depositAmount = ethers.utils.parseEther('5')
@@ -62,6 +62,43 @@ async function setupSigners(): Promise<{
   return { l1Signer, l2Signer }
 }
 
+async function deployBridges(
+  l1Signer: Wallet,
+  l2Signer: zk.Wallet,
+  l1Dai: L1Dai,
+  l2Dai: Dai,
+  l1Escrow: L1Escrow,
+): Promise<{
+  l1DAITokenBridge: L1DAITokenBridge
+  l2DAITokenBridge: L2DAITokenBridge
+}> {
+  const zkSyncAddress = await l2Signer.provider.getMainContractAddress()
+  const futureL1DAITokenBridgeAddress = await getAddressOfNextDeployedContract(l1Signer)
+  const l2DAITokenBridge = (await deployL2Contract(l2Signer, 'L2DAITokenBridge', [
+    l2Dai.address,
+    l1Dai.address,
+    futureL1DAITokenBridgeAddress,
+  ])) as L2DAITokenBridge
+  const l1DAITokenBridge = (await deployL1Contract(l1Signer, 'L1DAITokenBridge', [
+    l1Dai.address,
+    l2DAITokenBridge.address,
+    l2Dai.address,
+    l1Escrow.address,
+    zkSyncAddress,
+  ])) as L1DAITokenBridge
+  expect(l1DAITokenBridge.address).to.be.eq(
+    futureL1DAITokenBridgeAddress,
+    'Predicted address of l1DAITokenBridge doesnt match actual address',
+  )
+
+  console.log('Approving use of deployer L1Dai by l1DAITokenBridge...')
+  await waitForTx(l1Dai.approve(l1DAITokenBridge.address, ethers.constants.MaxUint256, { gasLimit: 200000 }))
+  console.log('Approving use of deployer L2Dai by l2DAITokenBridge...')
+  await waitForTx(l2Dai.approve(l2DAITokenBridge.address, ethers.constants.MaxUint256, { gasLimit: 200000 }))
+
+  return { l1DAITokenBridge, l2DAITokenBridge }
+}
+
 describe('bridge', function () {
   let zkSync: IZkSync
   let l1Signer: Wallet
@@ -70,12 +107,10 @@ describe('bridge', function () {
   let l1Dai: Dai
   let l1Escrow: L1Escrow
   let l1DAITokenBridge: L1DAITokenBridge
-  //   let l1DAITokenBridgeV2: L1DAITokenBridge
   let l1GovernanceRelay: L1GovernanceRelay
 
   let l2Dai: Dai
   let l2DAITokenBridge: L2DAITokenBridge
-  //   let l2DAITokenBridgeV2: L2DAITokenBridge
   let l2GovernanceRelay: L2GovernanceRelay
   beforeEach(async () => {
     ;({ l1Signer, l2Signer } = await setupSigners())
@@ -84,27 +119,8 @@ describe('bridge', function () {
 
     l2Dai = await deployL2Contract(l2Signer, 'Dai')
     l1Dai = await deployL1Contract(l1Signer, 'L1Dai')
-
     l1Escrow = await deployL1Contract(l1Signer, 'L1Escrow')
-
-    // deploy bridges
-    const futureL1DAITokenBridgeAddress = await getAddressOfNextDeployedContract(l1Signer)
-    l2DAITokenBridge = await deployL2Contract(l2Signer, 'L2DAITokenBridge', [
-      l2Dai.address,
-      l1Dai.address,
-      futureL1DAITokenBridgeAddress,
-    ])
-    l1DAITokenBridge = await deployL1Contract(l1Signer, 'L1DAITokenBridge', [
-      l1Dai.address,
-      l2DAITokenBridge.address,
-      l2Dai.address,
-      l1Escrow.address,
-      zkSyncAddress,
-    ])
-    expect(l1DAITokenBridge.address).to.be.eq(
-      futureL1DAITokenBridgeAddress,
-      'Predicted address of l1DAITokenBridge doesnt match actual address',
-    )
+    ;({ l1DAITokenBridge, l2DAITokenBridge } = await deployBridges(l1Signer, l2Signer, l1Dai, l2Dai, l1Escrow))
 
     // deploy gov relays
     const futureL1GovRelayAddress = await getAddressOfNextDeployedContract(l1Signer)
@@ -120,14 +136,16 @@ describe('bridge', function () {
 
     console.log('Minting deployer Dai...')
     await waitForTx(l1Dai.mint(l1Signer.address, parseEther('1000000'), { gasLimit: 200000 }))
-    console.log('Approving use of deployer Dai by l1DAITokenBridge...')
-    await waitForTx(l1Dai.approve(l1DAITokenBridge.address, ethers.constants.MaxUint256, { gasLimit: 200000 }))
+
     console.log('Approving l1DAITokenBridge to move l1Dai from L1Escrow...')
     await waitForTx(
       l1Escrow.approve(l1Dai.address, l1DAITokenBridge.address, ethers.constants.MaxUint256, { gasLimit: 200000 }),
     )
-    console.log('Setting permissions...')
+
+    console.log('Granting L2Dai mint right to l2DAITokenBridge')
     await waitForTx(l2Dai.rely(l2DAITokenBridge.address))
+
+    console.log('Setting permissions...')
     await waitForTx(l2Dai.rely(l2GovernanceRelay.address))
     await waitForTx(l2Dai.deny(l2Signer.address))
     await waitForTx(l2DAITokenBridge.rely(l2GovernanceRelay.address))
@@ -141,55 +159,70 @@ describe('bridge', function () {
     console.log('Setup done.')
   })
 
-  async function depositToL2(): Promise<providers.TransactionReceipt> {
-    const l2Calldata = l2DAITokenBridge.interface.encodeFunctionData('finalizeDeposit', [
-      l1Signer.address,
-      l2Signer.address,
-      l1Dai.address,
-      depositAmount,
-      '0x',
-    ])
+  async function waitToRelayTxToL2(
+    l1Contract: Contract,
+    l1Calldata: string,
+    l2Calldata?: string,
+    l1Overrides?: Overrides,
+    l2ErgsLimit?: BigNumberish,
+  ): Promise<providers.TransactionReceipt> {
     const gasPrice = await l1Signer.provider.getGasPrice()
-    const ergsLimit = BigNumber.from(1000000)
     const queueType = 0
     const l2ExecutionCost = await zkSync.l2TransactionBaseCost(
       gasPrice,
-      ergsLimit,
-      ethers.utils.hexlify(l2Calldata).length,
+      l2ErgsLimit || BigNumber.from(1000000),
+      l2Calldata !== undefined ? ethers.utils.hexlify(l2Calldata).length : 1000,
       queueType,
     )
-    const tx = await l1DAITokenBridge.deposit(l2Signer.address, l1Dai.address, depositAmount, queueType, {
+    const tx = await l1Contract.signer.sendTransaction({
+      to: l1Contract.address,
+      data: l1Calldata,
       value: l2ExecutionCost,
       gasPrice,
-      gasLimit: 300000,
+      ...l1Overrides,
     })
     await tx.wait()
     const l2Response = await l2Signer.provider.getL2TransactionFromPriorityOp(tx)
     return await l2Response.wait()
   }
 
-  it('moves l1 tokens to l2', async function () {
-    await waitForTx(l1Dai.approve(l1DAITokenBridge.address, depositAmount, { gasLimit: 200000 }))
+  async function testDepositToL2(): Promise<providers.TransactionReceipt> {
     const l2DaiBefore = await l2Dai.balanceOf(l2Signer.address)
+    const l1DaiBefore = await l1Dai.balanceOf(l1Signer.address)
 
-    await depositToL2()
+    const queueType = 0
+    const txReceipt = await waitToRelayTxToL2(
+      l1DAITokenBridge,
+      l1DAITokenBridge.interface.encodeFunctionData('deposit', [
+        l2Signer.address,
+        l1Dai.address,
+        depositAmount,
+        queueType,
+      ]),
+      l2DAITokenBridge.interface.encodeFunctionData('finalizeDeposit', [
+        l1Signer.address,
+        l2Signer.address,
+        l1Dai.address,
+        depositAmount,
+        '0x',
+      ]),
+      { gasLimit: 300000 },
+    )
 
     const l2DaiAfter = await l2Dai.balanceOf(l2Signer.address)
+    const l1DaiAfter = await l1Dai.balanceOf(l1Signer.address)
     expect(l2DaiAfter.sub(l2DaiBefore).toString()).to.be.eq(depositAmount.toString())
-  })
+    expect(l1DaiBefore.sub(l1DaiAfter).toString()).to.be.eq(depositAmount.toString())
 
-  it('moves l2 tokens to l1', async () => {
-    await depositToL2()
+    return txReceipt
+  }
 
+  async function testWithdrawFromL2(): Promise<providers.TransactionReceipt> {
     const l2DaiBefore = await l2Dai.balanceOf(l2Signer.address)
+    const l1DaiBefore = await l1Dai.balanceOf(l1Signer.address)
 
     const tx = await l2DAITokenBridge.withdraw(l1Signer.address, l2Dai.address, depositAmount)
     const receipt = (await (tx as zk.types.TransactionResponse).waitFinalize()) as ContractReceipt
-
-    const l2DaiAfter = await l2Dai.balanceOf(l2Signer.address)
-    expect(l2DaiBefore.sub(l2DaiAfter).toString()).to.be.eq(depositAmount.toString())
-
-    const l1DaiBefore = await l1Dai.balanceOf(l1Signer.address)
 
     const iface = new Interface(['event L1MessageSent(address indexed _sender, bytes32 indexed _hash, bytes _message)'])
     const msgSentEvent = receipt.events?.find((ev) => ev.topics[0] === iface.getEventTopic('L1MessageSent'))
@@ -201,9 +234,68 @@ describe('bridge', function () {
     const l1Tx = await l1DAITokenBridge.finalizeWithdrawal(receipt.blockNumber, id, message, proof, {
       gasLimit: 500000,
     })
-    await l1Tx.wait()
+    const txReceipt = await l1Tx.wait()
 
+    const l2DaiAfter = await l2Dai.balanceOf(l2Signer.address)
     const l1DaiAfter = await l1Dai.balanceOf(l1Signer.address)
+    expect(l2DaiBefore.sub(l2DaiAfter).toString()).to.be.eq(depositAmount.toString())
     expect(l1DaiAfter.sub(l1DaiBefore).toString()).to.be.eq(depositAmount.toString())
+
+    return txReceipt
+  }
+
+  it('moves l1 tokens to l2', async function () {
+    await testDepositToL2()
+  })
+
+  it('moves l2 tokens to l1', async () => {
+    await testDepositToL2()
+    await testWithdrawFromL2()
+  })
+
+  it('upgrades the bridge through governance relay', async () => {
+    const { l1DAITokenBridge: l1DAITokenBridgeV2, l2DAITokenBridge: l2DAITokenBridgeV2 } = await deployBridges(
+      l1Signer,
+      l2Signer,
+      l1Dai,
+      l2Dai,
+      l1Escrow,
+    )
+
+    // Close L1 bridge V1
+    console.log('Closing L1 bridge V1...')
+    await waitForTx(l1DAITokenBridge.close({ gasLimit: 200000 }))
+    console.log('L1 Bridge Closed')
+
+    // Close L2 bridge V1
+    const l2UpgradeSpell: TestBridgeUpgradeSpell = await deployL2Contract(l2Signer, 'TestBridgeUpgradeSpell', [])
+    const l2Calldata = l2UpgradeSpell.interface.encodeFunctionData('upgradeBridge', [
+      l2DAITokenBridge.address,
+      l2DAITokenBridgeV2.address,
+    ])
+    const queueType = 0
+    console.log('Executing spell to close L2 Bridge V1 and grant minting permissions to L2 Bridge V2...')
+    await waitToRelayTxToL2(
+      l1GovernanceRelay,
+      l1GovernanceRelay.interface.encodeFunctionData('relay', [l2UpgradeSpell.address, l2Calldata, queueType]),
+      l2Calldata,
+      { gasLimit: 300000 },
+      2000000,
+    )
+    console.log('L2 Bridge Closed')
+
+    console.log('Approving l1DAITokenBridgeV2 to move l1Dai from L1Escrow...')
+    await waitForTx(
+      l1Escrow.approve(l1Dai.address, l1DAITokenBridgeV2.address, ethers.constants.MaxUint256, { gasLimit: 200000 }),
+    )
+
+    l1DAITokenBridge = l1DAITokenBridgeV2
+    l2DAITokenBridge = l2DAITokenBridgeV2
+
+    console.log('Testing V2 bridge deposit...')
+    await testDepositToL2()
+
+    console.log('Testing V2 bridge withdrawal...')
+    await testWithdrawFromL2()
   })
 })
