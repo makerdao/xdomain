@@ -1,5 +1,5 @@
 import { Deployer } from '@matterlabs/hardhat-zksync-deploy'
-import { Contract, Wallet } from 'ethers'
+import { Contract, Signer } from 'ethers'
 import fs from 'fs'
 import { ethers } from 'hardhat'
 import * as hre from 'hardhat'
@@ -18,7 +18,7 @@ export async function deployL2Contract<T extends zk.Contract>(
 }
 
 export async function deployL1Contract<T extends Contract>(
-  l1Signer: Wallet,
+  l1Signer: Signer,
   contractName: string,
   args: Array<any> = [],
 ): Promise<T> {
