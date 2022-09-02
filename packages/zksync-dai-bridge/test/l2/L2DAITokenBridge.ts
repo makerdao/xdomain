@@ -2,7 +2,7 @@ import { assertPublicMutableMethods, getRandomAddresses, simpleDeploy, testAuth 
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
-import { Dai__factory, L2DAITokenBridge__factory } from '../../typechain-types/unit'
+import { Dai__factory, L2DAITokenBridge__factory } from '../../typechain-types'
 
 const errorMessages = {
   notOwner: 'L2DAITokenBridge/not-authorized',

@@ -72,15 +72,6 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: process.env.ETHERSCAN_KEY ?? '',
   },
-
-  typechain: {
-    outDir: process.env.UNIT_TESTS
-      ? './typechain-types/unit'
-      : process.env.NETWORK === 'zksync'
-      ? './typechain-types/l2'
-      : './typechain-types/l1',
-    externalArtifacts: process.env.UNIT_TESTS ? [] : ['artifacts-zk/*.json'],
-  },
 }
 
 export default config

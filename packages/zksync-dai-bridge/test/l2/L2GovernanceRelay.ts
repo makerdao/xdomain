@@ -7,7 +7,7 @@ import {
   Dai__factory,
   L2GovernanceRelay__factory,
   TestDaiMintSpell__factory,
-} from '../../typechain-types/unit'
+} from '../../typechain-types'
 
 const errorMessages = {
   callFromL1GovRelay: 'Only l1GovRelay can call',

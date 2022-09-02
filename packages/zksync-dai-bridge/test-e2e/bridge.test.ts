@@ -6,8 +6,16 @@ import { ethers } from 'hardhat'
 import * as hre from 'hardhat'
 import * as zk from 'zksync-web3'
 
-import { L1Dai, L1DAITokenBridge, L1Escrow, L1GovernanceRelay } from '../typechain-types/l1'
-import { Dai, L2DAITokenBridge, L2GovernanceRelay, TestBridgeUpgradeSpell } from '../typechain-types/l2'
+import {
+  Dai,
+  L1Dai,
+  L1DAITokenBridge,
+  L1Escrow,
+  L1GovernanceRelay,
+  L2DAITokenBridge,
+  L2GovernanceRelay,
+  TestBridgeUpgradeSpell,
+} from '../typechain-types'
 import { deployBridges, deployL1Contract, deployL2Contract, waitToRelayTxToL2 } from '../zksync-helpers'
 
 const RICH_WALLET_PK = '0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110'
