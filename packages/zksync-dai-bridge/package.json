@@ -12,7 +12,7 @@
     "coverage": "UNIT_TESTS=1 hardhat coverage && istanbul check-coverage --branches 59 --lines 63",
     "format": "prettier --check \"./**/*.{ts,sol}\"",
     "format:fix": "prettier --write \"./**/*.{ts,sol}\"",
-    "lint": "eslint --ext .ts test test-e2e hardhat.config.ts",
+    "lint": "eslint --ext .ts test test-e2e zksync-helpers hardhat.config.ts",
     "lint:fix": "yarn lint --fix",
     "typecheck": "tsc --noEmit",
     "test": "UNIT_TESTS=1 hardhat test --no-compile",
@@ -27,8 +27,7 @@
     "@eth-optimism/smock": "=1.1.10",
     "@makerdao/hardhat-utils": "^0.1.3",
     "@matterlabs/hardhat-zksync-deploy": "^0.4.0",
-    "@matterlabs/hardhat-zksync-solc": "^0.3.6",
-    "@matterlabs/zksync-contracts": "^0.2.4",
+    "@matterlabs/hardhat-zksync-solc": "^0.3.7",
     "@nomiclabs/ethereumjs-vm": "^4.2.2",
     "@nomiclabs/hardhat-ethers": "^2.1.1",
     "@nomiclabs/hardhat-etherscan": "^3.1.0",
@@ -72,6 +71,6 @@
     "typescript": "^4.7.4",
     "utf8": "^3.0.0",
     "web3": "^1.3.4",
-    "zksync-web3": "^0.7.13"
+    "zksync-web3": "^0.8.1"
   }
 }

@@ -20,21 +20,20 @@ interface IL1Bridge {
   function deposit(
     address _l2Receiver,
     address _l1Token,
-    uint256 _amount,
-    QueueType _queueType
+    uint256 _amount
   ) external payable returns (bytes32 txHash);
 
   function claimFailedDeposit(
     address _depositSender,
     address _l1Token,
     bytes32 _l2TxHash,
-    uint32 _l2BlockNumber,
+    uint256 _l2BlockNumber,
     uint256 _l2MessageIndex,
     bytes32[] calldata _merkleProof
   ) external;
 
   function finalizeWithdrawal(
-    uint32 _l2BlockNumber,
+    uint256 _l2BlockNumber,
     uint256 _l2MessageIndex,
     bytes calldata _message,
     bytes32[] calldata _merkleProof
@@ -63,14 +62,14 @@ interface L2DAITokenBridgeLike {
 
 interface IMailboxLike {
   function proveL2LogInclusion(
-    uint32 _blockNumber,
+    uint256 _blockNumber,
     uint256 _index,
     L2Log memory _log,
     bytes32[] calldata _proof
   ) external view returns (bool);
 
   function proveL2MessageInclusion(
-    uint32 _blockNumber,
+    uint256 _blockNumber,
     uint256 _index,
     L2Message calldata _message,
     bytes32[] calldata _proof
@@ -78,10 +77,10 @@ interface IMailboxLike {
 
   function requestL2Transaction(
     address _contractAddressL2,
+    uint256 _l2Value,
     bytes calldata _calldata,
     uint256 _ergsLimit,
-    bytes[] calldata _factoryDeps,
-    QueueType _queueType
+    bytes[] calldata _factoryDeps
   ) external payable returns (bytes32 txHash);
 }
 
@@ -114,7 +113,7 @@ contract L1DAITokenBridge is IL1Bridge {
 
   // TODO: evaluate constant
   uint256 constant DEPLOY_L2_BRIDGE_COUNTERPART_ERGS_LIMIT = 2097152;
-  mapping(uint32 => mapping(uint256 => bool)) isWithdrawalProcessed;
+  mapping(uint256 => mapping(uint256 => bool)) isWithdrawalProcessed;
   mapping(address => mapping(bytes32 => uint256)) depositAmount; //TODO: do we need that ?
 
   event WithdrawalFinalized(address indexed _recipient, uint256 _amount);
@@ -176,8 +175,7 @@ contract L1DAITokenBridge is IL1Bridge {
   function deposit(
     address _l2Receiver,
     address _l1Token,
-    uint256 _amount,
-    QueueType _queueType
+    uint256 _amount
   ) external payable returns (bytes32 txHash) {
     require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
     require(isOpen == 1, "L1DAITokenBridge/closed");
@@ -197,10 +195,10 @@ contract L1DAITokenBridge is IL1Bridge {
 
     txHash = zkSyncMailbox.requestL2Transaction{value: msg.value}(
       l2DAITokenBridge,
+      0, // l2Value is always 0
       l2TxCalldata,
       DEPOSIT_ERGS_LIMIT,
-      new bytes[](0),
-      _queueType
+      new bytes[](0)
     );
 
     depositAmount[msg.sender][txHash] = _amount; // TODO: do we need that ?
@@ -210,7 +208,7 @@ contract L1DAITokenBridge is IL1Bridge {
     address _depositSender,
     address _l1Token,
     bytes32 _l2TxHash,
-    uint32 _l2BlockNumber,
+    uint256 _l2BlockNumber,
     uint256 _l2MessageIndex,
     bytes32[] calldata _merkleProof
   ) external {
@@ -236,7 +234,7 @@ contract L1DAITokenBridge is IL1Bridge {
   // into two separate contracts - WithdrawRelayer and the Bridge
 
   function finalizeWithdrawal(
-    uint32 _l2BlockNumber,
+    uint256 _l2BlockNumber,
     uint256 _l2MessageIndex,
     bytes calldata _message,
     bytes32[] calldata _merkleProof

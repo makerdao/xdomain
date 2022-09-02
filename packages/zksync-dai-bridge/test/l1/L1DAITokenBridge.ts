@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
 import { Dai__factory, L1DAITokenBridge__factory, L1Escrow__factory } from '../../typechain-types/unit'
-import { deployZkSyncContractMock } from '../../zksync-helpers/mocks'
+import { deployContractMock, deployZkSyncContractMock } from '../../zksync-helpers'
 
 const initialTotalL1Supply = 3000
 const depositAmount = 100
@@ -42,7 +42,7 @@ describe('L1DAITokenBridge', () => {
       })
 
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
-      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount, 0) // TODO: Add QueueType ???
+      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
       const depositCallToMessengerCall = zkSyncMock.smocked.requestL2Transaction.calls[0]
 
       expect(await l1Dai.balanceOf(user1.address)).to.be.eq(initialTotalL1Supply - depositAmount)
@@ -70,7 +70,7 @@ describe('L1DAITokenBridge', () => {
       })
 
       await expect(
-        l1DAITokenBridge.connect(user1).deposit(user2.address, dummyL1Erc20.address, depositAmount, 0),
+        l1DAITokenBridge.connect(user1).deposit(user2.address, dummyL1Erc20.address, depositAmount),
       ).to.be.revertedWith(errorMessages.tokenMismatch)
     })
 
@@ -83,7 +83,7 @@ describe('L1DAITokenBridge', () => {
 
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, 0)
       await expect(
-        l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount, 0),
+        l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount),
       ).to.be.revertedWith(errorMessages.daiInsufficientAllowance)
     })
 
@@ -96,7 +96,7 @@ describe('L1DAITokenBridge', () => {
 
       await l1Dai.connect(user2).approve(l1DAITokenBridge.address, depositAmount)
       await expect(
-        l1DAITokenBridge.connect(user2).deposit(user2.address, l1Dai.address, depositAmount, 0),
+        l1DAITokenBridge.connect(user2).deposit(user2.address, l1Dai.address, depositAmount),
       ).to.be.revertedWith(errorMessages.daiInsufficientBalance)
     })
 
@@ -112,7 +112,7 @@ describe('L1DAITokenBridge', () => {
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
 
       await expect(
-        l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount, 0),
+        l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount),
       ).to.be.revertedWith(errorMessages.bridgeClosed)
     })
   })
@@ -339,7 +339,7 @@ describe('L1DAITokenBridge', () => {
       await l1Escrow.approve(l1Dai.address, l1DAITokenBridge.address, ethers.constants.MaxUint256)
       const txHash = '0xd85a3836a808c1a65f53182b133cf25b18e7014a834ee6b9d9e03d9a18c7bbe5'
       zkSyncMock.smocked.requestL2Transaction.will.return.with(() => txHash)
-      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount, 0) // TODO: Add QueueType ???
+      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
 
       zkSyncMock.smocked.requestL2Transaction.calls[0]
 
@@ -371,7 +371,7 @@ describe('L1DAITokenBridge', () => {
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
       const txHash = '0xd85a3836a808c1a65f53182b133cf25b18e7014a834ee6b9d9e03d9a18c7bbe5'
       zkSyncMock.smocked.requestL2Transaction.will.return.with(() => txHash)
-      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount, 0) // TODO: Add QueueType ???
+      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
 
       const blockNumber = 200
       const messageIndex = 100
@@ -400,7 +400,7 @@ describe('L1DAITokenBridge', () => {
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
       const txHash = '0xd85a3836a808c1a65f53182b133cf25b18e7014a834ee6b9d9e03d9a18c7bbe5'
       zkSyncMock.smocked.requestL2Transaction.will.return.with(() => txHash)
-      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount, 0) // TODO: Add QueueType ???
+      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
 
       zkSyncMock.smocked.requestL2Transaction.calls[0]
 
@@ -522,8 +522,8 @@ describe('L1DAITokenBridge', () => {
 })
 
 async function setupTest(signers: { zkSyncImpersonator: SignerWithAddress; user1: SignerWithAddress }) {
-  const l2DAITokenBridge = await deployZkSyncContractMock('L2DAITokenBridge')
-  const zkSyncMock = await deployZkSyncContractMock('IZkSync', { address: signers.zkSyncImpersonator.address })
+  const l2DAITokenBridge = await deployContractMock('L2DAITokenBridge')
+  const zkSyncMock = await deployZkSyncContractMock({ address: signers.zkSyncImpersonator.address })
 
   const l1Dai = await simpleDeploy<Dai__factory>('Dai', [])
   const l2Dai = await simpleDeploy<Dai__factory>('Dai', [])

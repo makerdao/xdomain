@@ -17,7 +17,7 @@ pragma solidity ^0.8.15;
 
 interface IL1Bridge {
   function finalizeWithdrawal(
-    uint32 _l2BlockNumber,
+    uint256 _l2BlockNumber,
     uint256 _l2MessageIndex,
     bytes calldata _message,
     bytes32[] calldata _merkleProof

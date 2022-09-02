@@ -11,7 +11,6 @@ export async function waitToRelayTxToL2(
   l2ErgsLimit?: BigNumberish,
 ): Promise<providers.TransactionReceipt> {
   const gasPrice = await l1Contract.provider.getGasPrice()
-  const queueType = 0
   const zkSyncAddress = await l2Provider.getMainContractAddress()
   const zkSync = new Contract(zkSyncAddress, zk.utils.ZKSYNC_MAIN_ABI, l1Contract.signer) as IZkSync
 
@@ -19,7 +18,6 @@ export async function waitToRelayTxToL2(
     gasPrice,
     l2ErgsLimit || BigNumber.from(1000000),
     l2Calldata !== undefined ? utils.hexlify(l2Calldata).length : 1000,
-    queueType,
   )
   const tx = await l1Contract.signer.sendTransaction({
     to: l1Contract.address,

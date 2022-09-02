@@ -105,15 +105,9 @@ describe('bridge', function () {
     const l2DaiBefore = await l2Dai.balanceOf(l2Signer.address)
     const l1DaiBefore = await l1Dai.balanceOf(l1Signer.address)
 
-    const queueType = 0
     const txReceipt = await waitToRelayTxToL2(
       l1DAITokenBridge,
-      l1DAITokenBridge.interface.encodeFunctionData('deposit', [
-        l2Signer.address,
-        l1Dai.address,
-        depositAmount,
-        queueType,
-      ]),
+      l1DAITokenBridge.interface.encodeFunctionData('deposit', [l2Signer.address, l1Dai.address, depositAmount]),
       l2Signer.provider,
       l2DAITokenBridge.interface.encodeFunctionData('finalizeDeposit', [
         l1Signer.address,
@@ -177,42 +171,35 @@ describe('bridge', function () {
       l2Dai,
       l1Escrow,
     )
-
     // Close L1 bridge V1
     console.log('Closing L1 bridge V1...')
     await waitForTx(l1DAITokenBridge.close({ gasLimit: 200000 }))
     console.log('L1 Bridge Closed')
-
     // Close L2 bridge V1
     const l2UpgradeSpell: TestBridgeUpgradeSpell = await deployL2Contract(l2Signer, 'TestBridgeUpgradeSpell', [])
     const l2Calldata = l2UpgradeSpell.interface.encodeFunctionData('upgradeBridge', [
       l2DAITokenBridge.address,
       l2DAITokenBridgeV2.address,
     ])
-    const queueType = 0
     console.log('Executing spell to close L2 Bridge V1 and grant minting permissions to L2 Bridge V2...')
     await waitToRelayTxToL2(
       l1GovernanceRelay,
-      l1GovernanceRelay.interface.encodeFunctionData('relay', [l2UpgradeSpell.address, l2Calldata, queueType]),
+      l1GovernanceRelay.interface.encodeFunctionData('relay', [l2UpgradeSpell.address, l2Calldata]),
       l2Signer.provider,
       l2Calldata,
       { gasLimit: 300000 },
       2000000,
     )
     console.log('L2 Bridge Closed')
-
     console.log('Approving l1DAITokenBridgeV2 to move l1Dai from L1Escrow...')
     await waitForTx(
       l1Escrow.approve(l1Dai.address, l1DAITokenBridgeV2.address, ethers.constants.MaxUint256, { gasLimit: 200000 }),
     )
-    await approveBridges(l1Dai, l2Dai, l1DAITokenBridge, l2DAITokenBridge)
-
+    await approveBridges(l1Dai, l2Dai, l1DAITokenBridgeV2, l2DAITokenBridgeV2)
     l1DAITokenBridge = l1DAITokenBridgeV2
     l2DAITokenBridge = l2DAITokenBridgeV2
-
     console.log('Testing V2 bridge deposit...')
     await testDepositToL2()
-
     console.log('Testing V2 bridge withdrawal...')
     await testWithdrawFromL2()
   })

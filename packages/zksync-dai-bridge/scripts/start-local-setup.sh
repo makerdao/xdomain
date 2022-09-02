@@ -8,5 +8,6 @@ mkdir -p ./volumes
 mkdir -p ./volumes/postgres ./volumes/geth ./volumes/zksync/env/dev ./volumes/zksync/data
 
 docker-compose down -v
+docker-compose pull
 docker-compose up -d
 

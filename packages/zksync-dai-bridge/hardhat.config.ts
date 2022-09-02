@@ -23,12 +23,12 @@ const zkSyncDeploy =
 
 const config: HardhatUserConfig = {
   zksolc: {
-    version: '1.1.3',
+    version: '1.1.5',
     compilerSource: 'docker',
     settings: {
       experimental: {
         dockerImage: 'matterlabs/zksolc',
-        tag: 'v1.1.3', // note: 1.1.4 & 1.1.5 generate faulty artifacts that can't be eth_call'ed
+        tag: 'v1.1.5',
       },
     },
   },
