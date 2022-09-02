@@ -1,10 +1,12 @@
 import { getActiveWards, getAddressOfNextDeployedContract, waitForTx } from '@makerdao/hardhat-utils'
-import { expect } from 'chai'
+import { expect, use } from 'chai'
+import chaiAsPromised from 'chai-as-promised'
 import { ContractReceipt, providers, Wallet } from 'ethers'
 import { Interface, parseEther } from 'ethers/lib/utils'
 import { ethers } from 'hardhat'
 import * as hre from 'hardhat'
 import * as zk from 'zksync-web3'
+use(chaiAsPromised)
 
 import {
   Dai,
@@ -97,13 +99,16 @@ describe('bridge', function () {
 
     console.log('Setting permissions...')
     await waitForTx(l2Dai.rely(l2GovernanceRelay.address))
-    await waitForTx(l2Dai.deny(l2Signer.address))
     await waitForTx(l2DAITokenBridge.rely(l2GovernanceRelay.address))
     await waitForTx(l2DAITokenBridge.deny(l2Signer.address))
     console.log('Sanity checking permissions...')
     const l2Block = await l2Signer.provider.getBlockNumber()
     const fromBlock = Math.max(0, l2Block - 80) // zkSync rpc cannot fetch events older than 100 blocks
-    expect(await getActiveWards(l2Dai, fromBlock)).to.deep.eq([l2DAITokenBridge.address, l2GovernanceRelay.address])
+    expect(await getActiveWards(l2Dai, fromBlock)).to.deep.eq([
+      l2Signer.address,
+      l2DAITokenBridge.address,
+      l2GovernanceRelay.address,
+    ])
     expect(await getActiveWards(l2DAITokenBridge, fromBlock)).to.deep.eq([l2GovernanceRelay.address])
 
     console.log('Setup done.')
@@ -210,5 +215,19 @@ describe('bridge', function () {
     await testDepositToL2()
     console.log('Testing V2 bridge withdrawal...')
     await testWithdrawFromL2()
+  })
+
+  it.skip('recovers failed l1-to-l2 deposit', async function () {
+    // revoke L2 bridge mint right to induce a revert on L2 upon deposit
+    await waitForTx(l2Dai.deny(l2DAITokenBridge.address))
+
+    const tx = await l1DAITokenBridge.deposit(l2Signer.address, l1Dai.address, depositAmount, { gasLimit: 300000 })
+    await tx.wait()
+    const l2Response = await l2Signer.provider.getL2TransactionFromPriorityOp(tx)
+    // const l2TxHash = l2Response.hash
+
+    await expect(l2Response.wait()).to.eventually.be.rejectedWith('transaction failed')
+
+    // TODO: construct merkle proof and call l1DaiTokenBridge.claimFailedDeposit
   })
 })
