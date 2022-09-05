@@ -91,7 +91,7 @@ export function useAmounts(srcChainId: DomainChainId, account?: string) {
     }
 
     getAmountAfterFees().catch(console.error)
-  }, [amount])
+  }, [amount, srcChainId])
 
   let amountAfterFee
   if (amount === undefined) amountAfterFee = undefined
