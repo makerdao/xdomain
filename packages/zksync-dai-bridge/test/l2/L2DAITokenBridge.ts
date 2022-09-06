@@ -1,10 +1,8 @@
 import { assertPublicMutableMethods, getRandomAddresses, simpleDeploy, testAuth } from '@makerdao/hardhat-utils'
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address'
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
 import { Dai__factory, L2DAITokenBridge__factory } from '../../typechain-types'
-const defaultData = '0x'
 
 const errorMessages = {
   notOwner: 'L2DAITokenBridge/not-authorized',
@@ -19,10 +17,10 @@ describe('L2DAITokenBridge', () => {
     const defaultData = '0x'
 
     it('mints new tokens', async () => {
-      const { owner, l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupTest()
+      const { l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupTest()
       const [user2] = await ethers.getSigners()
 
-      const finalizeDepositTx = await l2DAITokenBridge
+      await l2DAITokenBridge
         .connect(l1TokenBridge)
         .finalizeDeposit(user1.address, user2.address, l1Dai.address, depositAmount, defaultData)
 
@@ -31,12 +29,12 @@ describe('L2DAITokenBridge', () => {
     })
 
     it('completes deposits even when closed', async () => {
-      const { owner, l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupTest()
+      const { l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupTest()
       const [user2] = await ethers.getSigners()
 
       await l2DAITokenBridge.close()
 
-      const finalizeDepositTx = await l2DAITokenBridge
+      await l2DAITokenBridge
         .connect(l1TokenBridge)
         .finalizeDeposit(user1.address, user2.address, l1Dai.address, depositAmount, defaultData)
 
@@ -45,7 +43,7 @@ describe('L2DAITokenBridge', () => {
     })
 
     it('reverts when withdrawing not supported tokens', async () => {
-      const { owner, l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupTest()
+      const { l1TokenBridge, l2DAITokenBridge, user1 } = await setupTest()
       const [user2, dummyL1Erc20] = await ethers.getSigners()
 
       await expect(
@@ -56,7 +54,7 @@ describe('L2DAITokenBridge', () => {
     })
 
     it('reverts when DAI minting access was revoked', async () => {
-      const { owner, l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupTest()
+      const { l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupTest()
       const [user2] = await ethers.getSigners()
 
       await l2Dai.deny(l2DAITokenBridge.address)
@@ -69,7 +67,7 @@ describe('L2DAITokenBridge', () => {
     })
 
     it('reverts when called not by L1TokenBridge', async () => {
-      const { owner, l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupTest()
+      const { l2DAITokenBridge, user1 } = await setupTest()
       const [user2, dummyL1Erc20] = await ethers.getSigners()
 
       await expect(
@@ -82,7 +80,7 @@ describe('L2DAITokenBridge', () => {
 
   describe('close()', () => {
     it('can be called by owner', async () => {
-      const { owner, l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupTest()
+      const { owner, l2DAITokenBridge } = await setupTest()
 
       expect(await l2DAITokenBridge.isOpen()).to.be.eq(1)
       const closeTx = await l2DAITokenBridge.connect(owner).close()
@@ -92,7 +90,7 @@ describe('L2DAITokenBridge', () => {
     })
 
     it('can be called multiple times by the owner but nothing changes', async () => {
-      const { owner, l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupTest()
+      const { owner, l2DAITokenBridge } = await setupTest()
 
       await l2DAITokenBridge.connect(owner).close()
       expect(await l2DAITokenBridge.isOpen()).to.be.eq(0)
@@ -102,7 +100,7 @@ describe('L2DAITokenBridge', () => {
     })
 
     it('reverts when called not by the owner', async () => {
-      const { owner, l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupTest()
+      const { l2DAITokenBridge, user1 } = await setupTest()
 
       await expect(l2DAITokenBridge.connect(user1).close()).to.be.revertedWith(errorMessages.notOwner)
     })

@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
 import { L1GovernanceRelay__factory } from '../../typechain-types'
-import { deployZkSyncContractMock } from '../../zksync-helpers/mocks'
+import { deployContractMock, deployZkSyncContractMock } from '../../zksync-helpers'
 
 const errorMessages = {
   notAuthed: 'L1GovernanceRelay/not-authorized',
@@ -18,11 +18,10 @@ describe('L1GovernanceRelay', () => {
         zkSyncImpersonator,
       })
 
-      await l1GovernanceRelay.connect(deployer).relay(l2spell.address, [], 0) // TODO: Test different Queue Types
+      await l1GovernanceRelay.connect(deployer).relay(l2spell.address, [])
       const zkMailboxCall = zkSyncMock.smocked.requestL2Transaction.calls[0]
 
       expect(zkMailboxCall._contractAddressL2).to.equal(l2GovernanceRelay.address)
-      expect(zkMailboxCall._queueType).to.equal(0)
       expect(zkMailboxCall._calldata).to.equal(
         l2GovernanceRelay.interface.encodeFunctionData('relay', [l2spell.address, []]),
       )
@@ -34,7 +33,7 @@ describe('L1GovernanceRelay', () => {
         zkSyncImpersonator,
       })
 
-      await expect(l1GovernanceRelay.connect(user1).relay(l2spell.address, [], 0)).to.be.revertedWith(
+      await expect(l1GovernanceRelay.connect(user1).relay(l2spell.address, [])).to.be.revertedWith(
         errorMessages.notAuthed,
       )
     })
@@ -55,11 +54,7 @@ describe('L1GovernanceRelay', () => {
   })
 
   it('has correct public interface', async () => {
-    await assertPublicMutableMethods('L1GovernanceRelay', [
-      'rely(address)',
-      'deny(address)',
-      'relay(address,bytes,uint8)',
-    ])
+    await assertPublicMutableMethods('L1GovernanceRelay', ['rely(address)', 'deny(address)', 'relay(address,bytes)'])
   })
 
   testAuth({
@@ -72,15 +67,15 @@ describe('L1GovernanceRelay', () => {
     authedMethods: [
       async (c) => {
         const [a] = await getRandomAddresses()
-        return c.relay(a, '0x', 0)
+        return c.relay(a, '0x')
       },
     ],
   })
 })
 
 async function setupTest(signers: { zkSyncImpersonator: SignerWithAddress }) {
-  const l2GovernanceRelay = await deployZkSyncContractMock('L2GovernanceRelay')
-  const zkSyncMock = await deployZkSyncContractMock('IZkSync', { address: signers.zkSyncImpersonator.address })
+  const l2GovernanceRelay = await deployContractMock('L2GovernanceRelay')
+  const zkSyncMock = await deployZkSyncContractMock({ address: signers.zkSyncImpersonator.address })
 
   const l1GovernanceRelay = await simpleDeploy<L1GovernanceRelay__factory>('L1GovernanceRelay', [
     l2GovernanceRelay.address,

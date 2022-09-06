@@ -1,5 +1,4 @@
 import { assertPublicMutableMethods, simpleDeploy } from '@makerdao/hardhat-utils'
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address'
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
@@ -34,7 +33,7 @@ describe('L2GovernanceRelay', () => {
     })
 
     it('reverts when called not by l1GovRelay', async () => {
-      const { l1GovRelay, l2GovRelay, l2Dai, l2daiMintSpell, user1 } = await setupTest()
+      const { l2GovRelay, l2Dai, l2daiMintSpell, user1 } = await setupTest()
 
       await expect(
         l2GovRelay
@@ -47,7 +46,7 @@ describe('L2GovernanceRelay', () => {
     })
 
     it('reverts when spell reverts', async () => {
-      const { l1GovRelay, l2GovRelay, l2Dai, l2daiMintSpell, user1 } = await setupTest()
+      const { l1GovRelay, l2GovRelay } = await setupTest()
       const badSpell = await simpleDeploy<BadSpell__factory>('BadSpell', [])
 
       await expect(

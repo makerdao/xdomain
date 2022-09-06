@@ -1,14 +1,13 @@
-import { deployContractMock } from '@makerdao/hardhat-utils'
 import { smockit } from '@eth-optimism/smock'
+import { providers } from 'ethers'
+import * as hre from 'hardhat'
+import { utils } from 'zksync-web3'
 
-import { ContractFactory, ethers } from 'ethers'
-import { join } from 'path'
+export function deployZkSyncContractMock(opts?: { provider?: providers.Provider; address?: string }) {
+  return smockit(utils.ZKSYNC_MAIN_ABI, opts)
+}
 
-export function deployZkSyncContractMock(
-  name: string,
-  opts?: { provider?: ethers.providers.BaseProvider; address?: string },
-) {
-  const abiPath = join(__dirname, `./abis/${name}.json`)
-
-  return deployContractMock(abiPath, opts) as any
+export async function deployContractMock(name: string, opts?: { provider?: providers.Provider; address?: string }) {
+  const factory = await hre.ethers.getContractFactory(name)
+  return smockit(factory, opts)
 }

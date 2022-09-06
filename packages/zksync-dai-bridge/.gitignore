@@ -1,13 +1,16 @@
+.DS_Store
 node_modules/
 artifacts/
 cache/
 artifacts-l2
 typechain-types
-artifacts-ovm
-cache-ovm
+artifacts-zk
+cache-zk
 .env
+tmp
 gasReporterOutput.json
 coverage*
+local-setup
 
 # echidna
 crytic-export/
