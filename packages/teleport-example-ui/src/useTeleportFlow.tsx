@@ -160,32 +160,34 @@ export function useTeleportFlow(
         throw new Error(`${txDescription ?? 'tx'} failed: receipt=${receipt}`)
       }
     }
-    if (txObject) {
-      const waitForTxObject = async () => {
-        const receipt = await txObject.wait()
-        handleReceipt(receipt, 'success')
-      }
-      waitForTxObject().catch(console.error)
-    } else if (!checkingTxConfirmed) {
-      const waitForTxReceipt = async () => {
-        let receipt = null
-        let attempt = 1
-        while (!receipt && attempt <= 10) {
-          receipt = await provider.getTransactionReceipt(txHash)
-          if (receipt) {
-            handleReceipt(receipt, 'info')
-            return
-          } else {
-            await sleep(1000 * attempt)
-            attempt++
-          }
-        }
-        console.error(`getTransactionReceipt(${txDescription ?? 'tx'} hash=${txHash}): no receipt after 10 attempts.`)
-      }
+    if (!checkingTxConfirmed) {
       setCheckingTxConfirmed(true)
-      waitForTxReceipt()
-        .catch(console.error)
-        .finally(() => setCheckingTxConfirmed(false))
+      if (txObject) {
+        const waitForTxObject = async () => {
+          const receipt = await txObject.wait()
+          handleReceipt(receipt, 'success')
+        }
+        waitForTxObject().catch(console.error)
+      } else {
+        const waitForTxReceipt = async () => {
+          let receipt = null
+          let attempt = 1
+          while (!receipt && attempt <= 10) {
+            receipt = await provider.getTransactionReceipt(txHash)
+            if (receipt) {
+              handleReceipt(receipt, 'info')
+              return
+            } else {
+              await sleep(1000 * attempt)
+              attempt++
+            }
+          }
+          console.error(`getTransactionReceipt(${txDescription ?? 'tx'} hash=${txHash}): no receipt after 10 attempts.`)
+        }
+        waitForTxReceipt()
+          .catch(console.error)
+          .finally(() => setCheckingTxConfirmed(false))
+      }
     }
   }
 
