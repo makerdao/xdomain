@@ -137,11 +137,10 @@ describe('Dai', () => {
         )
       })
 
-      it('deployer can burn other', async () => {
-        const balanceBefore = await dai.balanceOf(signers.user1.address)
-        await dai.connect(signers.deployer).burn(signers.user1.address, 1)
-        const balanceAfter = await dai.balanceOf(signers.user1.address)
-        expect(balanceAfter).to.be.eq(balanceBefore.sub(1))
+      it('deployer cannot burn other', async () => {
+        await expect(dai.connect(signers.deployer).burn(signers.user1.address, 1)).to.be.revertedWith(
+          'Dai/insufficient-allowance',
+        )
       })
 
       it('can burn other if approved', async () => {

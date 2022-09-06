@@ -186,7 +186,7 @@ contract Dai {
     uint256 balance = balanceOf[from];
     require(balance >= value, "Dai/insufficient-balance");
 
-    if (from != msg.sender && wards[msg.sender] != 1) {
+    if (from != msg.sender) {
       uint256 allowed = allowance[from][msg.sender];
       if (allowed != type(uint256).max) {
         require(allowed >= value, "Dai/insufficient-allowance");
