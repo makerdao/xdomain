@@ -49,6 +49,7 @@
     "mocha": "^9.2.1",
     "prettier": "^2.5.1",
     "ts-node": "^10.7.0",
-    "typescript": "^4.5.5"
+    "typescript": "^4.5.5",
+    "xdomain-utils": "https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?154687086580ebd29bf44cbbab4a30fee47fcd8f"
   }
 }

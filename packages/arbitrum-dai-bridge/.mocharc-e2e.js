@@ -19,6 +19,6 @@ module.exports = {
   require: ['ts-node/register/transpile-only', 'dotenv/config'],
   extension: ['ts'],
   watchExtensions: ['ts'],
-  spec: ['test-e2e/**/*.test.ts'],
+  spec: ['test-e2e/**/*.goerli-light.test.ts'],
   timeout: 5000000,
 }

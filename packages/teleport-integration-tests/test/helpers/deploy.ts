@@ -2,8 +2,7 @@ import { ContractFactory, Signer } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 import { ethers } from 'hardhat'
 import { isEmpty } from 'lodash'
-
-import { waitForTx } from '.'
+import { waitForTx } from 'xdomain-utils'
 
 export type ContractLike = {
   readonly address: string

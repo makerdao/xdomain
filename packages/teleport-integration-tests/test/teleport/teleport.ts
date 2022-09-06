@@ -1,6 +1,7 @@
 import { BigNumber, BigNumberish, Contract, Signer } from 'ethers'
 import { ethers } from 'hardhat'
 import { assert } from 'ts-essentials'
+import { waitForTx } from 'xdomain-utils'
 
 import {
   BasicRelay,
@@ -19,7 +20,7 @@ import {
   TrustedRelay,
   TrustedRelay__factory,
 } from '../../typechain'
-import { deployUsingFactoryAndVerify, getContractFactory, waitForTx } from '../helpers'
+import { deployUsingFactoryAndVerify, getContractFactory } from '../helpers'
 import { RelayTxToL2Function } from './messages'
 import { MakerSdk } from './setup'
 import { executeSpell } from './spell'

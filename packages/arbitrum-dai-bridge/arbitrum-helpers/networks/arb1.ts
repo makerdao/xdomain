@@ -1,8 +1,8 @@
 import { assert } from 'console'
 import { ethers } from 'hardhat'
+import { RetryProvider } from 'xdomain-utils'
 
 import { NetworkConfig, useStaticRouterDeployment } from '..'
-import { RetryProvider } from './RetryProvider'
 
 // maker contracts: https://changelog.makerdao.com/releases/mainnet/1.9.5/contracts.json
 // arbitrum contracts: https://github.com/OffchainLabs/arbitrum/blob/master/packages/arb-bridge-eth/_deployments/1_current_deployment.json
@@ -16,7 +16,7 @@ export async function getArb1NetworkConfig({
   l1Rpc: string
   l2Rpc: string
 }): Promise<NetworkConfig> {
-  const l1 = new ethers.providers.JsonRpcProvider(l1Rpc)
+  const l1 = new RetryProvider(5, l1Rpc)
   const l2 = new RetryProvider(5, l2Rpc) // arbitrum l2 can be very unstable so we use RetryProvider
   const l1Deployer = new ethers.Wallet(pkey, l1)
   const l2Deployer = new ethers.Wallet(pkey, l2)

@@ -1,5 +1,6 @@
 import { TransactionReceipt } from '@ethersproject/providers'
 import { BigNumber, BigNumberish, Contract, Signer } from 'ethers'
+import { waitForTx } from 'xdomain-utils'
 
 import {
   ConfigureTrustedRelaySpell__factory,
@@ -8,7 +9,7 @@ import {
   PushBadDebtSpell__factory,
   TeleportConstantFee__factory,
 } from '../../typechain'
-import { deployUsingFactory, getContractFactory, impersonateAccount, waitForTx } from '../helpers'
+import { deployUsingFactory, getContractFactory, impersonateAccount } from '../helpers'
 import { MakerSdk } from '.'
 
 interface PushBadDebtSpellDeployOpts {

@@ -6,8 +6,9 @@ import { expect } from 'chai'
 import { ethers, Signer, Wallet } from 'ethers'
 import { formatEther, Interface } from 'ethers/lib/utils'
 import * as hre from 'hardhat'
+import { waitForTx } from 'xdomain-utils'
 
-import { deployUsingFactoryAndVerify, waitForTx } from '../../test/helpers'
+import { deployUsingFactoryAndVerify } from '../../test/helpers'
 import { executeSpell, MakerSdk } from '../../test/teleport'
 
 const L1_GOV_RELAY_ADDR = '0x97057eF24d3C69D974Cc5348145b7258c5a503B6'

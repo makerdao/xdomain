@@ -2,10 +2,10 @@ import { getMainnetSdk } from '@dethcrypto/eth-sdk-client'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { getOptionalEnv, getRequiredEnv } from '@makerdao/hardhat-utils'
 import { ethers, Wallet } from 'ethers'
+import { RetryProvider } from 'xdomain-utils'
 
 import { L1AddTeleportOptimismSpell__factory, L2AddTeleportDomainSpell__factory } from '../../typechain'
 import { deployUsingFactory, forwardTime, getContractFactory, mintEther, toEthersBigNumber } from '../helpers'
-import { RetryProvider } from '../helpers/RetryProvider'
 import {
   deployTeleport,
   DomainSetupOpts,

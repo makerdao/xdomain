@@ -1,8 +1,8 @@
 import { assert } from 'console'
 import { ethers } from 'hardhat'
+import { RetryProvider, RetryWallet } from 'xdomain-utils'
 
 import { NetworkConfig, useStaticRouterDeployment } from '..'
-import { RetryProvider } from './RetryProvider'
 
 export async function getRinkebyNetworkConfig({
   pkey,
@@ -13,10 +13,10 @@ export async function getRinkebyNetworkConfig({
   l1Rpc: string
   l2Rpc: string
 }): Promise<NetworkConfig> {
-  const l1 = new ethers.providers.JsonRpcProvider(l1Rpc)
+  const l1 = new RetryProvider(5, l1Rpc)
   const l2 = new RetryProvider(5, l2Rpc) // arbitrum l2 testnet is very unstable so we use RetryProvider
-  const l1Deployer = new ethers.Wallet(pkey, l1)
-  const l2Deployer = new ethers.Wallet(pkey, l2)
+  const l1Deployer = new RetryWallet(10, pkey, l1)
+  const l2Deployer = new RetryWallet(10, pkey, l2)
 
   assert((await l1.getNetwork()).chainId === 4, 'Not rinkeby!')
   assert((await l2.getNetwork()).chainId === 421611, 'Not arbitrum testnet!')

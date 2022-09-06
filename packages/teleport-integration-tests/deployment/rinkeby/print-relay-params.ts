@@ -6,8 +6,7 @@ import { getRequiredEnv } from '@makerdao/hardhat-utils'
 import { ethers } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 import { mapValues } from 'lodash'
-
-import { getGasPriceBid, getMaxGas_Nitro, getMaxSubmissionPrice_Nitro } from '../../test/arbitrum'
+import { getArbitrumGasPriceBid, getArbitrumMaxGas, getArbitrumMaxSubmissionPrice } from 'xdomain-utils'
 
 const L1_GOV_RELAY_ADDR = '0x97057eF24d3C69D974Cc5348145b7258c5a503B6'
 const L2_GOV_RELAY_ADDR = '0x10039313055c5803D1820FEF2720ecC1Ff2F02f6'
@@ -27,14 +26,14 @@ async function printRelayParams(l1Provider: Provider, l2Provider: Provider) {
     'function relay(address target, bytes calldata targetData)',
   ]).encodeFunctionData('relay', ['0xffffffffffffffffffffffffffffffffffffffff', l2SpellCalldata])
   const calldataLength = l2MessageCalldata.length
-  const gasPriceBid = await getGasPriceBid(l2Provider)
+  const gasPriceBid = await getArbitrumGasPriceBid(l2Provider)
   const rinkebySdk = getRinkebySdk(l1Provider as any)
-  const maxSubmissionCost = await getMaxSubmissionPrice_Nitro(
+  const maxSubmissionCost = await getArbitrumMaxSubmissionPrice(
     l1Provider,
     calldataLength,
     rinkebySdk.arbitrum.inbox.address,
   )
-  const maxGas = await getMaxGas_Nitro(
+  const maxGas = await getArbitrumMaxGas(
     l2Provider,
     L1_GOV_RELAY_ADDR,
     L2_GOV_RELAY_ADDR,

@@ -6,8 +6,9 @@ import { assert, expect } from 'chai'
 import * as ethers from 'ethers'
 import { Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
+import { waitForTx } from 'xdomain-utils'
 
-import { getContractFactory, waitForTx } from '../../test/helpers'
+import { getContractFactory } from '../../test/helpers'
 import { getAttestations } from '../../test/teleport'
 import {
   OptimismDai__factory,

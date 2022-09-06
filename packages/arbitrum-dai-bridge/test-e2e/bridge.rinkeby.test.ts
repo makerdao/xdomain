@@ -3,12 +3,18 @@ import {
   getAddressOfNextDeployedContract,
   getOptionalEnv,
   getRequiredEnv,
-  waitForTx,
 } from '@makerdao/hardhat-utils'
 import { expect } from 'chai'
 import { parseUnits } from 'ethers/lib/utils'
 import { ethers } from 'hardhat'
 import { mapValues } from 'lodash'
+import {
+  depositToArbitrumStandardBridge,
+  depositToArbitrumStandardRouter,
+  setArbitrumGatewayForToken,
+  waitForTx,
+  waitToRelayTxToArbitrum,
+} from 'xdomain-utils'
 
 import {
   BridgeDeployment,
@@ -19,14 +25,8 @@ import {
   RouterDeployment,
   useStaticDeployment,
   useStaticRouterDeployment,
-  waitToRelayTxsToL2_Nitro,
 } from '../arbitrum-helpers'
-import {
-  depositToStandardBridge_Nitro,
-  depositToStandardRouter_Nitro,
-  executeSpell_Nitro,
-  setGatewayForToken_Nitro,
-} from '../arbitrum-helpers/bridge'
+import { executeSpell } from '../arbitrum-helpers/bridge'
 
 const amount = parseUnits('7', 'ether')
 
@@ -56,8 +56,8 @@ describe('rinkeby bridge', () => {
     }
 
     console.log('Depositing to standard bridge...')
-    await waitToRelayTxsToL2_Nitro(
-      depositToStandardBridge_Nitro({
+    await waitToRelayTxToArbitrum(
+      depositToArbitrumStandardBridge({
         l1Provider: network.l1.provider,
         l2Provider: network.l2.provider,
         from: network.l1.deployer,
@@ -109,8 +109,8 @@ describe('rinkeby bridge', () => {
     }
 
     console.log('Depositing to standard router...')
-    await waitToRelayTxsToL2_Nitro(
-      depositToStandardRouter_Nitro({
+    await waitToRelayTxToArbitrum(
+      depositToArbitrumStandardRouter({
         l1Provider: network.l1.provider,
         l2Provider: network.l2.provider,
         from: network.l1.deployer,
@@ -203,13 +203,13 @@ describe('rinkeby bridge', () => {
       l2DaiGatewayV2.address,
     ])
 
-    await executeSpell_Nitro(network, bridgeDeployment, l2UpgradeSpell.address, spellCalldata)
+    await executeSpell(network, bridgeDeployment, l2UpgradeSpell.address, spellCalldata)
 
     console.log('Bridge upgraded!')
 
     await waitForTx(bridgeDeployment.l1Dai.approve(l1DaiGatewayV2.address, amount))
-    await waitToRelayTxsToL2_Nitro(
-      depositToStandardBridge_Nitro({
+    await waitToRelayTxToArbitrum(
+      depositToArbitrumStandardBridge({
         l1Provider: network.l1.provider,
         l2Provider: network.l2.provider,
         from: network.l1.deployer,
@@ -264,7 +264,7 @@ export async function setupTest() {
     routerDeployment = await deployRouter(network)
     bridgeDeployment = await deployBridge(network, routerDeployment)
 
-    await setGatewayForToken_Nitro({
+    await setArbitrumGatewayForToken({
       l1Router: routerDeployment.l1GatewayRouter,
       l1Provider: network.l1.provider,
       l2Provider: network.l2.provider,

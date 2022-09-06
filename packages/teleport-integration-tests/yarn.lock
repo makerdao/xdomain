@@ -34,7 +34,7 @@
     ts-node "^10.2.1"
     typechain "7.0.0"
 
-"@arbitrum/sdk@^2.0.11":
+"@arbitrum/sdk@^2.0.11", "@arbitrum/sdk@^2.0.13":
   version "2.0.13"
   resolved "https://registry.yarnpkg.com/@arbitrum/sdk/-/sdk-2.0.13.tgz#6c9c60c2fab0a6c1fd4fefc82fbb27e16ef0c8b1"
   integrity sha512-C/ckSzQkX4e8SKAY5Lz3yfakM5Aj6sA2mB9Q7cvZR/NFsFb0R95DiA6l1VMFT6Z1S1v8W936x4j9rLsJaFd/gg==
@@ -10894,6 +10894,13 @@ ws@^7.4.6:
   version "7.5.7"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.7.tgz#9e0ac77ee50af70d58326ecff7e85eb3fa375e67"
   integrity sha512-KMvVuFzpKBuiIXW3E4u3mySRO2/mCHSyZDJQM5NQ9Q9KHWHWh0NHgfbRMLLrceUK5qAL4ytALJbpRMjixFZh8A==
+
+"xdomain-utils@https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?154687086580ebd29bf44cbbab4a30fee47fcd8f":
+  version "0.0.1"
+  resolved "https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?154687086580ebd29bf44cbbab4a30fee47fcd8f#c68d124d2e5bfbdd18ff67602ff079df1c2c8f3f"
+  dependencies:
+    "@arbitrum/sdk" "^2.0.13"
+    ethers "^5.6.9"
 
 xhr-request-promise@^0.1.2:
   version "0.1.3"

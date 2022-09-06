@@ -5,8 +5,9 @@ import { getRequiredEnv } from '@makerdao/hardhat-utils'
 import { assert, expect } from 'chai'
 import { ethers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
+import { waitForTx } from 'xdomain-utils'
 
-import { getContractFactory, waitForTx } from '../../test/helpers'
+import { getContractFactory } from '../../test/helpers'
 import { getAttestations } from '../../test/teleport'
 import {
   ArbitrumDai__factory,

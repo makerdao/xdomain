@@ -62,6 +62,7 @@
     "ts-essentials": "^9.0.0",
     "ts-node": "^10.9.1",
     "typechain": "^8.0.0",
-    "typescript": "^4.7.4"
+    "typescript": "^4.7.4",
+    "xdomain-utils": "https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?154687086580ebd29bf44cbbab4a30fee47fcd8f"
   }
 }
