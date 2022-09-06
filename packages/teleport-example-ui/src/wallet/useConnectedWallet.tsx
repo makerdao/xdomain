@@ -15,7 +15,7 @@ export function useConnectedWallet() {
 
   const connectWallet = async () => {
     const provider = await web3Modal.connect()
-    const library = new ethers.providers.Web3Provider(provider)
+    const library = new ethers.providers.Web3Provider(provider, 'any')
     const accounts = await library.listAccounts()
     const network = await library.getNetwork()
 

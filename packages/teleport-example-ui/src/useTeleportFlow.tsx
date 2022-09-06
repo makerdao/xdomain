@@ -1,6 +1,5 @@
 import { Button, Col, notification, Row } from 'antd'
-import { ethers } from 'ethers'
-import { ContractTransaction } from 'ethers'
+import { BigNumber, ContractTransaction, ethers, providers } from 'ethers'
 import { formatEther, getAddress, hexStripZeros, hexZeroPad, parseEther } from 'ethers/lib/utils'
 import { ReactElement, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -11,6 +10,7 @@ import {
   getAttestations,
   getDefaultDstDomain,
   initRelayedTeleport,
+  mintWithOracles,
   requestFaucetDai,
   requestRelay,
   sleep,
@@ -30,9 +30,10 @@ import { switchChain, truncateAddress } from './utils'
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 
-export function useMainButton(
+export function useTeleportFlow(
   connectWallet: () => Promise<void>,
   srcChainId: DomainChainId,
+  dstChainId: DomainChainId,
   account?: string,
   maxAmount?: string,
   amount?: string,
@@ -55,7 +56,7 @@ export function useMainButton(
   const [pendingAmount, setPendingAmount] = useState<string | undefined>()
   const [payloadSigned, setPayloadSigned] = useState<boolean>(false)
   const [relayTxHash, setRelayTxHash] = useState<string | undefined>()
-  const [relayConfirmed, setRelayConfirmed] = useState<boolean>(false)
+  const [mintConfirmed, setMintConfirmed] = useState<boolean>(false)
   const [mainButton, setMainButton] = useState<{
     label?: ReactElement
     disabled?: boolean
@@ -63,13 +64,26 @@ export function useMainButton(
     onClick?: () => Promise<void>
   }>({})
 
+  const [directMintTx, setDirectMintTx] = useState<ContractTransaction | undefined>()
+  const [checkingMintConfirmed, setCheckingMintConfirmed] = useState<boolean>(false)
+  const [secondaryButton, setSecondaryButton] = useState<{
+    label?: ReactElement
+    disabled?: boolean
+    loading?: boolean
+    onClick?: () => Promise<void>
+  }>()
+
   const [searchParams, setSearchParams] = useSearchParams({})
   const burnTxHash = searchParams.get('txHash')
+  const mintTxHash = relayTxHash || searchParams.get('directMintTxHash') // could be relayed or direct mint
   const relayTaskId = searchParams.get('taskId')
 
-  const ethersProvider = provider && new ethers.providers.Web3Provider(provider as ethers.providers.ExternalProvider)
+  const ethersProvider =
+    provider && new ethers.providers.Web3Provider(provider as ethers.providers.ExternalProvider, 'any')
   const sender = ethersProvider?.getSigner()
   const srcDomain = getSdkDomainId(srcChainId)
+
+  amount = guid ? formatEther(BigNumber.from(guid.amount)) : amount // make sure to always use guid.amount if any
 
   function resetState() {
     setSearchParams({})
@@ -86,11 +100,12 @@ export function useMainButton(
     setPendingAmount(undefined)
     setPayloadSigned(false)
     setRelayTxHash(undefined)
-    setRelayConfirmed(false)
+    setMintConfirmed(false)
+    setSecondaryButton(undefined)
   }
 
   function getTxDescription() {
-    function getTxHashRow(label: string, chainId: DomainChainId, txHash: string) {
+    function getTxHashRow(label: string, chainId: DomainChainId, txHash: string | null) {
       return (
         txHash && (
           <Row>
@@ -109,10 +124,69 @@ export function useMainButton(
     const dstChainId = SRC_CHAINID_TO_DST_CHAINID[srcChainId as SrcDomainChainId]
     return (
       <>
-        {getTxHashRow('L2 Dai Burned:', srcChainId, burnTxHash!)}
-        {getTxHashRow('L1 Dai Minted:', dstChainId, relayTxHash!)}
+        {getTxHashRow('L2 Dai Burned:', srcChainId, burnTxHash)}
+        {getTxHashRow('L1 Dai Minted:', dstChainId, mintTxHash)}
       </>
     )
+  }
+
+  function waitForTx(
+    provider: providers.Provider,
+    txObject: ContractTransaction | undefined,
+    txHash: string,
+    checkingTxConfirmed: boolean,
+    setCheckingTxConfirmed: (value: React.SetStateAction<boolean>) => void,
+    setTxConfirmed: (value: React.SetStateAction<boolean>) => void,
+    txDescription?: string,
+    successNotificationTitle?: string,
+    failureNotificationTitle?: string,
+    successNotificationDuration?: number | null,
+  ) {
+    const handleReceipt = (receipt: ethers.ContractReceipt, notificationType: 'success' | 'info') => {
+      if (receipt.status === 1) {
+        console.log(`${txDescription ?? 'tx'} confirmed!`)
+        setTxConfirmed(true)
+        notification[notificationType]({
+          message: successNotificationTitle || 'Transaction Confirmed',
+          description: getTxDescription(),
+          duration: successNotificationDuration,
+        })
+      } else if (receipt.status === 0) {
+        notification.error({
+          message: failureNotificationTitle || 'Transaction Failed',
+          description: getTxDescription(),
+          duration: null,
+        })
+        throw new Error(`${txDescription ?? 'tx'} failed: receipt=${receipt}`)
+      }
+    }
+    if (txObject) {
+      const waitForTxObject = async () => {
+        const receipt = await txObject.wait()
+        handleReceipt(receipt, 'success')
+      }
+      waitForTxObject().catch(console.error)
+    } else if (!checkingTxConfirmed) {
+      const waitForTxReceipt = async () => {
+        let receipt = null
+        let attempt = 1
+        while (!receipt && attempt <= 10) {
+          receipt = await provider.getTransactionReceipt(txHash)
+          if (receipt) {
+            handleReceipt(receipt, 'info')
+            return
+          } else {
+            await sleep(1000 * attempt)
+            attempt++
+          }
+        }
+        console.error(`getTransactionReceipt(${txDescription ?? 'tx'} hash=${txHash}): no receipt after 10 attempts.`)
+      }
+      setCheckingTxConfirmed(true)
+      waitForTxReceipt()
+        .catch(console.error)
+        .finally(() => setCheckingTxConfirmed(false))
+    }
   }
 
   function doBurn() {
@@ -167,7 +241,7 @@ export function useMainButton(
           console.log(`DAI burn tx submitted on ${srcDomain}: ${tx!.hash}`)
           setPendingAmount(amount)
           setSearchParams({ txHash: tx!.hash, chainId: srcChainId.toString() })
-          if (tx) setBurnTx(tx)
+          setBurnTx(tx)
         },
       })
     } else if (!burnConfirmed) {
@@ -175,48 +249,17 @@ export function useMainButton(
         label: <>Initiating Teleport...</>,
         loading: true,
       })
-      const handleReceipt = (receipt: ethers.ContractReceipt, notificationType: 'success' | 'info') => {
-        if (receipt.status === 1) {
-          console.log(`DAI burn tx confirmed!`)
-          setBurnConfirmed(true)
-          notification[notificationType]({
-            message: 'Teleport Initiated',
-            description: getTxDescription(),
-          })
-        } else if (receipt.status === 0) {
-          throw new Error(`Dai burn tx failed: receipt=${receipt}`)
-        }
-      }
-      if (burnTx) {
-        const waitForBurnTx = async () => {
-          const receipt = await burnTx.wait()
-          handleReceipt(receipt, 'success')
-        }
-        waitForBurnTx().catch(console.error)
-      } else if (!checkingBurnConfirmed) {
-        const waitForBurnReceipt = async () => {
-          let receipt = null
-          let attempt = 1
-          while (!receipt && attempt <= 10) {
-            receipt = await ethersProvider?.getTransactionReceipt(burnTxHash)
-            if (receipt) {
-              handleReceipt(receipt, 'info')
-              return
-            } else {
-              // console.log(`burn tx receipt: ${receipt}`)
-              await sleep(1000 * attempt)
-              attempt++
-            }
-          }
-          console.error(
-            `getTransactionReceipt(burnTxHash=${burnTxHash}): no receipt after 10 attempts. Source domain probably incorrect.`,
-          )
-        }
-        setCheckingBurnConfirmed(true)
-        waitForBurnReceipt()
-          .catch(console.error)
-          .finally(() => setCheckingBurnConfirmed(false))
-      }
+      waitForTx(
+        ethersProvider!,
+        burnTx,
+        burnTxHash,
+        checkingBurnConfirmed,
+        setCheckingBurnConfirmed,
+        setBurnConfirmed,
+        'DAI burn tx',
+        'Teleport Initiated',
+        'Teleport Initiation Failed',
+      )
     } else if (!guid) {
       setMainButton({
         label: (
@@ -266,25 +309,27 @@ export function useMainButton(
     }
   }
 
-  function doRelay() {
+  function doMint() {
     if (!guid) return
+
     const receiverAddress = getAddress(hexZeroPad(hexStripZeros(guid.receiver), 20))
+    const maxFeePercentage = parseEther(amount || '0').eq(0)
+      ? 0
+      : parseEther(bridgeFee || '0')
+          .mul(parseEther('1'))
+          .div(parseEther(amount!))
+
     if (!relayTaskId && !payloadSigned && (!account || getAddress(account) !== receiverAddress)) {
       setMainButton({
         label: <>Please Connect Account {truncateAddress(receiverAddress)}</>,
         loading: false,
         disabled: true,
       })
-    } else if (!payloadSigned && !relayTaskId) {
+    } else if (!payloadSigned && !relayTaskId && !mintTxHash) {
       setMainButton({
-        label: <>Sign Relay Request</>,
+        label: <>Mint DAI using Relayer</>,
         loading: false,
         onClick: async () => {
-          const maxFeePercentage = parseEther(amount || '0').eq(0)
-            ? 0
-            : parseEther(bridgeFee || '0')
-                .mul(parseEther('1'))
-                .div(parseEther(amount!))
           const taskId = await requestRelay({
             srcDomain,
             receiver: sender!,
@@ -300,12 +345,35 @@ export function useMainButton(
           setSearchParams({ txHash: burnTxHash!, chainId: srcChainId.toString(), taskId })
         },
       })
-    } else if (!relayTaskId) {
+      setSecondaryButton({
+        label: (
+          <>
+            Mint DAI directly on &nbsp;
+            <DomainName chainId={dstChainId} />
+          </>
+        ),
+        onClick: async () => {
+          if (!provider) return
+          await switchChain(dstChainId, provider as ethers.providers.ExternalProvider)
+          const { tx } = await mintWithOracles({
+            srcDomain,
+            teleportGUID: guid,
+            signatures: signatures!,
+            maxFeePercentage,
+            sender,
+          })
+          console.log(`DAI mint tx submitted on ${getDefaultDstDomain(srcDomain)}: ${tx!.hash}`)
+          setSearchParams({ txHash: burnTxHash!, chainId: srcChainId.toString(), directMintTxHash: tx!.hash })
+          setDirectMintTx(tx)
+        },
+      })
+    } else if (payloadSigned && !relayTaskId) {
       setMainButton({
         label: <>Creating Relay Task...</>,
         loading: true,
       })
-    } else if (!relayTxHash) {
+      setSecondaryButton(undefined)
+    } else if (payloadSigned && relayTaskId && !mintTxHash) {
       console.log(`Waiting for taskId: ${relayTaskId} ...`)
       void waitForRelayTask({ taskId: relayTaskId, srcDomain })
         .then((txHash) => {
@@ -339,24 +407,28 @@ export function useMainButton(
         label: <>Waiting for relayer...</>,
         loading: true,
       })
-    } else if (!relayConfirmed) {
+      setSecondaryButton(undefined)
+    } else if (mintTxHash && !mintConfirmed) {
       setMainButton({
         label: <>Finalizing teleport... </>,
         loading: true,
       })
-      const waitForRelay = async () => {
-        const dstDomain = DEFAULT_RPC_URLS[getDefaultDstDomain(srcDomain)]
-        const dstProvider = new ethers.providers.JsonRpcProvider(dstDomain)
-        await dstProvider.getTransactionReceipt(relayTxHash)
-        console.log(`Relayed DAI mint tx confirmed!`)
-        setRelayConfirmed(true)
-        notification.success({
-          message: 'Teleport complete!',
-          description: getTxDescription(),
-          duration: null,
-        })
-      }
-      waitForRelay().catch(console.error)
+
+      const dstDomainRpcUrl = DEFAULT_RPC_URLS[getDefaultDstDomain(srcDomain)]
+      const dstProvider = new ethers.providers.JsonRpcProvider(dstDomainRpcUrl)
+      waitForTx(
+        dstProvider,
+        directMintTx,
+        mintTxHash,
+        checkingMintConfirmed,
+        setCheckingMintConfirmed,
+        setMintConfirmed,
+        'DAI mint tx',
+        'Teleport Complete!',
+        'Teleport Finalization Failed',
+        null, //success notification duration: infinite
+      )
+      setSecondaryButton(undefined)
     } else {
       resetState()
     }
@@ -380,13 +452,14 @@ export function useMainButton(
     //   pendingAmount,
     //   payloadSigned,
     //   relayTxHash,
-    //   relayConfirmed,
+    //   mintTxHash,
+    //   mintConfirmed,
     // })
 
     if (!guid || pendingAmount === undefined) {
       doBurn()
     } else if (parseEther(pendingAmount).gt(0)) {
-      doRelay()
+      doMint()
     } else {
       notification.info({
         message: 'Teleport already completed.',
@@ -411,8 +484,19 @@ export function useMainButton(
     payloadSigned,
     relayTaskId,
     relayTxHash,
-    relayConfirmed,
+    mintTxHash,
+    directMintTx,
+    mintConfirmed,
   ])
 
-  return { mainButton, gulpConfirmed, approveConfirmed, burnTxHash, burnConfirmed, guid, relayConfirmed }
+  return {
+    mainButton,
+    gulpConfirmed,
+    approveConfirmed,
+    burnTxHash,
+    burnConfirmed,
+    guid,
+    mintConfirmed,
+    secondaryButton,
+  }
 }

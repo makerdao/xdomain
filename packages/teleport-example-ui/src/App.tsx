@@ -9,7 +9,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 
 import { DomainBox, DomainChainId, SRC_CHAINID_TO_DST_CHAINID, SrcDomainChainId } from './domains'
 import { useAmounts } from './useAmounts'
-import { useMainButton } from './useMainButton'
+import { useTeleportFlow } from './useTeleportFlow'
 import { ConnectWalletButton } from './wallet/ConnectWalletButton'
 import { useConnectedWallet } from './wallet/useConnectedWallet'
 
@@ -23,6 +23,8 @@ function App() {
   const [searchParams] = useSearchParams({})
   const urlChainIdString = searchParams.get('chainId')
   const urlChainId = urlChainIdString ? Number(urlChainIdString) : undefined
+
+  const dstChainId = SRC_CHAINID_TO_DST_CHAINID[srcChainId as SrcDomainChainId]
 
   useEffect(() => {
     if (urlChainId !== undefined && SRC_CHAIN_IDS.includes(urlChainId)) {
@@ -45,28 +47,37 @@ function App() {
     updateDstBalance,
     updateAllowance,
   } = useAmounts(srcChainId, account)
-  const { mainButton, gulpConfirmed, approveConfirmed, burnTxHash, guid, burnConfirmed, relayConfirmed } =
-    useMainButton(
-      connectWallet,
-      srcChainId,
-      account,
-      maxAmount,
-      amount,
-      allowance,
-      bridgeFee,
-      relayFee,
-      walletChainId,
-      provider,
-    )
+  const {
+    mainButton,
+    gulpConfirmed,
+    approveConfirmed,
+    burnTxHash,
+    guid,
+    burnConfirmed,
+    mintConfirmed,
+    secondaryButton,
+  } = useTeleportFlow(
+    connectWallet,
+    srcChainId,
+    dstChainId,
+    account,
+    maxAmount,
+    amount,
+    allowance,
+    bridgeFee,
+    relayFee,
+    walletChainId,
+    provider,
+  )
 
   useEffect(() => {
-    if (relayConfirmed) {
+    if (mintConfirmed) {
       setAmount('0')
     } else if (guid) {
       const am = formatEther(BigNumber.from(guid.amount))
       setAmount(am)
     }
-  }, [guid, relayConfirmed])
+  }, [guid, mintConfirmed])
   useEffect(() => {
     updateMaxAmount().catch(console.error)
   }, [gulpConfirmed, burnConfirmed])
@@ -74,11 +85,9 @@ function App() {
     updateAllowance().catch(console.error)
   }, [approveConfirmed, burnConfirmed])
   useEffect(() => {
-    if (relayConfirmed) setAmount('0')
+    if (mintConfirmed) setAmount('0')
     updateDstBalance().catch(console.error)
-  }, [relayConfirmed])
-
-  const dstChainId = SRC_CHAINID_TO_DST_CHAINID[srcChainId as SrcDomainChainId]
+  }, [mintConfirmed])
 
   return (
     <div className="App">
@@ -152,6 +161,21 @@ function App() {
               >
                 {mainButton.label || <></>}
               </Button>
+              {secondaryButton && (
+                <Button
+                  ghost
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  block
+                  onClick={secondaryButton.onClick}
+                  disabled={secondaryButton.disabled}
+                  loading={secondaryButton.loading}
+                  style={{ marginTop: 8 }}
+                >
+                  {secondaryButton.label || <></>}
+                </Button>
+              )}
             </Col>
           </Row>
         </Col>
