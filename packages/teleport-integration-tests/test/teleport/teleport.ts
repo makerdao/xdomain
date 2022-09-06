@@ -25,7 +25,6 @@ import { RelayTxToL2Function } from './messages'
 import { MakerSdk } from './setup'
 import { executeSpell } from './spell'
 
-const bytes32 = ethers.utils.formatBytes32String
 export const OPTIMISTIC_ROLLUP_FLUSH_FINALIZATION_TIME = 60 * 60 * 24 * 8 // flush should happen more or less, 1 day after initTeleport, and should take 7 days to finalize
 export type FeeContractLike = TeleportConstantFee | TeleportLinearFee
 
@@ -105,32 +104,20 @@ export async function deployTeleport({
   ])
   console.log('TrustedRelay deployed at: ', trustedRelay.address)
 
-  console.log('Configuring join...')
-  await waitForTx(join['file(bytes32,address)'](bytes32('vow'), makerSdk.vow.address))
-
   console.log('Setting join permissions...')
-  await waitForTx(join.rely(oracleAuth.address))
-  await waitForTx(join.rely(router.address))
   await waitForTx(join.rely(makerSdk.pause_proxy.address))
-  await waitForTx(join.rely(makerSdk.esm.address))
   await waitForTx(join.deny(await defaultSigner.getAddress()))
 
   console.log('Setting oracleAuth permissions...')
   await waitForTx(oracleAuth.rely(makerSdk.pause_proxy.address))
-  await waitForTx(oracleAuth.rely(makerSdk.esm.address))
   await waitForTx(oracleAuth.deny(await defaultSigner.getAddress()))
-
-  console.log('Configuring router...')
-  await waitForTx(router.file(bytes32('gateway'), joinDomain, join.address))
 
   console.log('Setting router permissions...')
   await waitForTx(router.rely(makerSdk.pause_proxy.address))
-  await waitForTx(router.rely(makerSdk.esm.address))
   await waitForTx(router.deny(await defaultSigner.getAddress()))
 
   console.log('Setting trustedRelay permissions...')
   await waitForTx(trustedRelay.rely(makerSdk.pause_proxy.address))
-  await waitForTx(trustedRelay.rely(makerSdk.esm.address))
   await waitForTx(trustedRelay.deny(await defaultSigner.getAddress()))
 
   return { join, oracleAuth, router, feeContract, basicRelay, trustedRelay }

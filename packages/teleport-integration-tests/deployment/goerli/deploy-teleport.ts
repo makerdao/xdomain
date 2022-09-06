@@ -132,6 +132,8 @@ async function setupSigners() {
   const l2OptimismRpc = getRequiredEnv('GOERLI_OPTIMISM_L2_RPC')
   const l2ArbitrumRpc = getRequiredEnv('GOERLI_ARBITRUM_L2_RPC')
   const deployerPrivKey = getRequiredEnv('GOERLI_DEPLOYER_PRIV_KEY')
+  const optimismdeployerPrivKey = getRequiredEnv('GOERLI_OPTIMISM_DEPLOYER_PRIV_KEY')
+  const arbitrumdeployerPrivKey = getRequiredEnv('GOERLI_ARBITRUM_DEPLOYER_PRIV_KEY')
   const l1Provider = new ethers.providers.JsonRpcProvider(l1Rpc)
   const l2OptimismProvider = new ethers.providers.JsonRpcProvider(l2OptimismRpc)
   const l2ArbitrumProvider = new ethers.providers.JsonRpcProvider(l2ArbitrumRpc)
@@ -141,8 +143,8 @@ async function setupSigners() {
   expect((await l2ArbitrumProvider.getNetwork()).chainId).to.eq(421613, 'Not Arbitrum Goerli testnet!')
 
   const l1Signer = new ethers.Wallet(deployerPrivKey, l1Provider)
-  const l2OptimismSigner = new ethers.Wallet(deployerPrivKey, l2OptimismProvider)
-  const l2ArbitrumSigner = new ethers.Wallet(deployerPrivKey, l2ArbitrumProvider)
+  const l2OptimismSigner = new ethers.Wallet(optimismdeployerPrivKey, l2OptimismProvider)
+  const l2ArbitrumSigner = new ethers.Wallet(arbitrumdeployerPrivKey, l2ArbitrumProvider)
 
   return { l1Signer, l2OptimismSigner, l2ArbitrumSigner }
 }

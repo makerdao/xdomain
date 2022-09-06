@@ -50,22 +50,22 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
    },
 
    "Mainnet Teleport": {
-      "join": "0xF4B72741D114a49706877366300b3053a03E7f25",
-      "oracleAuth": "0xFb7b4427Fb77ad4AC24519725153CDD2C92Fc4e0",
-      "router": "0x0E18ab2b7cAA7ae841bC2e0Dd819Af87A8bF8b75",
-      "feeContract": "0xE3AEA9052Aca6b8ec4CF160B5771716765f99aA5",
-      "basicRelay": "0x49486814d8DC7dB8DE95Ee9B65acA621d392096F",
-      "trustedRelay": "0x626E65367122ee1Fd1733Aea4e910661C353837A"
+      "join": "0x41Ca7a7Aa2Be78Cf7CB80C0F4a9bdfBC96e81815",
+      "oracleAuth": "0x324a895625E7AE38Fc7A6ae91a71e7E937Caa7e6",
+      "router": "0xeEf8B35eD538b6Ef7DbA82236377aDE4204e5115",
+      "feeContract": "0xA7C088AAD64512Eff242901E33a516f2381b8823",
+      "basicRelay": "0x0b627300c5f06C5510243081fc66868A0F440d62",
+      "trustedRelay": "0xFabFEd371884ddBd4704867484EB0B419C7fC967"
    }
 
   "Optimism Mainnet teleport gateways":  {
-      "l2TeleportGateway": "0x67A45c2163798d47c32Fc2bcD5Dc0ABc6dCDFe78",
-      "l1TeleportGateway": "0x3c27390F61058152552613a563aC0195aDc7f169"
+      "l2TeleportGateway": "0x18d2CF2296c5b29343755E6B7e37679818913f88",
+      "l1TeleportGateway": "0x920347f49a9dbe50865EB6161C3B2774AC046A7F"
    }
 
    "Arbitrum Mainnet teleport gateways":  {
-      "l2TeleportGateway": "0x35d152cd86C455D08bB10cB1F36fe97b2C4127E3",
-      "l1TeleportGateway": "0x39Fb4f2c0658BCE77863288d12413B23C2c2D6df"
+      "l2TeleportGateway": "0x5dBaf6F2bEDebd414F8d78d13499222347e59D5E",
+      "l1TeleportGateway": "0x22218359E78bC34E532B653198894B639AC3ed72"
    },
 
    "Legacy (slow) Mainnet Optimism Dai bridge": {
@@ -203,22 +203,22 @@ used for makerdao/spells-goerli).
    },
 
    "Goerli Teleport": {
-      "join": "0xAaEf3f1523291aDdaF98a8535c27F25971d823D2",
-      "oracleAuth": "0xD40ab915cB8232E8188e1a9137E4b5dCB86F0fd8",
-      "router": "0x75c2D0A33cB245acD1F10798fEdD4a42Be4951a9",
-      "linearFee": "0x72Cb460888D401f991AB1a78ffc48EFcDcd155e8",
-      "basicRelay": "0xd94d9928E1E48Db1a3Aff47310E88c7b3b0e396c",
-      "trustedRelay": "0x658e6aCb91Fa80732b41E27c7167292DA164872B"
+      "join": "0xE2fddf4e0f5A4B6d0Cc1D162FBFbEF7B6c5D6f69",
+      "oracleAuth": "0x29d292E0773E484dbcA8626F432985630175763b",
+      "router": "0x5A16311D32662E71f1E0beAD41372f60cEb61b26",
+      "linearFee": "0x89bcDc64090ddAbB9AFBeeFB7999d564e2875907",
+      "basicRelay": "0x238a2523B3F211c4099517579B951347c5E5BF55",
+      "trustedRelay": "0x54Aa25B69a3D73A15D21A01a9943E63BAa4c1c58"
    }
 
   "Optimism Goerli teleport gateways":  {
-      "l2TeleportGateway": "0x67A45c2163798d47c32Fc2bcD5Dc0ABc6dCDFe78",
-      "l1TeleportGateway": "0xe57e6b2eEEf91C068849bd6066d1041A00A4F654"
+      "l2TeleportGateway": "0xd9e000C419F3aA4EA1C519497f5aF249b496a00f",
+      "l1TeleportGateway": "0x5d49a6BCEc49072D1612cA6d60c8D7985cfc4988"
    }
 
    "Arbitrum Goerli teleport gateways":  {
-      "l2TeleportGateway": "0x67A45c2163798d47c32Fc2bcD5Dc0ABc6dCDFe78",
-      "l1TeleportGateway": "0x3F7Eea7c2D08bc6F249759082360E14c829b2A92"
+      "l2TeleportGateway": "0x8334a747731Be3a58bCcAf9a3D35EbC968806223",
+      "l1TeleportGateway": "0x737D2B14571b58204403267A198BFa470F0D696e"
    },
 
    "Legacy (slow) Goerli Optimism Dai bridge": {
