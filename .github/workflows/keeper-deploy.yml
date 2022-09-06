@@ -17,32 +17,31 @@ jobs:
       SERVICE_NAME: optimism-teleport-keeper-prod
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        submodules: recursive
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.KEEPER_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.KEEPER_AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.KEEPER_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.KEEPER_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.REGION }}
 
-    - name: Login to container registry
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      - name: Login to container registry
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag, and push image to container registry
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: latest
-      run: |
-        # Build a docker container and
-        # push it to ECR so that it can
-        # be deployed to ECS.
-        docker build -t $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG       
-      working-directory: ./packages/teleport-keeper
-
+      - name: Build, tag, and push image to container registry
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: latest
+        run: |
+          # Build a docker container and
+          # push it to ECR so that it can
+          # be deployed to ECS.
+          docker build -t $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$SERVICE_NAME:$IMAGE_TAG
+        working-directory: ./packages/teleport-keeper

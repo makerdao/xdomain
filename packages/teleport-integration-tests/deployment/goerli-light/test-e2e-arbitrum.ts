@@ -5,8 +5,9 @@ import { getRequiredEnv } from '@makerdao/hardhat-utils'
 import { assert, expect } from 'chai'
 import { ethers, Wallet } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
+import { waitForTx } from 'xdomain-utils'
 
-import { getContractFactory, waitForTx } from '../../test/helpers'
+import { getContractFactory } from '../../test/helpers'
 import { getAttestations } from '../../test/teleport'
 import {
   ArbitrumDai__factory,
@@ -36,8 +37,8 @@ async function main() {
   const oracle = new Wallet(oraclePrivKey, l2Signer.provider)
   console.log('oracle:', oracle.address, 'receiver:', receiver.address)
 
-  const goerliSdk = getGoerliSdk(l1Signer)
-  const arbitrumGoerliTestnetSdk = getArbitrumGoerliTestnetSdk(l2Signer)
+  const goerliSdk = getGoerliSdk(l1Signer).light
+  const arbitrumGoerliTestnetSdk = getArbitrumGoerliTestnetSdk(l2Signer).light
 
   const senderBefore = await arbitrumGoerliTestnetSdk.arbitrumDaiBridge.dai.balanceOf(senderAddress)
   const receiverBefore = await goerliSdk.maker.dai.balanceOf(receiver.address)

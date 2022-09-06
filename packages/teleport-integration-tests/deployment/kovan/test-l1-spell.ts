@@ -4,8 +4,9 @@ import * as dotenv from 'dotenv'
 import { Contract } from 'ethers'
 import { formatEther, Interface } from 'ethers/lib/utils'
 import * as hre from 'hardhat'
+import { waitForTx } from 'xdomain-utils'
 
-import { deployUsingFactoryAndVerify, getContractFactory, impersonateAccount, waitForTx } from '../../test/helpers'
+import { deployUsingFactoryAndVerify, getContractFactory, impersonateAccount } from '../../test/helpers'
 
 dotenv.config()
 

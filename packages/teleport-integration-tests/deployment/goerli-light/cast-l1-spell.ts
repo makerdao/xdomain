@@ -15,7 +15,7 @@ const l1Spell: string | undefined = undefined
 async function main() {
   const { l1Signer } = await setupSigners()
 
-  const goerli = getGoerliSdk(l1Signer)
+  const goerli = getGoerliSdk(l1Signer).light
 
   await deployAndExecuteSpell(l1Signer, goerli.maker)
 }

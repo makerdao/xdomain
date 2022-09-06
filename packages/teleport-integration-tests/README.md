@@ -21,25 +21,94 @@ yarn test
 If you wish to quickly test some changes in smart contract code, just tweak source in `repos` dir and re-run
 `./scripts/setup.sh`.
 
-# Teleport test deployment
+# Teleport mainnet deployment
 
-## Optimism & Arbitrum Goerli testnet
+## Optimism & Arbitrum
 
 ### Instructions
 
-1. Set the name of the new ilk in `deployment/goerli/deploy-teleport.ts` then run
-   `yarn hardhat run deployment/goerli/deploy-teleport.ts` to deploy `dss-teleport`, `arbitrum-dai-bridge` Teleport
+1. Set the name of the new ilk in `deployment/mainnet/deploy-teleport.ts` then run
+   `yarn hardhat run deployment/mainnet/deploy-teleport.ts` to deploy `dss-teleport`, `arbitrum-dai-bridge` Teleport
    contracts and `optimism-dai-bridge` Teleport contracts.
+
+   2. An appropriate [spell](https://github.com/makerdao/spells-mainnet) needs to be written and cast. The test
+      environment spell in `contracts/deploy/goerli-light/L1GoerliAddTeleportDomainSpell.sol` can be used as a guide to
+      determine the necessary configuration operations to include in the spell.
+
+### Latest deployment
+
+```
+{
+   "Mainnet MCD": {
+      "vat": "0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B",
+      "dai_join": "0x9759A6Ac90977b93B58547b4A71c78317f391A28",
+      "vow": "0xA950524441892A31ebddF91d3cEEFa04Bf454466",
+      "pause_proxy": "0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB",
+      "esm": "0x09e05fF6142F2f9de8B6B65855A1d56B6cfE4c58",
+      "dai": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+      "median_ethusd": "0x64DE91F5A373Cd4c28de3600cB34C7C6cE410C85",
+   },
+
+   "Mainnet Teleport": {
+      "join": "0x41Ca7a7Aa2Be78Cf7CB80C0F4a9bdfBC96e81815",
+      "oracleAuth": "0x324a895625E7AE38Fc7A6ae91a71e7E937Caa7e6",
+      "router": "0xeEf8B35eD538b6Ef7DbA82236377aDE4204e5115",
+      "feeContract": "0xA7C088AAD64512Eff242901E33a516f2381b8823",
+      "basicRelay": "0x0b627300c5f06C5510243081fc66868A0F440d62",
+      "trustedRelay": "0xFabFEd371884ddBd4704867484EB0B419C7fC967"
+   }
+
+  "Optimism Mainnet teleport gateways":  {
+      "l2TeleportGateway": "0x18d2CF2296c5b29343755E6B7e37679818913f88",
+      "l1TeleportGateway": "0x920347f49a9dbe50865EB6161C3B2774AC046A7F"
+   }
+
+   "Arbitrum Mainnet teleport gateways":  {
+      "l2TeleportGateway": "0x5dBaf6F2bEDebd414F8d78d13499222347e59D5E",
+      "l1TeleportGateway": "0x22218359E78bC34E532B653198894B639AC3ed72"
+   },
+
+   "Legacy (slow) Mainnet Optimism Dai bridge": {
+      "l2Dai": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      "l1Escrow": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
+      "l1DAITokenBridge": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
+      "l2DAITokenBridge": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
+      "l1GovernanceRelay": "0x09B354CDA89203BB7B3131CC728dFa06ab09Ae2F",
+      "l2GovernanceRelay": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
+   },
+
+   "Legacy (slow) Mainnet Arbitrum Dai bridge": {
+      "l2Dai": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      "l1Escrow": "0xA10c7CE4b876998858b1a9E12b10092229539400",
+      "l1DaiGateway": "0xD3B5b60020504bc3489D6949d545893982BA3011",
+      "l2DaiGateway": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
+      "l1GovernanceRelay": "0x9ba25c289e351779E0D481Ba37489317c34A899d",
+      "l2GovernanceRelay": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
+      "l1GatewayRouter"": "0x72Ce9c846789fdB6fC1f34aC4AD25Dd9ef7031ef",
+      "l2GatewayRouter"": "0x5288c571Fd7aD117beA99bF60FE0846C4E84F933",
+   }
+}
+```
+
+# Teleport testnet deployments
+
+## Optimism & Arbitrum Goerli test environment ("goerli-light")
+
+### Instructions
+
+1. Set the name of the new ilk in `deployment/goerli-light/deploy-teleport.ts` then run
+   `yarn hardhat run deployment/goerli-light/deploy-teleport.ts` to deploy `dss-teleport`, `arbitrum-dai-bridge`
+   Teleport contracts and `optimism-dai-bridge` Teleport contracts.
 
 2. Set the addresses of the newly deployed `teleportJoin`, `router` (TeleportRouter), `oracleAuth` (TeleportOracleAuth),
    `constantFees` (TeleportConstantFees), `trustedRelay` (TrustedRelay), `optimismL1Bridge` (L1TeleportGateway) and
-   `arbitrumL1Bridge` (L1TeleportGateway) in `contracts/deploy/goerli/L1GoerliAddTeleportDomainSpell.sol`.
+   `arbitrumL1Bridge` (L1TeleportGateway) in `contracts/deploy/goerli-light/L1GoerliAddTeleportDomainSpell.sol`.
 
-3. Run `yarn hardhat run deployment/goerli/cast-l1-spell.ts` to deploy and cast the L1 spell on goerli.
+3. Run `yarn hardhat run deployment/goerli-light/cast-l1-spell.ts` to deploy and cast the L1 spell on goerli.
 
 4. To validate the resulting changes, copy the addresses of the newly deployed `oracleAuth` and `l2TeleportGateway` into
-   `deployment/goerli/test-e2e-[optimism|arbitrum].ts` and run
-   `yarn hardhat run deployment/goerli/test-e2e-[optimism|arbitrum].ts`.
+   `deployment/goerli-light/test-e2e-[optimism|arbitrum].ts` and run
+   `yarn hardhat run deployment/goerli-light/test-e2e-[optimism|arbitrum].ts`.
 
 ### Latest deployment
 
@@ -103,6 +172,73 @@ used for makerdao/spells-goerli).
 
    "GoerliLight Spell": {
       "l1": "0x29ADBE7cE6F650D56d8611Ab43a1153f5654fC01",
+   }
+}
+```
+
+## Optimism & Arbitrum Goerli staging environment ("canonical-goerli")
+
+### Instructions
+
+1. Set the name of the new ilk in `deployment/goerli/deploy-teleport.ts` then run
+   `yarn hardhat run deployment/goerli/deploy-teleport.ts` to deploy `dss-teleport`, `arbitrum-dai-bridge` Teleport
+   contracts and `optimism-dai-bridge` Teleport contracts.
+
+   2. An appropriate [spell](https://github.com/makerdao/spells-goerli) needs to be written and cast. The test
+      environment spell in `contracts/deploy/goerli-light/L1GoerliAddTeleportDomainSpell.sol` can be used as a guide to
+      determine the necessary configuration operations to include in the spell.
+
+### Latest deployment
+
+```
+{
+   "Goerli MCD": {
+      "vat": "0xB966002DDAa2Baf48369f5015329750019736031",
+      "dai_join": "0x6a60b7070befb2bfc964F646efDF70388320f4E0",
+      "vow": "0x23f78612769b9013b3145E43896Fa1578cAa2c2a",
+      "pause_proxy": "0x5DCdbD3cCF9B09EAAD03bc5f50fA2B3d3ACA0121",
+      "esm": "0x023A960cb9BE7eDE35B433256f4AfE9013334b55",
+      "dai": "0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844",
+      "median_ethusd": "0xD81834Aa83504F6614caE3592fb033e4b8130380",
+   },
+
+   "Goerli Teleport": {
+      "join": "0xE2fddf4e0f5A4B6d0Cc1D162FBFbEF7B6c5D6f69",
+      "oracleAuth": "0x29d292E0773E484dbcA8626F432985630175763b",
+      "router": "0x5A16311D32662E71f1E0beAD41372f60cEb61b26",
+      "linearFee": "0x89bcDc64090ddAbB9AFBeeFB7999d564e2875907",
+      "basicRelay": "0x238a2523B3F211c4099517579B951347c5E5BF55",
+      "trustedRelay": "0x54Aa25B69a3D73A15D21A01a9943E63BAa4c1c58"
+   }
+
+  "Optimism Goerli teleport gateways":  {
+      "l2TeleportGateway": "0xd9e000C419F3aA4EA1C519497f5aF249b496a00f",
+      "l1TeleportGateway": "0x5d49a6BCEc49072D1612cA6d60c8D7985cfc4988"
+   }
+
+   "Arbitrum Goerli teleport gateways":  {
+      "l2TeleportGateway": "0x8334a747731Be3a58bCcAf9a3D35EbC968806223",
+      "l1TeleportGateway": "0x737D2B14571b58204403267A198BFa470F0D696e"
+   },
+
+   "Legacy (slow) Goerli Optimism Dai bridge": {
+      "l2Dai": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      "l1Escrow": "0xbc892A208705862273008B2Fb7D01E968be42653",
+      "l1DAITokenBridge": "0x05a388Db09C2D44ec0b00Ee188cD42365c42Df23",
+      "l2DAITokenBridge": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
+      "l1GovernanceRelay": "0xD9b2835A5bFC8bD5f54DB49707CF48101C66793a",
+      "l2GovernanceRelay": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
+   },
+
+   "Legacy (slow) Goerli Arbitrum Dai bridge": {
+      "l2Dai": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      "l1Escrow": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      "l1DaiGateway": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
+      "l2DaiGateway": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
+      "l1GovernanceRelay": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
+      "l2GovernanceRelay": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
+      "l1GatewayRouter"": "0x4c7708168395aEa569453Fc36862D2ffcDaC588c",
+      "l2GatewayRouter"": "0xE5B9d8d42d656d1DcB8065A6c012FE3780246041",
    }
 }
 ```

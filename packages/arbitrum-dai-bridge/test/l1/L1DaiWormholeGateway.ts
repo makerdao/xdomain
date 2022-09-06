@@ -1,11 +1,12 @@
-import { assertPublicMutableMethods, getRandomAddress, simpleDeploy, waitForTx } from '@makerdao/hardhat-utils'
+import { assertPublicMutableMethods, getRandomAddress, simpleDeploy } from '@makerdao/hardhat-utils'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address'
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
+import { waitForTx } from 'xdomain-utils'
 
 import { deployArbitrumContractMock } from '../../arbitrum-helpers/mocks'
 import { Dai__factory, L1DaiTeleportGateway__factory, L1Escrow__factory } from '../../typechain-types'
-import { TeleportGUIDStruct } from '../../typechain-types/L1DaiTeleportGateway'
+import { TeleportGUIDStruct } from '../../typechain-types/l1/L1DaiTeleportGateway.sol/L1DaiTeleportGateway'
 import { addressToBytes32, deployAbstractMock, deployMock } from '../helpers'
 
 const INITIAL_ESCROW_BALANCE = 3000

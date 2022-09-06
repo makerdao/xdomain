@@ -1,8 +1,9 @@
 import { BigNumberish, constants, ContractReceipt, Signer, Wallet } from 'ethers'
 import { arrayify, hexConcat, hexZeroPad, Interface, keccak256, splitSignature } from 'ethers/lib/utils'
+import { waitForTx } from 'xdomain-utils'
 
 import { BasicRelay, TrustedRelay } from '../../typechain'
-import { toEthersBigNumber, waitForTx } from '../helpers'
+import { toEthersBigNumber } from '../helpers'
 import { getAttestations, TeleportGUID } from './attestations'
 
 interface GetRelayArgsOpts {
