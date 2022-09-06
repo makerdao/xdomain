@@ -4,8 +4,8 @@ import { waffleChai } from '@ethereum-waffle/chai'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { expect, use } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { Contract, ContractTransaction, ethers, Wallet } from 'ethers'
-import { formatBytes32String, parseEther } from 'ethers/lib/utils'
+import { ContractTransaction, ethers } from 'ethers'
+import { parseEther } from 'ethers/lib/utils'
 import { RetryProvider, RetryWallet } from 'xdomain-utils'
 
 import {
