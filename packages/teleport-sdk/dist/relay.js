@@ -12,6 +12,10 @@ const DEFAULT_POLLING_INTERVAL_MS = 2000;
 const GELATO_API_URL = 'https://relay.gelato.digital';
 const ETHEREUM_DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f';
 const GELATO_ADDRESSES = {
+    1: {
+        service: '0x5ca448e53e77499222741DcB6B3c959Fa829dAf2',
+        gelato: '0x3CACa7b48D0573D793d3b0279b5F0029180E83b6',
+    },
     4: {
         service: '0x9B79b798563e538cc326D03696B3Be38b971D282',
         gelato: '0x0630d1b8C2df3F0a68Df578D02075027a6397173',

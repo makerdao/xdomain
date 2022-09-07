@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getArbitrumGoerliTestnetSdk = exports.getOptimismGoerliTestnetSdk = exports.getGoerliSdk = exports.getArbitrumTestnetSdk = exports.getRinkebySdk = exports.getOptimismKovanSdk = exports.getKovanSdk = exports.getContract = void 0;
+exports.getArbitrumOneSdk = exports.getOptimismSdk = exports.getMainnetSdk = exports.getArbitrumGoerliTestnetSdk = exports.getOptimismGoerliTestnetSdk = exports.getGoerliSdk = exports.getArbitrumTestnetSdk = exports.getRinkebySdk = exports.getOptimismKovanSdk = exports.getKovanSdk = exports.getContract = void 0;
 const ethers_1 = require("ethers");
 const TeleportOracleAuth_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/TeleportOracleAuth.json"));
 const TeleportJoin_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/TeleportJoin.json"));
@@ -40,6 +40,17 @@ const Dai_json_6 = __importDefault(require("../../../eth-sdk/abis/optimismGoerli
 const TeleportOutboundGateway_json_4 = __importDefault(require("../../../eth-sdk/abis/arbitrumGoerliTestnet/ARB-GOER-A/TeleportOutboundGateway.json"));
 const Faucet_json_4 = __importDefault(require("../../../eth-sdk/abis/arbitrumGoerliTestnet/ARB-GOER-A/Faucet.json"));
 const Dai_json_7 = __importDefault(require("../../../eth-sdk/abis/arbitrumGoerliTestnet/ARB-GOER-A/Dai.json"));
+const TeleportOracleAuth_json_4 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/TeleportOracleAuth.json"));
+const TeleportJoin_json_4 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/TeleportJoin.json"));
+const Vat_json_4 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/Vat.json"));
+const Multicall_json_4 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/Multicall.json"));
+const BasicRelay_json_4 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/BasicRelay.json"));
+const TrustedRelay_json_4 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/TrustedRelay.json"));
+const Dai_json_8 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/Dai.json"));
+const TeleportOutboundGateway_json_5 = __importDefault(require("../../../eth-sdk/abis/optimism/OPT-MAIN-A/TeleportOutboundGateway.json"));
+const Dai_json_9 = __importDefault(require("../../../eth-sdk/abis/optimism/OPT-MAIN-A/Dai.json"));
+const TeleportOutboundGateway_json_6 = __importDefault(require("../../../eth-sdk/abis/arbitrumOne/ARB-ONE-A/TeleportOutboundGateway.json"));
+const Dai_json_10 = __importDefault(require("../../../eth-sdk/abis/arbitrumOne/ARB-ONE-A/Dai.json"));
 function getContract(address, abi, defaultSigner) {
     return new ethers_1.Contract(address, abi, defaultSigner);
 }
@@ -128,3 +139,35 @@ function getArbitrumGoerliTestnetSdk(defaultSigner) {
     };
 }
 exports.getArbitrumGoerliTestnetSdk = getArbitrumGoerliTestnetSdk;
+function getMainnetSdk(defaultSigner) {
+    return {
+        "ETH-MAIN-A": {
+            "TeleportOracleAuth": getContract('0x324a895625E7AE38Fc7A6ae91a71e7E937Caa7e6', TeleportOracleAuth_json_4.default, defaultSigner),
+            "TeleportJoin": getContract('0x41Ca7a7Aa2Be78Cf7CB80C0F4a9bdfBC96e81815', TeleportJoin_json_4.default, defaultSigner),
+            "Vat": getContract('0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B', Vat_json_4.default, defaultSigner),
+            "Multicall": getContract('0x5e227AD1969Ea493B43F840cfF78d08a6fc17796', Multicall_json_4.default, defaultSigner),
+            "BasicRelay": getContract('0x0b627300c5f06C5510243081fc66868A0F440d62', BasicRelay_json_4.default, defaultSigner),
+            "TrustedRelay": getContract('0xFabFEd371884ddBd4704867484EB0B419C7fC967', TrustedRelay_json_4.default, defaultSigner),
+            "Dai": getContract('0x6B175474E89094C44Da98b954EedeAC495271d0F', Dai_json_8.default, defaultSigner),
+        },
+    };
+}
+exports.getMainnetSdk = getMainnetSdk;
+function getOptimismSdk(defaultSigner) {
+    return {
+        "OPT-MAIN-A": {
+            "TeleportOutboundGateway": getContract('0x18d2CF2296c5b29343755E6B7e37679818913f88', TeleportOutboundGateway_json_5.default, defaultSigner),
+            "Dai": getContract('0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', Dai_json_9.default, defaultSigner),
+        },
+    };
+}
+exports.getOptimismSdk = getOptimismSdk;
+function getArbitrumOneSdk(defaultSigner) {
+    return {
+        "ARB-ONE-A": {
+            "TeleportOutboundGateway": getContract('0x5dBaf6F2bEDebd414F8d78d13499222347e59D5E', TeleportOutboundGateway_json_6.default, defaultSigner),
+            "Dai": getContract('0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', Dai_json_10.default, defaultSigner),
+        },
+    };
+}
+exports.getArbitrumOneSdk = getArbitrumOneSdk;

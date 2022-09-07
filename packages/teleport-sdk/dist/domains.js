@@ -11,9 +11,9 @@ exports.DOMAINS = [
     'OPT-GOER-A',
     'ARB-GOER-A',
     'ETH-GOER-A',
-    // 'OPT-MAIN-A',
-    // 'ARB-MAIN-A',
-    // 'ETH-MAIN-A',
+    'OPT-MAIN-A',
+    'ARB-ONE-A',
+    'ETH-MAIN-A',
 ];
 exports.DEFAULT_RPC_URLS = {
     'RINKEBY-SLAVE-ARBITRUM-1': 'https://rinkeby.arbitrum.io/rpc',
@@ -23,15 +23,17 @@ exports.DEFAULT_RPC_URLS = {
     'OPT-GOER-A': 'https://goerli.optimism.io',
     'ARB-GOER-A': 'https://goerli-rollup.arbitrum.io/rpc',
     'ETH-GOER-A': 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
-    //   "OPT-MAIN-A": "https://optimism.io/",
-    //   "ARB-ONE-A": "https://arb1.arbitrum.io/rpc",
-    //   "ETH-MAIN-A": "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+    'OPT-MAIN-A': 'https://optimism.io/',
+    'ARB-ONE-A': 'https://arb1.arbitrum.io/rpc',
+    'ETH-MAIN-A': 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
 };
 const descriptionsToDomainIds = {
-    'arbitrum-testnet': 'RINKEBY-SLAVE-ARBITRUM-1',
     'optimism-testnet': 'KOVAN-SLAVE-OPTIMISM-1',
-    'arbitrum-goerli-testnet': 'ARB-GOER-A',
+    'arbitrum-testnet': 'RINKEBY-SLAVE-ARBITRUM-1',
     'optimism-goerli-testnet': 'OPT-GOER-A',
+    'arbitrum-goerli-testnet': 'ARB-GOER-A',
+    optimism: 'OPT-MAIN-A',
+    arbitrum: 'ARB-ONE-A',
     ...Object.assign({}, ...exports.DOMAINS.map((d) => ({ [d]: d }))),
 };
 function getLikelyDomainId(srcDomain) {
@@ -49,6 +51,9 @@ function getDefaultDstDomain(srcDomain) {
     if (domainId.includes('GOER')) {
         return 'ETH-GOER-A';
     }
+    if (domainId.includes('MAIN') || domainId === 'ARB-ONE-A') {
+        return 'ETH-MAIN-A';
+    }
     throw new Error(`No default destination domain for source domain "${srcDomain}"`);
 }
 exports.getDefaultDstDomain = getDefaultDstDomain;
@@ -61,6 +66,9 @@ function getSdk(domain, signerOrProvider) {
         'OPT-GOER-A': sdk_1.getOptimismGoerliTestnetSdk,
         'ARB-GOER-A': sdk_1.getArbitrumGoerliTestnetSdk,
         'ETH-GOER-A': sdk_1.getGoerliSdk,
+        'OPT-MAIN-A': sdk_1.getOptimismSdk,
+        'ARB-ONE-A': sdk_1.getArbitrumOneSdk,
+        'ETH-MAIN-A': sdk_1.getMainnetSdk,
     };
     const domainId = getLikelyDomainId(domain);
     const signer = signerOrProvider;

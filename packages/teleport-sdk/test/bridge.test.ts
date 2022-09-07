@@ -52,6 +52,9 @@ const privKeyEnvVars = {
   'ETH-GOER-A': 'GOERLI_USER_PRIV_KEY',
   'OPT-GOER-A': 'GOERLI_OPTIMISM_USER_PRIV_KEY',
   'ARB-GOER-A': 'GOERLI_ARBITRUM_USER_PRIV_KEY',
+  'ETH-MAIN-A': 'MAINNET_USER_PRIV_KEY',
+  'OPT-MAIN-A': 'MAINNET_OPTIMISM_USER_PRIV_KEY',
+  'ARB-ONE-A': 'MAINNET_ARBITRUM_USER_PRIV_KEY',
 }
 
 async function getTestWallets(srcDomainDescr: DomainDescription) {
@@ -99,6 +102,12 @@ describe('TeleportBridge', () => {
     })
     it('should auto-fill default RPC URLs and dstDomain (goerli-arbitrun)', () => {
       testDefaults('ARB-GOER-A')
+    })
+    it('should auto-fill default RPC URLs and dstDomain (arbitrum)', () => {
+      testDefaults('ARB-ONE-A')
+    })
+    it('should auto-fill default RPC URLs and dstDomain (optimism)', () => {
+      testDefaults('OPT-MAIN-A')
     })
   })
 

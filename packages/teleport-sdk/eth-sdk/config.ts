@@ -65,6 +65,29 @@ export default defineConfig({
         Dai: '0x8ea903081aa1137F11D51F64A1F372EDe67571a9', // L2Dai
       },
     },
+    mainnet: {
+      'ETH-MAIN-A': {
+        TeleportOracleAuth: '0x324a895625E7AE38Fc7A6ae91a71e7E937Caa7e6',
+        TeleportJoin: '0x41Ca7a7Aa2Be78Cf7CB80C0F4a9bdfBC96e81815',
+        Vat: '0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B',
+        Multicall: '0x5e227AD1969Ea493B43F840cfF78d08a6fc17796',
+        BasicRelay: '0x0b627300c5f06C5510243081fc66868A0F440d62',
+        TrustedRelay: '0xFabFEd371884ddBd4704867484EB0B419C7fC967',
+        Dai: '0x6B175474E89094C44Da98b954EedeAC495271d0F', // L1Dai
+      },
+    },
+    optimism: {
+      'OPT-MAIN-A': {
+        TeleportOutboundGateway: '0x18d2CF2296c5b29343755E6B7e37679818913f88', // L2DaiTeleportGateway
+        Dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', // L2Dai
+      },
+    },
+    arbitrumOne: {
+      'ARB-ONE-A': {
+        TeleportOutboundGateway: '0x5dBaf6F2bEDebd414F8d78d13499222347e59D5E', // L2DaiTeleportGateway
+        Dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', // L2Dai
+      },
+    },
   },
   outputPath: './src/sdk',
 })

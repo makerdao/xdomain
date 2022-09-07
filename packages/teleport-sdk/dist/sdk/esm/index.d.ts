@@ -71,3 +71,29 @@ export declare function getArbitrumGoerliTestnetSdk(defaultSigner: Signer): {
         Dai: types.Dai;
     };
 };
+export declare type MainnetSdk = ReturnType<typeof getMainnetSdk>;
+export declare function getMainnetSdk(defaultSigner: Signer): {
+    "ETH-MAIN-A": {
+        TeleportOracleAuth: types.TeleportOracleAuth;
+        TeleportJoin: types.TeleportJoin;
+        Vat: types.Vat;
+        Multicall: types.Multicall;
+        BasicRelay: types.BasicRelay;
+        TrustedRelay: types.TrustedRelay;
+        Dai: types.Dai;
+    };
+};
+export declare type OptimismSdk = ReturnType<typeof getOptimismSdk>;
+export declare function getOptimismSdk(defaultSigner: Signer): {
+    "OPT-MAIN-A": {
+        TeleportOutboundGateway: types.TeleportOutboundGateway;
+        Dai: types.Dai;
+    };
+};
+export declare type ArbitrumOneSdk = ReturnType<typeof getArbitrumOneSdk>;
+export declare function getArbitrumOneSdk(defaultSigner: Signer): {
+    "ARB-ONE-A": {
+        TeleportOutboundGateway: types.TeleportOutboundGateway;
+        Dai: types.Dai;
+    };
+};
