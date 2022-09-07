@@ -18,6 +18,8 @@
 
 pragma solidity ^0.8.15;
 
+import {SignatureChecker} from "@matterlabs/signature-checker/contracts/SignatureChecker.sol";
+
 // Improved Dai token
 
 contract Dai {
@@ -202,16 +204,16 @@ contract Dai {
   }
 
   // --- Approve by signature ---
+
   function permit(
     address owner,
     address spender,
     uint256 value,
     uint256 deadline,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    bytes memory signature
   ) external {
     require(block.timestamp <= deadline, "Dai/permit-expired");
+    require(owner != address(0), "Dai/invalid-permit");
 
     uint256 chainId;
     assembly {
@@ -226,7 +228,7 @@ contract Dai {
       )
     );
 
-    require(owner != address(0) && owner == ecrecover(digest, v, r, s), "Dai/invalid-permit");
+    require(SignatureChecker.isValidSignatureNow(owner, digest, signature), "Dai/invalid-permit");
 
     allowance[owner][spender] = value;
     emit Approval(owner, spender, value);

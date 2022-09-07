@@ -22,7 +22,9 @@
     "test-e2e:goerli": "TEST_ENV=goerli mocha --config .mocharc-e2e.js",
     "test:fix": "yarn lint:fix && yarn format:fix && yarn test && yarn typecheck"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@matterlabs/signature-checker": "^1.1.0"
+  },
   "devDependencies": {
     "@eth-optimism/smock": "=1.1.10",
     "@makerdao/hardhat-utils": "^0.1.3",

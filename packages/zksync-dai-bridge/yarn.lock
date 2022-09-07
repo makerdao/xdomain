@@ -649,12 +649,27 @@
     lodash "^4.17.21"
     ts-essentials "^7.0.3"
 
+"@matterlabs/hardhat-zksync-deploy@^0.1.2":
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/@matterlabs/hardhat-zksync-deploy/-/hardhat-zksync-deploy-0.1.5.tgz#8346ddab9969152742a485cc00221582de189769"
+  integrity sha512-UXhfJWSkHOaRyngy1ZJ5vQehO2zug7ykS2gLoQnMEfrW6an2Teuhqov6UInZ8PXmsF8qvoxgIWV2KuMYN0CcqA==
+  dependencies:
+    glob "^7.1.3"
+
 "@matterlabs/hardhat-zksync-deploy@^0.4.0":
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/@matterlabs/hardhat-zksync-deploy/-/hardhat-zksync-deploy-0.4.0.tgz#8a6ef1faf7d91cf2b32072eeaa7c7332fb4c27b1"
   integrity sha512-r/xp+CL1+qVLNGoSehUe4u80QZRG8e4WEnhJ1JuJSxzOaoivqUDFblf8Q/TQkdFPrilBqpgTJzcPazDsWeH0SQ==
   dependencies:
     glob "^8.0.1"
+
+"@matterlabs/hardhat-zksync-solc@^0.2.1":
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/@matterlabs/hardhat-zksync-solc/-/hardhat-zksync-solc-0.2.4.tgz#a62618b81b3689e0465676cdc9e58ae4acb033a3"
+  integrity sha512-97so6F9Vjn3snQX47W/qSpvg7JMZ771yqZYoS8qBmSn8mXd/SSCrfeK9VILsW37YB96m90FpH6Vg3nt9u8z8DQ==
+  dependencies:
+    "@nomiclabs/hardhat-docker" "^2.0.0"
+    dockerode "^3.3.1"
 
 "@matterlabs/hardhat-zksync-solc@^0.3.7":
   version "0.3.7"
@@ -663,6 +678,14 @@
   dependencies:
     "@nomiclabs/hardhat-docker" "^2.0.0"
     dockerode "^3.3.4"
+
+"@matterlabs/signature-checker@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@matterlabs/signature-checker/-/signature-checker-1.1.0.tgz#70f127e0acc9abed18bdff301a3c473acc8db618"
+  integrity sha512-wnBwiFwtlstUtSfX1F9VooHCbcC2dxWqTVMzV1nta6Wbvzu41IRYyF6Ym0ya/ey3wzMYxxqe7PiFpB4PFDsHGg==
+  dependencies:
+    "@matterlabs/hardhat-zksync-deploy" "^0.1.2"
+    "@matterlabs/hardhat-zksync-solc" "^0.2.1"
 
 "@metamask/eth-sig-util@^4.0.0":
   version "4.0.1"
@@ -3594,7 +3617,7 @@ dockerode@^2.5.8:
     docker-modem "^1.0.8"
     tar-fs "~1.16.3"
 
-dockerode@^3.3.4:
+dockerode@^3.3.1, dockerode@^3.3.4:
   version "3.3.4"
   resolved "https://registry.yarnpkg.com/dockerode/-/dockerode-3.3.4.tgz#875de614a1be797279caa9fe27e5637cf0e40548"
   integrity sha512-3EUwuXnCU+RUlQEheDjmBE0B7q66PV9Rw5NiH1sXwINq0M9c5ERP9fxgkw36ZHOtzf4AGEEYySnkx/sACC9EgQ==
