@@ -517,6 +517,7 @@ contract OptimismIntegrationTest is DSSTest {
         vm.warp(block.timestamp + rmcd.end().wait());
 
         rmcd.end().thaw();
+        guest.tell();
         assertEq(guest.grain(), 100 ether);
         rmcd.end().flow(REMOTE_COLL_ILK);
         relayLastMessageL2toL1();

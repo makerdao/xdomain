@@ -97,17 +97,17 @@ contract OptimismDomainGuest is DomainGuest {
         );
     }
 
-    function tell(uint256 value) external {
+    function tell() external {
         l2messenger.sendMessage(
             host,
-            _tell(value),
+            _tell(),
             glTell
         );
     }
-    function tell(uint256 value, uint32 gasLimit) external {
+    function tell(uint32 gasLimit) external {
         l2messenger.sendMessage(
             host,
-            _tell(value),
+            _tell(),
             gasLimit
         );
     }
