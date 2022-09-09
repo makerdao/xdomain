@@ -63,34 +63,6 @@ interface EscrowLike {
     function approve(address token, address spender, uint256 value) external;
 }
 
-interface ForkCheatCodes {
-    // Snapshot the current state of the evm.
-    // Returns the id of the snapshot that was created.
-    // To revert a snapshot use `revertTo`
-    function snapshot() external returns(uint256);
-    // Revert the state of the evm to a previous snapshot
-    // takes the snapshot id to revert to. This deletes the snapshot and all snapshots taken after the given snapshot id.
-    function revertTo(uint256) external returns(bool);
-    // Creates a new fork with the given endpoint and block and returns the identifier of the fork
-    function createFork(string calldata,uint256) external returns(uint256);
-    // Creates a new fork with the given endpoint and the latest block and returns the identifier of the fork
-    function createFork(string calldata) external returns(uint256);
-    // takes a fork identifier created by `createFork` and changes the state
-    function selectFork(uint256) external;
-    // forks the `block` variable from the given endpoint
-    function forkBlockVariable(string calldata, uint256) external;
-    // Updates the currently active fork to given block number
-    // This is similar to `roll` but for the fork
-    function rollFork(uint256) external;
-    // Updates the given fork to given block number
-    // Returns false if no matching fork was found
-    function rollFork(uint256, uint256) external;
-    /// Returns the RPC url for the given alias
-    function rpcUrl(string calldata) external returns(string memory);
-    /// Returns all rpc urls and their aliases `[alias, url][]`
-    function rpcUrls() external returns(string[2][] memory);
-}
-
 // TODO use actual dog when ready
 contract DogMock {
     function wards(address) external pure returns (uint256) {
@@ -153,8 +125,6 @@ contract OptimismIntegrationTest is DSSTest {
 
     using GodMode for *;
 
-    ForkCheatCodes constant cheats = ForkCheatCodes(HEVM_ADDRESS);
-
     // Ethereum-side contracts
     MessengerLike l1messenger;
     MessageRelayEavesdrop l1Eavesdrop;
@@ -181,11 +151,11 @@ contract OptimismIntegrationTest is DSSTest {
     }
 
     function postSetup() internal virtual override {
-        mainnetFork = cheats.createFork("mainnet");
-        optimismFork = cheats.createFork("optimism");
+        mainnetFork = vm.createFork("mainnet");
+        optimismFork = vm.createFork("optimism");
 
         // --- Setup mainnet contracts ---
-        cheats.selectFork(mainnetFork);
+        vm.selectFork(mainnetFork);
 
         escrow = EscrowLike(mcd.chainlog().getAddress("OPTIMISM_ESCROW"));
         l1messenger = MessengerLike(0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1);
@@ -214,7 +184,7 @@ contract OptimismIntegrationTest is DSSTest {
         host.file("glDeposit", 1_000_000);
 
         // --- Setup optimism contracts ---
-        cheats.selectFork(optimismFork);
+        vm.selectFork(optimismFork);
 
         l2messenger = MessengerLike(0x4200000000000000000000000000000000000007);
         l2Eavesdrop = new MessageRelayEavesdrop(address(l2messenger));
@@ -257,7 +227,7 @@ contract OptimismIntegrationTest is DSSTest {
         rmcd.end().rely(address(guest));
 
         // Default back to mainnet
-        cheats.selectFork(mainnetFork);
+        vm.selectFork(mainnetFork);
     }
 
     function relayLastMessageL1toL2() internal {
@@ -265,7 +235,7 @@ contract OptimismIntegrationTest is DSSTest {
         address sender = l1Eavesdrop.sender();
         bytes memory message = l1Eavesdrop.message();
 
-        cheats.selectFork(optimismFork);
+        vm.selectFork(optimismFork);
 
         uint160 offset = uint160(0x1111000000000000000000000000000000001111);
         address malias;
@@ -283,7 +253,7 @@ contract OptimismIntegrationTest is DSSTest {
         address sender = l2Eavesdrop.sender();
         bytes memory message = l2Eavesdrop.message();
 
-        cheats.selectFork(mainnetFork);
+        vm.selectFork(mainnetFork);
 
         // TODO use the actual messege relayer with state inclusion proofs
         l1Eavesdrop.setXDomainMessageSender(sender);
@@ -346,7 +316,7 @@ contract OptimismIntegrationTest is DSSTest {
         assertEq(rmcd.vat().Line(), 100 * RAD);
 
         // Pre-mint DAI is not released here
-        cheats.selectFork(mainnetFork);
+        vm.selectFork(mainnetFork);
         host.lift(50 ether);
 
         (ink, art) = mcd.vat().urns(DOMAIN_ILK, address(host));
@@ -378,12 +348,12 @@ contract OptimismIntegrationTest is DSSTest {
 
         // Add some debt to the guest instance, lower the DC and release some more pre-mint
         // This can only release pre-mint DAI up to the debt
-        cheats.selectFork(optimismFork);
+        vm.selectFork(optimismFork);
         rmcd.vat().suck(address(guest), address(this), 40 * RAD);
         assertEq(rmcd.vat().Line(), 50 * RAD);
         assertEq(rmcd.vat().debt(), 40 * RAD);
 
-        cheats.selectFork(mainnetFork);
+        vm.selectFork(mainnetFork);
         host.lift(25 ether);
         relayLastMessageL1toL2();
         guest.release();
@@ -441,11 +411,11 @@ contract OptimismIntegrationTest is DSSTest {
         guest.push();
         relayLastMessageL2toL1();
 
-        cheats.selectFork(optimismFork);
+        vm.selectFork(optimismFork);
         assertEq(rmcd.vat().dai(address(guest)), 0);
         assertEq(rmcd.vat().sin(address(guest)), 30 * RAD);
         assertEq(Vat(address(rmcd.vat())).surf(), 0);
-        cheats.selectFork(mainnetFork);
+        vm.selectFork(mainnetFork);
 
         host.rectify();
         assertEq(mcd.vat().dai(address(mcd.vow())), vowDai);
@@ -483,7 +453,7 @@ contract OptimismIntegrationTest is DSSTest {
         assertEq(ink, 40 ether);
         assertEq(art, 40 ether);
 
-        cheats.selectFork(mainnetFork);
+        vm.selectFork(mainnetFork);
         mcd.end().cage();
         host.deny(address(this));       // Confirm cage can be done permissionlessly
         host.cage();
