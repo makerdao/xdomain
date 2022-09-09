@@ -18,10 +18,6 @@ const GELATO_ADDRESSES: { [chainId: number]: { service: string; gelato: string }
     service: '0xaBcC9b596420A9E9172FD5938620E265a0f9Df92',
     gelato: '0x0630d1b8C2df3F0a68Df578D02075027a6397173',
   },
-  42: {
-    service: '0x4F36f93F58d36DcbC1E60b9bdBE213482285C482',
-    gelato: '0xDf592cB2d32445F8e831d211AB20D3233cA41bD8',
-  },
   5: {
     service: '0xaBcC9b596420A9E9172FD5938620E265a0f9Df92',
     gelato: '0x683913B3A32ada4F8100458A3E1675425BdAa7DF',
