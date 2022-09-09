@@ -108,12 +108,12 @@ async function getRelayCalldata(
 async function createRelayTask(relay: Relay, calldata: string, gasLimit: BigNumberish): Promise<string> {
   const { chainId } = await relay.provider.getNetwork()
   const token = await relay.dai()
-  const { taskId } = await queryGelatoApi(`/relays/v2/call-with-sync-fee`, 'post', {
+  const { taskId } = await queryGelatoApi(`relays/v2/call-with-sync-fee`, 'post', {
     chainId,
     target: relay.address,
     data: calldata,
     feeToken: token,
-    gas: gasLimit.toString(),
+    gasLimit: gasLimit.toString(),
   })
   return taskId
 }
