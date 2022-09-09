@@ -92,8 +92,7 @@ async function getRelayCalldata(relayInterface, receiver, teleportGUID, signatur
 async function createRelayTask(relay, calldata, gasLimit) {
     const { chainId } = await relay.provider.getNetwork();
     const token = await relay.dai();
-    const { taskId } = await queryGelatoApi(`metabox-relays/${chainId}`, 'post', {
-        typeId: 'ForwardCall',
+    const { taskId } = await queryGelatoApi(`/relays/v2/call-with-sync-fee`, 'post', {
         chainId,
         target: relay.address,
         data: calldata,
