@@ -49,8 +49,8 @@ contract EmptyDomainGuest is DomainGuest {
     function push() external {
         lastPayload = _push();
     }
-    function tell(uint256 value) external {
-        lastPayload = _tell(value);
+    function tell() external {
+        lastPayload = _tell();
     }
     function withdraw(address to, uint256 amount) external {
         lastPayload = _withdraw(to, amount);
@@ -184,17 +184,6 @@ contract DomainGuestTest is DSSTest {
         guest.deny(address(this));
         vm.expectRevert("DomainGuest/not-authorized");
         guest.file("validDomains", TARGET_DOMAIN, 1);
-    }
-
-    function testAuth() public {
-        guest.deny(address(this));
-
-        bytes[] memory funcs = new bytes[](1);
-        funcs[0] = abi.encodeWithSelector(EmptyDomainGuest.tell.selector, 0, 0, 0);
-
-        for (uint256 i = 0; i < funcs.length; i++) {
-            assertRevert(address(guest), funcs[i], "DomainGuest/not-authorized");
-        }
     }
 
     function testHostOnly() public {
@@ -440,12 +429,34 @@ contract DomainGuestTest is DSSTest {
     }
 
     function testTell() public {
+        guest.lift(0, int256(100 * RAD));
+        end.setDebt(10 * RAD);
+
         vm.expectEmit(true, true, true, true);
-        emit Tell(123);
-        guest.tell(123);
+        emit Tell(90 * RAD);
+        guest.tell();
 
         assertEq(guest.rid(), 1);
-        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.tell.selector, 0, 123));
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.tell.selector, 0, 90 * RAD));
+    }
+
+    function testTellCagedNoDebt() public {
+        guest.cage(0);
+
+        vm.expectEmit(true, true, true, true);
+        emit Tell(0);
+        guest.tell();
+
+        assertEq(guest.rid(), 1);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.tell.selector, 0, 0));
+    }
+
+    function testTellDebtNotSet() public {
+        vat.suck(address(guest), address(this), 100 * RAD);
+        guest.cage(0);
+        assertEq(end.debt(), 0);
+        vm.expectRevert("DomainGuest/end-debt-zero");
+        guest.tell();
     }
 
     function testExit() public {

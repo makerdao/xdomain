@@ -55,8 +55,14 @@ contract EmptyDomainHost is DomainHost {
     function exit(address usr, uint256 wad) external {
         lastPayload = _exit(usr, wad);
     }
+    function undoExit(address originalSender, uint256 wad) external {
+        _undoExit(originalSender, wad);
+    }
     function deposit(address to, uint256 amount) external {
         lastPayload = _deposit(to, amount);
+    }
+    function undoDeposit(address originalSender, uint256 amount) external {
+        _undoDeposit(originalSender, amount);
     }
 
 }
@@ -81,7 +87,9 @@ contract DomainHostTest is DSSTest {
     event Cage();
     event Tell(uint256 value);
     event Exit(address indexed usr, uint256 wad, uint256 claim);
+    event UndoExit(address indexed originalSender, uint256 wad);
     event Deposit(address indexed to, uint256 amount);
+    event UndoDeposit(address indexed originalSender, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
     event TeleportSlowPath(TeleportGUID teleport);
     event Flush(bytes32 targetDomain, uint256 daiToFlush);
@@ -474,6 +482,29 @@ contract DomainHostTest is DSSTest {
         assertEq(host.lastPayload(), abi.encodeWithSelector(DomainGuest.exit.selector, address(123), 15 ether));     // 50% of 30 debt is 15
     }
 
+    function testUndoExit() public {
+        // Setup initial conditions
+        host.lift(100 ether);       // DC raised to 100
+        vat.cage();
+        host.cage();
+        host.tell(0, 70 * RAD);        // Guest later reports on 30 debt is actually used
+
+        // Simulate user getting some gems for this ilk (normally handled by end)
+        vat.slip(ILK, address(this), 50 ether);
+
+        // User attempts to exit
+        host.exit(address(123), 50 ether);
+
+        assertEq(vat.gem(ILK, address(this)), 0);
+
+        // ... but they were censored and user wants the funds back
+        vm.expectEmit(true, true, true, true);
+        emit UndoExit(address(this), 50 ether);
+        host.undoExit(address(this), 50 ether);
+
+        assertEq(vat.gem(ILK, address(this)), 50 ether);
+    }
+
     function testDeposit() public {
         vat.suck(address(123), address(this), 100 * RAD);
         daiJoin.exit(address(this), 100 ether);
@@ -489,6 +520,26 @@ contract DomainHostTest is DSSTest {
         assertEq(dai.balanceOf(address(this)), 0);
         assertEq(dai.balanceOf(address(escrow)), 100 ether);
         assertEq(host.lastPayload(), abi.encodeWithSelector(DomainGuest.deposit.selector, address(123), 100 ether));
+    }
+
+    function testUndoDeposit() public {
+        vat.suck(address(123), address(this), 100 * RAD);
+        daiJoin.exit(address(this), 100 ether);
+        dai.approve(address(host), 100 ether);
+
+        // User attempts to deposit
+        host.deposit(address(123), 100 ether);
+
+        assertEq(dai.balanceOf(address(this)), 0);
+        assertEq(dai.balanceOf(address(escrow)), 100 ether);
+
+        // ... but they were censored and user wants the funds back
+        vm.expectEmit(true, true, true, true);
+        emit UndoDeposit(address(this), 100 ether);
+        host.undoDeposit(address(this), 100 ether);
+
+        assertEq(dai.balanceOf(address(this)), 100 ether);
+        assertEq(dai.balanceOf(address(escrow)), 0);
     }
 
     function testWithdraw() public {
