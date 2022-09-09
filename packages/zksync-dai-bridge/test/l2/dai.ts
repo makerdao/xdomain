@@ -1,9 +1,9 @@
 import { assertPublicMutableMethods, getRandomAddresses, testAuth } from '@makerdao/hardhat-utils'
 import { expect } from 'chai'
-import { hexConcat, hexZeroPad, keccak256, toUtf8Bytes } from 'ethers/lib/utils'
+import { arrayify, hexConcat, hexlify, hexZeroPad, keccak256, toUtf8Bytes } from 'ethers/lib/utils'
 import { ethers, web3 } from 'hardhat'
 
-import { Dai, Dai__factory } from '../../typechain-types'
+import { Dai, Dai__factory, TestMultiSig__factory } from '../../typechain-types'
 
 const { signERC2612Permit } = require('./eth-permit/eth-permit')
 
@@ -238,6 +238,69 @@ describe('Dai', () => {
           ),
           'Dai/invalid-permit',
         ).to.be.revertedWith('Dai/invalid-permit')
+      })
+
+      it('approves to increase allowance with permit (contract wallet)', async () => {
+        const [deployer, owner1, owner2, user] = await ethers.getSigners()
+
+        // deploy a 2-of-2 multi-sig contract account
+        const musigFactory = (await ethers.getContractFactory('TestMultiSig', deployer)) as TestMultiSig__factory
+        const musig = await musigFactory.deploy(owner1.address, owner2.address)
+
+        // compute the *permit• nonce (should be 0)
+        const nonce = (await dai.nonces(musig.address)).toNumber()
+
+        // compute the *permit* signatures
+        const sigs = await Promise.all(
+          [owner1, owner2].map((owner) =>
+            signERC2612Permit(
+              web3.currentProvider,
+              dai.address,
+              musig.address,
+              user.address,
+              '1', // value
+              null,
+              nonce,
+              '2', // version
+              owner.address, // signer
+            ),
+          ),
+        )
+        const signatures = hexConcat([sigs[0].r, sigs[0].s, sigs[0].v, sigs[1].r, sigs[1].s, sigs[1].v])
+
+        // compute the *permit* calladata
+        const data = dai.interface.encodeFunctionData('permit(address,address,uint256,uint256,bytes)', [
+          musig.address,
+          user.address,
+          '1',
+          sigs[0].deadline,
+          signatures,
+        ])
+
+        // compute the *execute* signatures
+        const executeSignHash = keccak256(
+          hexConcat([
+            '0x19',
+            '0x00',
+            musig.address, // from
+            dai.address, // to
+            ethers.constants.HashZero, // value
+            data,
+            hexZeroPad(hexlify(await musig.nonce()), 32),
+          ]),
+        )
+        const [sig1, sig2] = await Promise.all(
+          [owner1, owner2].map((owner) => owner.signMessage(arrayify(executeSignHash))),
+        )
+        const executeSignatures = hexConcat([sig1, sig2])
+
+        // execute the permit call
+        const tx = await musig.execute(dai.address, 0, data, executeSignatures)
+        await tx.wait()
+
+        // check that permit increased the user's allowance
+        const allowanceAfter = await dai.allowance(musig.address, user.address)
+        expect(allowanceAfter).to.be.eq('1')
       })
 
       describe('with a positive allowance', async () => {
