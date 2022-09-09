@@ -178,7 +178,7 @@ describe('Dai', () => {
           null,
           '2',
         )
-        await dai.permit(
+        await dai['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
           signers.user1.address,
           signers.user2.address,
           '1',
@@ -203,7 +203,7 @@ describe('Dai', () => {
           '2',
         )
         await expect(
-          dai.permit(
+          dai['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
             signers.user1.address,
             signers.user2.address,
             '1',
@@ -227,7 +227,7 @@ describe('Dai', () => {
           '2',
         )
         await expect(
-          dai.permit(
+          dai['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
             signers.user1.address,
             signers.user2.address,
             '2',
@@ -371,7 +371,7 @@ describe('Dai', () => {
             '2',
           )
           await expect(
-            dai.permit(
+            dai['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
               signers.user1.address,
               signers.user2.address,
               '1',
@@ -398,6 +398,7 @@ describe('Dai', () => {
       'increaseAllowance(address,uint256)',
       'mint(address,uint256)',
       'permit(address,address,uint256,uint256,uint8,bytes32,bytes32)',
+      'permit(address,address,uint256,uint256,bytes)',
       'transfer(address,uint256)',
       'transferFrom(address,address,uint256)',
     ])

@@ -211,7 +211,7 @@ contract Dai {
     uint256 value,
     uint256 deadline,
     bytes memory signature
-  ) external {
+  ) public {
     require(block.timestamp <= deadline, "Dai/permit-expired");
     require(owner != address(0), "Dai/invalid-permit");
 
@@ -232,5 +232,17 @@ contract Dai {
 
     allowance[owner][spender] = value;
     emit Approval(owner, spender, value);
+  }
+
+  function permit(
+    address owner,
+    address spender,
+    uint256 value,
+    uint256 deadline,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) external {
+    permit(owner, spender, value, deadline, abi.encodePacked(r, s, v));
   }
 }
