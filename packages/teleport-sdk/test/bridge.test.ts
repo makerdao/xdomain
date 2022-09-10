@@ -36,6 +36,7 @@ import {
   waitForRelayTask,
 } from '../src'
 import { fundTestWallet } from './faucet'
+import { it } from 'mocha'
 
 use(chaiAsPromised).use(waffleChai) // add support for expect() on ethers' BigNumber
 
@@ -175,8 +176,8 @@ describe('TeleportBridge', () => {
     return { txHash: tx!.hash, bridge }
   }
 
-  describe('Init Teleport', async () => {
-    it.skip('should initiate withdrawal (goerli-optimism)', async () => {
+  describe.skip('Init Teleport', async () => {
+    it('should initiate withdrawal (goerli-optimism)', async () => {
       await testInitTeleport({ srcDomain: 'optimism-goerli-testnet' })
     })
 
