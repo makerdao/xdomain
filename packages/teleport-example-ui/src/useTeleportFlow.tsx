@@ -142,11 +142,11 @@ export function useTeleportFlow(
     failureNotificationTitle?: string,
     successNotificationDuration?: number | null,
   ) {
-    const handleReceipt = (receipt: ethers.ContractReceipt, notificationType: 'success' | 'info') => {
+    const handleReceipt = (receipt: ethers.ContractReceipt) => {
       if (receipt.status === 1) {
         console.log(`${txDescription ?? 'tx'} confirmed!`)
         setTxConfirmed(true)
-        notification[notificationType]({
+        notification.success({
           message: successNotificationTitle || 'Transaction Confirmed',
           description: getTxDescription(),
           duration: successNotificationDuration,
@@ -165,7 +165,7 @@ export function useTeleportFlow(
       if (txObject) {
         const waitForTxObject = async () => {
           const receipt = await txObject.wait()
-          handleReceipt(receipt, 'success')
+          handleReceipt(receipt)
         }
         waitForTxObject().catch(console.error)
       } else {
@@ -175,7 +175,7 @@ export function useTeleportFlow(
           while (!receipt && attempt <= 10) {
             receipt = await provider.getTransactionReceipt(txHash)
             if (receipt) {
-              handleReceipt(receipt, 'info')
+              handleReceipt(receipt)
               return
             } else {
               await sleep(1000 * attempt)

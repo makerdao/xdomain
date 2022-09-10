@@ -11663,9 +11663,9 @@ tar@^6.0.2:
     mkdirp "^1.0.3"
     yallist "^4.0.0"
 
-"teleport-sdk@https://gitpkg.now.sh/makerdao/xdomain/packages/teleport-sdk?563863b2391a0ea3de96862a65efd376bd95a7b3":
+"teleport-sdk@https://gitpkg.now.sh/makerdao/xdomain/packages/teleport-sdk?07c063167708abe013ff5f94b320ec2f931e6a61":
   version "1.0.0"
-  resolved "https://gitpkg.now.sh/makerdao/xdomain/packages/teleport-sdk?563863b2391a0ea3de96862a65efd376bd95a7b3#bf353d492a1d4fc1b090ab78c86e1752dc817b86"
+  resolved "https://gitpkg.now.sh/makerdao/xdomain/packages/teleport-sdk?07c063167708abe013ff5f94b320ec2f931e6a61#7f48c717ec9ded369ede7d48af61f28e08c21b02"
   dependencies:
     "@arbitrum/sdk" "^2.0.15"
     axios "^0.26.0"
