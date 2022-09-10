@@ -15,15 +15,11 @@ const GELATO_ADDRESSES: { [chainId: number]: { service: string; gelato: string }
     gelato: '0x3CACa7b48D0573D793d3b0279b5F0029180E83b6',
   },
   4: {
-    service: '0x9B79b798563e538cc326D03696B3Be38b971D282',
+    service: '0xaBcC9b596420A9E9172FD5938620E265a0f9Df92',
     gelato: '0x0630d1b8C2df3F0a68Df578D02075027a6397173',
   },
-  42: {
-    service: '0x4F36f93F58d36DcbC1E60b9bdBE213482285C482',
-    gelato: '0xDf592cB2d32445F8e831d211AB20D3233cA41bD8',
-  },
   5: {
-    service: '0x61BF11e6641C289d4DA1D59dC3E03E15D2BA971c',
+    service: '0xaBcC9b596420A9E9172FD5938620E265a0f9Df92',
     gelato: '0x683913B3A32ada4F8100458A3E1675425BdAa7DF',
   },
 }
@@ -108,13 +104,12 @@ async function getRelayCalldata(
 async function createRelayTask(relay: Relay, calldata: string, gasLimit: BigNumberish): Promise<string> {
   const { chainId } = await relay.provider.getNetwork()
   const token = await relay.dai()
-  const { taskId } = await queryGelatoApi(`metabox-relays/${chainId}`, 'post', {
-    typeId: 'ForwardCall',
+  const { taskId } = await queryGelatoApi(`relays/v2/call-with-sync-fee`, 'post', {
     chainId,
     target: relay.address,
     data: calldata,
     feeToken: token,
-    gas: gasLimit.toString(),
+    gasLimit: gasLimit.toString(),
   })
   return taskId
 }
@@ -191,13 +186,12 @@ async function getRelayGasLimit(
   const serviceAddress = addresses.service
   if (!serviceAddress) throw new Error(`Missing "service" address for chainId ${chainId}`)
   const serviceInterface = new Interface([
-    'function forwardCallSyncFee(address _target,bytes calldata _data,address _feeToken,uint256 _gas,uint256 _gelatoFee,bytes32 _taskId)',
+    'function callWithSyncFee(address _target,bytes calldata _data,address _feeToken,uint256 _fee,bytes32 _taskId)',
   ])
-  const serviceData = serviceInterface.encodeFunctionData('forwardCallSyncFee', [
+  const serviceData = serviceInterface.encodeFunctionData('callWithSyncFee', [
     relay.address,
     relayData,
     await relay.dai(),
-    2000000,
     0,
     ethers.constants.MaxUint256.toHexString(),
   ])

@@ -180,15 +180,15 @@ describe('TeleportBridge', () => {
       await testInitTeleport({ srcDomain: 'optimism-goerli-testnet' })
     })
 
-    it.skip('should initiate withdrawal (goerli-optimism, build-only)', async () => {
+    it('should initiate withdrawal (goerli-optimism, build-only)', async () => {
       await testInitTeleport({ srcDomain: 'optimism-goerli-testnet', buildOnly: true })
     })
 
-    it.skip('should initiate withdrawal (goerli-arbitrum)', async () => {
+    it('should initiate withdrawal (goerli-arbitrum)', async () => {
       await testInitTeleport({ srcDomain: 'arbitrum-goerli-testnet' })
     })
 
-    it.skip('should initiate withdrawal (goerli-arbitrum, wrapper)', async () => {
+    it('should initiate withdrawal (goerli-arbitrum, wrapper)', async () => {
       await testInitTeleport({ srcDomain: 'arbitrum-goerli-testnet', useWrapper: true })
     })
   })
@@ -252,7 +252,7 @@ describe('TeleportBridge', () => {
       await testGetAttestations({ srcDomain: 'optimism-goerli-testnet' })
     })
 
-    it.skip('should produce attestations (goerli-arbitrum)', async () => {
+    it('should produce attestations (goerli-arbitrum)', async () => {
       await testGetAttestations({ srcDomain: 'arbitrum-goerli-testnet' })
     })
 
@@ -355,6 +355,10 @@ describe('TeleportBridge', () => {
 
     it('should return fees and mintable amounts (goerli-optimism, wrapper, with teleportGUID)', async () => {
       await testGetAmountsForTeleportGUID({ srcDomain: 'optimism-goerli-testnet', useWrapper: true })
+    })
+
+    it('should return fees and mintable amounts (goerli-arbitrum, without teleportGUID)', async () => {
+      await testGetAmounts({ srcDomain: 'arbitrum-goerli-testnet' })
     })
 
     it('should return fees and mintable amounts (goerli-arbitrum, without teleportGUID)', async () => {
