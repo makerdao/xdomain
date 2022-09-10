@@ -4,14 +4,14 @@ import { Dictionary } from 'ts-essentials'
 
 import {
   getArbitrumGoerliTestnetSdk,
-  getArbitrumTestnetSdk,
   getArbitrumOneSdk,
+  getArbitrumTestnetSdk,
   getGoerliSdk,
   getKovanSdk,
   getMainnetSdk,
-  getOptimismSdk,
   getOptimismGoerliTestnetSdk,
   getOptimismKovanSdk,
+  getOptimismSdk,
   getRinkebySdk,
 } from './sdk'
 import {
