@@ -36,7 +36,6 @@ import {
   waitForRelayTask,
 } from '../src'
 import { fundTestWallet } from './faucet'
-import { it } from 'mocha'
 
 use(chaiAsPromised).use(waffleChai) // add support for expect() on ethers' BigNumber
 
