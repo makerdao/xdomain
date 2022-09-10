@@ -317,7 +317,7 @@ export function useTeleportFlow(
     const receiverAddress = getAddress(hexZeroPad(hexStripZeros(guid.receiver), 20))
     const maxFeePercentage = parseEther(amount || '0').eq(0)
       ? 0
-      : parseEther(bridgeFee || '0')
+      : parseEther(bridgeFee || amount || '0')
           .mul(parseEther('1'))
           .div(parseEther(amount!))
 
@@ -470,10 +470,15 @@ export function useTeleportFlow(
       resetState()
     }
   }, [
+    account,
     walletChainId,
     srcChainId,
+    dstChainId,
+    provider,
     maxAmount,
     amount,
+    bridgeFee,
+    relayFee,
     gulpConfirmed,
     allowance,
     approveConfirmed,

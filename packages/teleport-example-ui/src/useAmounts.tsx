@@ -11,7 +11,7 @@ export function useAmounts(srcChainId: DomainChainId, account?: string) {
   const [allowance, setAllowance] = useState<string | undefined>('0')
   const [fee, setFee] = useState<string | undefined>('0')
   const [relayFee, setRelayFee] = useState<string | undefined>('0')
-  const [bridgeFee, setBridgeFee] = useState<string | undefined>('0')
+  const [bridgeFee, setBridgeFee] = useState<string | undefined>()
 
   let valid = true
 
@@ -73,20 +73,20 @@ export function useAmounts(srcChainId: DomainChainId, account?: string) {
 
     const srcDomain = getSdkDomainId(srcChainId)
     const getAmountAfterFees = async () => {
-      const { bridgeFee, relayFee } = await getAmounts({
+      const { bridgeFee: bridgeFeeBN, relayFee: relayFeeBN } = await getAmounts({
         withdrawn: parseEther(amount),
         srcDomain,
       })
 
-      setBridgeFee(formatEther(bridgeFee))
+      setBridgeFee(formatEther(bridgeFeeBN))
 
-      if (relayFee === undefined) {
+      if (relayFeeBN === undefined) {
         setRelayFee(undefined)
         setFee(undefined)
       } else {
-        const totalFee = bridgeFee.add(relayFee)
-        setRelayFee(formatEther(relayFee))
-        setFee(formatEther(totalFee))
+        const totalFeeBN = bridgeFeeBN.add(relayFeeBN)
+        setRelayFee(formatEther(relayFeeBN))
+        setFee(formatEther(totalFeeBN))
       }
     }
 
