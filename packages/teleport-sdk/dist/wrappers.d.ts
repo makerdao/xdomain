@@ -27,7 +27,7 @@ export declare function initRelayedTeleport(opts: Omit<InitTeleportOpts, 'operat
 } & DomainContext): ReturnType<TeleportBridge['initTeleport']>;
 export interface GetAttestationsOpts {
     txHash: string;
-    onNewSignatureReceived?: (numSignatures: number, threshold: number) => void;
+    onNewSignatureReceived?: (numSignatures: number, threshold: number, guid?: TeleportGUID) => void;
     timeoutMs?: number;
     pollingIntervalMs?: number;
     teleportGUID?: TeleportGUID;

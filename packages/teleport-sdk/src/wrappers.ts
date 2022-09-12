@@ -53,7 +53,7 @@ export function initRelayedTeleport(
 
 export interface GetAttestationsOpts {
   txHash: string
-  onNewSignatureReceived?: (numSignatures: number, threshold: number) => void
+  onNewSignatureReceived?: (numSignatures: number, threshold: number, guid?: TeleportGUID) => void
   timeoutMs?: number
   pollingIntervalMs?: number
   teleportGUID?: TeleportGUID

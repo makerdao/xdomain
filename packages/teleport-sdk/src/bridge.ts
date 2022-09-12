@@ -121,7 +121,7 @@ export class TeleportBridge {
 
   public async getAttestations(
     txHash: string,
-    onNewSignatureReceived?: (numSignatures: number, threshold: number) => void,
+    onNewSignatureReceived?: (numSignatures: number, threshold: number, guid?: TeleportGUID) => void,
     timeoutMs?: number,
     pollingIntervalMs: number = 2000,
     teleportGUID?: TeleportGUID,

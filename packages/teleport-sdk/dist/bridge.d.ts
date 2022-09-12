@@ -27,7 +27,7 @@ export declare class TeleportBridge {
     approveSrcGateway(sender?: Signer, amount?: BigNumberish, overrides?: Overrides): Promise<Call>;
     initTeleport(receiverAddress: string, amount: BigNumberish, operatorAddress?: string, sender?: Signer, overrides?: Overrides): Promise<Call>;
     initRelayedTeleport(receiverAddress: string, amount: BigNumberish, sender?: Signer, relayAddress?: string, overrides?: Overrides): Promise<Call>;
-    getAttestations(txHash: string, onNewSignatureReceived?: (numSignatures: number, threshold: number) => void, timeoutMs?: number, pollingIntervalMs?: number, teleportGUID?: TeleportGUID): Promise<{
+    getAttestations(txHash: string, onNewSignatureReceived?: (numSignatures: number, threshold: number, guid?: TeleportGUID) => void, timeoutMs?: number, pollingIntervalMs?: number, teleportGUID?: TeleportGUID): Promise<{
         signatures: string;
         teleportGUID: TeleportGUID;
     }>;
