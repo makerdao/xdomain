@@ -1,25 +1,22 @@
 import './App.scss'
 
 import { Alert, Button, Col, Row } from 'antd'
-import { BigNumber } from 'ethers'
-import { formatEther } from 'ethers/lib/utils'
 import { useState } from 'react'
 import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { DomainBox, DomainChainId, SRC_CHAINID_TO_DST_CHAINID, SrcDomainChainId } from './domains'
-import { useAmounts } from './useAmounts'
 import { useTeleportFlow } from './useTeleportFlow'
 import { ConnectWalletButton } from './wallet/ConnectWalletButton'
 import { useConnectedWallet } from './wallet/useConnectedWallet'
 
-const SRC_CHAIN_IDS = [421613, 420]
+const SRC_CHAIN_IDS = [42161, 10, 421613, 420]
 
 function App() {
   const [warningVisible, setWarningVisible] = useState<boolean>(true)
   const { connectWallet, disconnectWallet, account, chainId: walletChainId, provider } = useConnectedWallet()
 
-  const [srcChainId, setSrcChainId] = useState<SrcDomainChainId>(421613)
+  const [srcChainId, setSrcChainId] = useState<SrcDomainChainId>(42161)
   const [searchParams] = useSearchParams({})
   const urlChainIdString = searchParams.get('chainId')
   const urlChainId = urlChainIdString ? Number(urlChainIdString) : undefined
@@ -34,60 +31,8 @@ function App() {
     }
   }, [walletChainId, urlChainId])
 
-  const {
-    amount,
-    maxAmount,
-    dstBalance,
-    bridgeFee,
-    relayFee,
-    amountAfterFee,
-    allowance,
-    setAmount,
-    updateMaxAmount,
-    updateDstBalance,
-    updateAllowance,
-  } = useAmounts(srcChainId, account)
-  const {
-    mainButton,
-    gulpConfirmed,
-    approveConfirmed,
-    burnTxHash,
-    guid,
-    burnConfirmed,
-    mintConfirmed,
-    secondaryButton,
-  } = useTeleportFlow(
-    connectWallet,
-    srcChainId,
-    dstChainId,
-    account,
-    maxAmount,
-    amount,
-    allowance,
-    bridgeFee,
-    relayFee,
-    walletChainId,
-    provider,
-  )
-
-  useEffect(() => {
-    if (mintConfirmed) {
-      setAmount('0')
-    } else if (guid) {
-      const am = formatEther(BigNumber.from(guid.amount))
-      setAmount(am)
-    }
-  }, [guid, mintConfirmed])
-  useEffect(() => {
-    updateMaxAmount().catch(console.error)
-  }, [gulpConfirmed, burnConfirmed])
-  useEffect(() => {
-    updateAllowance().catch(console.error)
-  }, [approveConfirmed, burnConfirmed])
-  useEffect(() => {
-    if (mintConfirmed) setAmount('0')
-    updateDstBalance().catch(console.error)
-  }, [mintConfirmed])
+  const { mainButton, burnTxHash, secondaryButton, dstBalance, amount, amountAfterFee, maxAmount, setAmount } =
+    useTeleportFlow(connectWallet, srcChainId, dstChainId, account, walletChainId, provider)
 
   return (
     <div className="App">

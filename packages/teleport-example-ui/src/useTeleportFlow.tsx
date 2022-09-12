@@ -26,6 +26,7 @@ import {
   SRC_CHAINID_TO_DST_CHAINID,
   SrcDomainChainId,
 } from './domains'
+import { useAmounts } from './useAmounts'
 import { switchChain, truncateAddress } from './utils'
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
@@ -35,11 +36,6 @@ export function useTeleportFlow(
   srcChainId: DomainChainId,
   dstChainId: DomainChainId,
   account?: string,
-  maxAmount?: string,
-  amount?: string,
-  allowance?: string,
-  bridgeFee?: string,
-  relayFee?: string,
   walletChainId?: number,
   provider?: ethers.providers.Provider,
 ) {
@@ -83,7 +79,31 @@ export function useTeleportFlow(
   const sender = ethersProvider?.getSigner()
   const srcDomain = getSdkDomainId(srcChainId)
 
-  amount = guid ? formatEther(BigNumber.from(guid.amount)) : amount // make sure to always use guid.amount if any
+  const relayParams =
+    (sender &&
+      guid &&
+      signatures && {
+        receiver: sender,
+        teleportGUID: guid,
+        signatures,
+      }) ||
+    undefined
+
+  const {
+    amount: amount_,
+    maxAmount,
+    maxFeePercentage,
+    dstBalance,
+    bridgeFee,
+    relayFee,
+    amountAfterFee,
+    allowance,
+    setAmount,
+    updateMaxAmount,
+    updateDstBalance,
+    updateAllowance,
+  } = useAmounts(srcChainId, account, relayParams)
+  const amount = guid ? formatEther(BigNumber.from(guid.amount)) : amount_ // make sure to always use guid.amount if any
 
   function resetState() {
     setSearchParams({})
@@ -124,8 +144,8 @@ export function useTeleportFlow(
     const dstChainId = SRC_CHAINID_TO_DST_CHAINID[srcChainId as SrcDomainChainId]
     return (
       <>
-        {getTxHashRow('L2 Dai Burned:', srcChainId, burnTxHash)}
-        {getTxHashRow('L1 Dai Minted:', dstChainId, mintTxHash)}
+        {getTxHashRow('L2 DAI Burned:', srcChainId, burnTxHash)}
+        {getTxHashRow('L1 DAI Minted:', dstChainId, mintTxHash)}
       </>
     )
   }
@@ -207,9 +227,15 @@ export function useTeleportFlow(
         ),
         onClick: async () => provider && (await switchChain(srcChainId, provider as ethers.providers.ExternalProvider)),
       })
-    } else if (!burnTxHash && !gulpConfirmed && maxAmount && parseEther(maxAmount).eq(0)) {
+    } else if (
+      !burnTxHash &&
+      ![10, 42161].includes(srcChainId) &&
+      !gulpConfirmed &&
+      maxAmount &&
+      parseEther(maxAmount).eq(0)
+    ) {
       setMainButton({
-        label: <>Claim Faucet Dai</>,
+        label: <>Claim Faucet DAI</>,
         onClick: async () => {
           const tx = await requestFaucetDai({ sender: sender!, srcDomain })
           const receipt = await tx.wait()
@@ -220,7 +246,7 @@ export function useTeleportFlow(
       })
     } else if (!burnTxHash && !approveConfirmed && parseEther(allowance || '0').lt(parseEther(amount || '0'))) {
       setMainButton({
-        label: <>Approve Dai</>,
+        label: <>Approve DAI</>,
         onClick: async () => {
           const { tx } = await approveSrcGateway({ sender: sender!, srcDomain })
           const receipt = await tx?.wait()
@@ -262,7 +288,7 @@ export function useTeleportFlow(
         'Teleport Initiated',
         'Teleport Initiation Failed',
       )
-    } else if (!guid) {
+    } else if (!guid || !signatures) {
       setMainButton({
         label: (
           <>
@@ -283,10 +309,11 @@ export function useTeleportFlow(
         const { signatures, teleportGUID } = await getAttestations({
           srcDomain: getSdkDomainId(srcChainId),
           txHash: burnTxHash,
-          onNewSignatureReceived: (numSig, threshold) => {
+          onNewSignatureReceived: (numSig, threshold, teleportGuid_) => {
             console.log(`Oracle attestations received: ${numSig}/${threshold}`)
             setNumSigs(numSig)
             setThreshold(threshold)
+            if (teleportGuid_) setGuid(teleportGuid_)
           },
         })
         console.log(`TeleportGUID=${JSON.stringify(teleportGUID)} signatures=${signatures}`)
@@ -294,7 +321,6 @@ export function useTeleportFlow(
           message: 'Oracle Attestations Received',
         })
         setSignatures(signatures)
-        setGuid(teleportGUID)
         setAttestationsRequested(false)
       }
       waitForAttestations().catch(console.error)
@@ -312,14 +338,9 @@ export function useTeleportFlow(
   }
 
   function doMint() {
-    if (!guid) return
+    if (!guid || !signatures) return
 
     const receiverAddress = getAddress(hexZeroPad(hexStripZeros(guid.receiver), 20))
-    const maxFeePercentage = parseEther(amount || '0').eq(0)
-      ? 0
-      : parseEther(bridgeFee || amount || '0')
-          .mul(parseEther('1'))
-          .div(parseEther(amount!))
 
     if (!relayTaskId && !payloadSigned && (!account || getAddress(account) !== receiverAddress)) {
       setMainButton({
@@ -336,7 +357,7 @@ export function useTeleportFlow(
             srcDomain,
             receiver: sender!,
             teleportGUID: guid,
-            signatures: signatures!,
+            signatures,
             maxFeePercentage,
             relayFee: parseEther(relayFee || '0'),
             onPayloadSigned: (payload, r, s, v) => {
@@ -360,7 +381,7 @@ export function useTeleportFlow(
           const { tx } = await mintWithOracles({
             srcDomain,
             teleportGUID: guid,
-            signatures: signatures!,
+            signatures,
             maxFeePercentage,
             sender,
           })
@@ -437,6 +458,28 @@ export function useTeleportFlow(
   }
 
   useEffect(() => {
+    updateAllowance().catch(console.error)
+  }, [approveConfirmed, burnConfirmed])
+
+  useEffect(() => {
+    if (mintConfirmed) {
+      setAmount('0')
+    } else if (guid) {
+      const am = formatEther(BigNumber.from(guid.amount))
+      setAmount(am)
+    }
+  }, [guid, mintConfirmed])
+
+  useEffect(() => {
+    updateMaxAmount().catch(console.error)
+  }, [gulpConfirmed, burnConfirmed])
+
+  useEffect(() => {
+    if (mintConfirmed) setAmount('0')
+    updateDstBalance().catch(console.error)
+  }, [mintConfirmed])
+
+  useEffect(() => {
     // console.log({
     //   walletChainId,
     //   srcChainId,
@@ -458,7 +501,7 @@ export function useTeleportFlow(
     //   mintConfirmed,
     // })
 
-    if (!guid || pendingAmount === undefined) {
+    if (!signatures || pendingAmount === undefined) {
       doBurn()
     } else if (parseEther(pendingAmount).gt(0)) {
       doMint()
@@ -486,6 +529,7 @@ export function useTeleportFlow(
     burnTx,
     burnConfirmed,
     numSigs,
+    signatures,
     guid,
     pendingAmount,
     payloadSigned,
@@ -505,5 +549,10 @@ export function useTeleportFlow(
     guid,
     mintConfirmed,
     secondaryButton,
+    dstBalance,
+    amount,
+    amountAfterFee,
+    maxAmount,
+    setAmount,
   }
 }

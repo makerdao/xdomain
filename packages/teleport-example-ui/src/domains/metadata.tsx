@@ -3,6 +3,16 @@ import Ethereum from './logos/ethereum.png'
 import Optimism from './logos/optimism.png'
 
 const SRC_DOMAIN_DATA = {
+  10: {
+    name: 'Optimism Mainnet',
+    logo: Optimism,
+    explorer: 'https://optimistic.etherscan.io/tx/',
+  },
+  42161: {
+    name: 'Arbitrum One',
+    logo: Arbitrum,
+    explorer: 'https://arbiscan.io/tx/',
+  },
   69: {
     name: 'Optimism Kovan',
     logo: Optimism,
@@ -26,6 +36,11 @@ const SRC_DOMAIN_DATA = {
 }
 
 const DST_DOMAIN_DATA = {
+  1: {
+    name: 'Ethereum Mainnet',
+    logo: Ethereum,
+    explorer: 'https://etherscan.io/tx/',
+  },
   4: {
     name: 'Rinkeby Testnet',
     logo: Ethereum,
@@ -50,6 +65,8 @@ export type DstDomainChainId = keyof typeof DST_DOMAIN_DATA
 export type DomainChainId = SrcDomainChainId | DstDomainChainId
 
 export const SRC_CHAINID_TO_DST_CHAINID: { [key in SrcDomainChainId]: DstDomainChainId } = {
+  10: 1,
+  42161: 1,
   69: 42,
   421611: 4,
   420: 5,

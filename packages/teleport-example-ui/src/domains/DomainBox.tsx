@@ -1,5 +1,6 @@
 import { Button, Col, InputNumber, Row, Select } from 'antd'
 import { ethers } from 'ethers'
+import { parseEther } from 'ethers/lib/utils'
 
 import { DomainChainId, DomainName } from './metadata'
 export function DomainBox({
@@ -32,6 +33,18 @@ export function DomainBox({
     <div className="dst-balance">{maxAmount} DAI</div>
   )
 
+  const mainnetDomains = supportedDomains?.filter((chainId) => [1, 10, 42161].includes(chainId)) ?? []
+  const testnetDomains = supportedDomains?.filter((chainId) => !mainnetDomains.includes(chainId)) ?? []
+  const optionGroup = (domains: Array<DomainChainId>, label: string) =>
+    domains.length > 0 && (
+      <Select.OptGroup label={label}>
+        {domains.map((chainId) => (
+          <Select.Option value={chainId} key={chainId} disabled={enabledDomains?.includes(chainId) === false}>
+            <DomainName chainId={chainId} />
+          </Select.Option>
+        ))}
+      </Select.OptGroup>
+    )
   return (
     <div className="domain">
       <Row>
@@ -44,11 +57,8 @@ export function DomainBox({
                 style={{ width: 200 }}
                 onChange={(chainId: DomainChainId) => onDomainChanged?.(chainId)}
               >
-                {(supportedDomains ?? []).map((chainId) => (
-                  <Select.Option value={chainId} key={chainId} disabled={enabledDomains?.includes(chainId) === false}>
-                    <DomainName chainId={chainId} />
-                  </Select.Option>
-                ))}
+                {optionGroup(mainnetDomains, 'mainnet')}
+                {optionGroup(testnetDomains, 'testnet')}
               </Select>
             </Col>
           </Row>
@@ -75,7 +85,11 @@ export function DomainBox({
             </Select>
           }
           min="0"
-          max={isSourceDomain ? maxAmount || '0' : undefined}
+          max={
+            isSourceDomain
+              ? (parseEther(maxAmount || '0').gt(parseEther(amount || '0')) ? maxAmount : amount) || '0'
+              : undefined
+          }
           step={'1'}
           // precision={18}
           value={amount}

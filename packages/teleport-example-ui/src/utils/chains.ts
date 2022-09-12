@@ -1,4 +1,36 @@
 export const chains = {
+  1: {
+    name: 'Ethereum Mainnet',
+    chain: 'ETH',
+    icon: 'ethereum',
+    rpc: [
+      'https://mainnet.infura.io/v3/${INFURA_API_KEY}',
+      'wss://mainnet.infura.io/ws/v3/${INFURA_API_KEY}',
+      'https://api.mycryptoapi.com/eth',
+      'https://cloudflare-eth.com',
+    ],
+    faucets: [],
+    nativeCurrency: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    infoURL: 'https://ethereum.org',
+    shortName: 'eth',
+    chainId: 1,
+    networkId: 1,
+    slip44: 60,
+    ens: {
+      registry: '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e',
+    },
+    explorers: [
+      {
+        name: 'etherscan',
+        url: 'https://etherscan.io',
+        standard: 'EIP3091',
+      },
+    ],
+  },
   4: {
     name: 'Rinkeby',
     title: 'Ethereum Testnet Rinkeby',
@@ -94,6 +126,68 @@ export const chains = {
     shortName: 'kov',
     chainId: 42,
     networkId: 42,
+  },
+  10: {
+    name: 'Optimism',
+    chain: 'ETH',
+    rpc: ['https://mainnet.optimism.io/'],
+    faucets: [],
+    nativeCurrency: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    infoURL: 'https://optimism.io',
+    shortName: 'oeth',
+    chainId: 10,
+    networkId: 10,
+    explorers: [
+      {
+        name: 'etherscan',
+        url: 'https://optimistic.etherscan.io',
+        standard: 'EIP3091',
+      },
+    ],
+  },
+  42161: {
+    name: 'Arbitrum One',
+    chainId: 42161,
+    shortName: 'arb1',
+    chain: 'ETH',
+    networkId: 42161,
+    nativeCurrency: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    rpc: [
+      'https://arbitrum-mainnet.infura.io/v3/${INFURA_API_KEY}',
+      'https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}',
+      'https://arb1.arbitrum.io/rpc',
+    ],
+    faucets: [],
+    explorers: [
+      {
+        name: 'Arbiscan',
+        url: 'https://arbiscan.io',
+        standard: 'EIP3091',
+      },
+      {
+        name: 'Arbitrum Explorer',
+        url: 'https://explorer.arbitrum.io',
+        standard: 'EIP3091',
+      },
+    ],
+    infoURL: 'https://arbitrum.io',
+    parent: {
+      type: 'L2',
+      chain: 'eip155-1',
+      bridges: [
+        {
+          url: 'https://bridge.arbitrum.io',
+        },
+      ],
+    },
   },
   69: {
     name: 'Optimism Kovan',
