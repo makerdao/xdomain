@@ -61,7 +61,7 @@ export const DEFAULT_RPC_URLS: Dictionary<string, DomainId> = {
   'OPT-GOER-A': 'https://goerli.optimism.io',
   'ARB-GOER-A': 'https://goerli-rollup.arbitrum.io/rpc',
   'ETH-GOER-A': 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
-  'OPT-MAIN-A': 'https://optimism-mainnet.gateway.pokt.network/v1/lb/62eb567f0fd618003965da18',
+  'OPT-MAIN-A': 'https://mainnet.optimism.io/',
   'ARB-ONE-A': 'https://arb1.arbitrum.io/rpc',
   'ETH-MAIN-A': 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
 }
