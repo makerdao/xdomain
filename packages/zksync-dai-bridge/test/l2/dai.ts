@@ -486,11 +486,11 @@ describe('Dai', () => {
       }
 
       it('approves to increase allowance with permit (contract wallet)', async () => {
-        testContractWalletPermit(true)
+        await testContractWalletPermit(true)
       })
 
       it('does not approve with invalid permit (contract wallet)', async () => {
-        testContractWalletPermit(false)
+        await testContractWalletPermit(false)
       })
     })
   })
