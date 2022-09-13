@@ -1,6 +1,7 @@
 import './App.scss'
 
-import { Alert, Button, Col, Row } from 'antd'
+import { Alert, Button, Col, Descriptions, Row, Switch } from 'antd'
+import { formatEther, parseEther } from 'ethers/lib/utils'
 import { useState } from 'react'
 import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -12,8 +13,20 @@ import { useConnectedWallet } from './wallet/useConnectedWallet'
 
 const SRC_CHAIN_IDS = [42161, 10, 421613, 420]
 
+function formatFee(amount: string) {
+  try {
+    const am = Number(amount)
+    if (am === 0) return '0'
+    if (am < 0.005) return '< 0.01'
+    return am.toFixed(2)
+  } catch {
+    return amount
+  }
+}
+
 function App() {
   const [warningVisible, setWarningVisible] = useState<boolean>(true)
+  const [useRelayer, setUseRelayer] = useState<boolean>(true)
   const { connectWallet, disconnectWallet, account, chainId: walletChainId, provider } = useConnectedWallet()
 
   const [srcChainId, setSrcChainId] = useState<SrcDomainChainId>(42161)
@@ -31,8 +44,14 @@ function App() {
     }
   }, [walletChainId, urlChainId])
 
-  const { mainButton, burnTxHash, secondaryButton, dstBalance, amount, amountAfterFee, maxAmount, setAmount } =
+  const { mainButton, burnTxHash, secondaryButton, dstBalance, amount, maxAmount, setAmount, bridgeFee, relayFee } =
     useTeleportFlow(connectWallet, srcChainId, dstChainId, account, walletChainId, provider)
+
+  const fee = parseEther(bridgeFee || '0').add((useRelayer && parseEther(relayFee || '0')) || 0)
+  let amountAfterFee
+  if (amount === undefined) amountAfterFee = undefined
+  else if (fee.gt(parseEther(amount))) amountAfterFee = '0'
+  else amountAfterFee = formatEther(parseEther(amount).sub(fee))
 
   return (
     <div className="App">
@@ -95,20 +114,38 @@ function App() {
                 domain={dstChainId}
               />
 
-              <Button
-                type="primary"
-                shape="round"
-                size="large"
-                block
-                onClick={mainButton.onClick}
-                disabled={mainButton.disabled}
-                loading={mainButton.loading}
-              >
-                {mainButton.label || <></>}
-              </Button>
-              {secondaryButton && (
+              <Row>
+                <Col flex="220px">
+                  <Descriptions
+                    bordered
+                    size="small"
+                    column={1}
+                    contentStyle={{ paddingTop: 4, paddingBottom: 4, textAlign: 'right' }}
+                    labelStyle={{
+                      paddingLeft: 0,
+                      paddingTop: 4,
+                      paddingBottom: 4,
+                      textAlign: 'right',
+                    }}
+                  >
+                    {<Descriptions.Item label="Bridge fee">{formatFee(bridgeFee || '0')} DAI</Descriptions.Item>}
+                    {useRelayer && (
+                      <Descriptions.Item label="Relayer fee">{formatFee(relayFee || '0')} DAI</Descriptions.Item>
+                    )}
+                  </Descriptions>
+                </Col>
+
+                <Col flex="auto">
+                  <div style={{ textAlign: 'right' }}>
+                    <Switch checked={useRelayer} onChange={setUseRelayer} style={{ marginRight: 6, marginBottom: 3 }} />{' '}
+                    Mint DAI using Relayer
+                  </div>
+                </Col>
+              </Row>
+              <br />
+
+              {(!useRelayer && secondaryButton && (
                 <Button
-                  ghost
                   type="primary"
                   shape="round"
                   size="large"
@@ -116,9 +153,20 @@ function App() {
                   onClick={secondaryButton.onClick}
                   disabled={secondaryButton.disabled}
                   loading={secondaryButton.loading}
-                  style={{ marginTop: 8 }}
                 >
                   {secondaryButton.label || <></>}
+                </Button>
+              )) || (
+                <Button
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  block
+                  onClick={mainButton.onClick}
+                  disabled={mainButton.disabled}
+                  loading={mainButton.loading}
+                >
+                  {mainButton.label || <></>}
                 </Button>
               )}
             </Col>

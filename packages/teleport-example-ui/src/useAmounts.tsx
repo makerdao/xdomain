@@ -125,12 +125,6 @@ export function useAmounts(
     getAmountAfterFees().catch(console.error)
   }, [amount, srcChainId])
 
-  let amountAfterFee
-  if (amount === undefined) amountAfterFee = undefined
-  else if (fee === undefined) amountAfterFee = amount
-  else if (parseEther(fee).gt(parseEther(amount))) amountAfterFee = '0'
-  else amountAfterFee = formatEther(parseEther(amount).sub(parseEther(fee)))
-
   return {
     amount,
     maxAmount,
@@ -139,7 +133,6 @@ export function useAmounts(
     relayFee,
     bridgeFee,
     fee,
-    amountAfterFee,
     allowance,
     setAmount,
     updateMaxAmount,

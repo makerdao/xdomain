@@ -96,7 +96,6 @@ export function useTeleportFlow(
     dstBalance,
     bridgeFee,
     relayFee,
-    amountAfterFee,
     allowance,
     setAmount,
     updateMaxAmount,
@@ -350,7 +349,7 @@ export function useTeleportFlow(
       })
     } else if (!payloadSigned && !relayTaskId && !mintTxHash) {
       setMainButton({
-        label: <>Mint DAI using Relayer</>,
+        label: <>Sign DAI Mint Request</>,
         loading: false,
         onClick: async () => {
           const taskId = await requestRelay({
@@ -371,7 +370,7 @@ export function useTeleportFlow(
       setSecondaryButton({
         label: (
           <>
-            Mint DAI directly on &nbsp;
+            Mint DAI on &nbsp;
             <DomainName chainId={dstChainId} />
           </>
         ),
@@ -551,8 +550,9 @@ export function useTeleportFlow(
     secondaryButton,
     dstBalance,
     amount,
-    amountAfterFee,
     maxAmount,
     setAmount,
+    bridgeFee,
+    relayFee,
   }
 }
