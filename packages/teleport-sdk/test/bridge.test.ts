@@ -30,6 +30,7 @@ import {
   mintWithOracles,
   mintWithoutOracles,
   requestRelay,
+  signRelay,
   TeleportBridge,
   TeleportGUID,
   waitForMint,
@@ -395,8 +396,10 @@ describe('TeleportBridge', () => {
       buildOnly,
     })
 
+    const expiry = Math.floor(Date.now() / 1000 + 24 * 3600)
+    const { r, s, v } = await signRelay({ srcDomain, receiver: l1User, teleportGUID, relayFee: 1, expiry })
     const relayParams = usePreciseRelayFeeEstimation
-      ? { receiver: l1User, teleportGUID: teleportGUID!, signatures }
+      ? { teleportGUID: teleportGUID!, signatures, r, s, v, expiry }
       : undefined
     const relayAddress = useRelay === 'TrustedRelay' ? getSdk(dstDomain, l1User).TrustedRelay?.address : undefined
 

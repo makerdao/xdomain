@@ -1,7 +1,15 @@
 import { Provider } from '@ethersproject/abstract-provider'
 import { BigNumberish, Overrides, Signer } from 'ethers'
 
-import { BridgeSettings, DomainDescription, DomainId, getLikelyDomainId, TeleportBridge, TeleportGUID } from '.'
+import {
+  BridgeSettings,
+  DomainDescription,
+  DomainId,
+  getLikelyDomainId,
+  RelayParams,
+  TeleportBridge,
+  TeleportGUID,
+} from '.'
 
 export interface DomainContext {
   srcDomain: DomainDescription
@@ -93,15 +101,7 @@ export function getAmountsForTeleportGUID(
   opts: {
     teleportGUID: TeleportGUID
     isHighPriority?: boolean
-    relayParams?: {
-      receiver: Signer
-      teleportGUID: TeleportGUID
-      signatures: string
-      maxFeePercentage?: BigNumberish
-      expiry?: BigNumberish
-      to?: string
-      data?: string
-    }
+    relayParams?: RelayParams
     relayAddress?: string
   } & DomainContext,
 ): ReturnType<TeleportBridge['getAmountsForTeleportGUID']> {
@@ -157,13 +157,36 @@ export function waitForMint(opts: WaitForMintOpts & DomainContext): ReturnType<T
   return getTeleportBridge(opts).waitForMint(opts.teleportGUIDorGUIDHash, opts.pollingIntervalMs, opts.timeoutMs)
 }
 
-export interface RequestRelayOpts {
+export interface GetRelayFeeOpts {
+  isHighPriority?: boolean
+  relayParams?: RelayParams
+  relayAddress?: string
+}
+
+export function getRelayFee(opts: GetRelayFeeOpts & DomainContext): ReturnType<TeleportBridge['getRelayFee']> {
+  return getTeleportBridge(opts).getRelayFee(opts.isHighPriority, opts.relayParams, opts.relayAddress)
+}
+
+export interface SignRelayOpts {
   receiver: Signer
   teleportGUID: TeleportGUID
-  signatures: string
   relayFee: BigNumberish
   maxFeePercentage?: BigNumberish
   expiry?: BigNumberish
+}
+
+export function signRelay(opts: SignRelayOpts & DomainContext): ReturnType<TeleportBridge['signRelay']> {
+  return getTeleportBridge(opts).signRelay(
+    opts.receiver,
+    opts.teleportGUID,
+    opts.relayFee,
+    opts.maxFeePercentage,
+    opts.expiry,
+  )
+}
+
+export type RequestRelayOpts = SignRelayOpts & {
+  signatures: string
   to?: string
   data?: string
   relayAddress?: string

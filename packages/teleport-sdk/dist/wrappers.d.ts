@@ -1,6 +1,6 @@
 import { Provider } from '@ethersproject/abstract-provider';
 import { BigNumberish, Overrides, Signer } from 'ethers';
-import { BridgeSettings, DomainDescription, DomainId, TeleportBridge, TeleportGUID } from '.';
+import { BridgeSettings, DomainDescription, DomainId, RelayParams, TeleportBridge, TeleportGUID } from '.';
 export interface DomainContext {
     srcDomain: DomainDescription;
     destDomain?: DomainId;
@@ -45,15 +45,7 @@ export declare function getSrcGatewayAllowance(opts: {
 export declare function getAmountsForTeleportGUID(opts: {
     teleportGUID: TeleportGUID;
     isHighPriority?: boolean;
-    relayParams?: {
-        receiver: Signer;
-        teleportGUID: TeleportGUID;
-        signatures: string;
-        maxFeePercentage?: BigNumberish;
-        expiry?: BigNumberish;
-        to?: string;
-        data?: string;
-    };
+    relayParams?: RelayParams;
     relayAddress?: string;
 } & DomainContext): ReturnType<TeleportBridge['getAmountsForTeleportGUID']>;
 export declare function getAmounts(opts: {
@@ -80,18 +72,27 @@ export interface WaitForMintOpts {
     timeoutMs?: number;
 }
 export declare function waitForMint(opts: WaitForMintOpts & DomainContext): ReturnType<TeleportBridge['waitForMint']>;
-export interface RequestRelayOpts {
+export interface GetRelayFeeOpts {
+    isHighPriority?: boolean;
+    relayParams?: RelayParams;
+    relayAddress?: string;
+}
+export declare function getRelayFee(opts: GetRelayFeeOpts & DomainContext): ReturnType<TeleportBridge['getRelayFee']>;
+export interface SignRelayOpts {
     receiver: Signer;
     teleportGUID: TeleportGUID;
-    signatures: string;
     relayFee: BigNumberish;
     maxFeePercentage?: BigNumberish;
     expiry?: BigNumberish;
+}
+export declare function signRelay(opts: SignRelayOpts & DomainContext): ReturnType<TeleportBridge['signRelay']>;
+export declare type RequestRelayOpts = SignRelayOpts & {
+    signatures: string;
     to?: string;
     data?: string;
     relayAddress?: string;
     onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void;
-}
+};
 export declare function requestRelay(opts: RequestRelayOpts & DomainContext): ReturnType<TeleportBridge['requestRelay']>;
 export declare type RelayMintWithOraclesOpts = RequestRelayOpts & {
     pollingIntervalMs?: number;

@@ -90,6 +90,9 @@ class TeleportBridge {
         const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
         return await (0, _1.getRelayGasFee)(relay, isHighPriority, relayParams);
     }
+    async signRelay(receiver, teleportGUID, relayFee, maxFeePercentage, expiry) {
+        return await (0, _1.signRelayPayload)(receiver, teleportGUID, relayFee, maxFeePercentage, expiry);
+    }
     async requestRelay(receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, relayAddress, onPayloadSigned) {
         const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
         return await (0, _1.signAndCreateRelayTask)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, onPayloadSigned);

@@ -1,6 +1,15 @@
 import axios from 'axios'
-import { BigNumber, BigNumberish, constants, Contract, ethers, Signer } from 'ethers'
-import { arrayify, formatEther, hexConcat, hexZeroPad, Interface, keccak256, splitSignature } from 'ethers/lib/utils'
+import { BigNumber, BigNumberish, constants, Contract, ethers, Signature, Signer } from 'ethers'
+import {
+  arrayify,
+  formatEther,
+  hexConcat,
+  hexZeroPad,
+  Interface,
+  keccak256,
+  parseEther,
+  splitSignature,
+} from 'ethers/lib/utils'
 
 import { getGuidHash, sleep, TeleportGUID } from '.'
 import { BasicRelay, BasicRelayInterface } from './sdk/esm/types/BasicRelay'
@@ -26,6 +35,23 @@ const GELATO_ADDRESSES: { [chainId: number]: { service: string; gelato: string }
 
 export type Relay = BasicRelay | TrustedRelay
 type RelayInterface = BasicRelayInterface | TrustedRelayInterface
+
+export interface RelayParams {
+  teleportGUID: TeleportGUID
+  signatures: string
+  r: string
+  s: string
+  v: number
+  maxFeePercentage?: BigNumberish
+  expiry?: BigNumberish
+  to?: string
+  data?: string
+}
+
+function getDefaultExpiry(): BigNumberish {
+  return Math.floor(Date.now() / 1000 + 24 * 3600)
+}
+const DEFAULT_MAX_FEE_PERCENTAGE = parseEther('0.1') // 10%
 
 function getEstimatedRelayGasLimit(relay: BasicRelay | TrustedRelay): string {
   if (relay.hasOwnProperty('signers')) {
@@ -58,21 +84,12 @@ async function queryGelatoApi(url: string, method: 'get' | 'post', params?: Obje
   }
 }
 
-async function getRelayCalldata(
-  relayInterface: RelayInterface,
-  receiver: Signer,
+function getRelayPayload(
   teleportGUID: TeleportGUID,
-  signatures: string,
   gasFee: BigNumberish,
-  maxFeePercentage?: BigNumberish,
-  expiry?: BigNumberish,
-  to?: string,
-  data?: string,
-  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
-): Promise<string> {
-  maxFeePercentage ||= 0
-  expiry ||= Math.floor(Date.now() / 1000 + 3600)
-
+  maxFeePercentage: BigNumberish,
+  expiry: BigNumberish,
+): string {
   const guidHash = getGuidHash(teleportGUID)
   const payload = keccak256(
     hexConcat([
@@ -82,9 +99,42 @@ async function getRelayCalldata(
       hexZeroPad(BigNumber.from(expiry).toHexString(), 32),
     ]),
   )
-  const { r, s, v } = splitSignature(await receiver.signMessage(arrayify(payload)))
-  onPayloadSigned?.(payload, r, s, v)
+  return payload
+}
 
+export async function signRelayPayload(
+  receiver: Signer,
+  teleportGUID: TeleportGUID,
+  gasFee: BigNumberish,
+  maxFeePercentage?: BigNumberish,
+  expiry?: BigNumberish,
+): Promise<Signature & { payload: string }> {
+  if (BigNumber.from(teleportGUID.amount).lt(gasFee)) {
+    throw new Error(
+      `Amount transferred (${formatEther(teleportGUID.amount)} DAI) must be greater than relay fee (${formatEther(
+        gasFee,
+      )} DAI)`,
+    )
+  }
+  maxFeePercentage ||= DEFAULT_MAX_FEE_PERCENTAGE
+  expiry ||= getDefaultExpiry()
+  const payload = getRelayPayload(teleportGUID, gasFee, maxFeePercentage, expiry)
+  return { payload, ...splitSignature(await receiver.signMessage(arrayify(payload))) }
+}
+
+async function getRelayCalldata(
+  relayInterface: RelayInterface,
+  teleportGUID: TeleportGUID,
+  signatures: string,
+  gasFee: BigNumberish,
+  r: string,
+  s: string,
+  v: number,
+  maxFeePercentage: BigNumberish,
+  expiry: BigNumberish,
+  to?: string,
+  data?: string,
+): Promise<string> {
   const useTrustedRelay = relayInterface.functions.hasOwnProperty('signers(address)')
   const extCall = useTrustedRelay ? [to || constants.AddressZero, data || '0x'] : []
   const calldata = (relayInterface as any).encodeFunctionData('relay', [
@@ -152,33 +202,32 @@ export async function waitForRelayTaskConfirmation(
   }
 }
 
-async function getRelayGasLimit(
-  relay: Relay,
-  relayParams?: {
-    receiver: Signer
-    teleportGUID: TeleportGUID
-    signatures: string
-    maxFeePercentage?: BigNumberish
-    expiry?: BigNumberish
-    to?: string
-    data?: string
-  },
-  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
-): Promise<string> {
+async function getRelayGasLimit(relay: Relay, relayParams?: RelayParams): Promise<string> {
   if (!relayParams) return getEstimatedRelayGasLimit(relay)
-  const { receiver, teleportGUID, signatures, maxFeePercentage, expiry, to, data } = relayParams
+  const {
+    teleportGUID,
+    signatures,
+    r,
+    s,
+    v,
+    maxFeePercentage = DEFAULT_MAX_FEE_PERCENTAGE,
+    expiry = getDefaultExpiry(),
+    to,
+    data,
+  } = relayParams
 
   const relayData = await getRelayCalldata(
     relay.interface,
-    receiver,
     teleportGUID,
     signatures,
     1,
+    r,
+    s,
+    v,
     maxFeePercentage,
     expiry,
     to,
     data,
-    onPayloadSigned,
   )
   const { chainId } = await relay.provider.getNetwork()
   const addresses = GELATO_ADDRESSES[chainId]
@@ -226,15 +275,7 @@ async function getRelayGasLimit(
 export async function getRelayGasFee(
   relay: Relay,
   isHighPriority?: boolean,
-  relayParams?: {
-    receiver: Signer
-    teleportGUID: TeleportGUID
-    signatures: string
-    maxFeePercentage?: BigNumberish
-    expiry?: BigNumberish
-    to?: string
-    data?: string
-  },
+  relayParams?: RelayParams,
 ): Promise<string> {
   isHighPriority ||= false
 
@@ -266,25 +307,24 @@ export async function signAndCreateRelayTask(
   data?: string,
   onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
 ): Promise<string> {
-  if (BigNumber.from(teleportGUID.amount).lt(relayFee)) {
-    throw new Error(
-      `Amount transferred (${formatEther(teleportGUID.amount)} DAI) must be greater than relay fee (${formatEther(
-        relayFee,
-      )} DAI)`,
-    )
-  }
+  maxFeePercentage ||= DEFAULT_MAX_FEE_PERCENTAGE
+  expiry ||= getDefaultExpiry()
+
+  const { payload, r, s, v } = await signRelayPayload(receiver, teleportGUID, relayFee, maxFeePercentage, expiry)
+  onPayloadSigned?.(payload, r, s, v)
 
   const relayData = await getRelayCalldata(
     relay.interface,
-    receiver,
     teleportGUID,
     signatures,
     relayFee,
+    r,
+    s,
+    v,
     maxFeePercentage,
     expiry,
     to,
     data,
-    onPayloadSigned,
   )
   const taskId = await createRelayTask(relay, relayData, getEstimatedRelayGasLimit(relay))
   return taskId

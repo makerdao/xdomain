@@ -1,6 +1,6 @@
 import { Provider } from '@ethersproject/abstract-provider';
-import { BigNumber, BigNumberish, ContractTransaction, Overrides, Signer } from 'ethers';
-import { DomainDescription, DomainId, TeleportGUID } from '.';
+import { BigNumber, BigNumberish, ContractTransaction, Overrides, Signature, Signer } from 'ethers';
+import { DomainDescription, DomainId, RelayParams, TeleportGUID } from '.';
 interface AllBridgeSettings {
     useFakeArbitrumOutbox: boolean;
 }
@@ -39,15 +39,7 @@ export declare class TeleportBridge {
         bridgeFee: BigNumber;
         relayFee?: BigNumber;
     }>;
-    getAmountsForTeleportGUID(teleportGUID: TeleportGUID, isHighPriority?: boolean, relayParams?: {
-        receiver: Signer;
-        teleportGUID: TeleportGUID;
-        signatures: string;
-        maxFeePercentage?: BigNumberish;
-        expiry?: BigNumberish;
-        to?: string;
-        data?: string;
-    }, relayAddress?: string): Promise<{
+    getAmountsForTeleportGUID(teleportGUID: TeleportGUID, isHighPriority?: boolean, relayParams?: RelayParams, relayAddress?: string): Promise<{
         pending: BigNumber;
         mintable: BigNumber;
         bridgeFee: BigNumber;
@@ -56,15 +48,10 @@ export declare class TeleportBridge {
     requestFaucetDai(sender: Signer, overrides?: Overrides): Promise<ContractTransaction>;
     mintWithOracles(teleportGUID: TeleportGUID, signatures: string, maxFeePercentage?: BigNumberish, operatorFee?: BigNumberish, sender?: Signer, overrides?: Overrides): Promise<Call>;
     waitForMint(teleportGUIDorGUIDHash: TeleportGUID | string, pollingIntervalMs?: number, timeoutMs?: number): Promise<string>;
-    getRelayFee(isHighPriority?: boolean, relayParams?: {
-        receiver: Signer;
-        teleportGUID: TeleportGUID;
-        signatures: string;
-        maxFeePercentage?: BigNumberish;
-        expiry?: BigNumberish;
-        to?: string;
-        data?: string;
-    }, relayAddress?: string): Promise<string>;
+    getRelayFee(isHighPriority?: boolean, relayParams?: RelayParams, relayAddress?: string): Promise<string>;
+    signRelay(receiver: Signer, teleportGUID: TeleportGUID, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish): Promise<Signature & {
+        payload: string;
+    }>;
     requestRelay(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, relayAddress?: string, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void): Promise<string>;
     waitForRelayTask(taskId: string, pollingIntervalMs?: number, timeoutMs?: number): Promise<string>;
     relayMintWithOracles(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, relayAddress?: string, pollingIntervalMs?: number, timeoutMs?: number, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void, onRelayTaskCreated?: (taskId: string) => void): Promise<string>;

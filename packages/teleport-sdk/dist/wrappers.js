@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mintWithoutOracles = exports.canMintWithoutOracle = exports.waitForRelayTask = exports.relayMintWithOracles = exports.requestRelay = exports.waitForMint = exports.mintWithOracles = exports.requestFaucetDai = exports.getAmounts = exports.getAmountsForTeleportGUID = exports.getSrcGatewayAllowance = exports.getDstBalance = exports.getSrcBalance = exports.getAttestations = exports.initRelayedTeleport = exports.initTeleport = exports.approveSrcGateway = exports.getTeleportBridge = void 0;
+exports.mintWithoutOracles = exports.canMintWithoutOracle = exports.waitForRelayTask = exports.relayMintWithOracles = exports.requestRelay = exports.signRelay = exports.getRelayFee = exports.waitForMint = exports.mintWithOracles = exports.requestFaucetDai = exports.getAmounts = exports.getAmountsForTeleportGUID = exports.getSrcGatewayAllowance = exports.getDstBalance = exports.getSrcBalance = exports.getAttestations = exports.initRelayedTeleport = exports.initTeleport = exports.approveSrcGateway = exports.getTeleportBridge = void 0;
 const _1 = require(".");
 function getTeleportBridge(opts) {
     return new _1.TeleportBridge({ ...opts, srcDomain: (0, _1.getLikelyDomainId)(opts.srcDomain) });
@@ -54,6 +54,14 @@ function waitForMint(opts) {
     return getTeleportBridge(opts).waitForMint(opts.teleportGUIDorGUIDHash, opts.pollingIntervalMs, opts.timeoutMs);
 }
 exports.waitForMint = waitForMint;
+function getRelayFee(opts) {
+    return getTeleportBridge(opts).getRelayFee(opts.isHighPriority, opts.relayParams, opts.relayAddress);
+}
+exports.getRelayFee = getRelayFee;
+function signRelay(opts) {
+    return getTeleportBridge(opts).signRelay(opts.receiver, opts.teleportGUID, opts.relayFee, opts.maxFeePercentage, opts.expiry);
+}
+exports.signRelay = signRelay;
 function requestRelay(opts) {
     return getTeleportBridge(opts).requestRelay(opts.receiver, opts.teleportGUID, opts.signatures, opts.relayFee, opts.maxFeePercentage, opts.expiry, opts.to, opts.data, opts.relayAddress, opts.onPayloadSigned);
 }

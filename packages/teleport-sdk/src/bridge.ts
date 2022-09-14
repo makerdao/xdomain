@@ -1,5 +1,5 @@
 import { Provider } from '@ethersproject/abstract-provider'
-import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrides, Signer } from 'ethers'
+import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrides, Signature, Signer } from 'ethers'
 import { hexlify, hexZeroPad } from 'ethers/lib/utils'
 
 import {
@@ -15,8 +15,10 @@ import {
   isArbitrumMessageInOutbox,
   Relay,
   relayArbitrumMessage,
+  RelayParams,
   requestAndWaitForRelay,
   signAndCreateRelayTask,
+  signRelayPayload,
   TeleportGUID,
   waitForAttestations,
   waitForMintConfirmation,
@@ -186,15 +188,7 @@ export class TeleportBridge {
   public async getAmountsForTeleportGUID(
     teleportGUID: TeleportGUID,
     isHighPriority?: boolean,
-    relayParams?: {
-      receiver: Signer
-      teleportGUID: TeleportGUID
-      signatures: string
-      maxFeePercentage?: BigNumberish
-      expiry?: BigNumberish
-      to?: string
-      data?: string
-    },
+    relayParams?: RelayParams,
     relayAddress?: string,
   ): Promise<{
     pending: BigNumber
@@ -262,19 +256,21 @@ export class TeleportBridge {
 
   public async getRelayFee(
     isHighPriority?: boolean,
-    relayParams?: {
-      receiver: Signer
-      teleportGUID: TeleportGUID
-      signatures: string
-      maxFeePercentage?: BigNumberish
-      expiry?: BigNumberish
-      to?: string
-      data?: string
-    },
+    relayParams?: RelayParams,
     relayAddress?: string,
   ): Promise<string> {
     const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
     return await getRelayGasFee(relay, isHighPriority, relayParams)
+  }
+
+  public async signRelay(
+    receiver: Signer,
+    teleportGUID: TeleportGUID,
+    relayFee: BigNumberish,
+    maxFeePercentage?: BigNumberish,
+    expiry?: BigNumberish,
+  ): Promise<Signature & { payload: string }> {
+    return await signRelayPayload(receiver, teleportGUID, relayFee, maxFeePercentage, expiry)
   }
 
   public async requestRelay(

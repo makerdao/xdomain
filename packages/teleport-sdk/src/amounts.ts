@@ -1,8 +1,8 @@
 import { Provider } from '@ethersproject/abstract-provider'
-import { BigNumber, BigNumberish, Contract, ethers, Signer } from 'ethers'
+import { BigNumber, Contract, ethers } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 
-import { DomainId, getGuidHash, getRelayGasFee, getSdk, multicall, Relay, TeleportGUID } from '.'
+import { DomainId, getGuidHash, getRelayGasFee, getSdk, multicall, Relay, RelayParams, TeleportGUID } from '.'
 
 const bytes32 = ethers.utils.formatBytes32String
 const GET_FEE_METHOD_FRAGMENT =
@@ -15,15 +15,7 @@ export async function getFeesAndMintableAmounts(
   teleportGUID: TeleportGUID,
   relay?: Relay,
   isHighPriority?: boolean,
-  relayParams?: {
-    receiver: Signer
-    teleportGUID: TeleportGUID
-    signatures: string
-    maxFeePercentage?: BigNumberish
-    expiry?: BigNumberish
-    to?: string
-    data?: string
-  },
+  relayParams?: RelayParams,
 ): Promise<{
   pending: BigNumber
   mintable: BigNumber
