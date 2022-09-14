@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-import {ECDSA} from "@matterlabs/signature-checker/contracts/openzeppelin/ECDSA.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 /* A 2-of-2 multisig contract account */
 contract TestMultiSig {
