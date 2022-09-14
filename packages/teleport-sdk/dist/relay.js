@@ -26,9 +26,9 @@ const GELATO_ADDRESSES = {
     },
 };
 function getDefaultExpiry() {
-    return Math.floor(Date.now() / 1000 + 3600);
+    return Math.floor(Date.now() / 1000 + 24 * 3600);
 }
-const DEFAULT_MAX_FEE_PERCENTAGE = 0;
+const DEFAULT_MAX_FEE_PERCENTAGE = (0, utils_1.parseEther)('0.1'); // 10%
 function getEstimatedRelayGasLimit(relay) {
     if (relay.hasOwnProperty('signers')) {
         return '420000'; // = 385462 + a small margin (estimate for TrustedRelay)
