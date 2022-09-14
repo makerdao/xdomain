@@ -1,29 +1,10 @@
-import {
-  // BigNumber,
-  Signer,
-} from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 import { useEffect, useState } from 'react'
-import {
-  getAmounts,
-  // getAmountsForTeleportGUID,
-  getDstBalance,
-  getSrcBalance,
-  getSrcGatewayAllowance,
-  TeleportGUID,
-} from 'teleport-sdk'
+import { getAmounts, getDstBalance, getSrcBalance, getSrcGatewayAllowance } from 'teleport-sdk'
 
 import { DomainChainId, getSdkDomainId } from './domains'
 
-export function useAmounts(
-  srcChainId: DomainChainId,
-  account?: string,
-  relayParams?: {
-    receiver: Signer
-    teleportGUID: TeleportGUID
-    signatures: string
-  },
-) {
+export function useAmounts(srcChainId: DomainChainId, account?: string) {
   const [amount, setAmount] = useState<string | undefined>('0')
   const [maxAmount, setMaxAmount] = useState<string | undefined>('0')
   const [dstBalance, setDstBalance] = useState<string | undefined>('0')
@@ -98,21 +79,6 @@ export function useAmounts(
 
     const srcDomain = getSdkDomainId(srcChainId)
     const getAmountAfterFees = async () => {
-      // let relayFeeBN: BigNumber | undefined
-      // let bridgeFeeBN: BigNumber
-      // if (relayParams) {
-      //   ;({ bridgeFee: bridgeFeeBN, relayFee: relayFeeBN } = await getAmountsForTeleportGUID({
-      //     srcDomain,
-      //     teleportGUID: relayParams.teleportGUID,
-      //     relayParams: { ...relayParams, maxFeePercentage },
-      //   }))
-      // } else {
-      //   ;({ bridgeFee: bridgeFeeBN, relayFee: relayFeeBN } = await getAmounts({
-      //     srcDomain,
-      //     withdrawn: parseEther(amount),
-      //   }))
-      // }
-
       const { bridgeFee: bridgeFeeBN, relayFee: relayFeeBN } = await getAmounts({
         srcDomain,
         withdrawn: parseEther(amount),

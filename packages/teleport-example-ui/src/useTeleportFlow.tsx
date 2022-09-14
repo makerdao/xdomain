@@ -79,16 +79,6 @@ export function useTeleportFlow(
   const sender = ethersProvider?.getSigner()
   const srcDomain = getSdkDomainId(srcChainId)
 
-  const relayParams =
-    (sender &&
-      guid &&
-      signatures && {
-        receiver: sender,
-        teleportGUID: guid,
-        signatures,
-      }) ||
-    undefined
-
   const {
     amount: amount_,
     maxAmount,
@@ -101,7 +91,7 @@ export function useTeleportFlow(
     updateMaxAmount,
     updateDstBalance,
     updateAllowance,
-  } = useAmounts(srcChainId, account, relayParams)
+  } = useAmounts(srcChainId, account)
   const amount = guid ? formatEther(BigNumber.from(guid.amount)) : amount_ // make sure to always use guid.amount if any
 
   function resetState() {
