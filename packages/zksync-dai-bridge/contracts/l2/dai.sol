@@ -210,7 +210,7 @@ contract Dai {
 
   // --- Approve by signature ---
 
-  function _isValidSignatureNow(
+  function _isValidSignature(
     address signer,
     bytes32 hash,
     bytes memory signature
@@ -260,7 +260,7 @@ contract Dai {
       )
     );
 
-    require(_isValidSignatureNow(owner, digest, signature), "Dai/invalid-permit");
+    require(_isValidSignature(owner, digest, signature), "Dai/invalid-permit");
 
     allowance[owner][spender] = value;
     emit Approval(owner, spender, value);
