@@ -18,9 +18,14 @@
 
 pragma solidity ^0.8.15;
 
-import {SignatureChecker} from "@matterlabs/signature-checker/contracts/SignatureChecker.sol";
-
 // Improved Dai token
+
+interface IERC1271 {
+  function isValidSignature(bytes32 hash, bytes memory signature)
+    external
+    view
+    returns (bytes4 magicValue);
+}
 
 contract Dai {
   // --- Auth ---
@@ -205,6 +210,33 @@ contract Dai {
 
   // --- Approve by signature ---
 
+  function _isValidSignature(
+    address signer,
+    bytes32 hash,
+    bytes memory signature
+  ) internal view returns (bool) {
+    if (signature.length == 65) {
+      bytes32 r;
+      bytes32 s;
+      uint8 v;
+      assembly {
+        r := mload(add(signature, 0x20))
+        s := mload(add(signature, 0x40))
+        v := byte(0, mload(add(signature, 0x60)))
+      }
+      if (signer == ecrecover(hash, v, r, s)) {
+        return true;
+      }
+    }
+
+    (bool success, bytes memory result) = signer.staticcall(
+      abi.encodeWithSelector(IERC1271.isValidSignature.selector, hash, signature)
+    );
+    return (success &&
+      result.length == 32 &&
+      abi.decode(result, (bytes32)) == bytes32(IERC1271.isValidSignature.selector));
+  }
+
   function permit(
     address owner,
     address spender,
@@ -228,7 +260,7 @@ contract Dai {
       )
     );
 
-    require(SignatureChecker.isValidSignatureNow(owner, digest, signature), "Dai/invalid-permit");
+    require(_isValidSignature(owner, digest, signature), "Dai/invalid-permit");
 
     allowance[owner][spender] = value;
     emit Approval(owner, spender, value);
