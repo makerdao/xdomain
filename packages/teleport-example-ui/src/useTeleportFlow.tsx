@@ -546,6 +546,8 @@ export function useTeleportFlow(
     burnTxHash,
     burnConfirmed,
     guid,
+    relayTaskId,
+    mintTxHash,
     mintConfirmed,
     secondaryButton,
     dstBalance,

@@ -26,7 +26,7 @@ function formatFee(amount: string) {
 
 function App() {
   const [warningVisible, setWarningVisible] = useState<boolean>(true)
-  const [useRelayer, setUseRelayer] = useState<boolean>(true)
+  const [relayerSelected, setRelayerSelected] = useState<boolean>(true)
   const { connectWallet, disconnectWallet, account, chainId: walletChainId, provider } = useConnectedWallet()
 
   const [srcChainId, setSrcChainId] = useState<SrcDomainChainId>(42161)
@@ -44,8 +44,21 @@ function App() {
     }
   }, [walletChainId, urlChainId])
 
-  const { mainButton, burnTxHash, secondaryButton, dstBalance, amount, maxAmount, setAmount, bridgeFee, relayFee } =
-    useTeleportFlow(connectWallet, srcChainId, dstChainId, account, walletChainId, provider)
+  const {
+    mainButton,
+    burnTxHash,
+    secondaryButton,
+    dstBalance,
+    amount,
+    maxAmount,
+    setAmount,
+    bridgeFee,
+    relayFee,
+    mintTxHash,
+    relayTaskId,
+  } = useTeleportFlow(connectWallet, srcChainId, dstChainId, account, walletChainId, provider)
+
+  const useRelayer = relayTaskId ? true : mintTxHash ? false : relayerSelected
 
   const fee = parseEther(bridgeFee || '0').add((useRelayer && parseEther(relayFee || '0')) || 0)
   let amountAfterFee
@@ -137,7 +150,12 @@ function App() {
 
                 <Col flex="auto">
                   <div style={{ textAlign: 'right' }}>
-                    <Switch checked={useRelayer} onChange={setUseRelayer} style={{ marginRight: 6, marginBottom: 3 }} />{' '}
+                    <Switch
+                      disabled={((mintTxHash || relayTaskId) && true) || false}
+                      checked={useRelayer}
+                      onChange={setRelayerSelected}
+                      style={{ marginRight: 6, marginBottom: 3 }}
+                    />{' '}
                     Mint DAI using Relayer
                   </div>
                 </Col>
