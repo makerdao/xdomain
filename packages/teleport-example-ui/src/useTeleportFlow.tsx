@@ -145,6 +145,7 @@ export function useTeleportFlow(
     checkingTxConfirmed: boolean,
     setCheckingTxConfirmed: (value: React.SetStateAction<boolean>) => void,
     setTxConfirmed: (value: React.SetStateAction<boolean>) => void,
+    onTxFail?: () => void,
     txDescription?: string,
     successNotificationTitle?: string,
     failureNotificationTitle?: string,
@@ -165,17 +166,24 @@ export function useTeleportFlow(
           description: getTxDescription(),
           duration: null,
         })
-        throw new Error(`${txDescription ?? 'tx'} failed: receipt=${receipt}`)
+        onTxFail?.()
+        throw new Error(`${txDescription ?? 'tx'} failed: receipt=${JSON.stringify(receipt)}`)
       }
     }
     if (!checkingTxConfirmed) {
       setCheckingTxConfirmed(true)
+      let _waitForTx: () => Promise<void>
       if (txObject) {
         const waitForTxObject = async () => {
-          const receipt = await txObject.wait()
+          let receipt
+          try {
+            receipt = await txObject.wait()
+          } catch (error: any) {
+            receipt = error.receipt
+          }
           handleReceipt(receipt)
         }
-        waitForTxObject().catch(console.error)
+        _waitForTx = waitForTxObject
       } else {
         const waitForTxReceipt = async () => {
           let receipt = null
@@ -192,10 +200,11 @@ export function useTeleportFlow(
           }
           console.error(`getTransactionReceipt(${txDescription ?? 'tx'} hash=${txHash}): no receipt after 10 attempts.`)
         }
-        waitForTxReceipt()
-          .catch(console.error)
-          .finally(() => setCheckingTxConfirmed(false))
+        _waitForTx = waitForTxReceipt
       }
+      _waitForTx()
+        .catch(console.error)
+        .finally(() => setCheckingTxConfirmed(false))
     }
   }
 
@@ -272,6 +281,7 @@ export function useTeleportFlow(
         checkingBurnConfirmed,
         setCheckingBurnConfirmed,
         setBurnConfirmed,
+        () => setSearchParams({}),
         'DAI burn tx',
         'Teleport Initiated',
         'Teleport Initiation Failed',
@@ -437,6 +447,11 @@ export function useTeleportFlow(
         checkingMintConfirmed,
         setCheckingMintConfirmed,
         setMintConfirmed,
+        () => {
+          setRelayTxHash(undefined)
+          setPayloadSigned(false)
+          setSearchParams({ txHash: burnTxHash!, chainId: srcChainId.toString() }) // remove taskId & directMintTxHash from url
+        },
         'DAI mint tx',
         'Teleport Complete!',
         'Teleport Finalization Failed',
