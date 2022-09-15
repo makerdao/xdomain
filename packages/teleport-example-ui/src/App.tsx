@@ -6,6 +6,7 @@ import { formatEther, parseEther } from 'ethers/lib/utils'
 import { useState } from 'react'
 import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import useLocalStorage from 'use-local-storage'
 
 import { DomainBox, DomainChainId, SRC_CHAINID_TO_DST_CHAINID, SrcDomainChainId } from './domains'
 import { useTeleportFlow } from './useTeleportFlow'
@@ -26,8 +27,8 @@ function formatFee(amount: string) {
 }
 
 function App() {
-  const [warningVisible, setWarningVisible] = useState<boolean>(true)
-  const [relayerSelected, setRelayerSelected] = useState<boolean>(true)
+  const [warningVisible, setWarningVisible] = useState(true)
+  const [relayerSelected, setRelayerSelected] = useLocalStorage('relayerSelected', true)
   const { connectWallet, disconnectWallet, account, chainId: walletChainId, provider } = useConnectedWallet()
 
   const [srcChainId, setSrcChainId] = useState<SrcDomainChainId>(42161)
