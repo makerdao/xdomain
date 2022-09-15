@@ -37,7 +37,7 @@ export function useTeleportFlow(
   dstChainId: DomainChainId,
   account?: string,
   walletChainId?: number,
-  provider?: ethers.providers.Provider,
+  walletProvider?: ethers.providers.ExternalProvider,
 ) {
   const [gulpConfirmed, setGulpConfirmed] = useState<boolean>(false)
   const [approveConfirmed, setApproveConfirmed] = useState<boolean>(false)
@@ -74,8 +74,7 @@ export function useTeleportFlow(
   const mintTxHash = relayTxHash || searchParams.get('directMintTxHash') // could be relayed or direct mint
   const relayTaskId = searchParams.get('taskId')
 
-  const ethersProvider =
-    provider && new ethers.providers.Web3Provider(provider as ethers.providers.ExternalProvider, 'any')
+  const ethersProvider = walletProvider && new ethers.providers.Web3Provider(walletProvider, 'any')
   const sender = ethersProvider?.getSigner()
   const srcDomain = getSdkDomainId(srcChainId)
 
@@ -201,7 +200,7 @@ export function useTeleportFlow(
   }
 
   function doBurn() {
-    if (!account || !walletChainId || !provider) {
+    if (!account || !walletChainId || !walletProvider) {
       setMainButton({
         label: <>Connect Wallet</>,
         onClick: connectWallet,
@@ -214,7 +213,7 @@ export function useTeleportFlow(
             <DomainName chainId={srcChainId} />
           </>
         ),
-        onClick: async () => provider && (await switchChain(srcChainId, provider as ethers.providers.ExternalProvider)),
+        onClick: async () => walletProvider && (await switchChain(srcChainId, walletProvider)),
       })
     } else if (
       !burnTxHash &&
@@ -365,8 +364,11 @@ export function useTeleportFlow(
           </>
         ),
         onClick: async () => {
-          if (!provider) return
-          await switchChain(dstChainId, provider as ethers.providers.ExternalProvider)
+          if (!walletProvider) return
+          await switchChain(dstChainId, walletProvider)
+          const currChainId = parseInt(await walletProvider.request?.({ method: 'eth_chainId' }), 16)
+          if (currChainId !== dstChainId) return
+
           const { tx } = await mintWithOracles({
             srcDomain,
             teleportGUID: guid,
@@ -506,7 +508,7 @@ export function useTeleportFlow(
     walletChainId,
     srcChainId,
     dstChainId,
-    provider,
+    walletProvider,
     maxAmount,
     amount,
     bridgeFee,

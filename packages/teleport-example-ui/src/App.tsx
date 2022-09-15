@@ -1,6 +1,7 @@
 import './App.scss'
 
 import { Alert, Button, Col, Descriptions, Row, Switch } from 'antd'
+import { ethers } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 import { useState } from 'react'
 import { useEffect } from 'react'
@@ -56,7 +57,14 @@ function App() {
     relayFee,
     mintTxHash,
     relayTaskId,
-  } = useTeleportFlow(connectWallet, srcChainId, dstChainId, account, walletChainId, provider)
+  } = useTeleportFlow(
+    connectWallet,
+    srcChainId,
+    dstChainId,
+    account,
+    walletChainId,
+    provider as ethers.providers.ExternalProvider,
+  )
 
   const useRelayer = relayTaskId ? true : mintTxHash ? false : relayerSelected
 
