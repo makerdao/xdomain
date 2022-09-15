@@ -3,7 +3,6 @@ import './App.scss'
 import { Alert, Button, Col, Descriptions, Row, Switch } from 'antd'
 import { ethers } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
-import { useState } from 'react'
 import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import useLocalStorage from 'use-local-storage'
@@ -27,11 +26,11 @@ function formatFee(amount: string) {
 }
 
 function App() {
-  const [warningVisible, setWarningVisible] = useState(true)
+  const [warningVisible, setWarningVisible] = useLocalStorage('warningVisible', true)
   const [relayerSelected, setRelayerSelected] = useLocalStorage('relayerSelected', true)
   const { connectWallet, disconnectWallet, account, chainId: walletChainId, provider } = useConnectedWallet()
 
-  const [srcChainId, setSrcChainId] = useState<SrcDomainChainId>(42161)
+  const [srcChainId, setSrcChainId] = useLocalStorage<SrcDomainChainId>('srcChainId', 42161)
   const [searchParams] = useSearchParams({})
   const urlChainIdString = searchParams.get('chainId')
   const urlChainId = urlChainIdString ? Number(urlChainIdString) : undefined
@@ -81,18 +80,20 @@ function App() {
         <Col xs={24} sm={24} md={24} lg={22} xl={20} xxl={18}>
           <Row style={{ marginBottom: warningVisible ? 20 : 10 }}>
             <Col span={24}>
-              <Alert
-                message={
-                  <>
-                    This is an example UI and is not meant for use in production. This frontend is{' '}
-                    <strong>unaudited</strong> and may contain critical bugs resulting in the{' '}
-                    <strong>loss of your funds</strong>. Use at your own risks!
-                  </>
-                }
-                type="warning"
-                closable
-                onClose={() => setWarningVisible(false)}
-              />
+              {warningVisible && (
+                <Alert
+                  message={
+                    <>
+                      This is an example UI and is not meant for use in production. This frontend is{' '}
+                      <strong>unaudited</strong> and may contain critical bugs resulting in the{' '}
+                      <strong>loss of your funds</strong>. Use at your own risks!
+                    </>
+                  }
+                  type="warning"
+                  closable
+                  onClose={() => setWarningVisible(false)}
+                />
+              )}
             </Col>
           </Row>
           <Row justify="end" className="box top-bar">
