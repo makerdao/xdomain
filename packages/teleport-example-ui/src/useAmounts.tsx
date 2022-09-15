@@ -72,16 +72,11 @@ export function useAmounts(srcChainId: DomainChainId, account?: string) {
   }, [account, srcChainId])
 
   useEffect(() => {
-    if (!amount || amount === '0') {
-      setFee('0')
-      return
-    }
-
     const srcDomain = getSdkDomainId(srcChainId)
     const getAmountAfterFees = async () => {
       const { bridgeFee: bridgeFeeBN, relayFee: relayFeeBN } = await getAmounts({
         srcDomain,
-        withdrawn: parseEther(amount),
+        withdrawn: parseEther(amount || '0'),
       })
 
       setBridgeFee(formatEther(bridgeFeeBN))
