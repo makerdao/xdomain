@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.waitForAttestations = void 0;
 const axios_1 = __importDefault(require("axios"));
+const ethers_1 = require("ethers");
 const utils_1 = require("ethers/lib/utils");
 const _1 = require(".");
 const ORACLE_API_URL = 'https://lair.chroniclelabs.org';
@@ -20,9 +21,14 @@ async function fetchAttestations(txHash) {
     for (const oracle of results) {
         const h = oracle.data.hash;
         if (!teleports.has(h)) {
-            teleports.set(h, { signatures: '0x', teleportGUID: (0, _1.decodeTeleportData)(oracle.data.event) });
+            teleports.set(h, { signatureArray: [], signatures: '0x', teleportGUID: (0, _1.decodeTeleportData)(oracle.data.event) });
         }
-        teleports.get(h).signatures += oracle.signatures.ethereum.signature;
+        const teleport = teleports.get(h);
+        const { signer, signature } = oracle.signatures.ethereum;
+        teleport.signatureArray.push({ signer: `0x${signer}`, signature: `0x${signature}` });
+        teleport.signatures = (0, utils_1.hexConcat)(teleport.signatureArray
+            .sort((a, b) => (ethers_1.BigNumber.from(a.signer).lt(ethers_1.BigNumber.from(b.signer)) ? -1 : 1))
+            .map((s) => s.signature));
     }
     return Array.from(teleports.values());
 }

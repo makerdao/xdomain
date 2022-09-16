@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { arrayify, hashMessage } from 'ethers/lib/utils'
+import { BigNumber } from 'ethers'
+import { arrayify, hashMessage, hexConcat } from 'ethers/lib/utils'
 
 import { decodeTeleportData, getGuidHash, sleep, TeleportGUID } from '.'
 import { TeleportOracleAuth } from './sdk/esm/types'
@@ -10,6 +11,7 @@ interface OracleData {
   data: { event: string; hash: string }
   signatures: {
     ethereum: {
+      signer: string
       signature: string
     }
   }
@@ -18,6 +20,10 @@ interface OracleData {
 interface Attestation {
   signatures: string
   teleportGUID: TeleportGUID
+  signatureArray: Array<{
+    signer: string
+    signature: string
+  }>
 }
 
 async function fetchAttestations(txHash: string): Promise<Attestation[]> {
@@ -34,9 +40,17 @@ async function fetchAttestations(txHash: string): Promise<Attestation[]> {
   for (const oracle of results) {
     const h = oracle.data.hash
     if (!teleports.has(h)) {
-      teleports.set(h, { signatures: '0x', teleportGUID: decodeTeleportData(oracle.data.event) })
+      teleports.set(h, { signatureArray: [], signatures: '0x', teleportGUID: decodeTeleportData(oracle.data.event) })
     }
-    teleports.get(h)!.signatures += oracle.signatures.ethereum.signature
+    const teleport = teleports.get(h)!
+
+    const { signer, signature } = oracle.signatures.ethereum
+    teleport.signatureArray.push({ signer: `0x${signer}`, signature: `0x${signature}` })
+    teleport.signatures = hexConcat(
+      teleport.signatureArray
+        .sort((a, b) => (BigNumber.from(a.signer).lt(BigNumber.from(b.signer)) ? -1 : 1))
+        .map((s) => s.signature),
+    )
   }
 
   return Array.from(teleports.values())

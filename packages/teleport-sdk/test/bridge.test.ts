@@ -249,7 +249,7 @@ describe('TeleportBridge', () => {
   }
 
   describe('Get Attestations', async () => {
-    it.skip('should produce attestations (goerli-optimism)', async () => {
+    it('should produce attestations (goerli-optimism)', async () => {
       await testGetAttestations({ srcDomain: 'optimism-goerli-testnet' })
     })
 
@@ -257,7 +257,7 @@ describe('TeleportBridge', () => {
       await testGetAttestations({ srcDomain: 'arbitrum-goerli-testnet' })
     })
 
-    it.skip('should produce attestations (goerli-arbitrum, wrapper)', async () => {
+    it('should produce attestations (goerli-arbitrum, wrapper)', async () => {
       await testGetAttestations({ srcDomain: 'arbitrum-goerli-testnet', useWrapper: true })
     })
 
