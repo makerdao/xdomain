@@ -23,7 +23,8 @@
     "test:fix": "yarn lint:fix && yarn format:fix && yarn test && yarn typecheck"
   },
   "dependencies": {
-    "@matterlabs/signature-checker": "^1.1.1"
+    "@matterlabs/signature-checker": "^1.1.1",
+    "@matterlabs/zksync-contracts": "^0.3.1"
   },
   "devDependencies": {
     "@eth-optimism/smock": "=1.1.10",

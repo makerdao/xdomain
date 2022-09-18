@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2021 Dai Foundation
-// @unsupported: ovm
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -15,6 +14,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 pragma solidity ^0.8.15;
+
+import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IMailbox.sol";
 
 interface IL1Bridge {
   function deposit(
@@ -90,16 +91,16 @@ enum QueueType {
   Heap
 }
 
-struct L2Log {
-  address sender;
-  bytes32 key;
-  bytes32 value;
-}
+//struct L2Log {
+//  address sender;
+//  bytes32 key;
+//  bytes32 value;
+//}
 
-struct L2Message {
-  address sender;
-  bytes data;
-}
+//struct L2Message {
+//  address sender;
+//  bytes data;
+//}
 
 uint160 constant SYSTEM_CONTRACTS_OFFSET = 0x8000; // 2^15
 address constant BOOTLOADER_ADDRESS = address(SYSTEM_CONTRACTS_OFFSET + 0x01);

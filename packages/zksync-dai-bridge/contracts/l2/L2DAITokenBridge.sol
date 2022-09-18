@@ -15,6 +15,8 @@
 
 pragma solidity ^0.8.15;
 
+import "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
+
 interface IL1Bridge {
   function finalizeWithdrawal(
     uint256 _l2BlockNumber,
@@ -45,13 +47,6 @@ interface IL2Bridge {
 
   function l1Bridge() external view returns (address);
 }
-
-interface IL2Messenger {
-  function sendToL1(bytes memory _message) external returns (bytes32);
-}
-
-uint160 constant SYSTEM_CONTRACTS_OFFSET = 0x8000; // 2^15
-IL2Messenger constant L2_MESSENGER = IL2Messenger(address(SYSTEM_CONTRACTS_OFFSET + 0x08));
 
 interface Mintable {
   function mint(address usr, uint256 wad) external;
@@ -147,7 +142,7 @@ contract L2DAITokenBridge {
 
     bytes memory message = abi.encodePacked(IL1Bridge.finalizeWithdrawal.selector, _to, _amount);
 
-    L2_MESSENGER.sendToL1(message);
+    L1_MESSENGER_CONTRACT.sendToL1(message);
   }
 
   // When a deposit is finalized, we credit the account on L2 with the same amount of tokens.
@@ -166,11 +161,15 @@ contract L2DAITokenBridge {
     Mintable(l2Token).mint(_to, _amount);
   }
 
-  function l2TokenAddress(address) external view returns (address) {
+  function l2TokenAddress(address _l1Token) external view returns (address) {
+    require(_l1Token == l1Token, "L2DAITokenBridge/token-not-dai");
+
     return l2Token;
   }
 
-  function l1TokenAddress(address) external view returns (address) {
+  function l1TokenAddress(address _l2Token) external view returns (address) {
+    require(_l2Token == l2Token, "L2DAITokenBridge/token-not-dai");
+
     return l1Token;
   }
 }
