@@ -1,8 +1,7 @@
 import { smockit } from '@eth-optimism/smock'
 import { providers } from 'ethers'
-import { utils } from 'zksync-web3'
-
 import * as hre from 'hardhat'
+import { utils } from 'zksync-web3'
 
 export function deployL1ZkSyncContractMock(opts?: { provider?: providers.Provider; address?: string }) {
   return smockit(utils.ZKSYNC_MAIN_ABI, opts)

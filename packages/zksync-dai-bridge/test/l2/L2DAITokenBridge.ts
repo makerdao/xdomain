@@ -87,8 +87,7 @@ describe('L2DAITokenBridge', () => {
     const withdrawAmount = 100
 
     it('sends xdomain message and burns tokens', async () => {
-      const { l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1, l1DAITokenBridge, zkSyncSysMock } =
-        await setupWithdrawalTest()
+      const { l2DAITokenBridge, l2Dai, user1, l1DAITokenBridge, zkSyncSysMock } = await setupWithdrawalTest()
 
       await l2Dai.connect(user1).approve(l2DAITokenBridge.address, withdrawAmount)
       await l2DAITokenBridge.connect(user1).withdraw(user1.address, l2Dai.address, withdrawAmount)
@@ -105,8 +104,7 @@ describe('L2DAITokenBridge', () => {
     })
 
     it('sends xdomain message and burns tokens when withdrawing to the 3rd party', async () => {
-      const { l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1, l1DAITokenBridge, zkSyncSysMock } =
-        await setupWithdrawalTest()
+      const { l2DAITokenBridge, l2Dai, user1, l1DAITokenBridge, zkSyncSysMock } = await setupWithdrawalTest()
       const [user2] = await ethers.getSigners()
 
       await l2Dai.connect(user1).approve(l2DAITokenBridge.address, withdrawAmount)
@@ -125,8 +123,9 @@ describe('L2DAITokenBridge', () => {
     })
 
     it('reverts when called with a different token', async () => {
-      const { l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupWithdrawalTest()
-      const [user2, dummyL1Erc20] = await ethers.getSigners()
+      //const { l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupWithdrawalTest()
+      const { l2DAITokenBridge, user1 } = await setupWithdrawalTest()
+      const [dummyL1Erc20] = await ethers.getSigners()
 
       await l2DAITokenBridge.close()
 
@@ -136,8 +135,7 @@ describe('L2DAITokenBridge', () => {
     })
 
     it('reverts when bridge closed', async () => {
-      const { l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupWithdrawalTest()
-      const [user2] = await ethers.getSigners()
+      const { l2DAITokenBridge, l2Dai, user1 } = await setupWithdrawalTest()
 
       await l2DAITokenBridge.close()
 
@@ -147,7 +145,7 @@ describe('L2DAITokenBridge', () => {
     })
 
     it('reverts when user funds too low', async () => {
-      const { l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupWithdrawalTest()
+      const { l2DAITokenBridge, l2Dai } = await setupWithdrawalTest()
       const [user2] = await ethers.getSigners()
 
       await expect(
@@ -187,7 +185,6 @@ describe('L2DAITokenBridge', () => {
   describe('constructor', () => {
     it('assigns all variables properly', async () => {
       const [l1Dai, l2Dai, l1DAITokenBridge] = await ethers.getSigners()
-      const [ERC20DummyToken] = await ethers.getSigners()
 
       const l2DAITokenBridge = await simpleDeploy<L2DAITokenBridge__factory>('L2DAITokenBridge', [
         l2Dai.address,
