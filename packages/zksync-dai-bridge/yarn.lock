@@ -687,10 +687,10 @@
     "@matterlabs/hardhat-zksync-deploy" "^0.1.2"
     "@matterlabs/hardhat-zksync-solc" "^0.2.1"
 
-"@matterlabs/zksync-contracts@^0.3.1":
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/@matterlabs/zksync-contracts/-/zksync-contracts-0.3.1.tgz#467aa4e457696dde0813e14708fcd7dbea311eb3"
-  integrity sha512-4yxNQR95Dz9hx3cEvwqkqeOGgeatyhT3lbST/ErNQvdK/I88PEIkvpI0LFc/8UQG7km+q18S0/P3fnWoK0s+eA==
+"@matterlabs/zksync-contracts@^0.3.3":
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/@matterlabs/zksync-contracts/-/zksync-contracts-0.3.3.tgz#d51bd24ad2a72354ee5a7c299e49968c049d8171"
+  integrity sha512-nyaRu+gVfEhq0vH0/J4K0Xks/UpLtD0QbkIySxZ6E8p/TA6XARCHNTm9RYOW3IPSncpQWZ5jca6iICSXNNcM3Q==
 
 "@metamask/eth-sig-util@^4.0.0":
   version "4.0.1"

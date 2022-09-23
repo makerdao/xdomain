@@ -16,32 +16,7 @@
 pragma solidity ^0.8.15;
 
 import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IMailbox.sol";
-
-interface IL1Bridge {
-  function deposit(
-    address _l2Receiver,
-    address _l1Token,
-    uint256 _amount
-  ) external payable returns (bytes32 txHash);
-
-  function claimFailedDeposit(
-    address _depositSender,
-    address _l1Token,
-    bytes32 _l2TxHash,
-    uint256 _l2BlockNumber,
-    uint256 _l2MessageIndex,
-    bytes32[] calldata _merkleProof
-  ) external;
-
-  function finalizeWithdrawal(
-    uint256 _l2BlockNumber,
-    uint256 _l2MessageIndex,
-    bytes calldata _message,
-    bytes32[] calldata _merkleProof
-  ) external;
-
-  function l2TokenAddress(address _l1Token) external view returns (address);
-}
+import "@matterlabs/zksync-contracts/l1/contracts/bridge/interfaces/IL1Bridge.sol";
 
 interface TokenLike {
   function transferFrom(
@@ -61,47 +36,6 @@ interface L2DAITokenBridgeLike {
   ) external;
 }
 
-interface IMailboxLike {
-  function proveL2LogInclusion(
-    uint256 _blockNumber,
-    uint256 _index,
-    L2Log memory _log,
-    bytes32[] calldata _proof
-  ) external view returns (bool);
-
-  function proveL2MessageInclusion(
-    uint256 _blockNumber,
-    uint256 _index,
-    L2Message calldata _message,
-    bytes32[] calldata _proof
-  ) external view returns (bool);
-
-  function requestL2Transaction(
-    address _contractAddressL2,
-    uint256 _l2Value,
-    bytes calldata _calldata,
-    uint256 _ergsLimit,
-    bytes[] calldata _factoryDeps
-  ) external payable returns (bytes32 txHash);
-}
-
-enum QueueType {
-  Deque,
-  HeapBuffer,
-  Heap
-}
-
-//struct L2Log {
-//  address sender;
-//  bytes32 key;
-//  bytes32 value;
-//}
-
-//struct L2Message {
-//  address sender;
-//  bytes data;
-//}
-
 uint160 constant SYSTEM_CONTRACTS_OFFSET = 0x8000; // 2^15
 address constant BOOTLOADER_ADDRESS = address(SYSTEM_CONTRACTS_OFFSET + 0x01);
 
@@ -114,8 +48,8 @@ contract L1DAITokenBridge is IL1Bridge {
 
   // TODO: evaluate constant
   uint256 constant DEPLOY_L2_BRIDGE_COUNTERPART_ERGS_LIMIT = 2097152;
-  mapping(uint256 => mapping(uint256 => bool)) isWithdrawalProcessed;
-  mapping(address => mapping(bytes32 => uint256)) depositAmount; //TODO: do we need that ?
+  mapping(uint256 => mapping(uint256 => bool)) public isWithdrawalFinalized;
+  mapping(address => mapping(bytes32 => uint256)) depositAmount;
 
   event WithdrawalFinalized(address indexed _recipient, uint256 _amount);
 
@@ -144,7 +78,7 @@ contract L1DAITokenBridge is IL1Bridge {
   address public immutable l2DAITokenBridge;
   address public immutable l2Token;
   address public immutable escrow;
-  IMailboxLike public immutable zkSyncMailbox;
+  IMailbox public immutable zkSyncMailbox;
   uint256 public isOpen = 1;
 
   event Closed();
@@ -154,7 +88,7 @@ contract L1DAITokenBridge is IL1Bridge {
     address _l2DAITokenBridge,
     address _l2Token,
     address _escrow,
-    IMailboxLike _mailbox
+    IMailbox _mailbox
   ) {
     wards[msg.sender] = 1;
     emit Rely(msg.sender);
@@ -202,7 +136,7 @@ contract L1DAITokenBridge is IL1Bridge {
       new bytes[](0)
     );
 
-    depositAmount[msg.sender][txHash] = _amount; // TODO: do we need that ?
+    depositAmount[msg.sender][txHash] = _amount;
   }
 
   function claimFailedDeposit(
@@ -241,7 +175,7 @@ contract L1DAITokenBridge is IL1Bridge {
     bytes32[] calldata _merkleProof
   ) external {
     require(
-      !isWithdrawalProcessed[_l2BlockNumber][_l2MessageIndex],
+      !isWithdrawalFinalized[_l2BlockNumber][_l2MessageIndex],
       "Withdrawal already processed"
     );
     L2Message memory l2ToL1Message = L2Message({sender: l2DAITokenBridge, data: _message});
@@ -255,7 +189,7 @@ contract L1DAITokenBridge is IL1Bridge {
     );
     require(success, "nq");
 
-    isWithdrawalProcessed[_l2BlockNumber][_l2MessageIndex] = true;
+    isWithdrawalFinalized[_l2BlockNumber][_l2MessageIndex] = true;
 
     TokenLike(l1Token).transferFrom(escrow, l1Receiver, amount);
   }

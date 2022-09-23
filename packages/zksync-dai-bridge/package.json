@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@matterlabs/signature-checker": "^1.1.1",
-    "@matterlabs/zksync-contracts": "^0.3.1"
+    "@matterlabs/zksync-contracts": "^0.3.3"
   },
   "devDependencies": {
     "@eth-optimism/smock": "=1.1.10",
