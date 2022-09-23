@@ -16,37 +16,8 @@
 pragma solidity ^0.8.15;
 
 import "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
-
-interface IL1Bridge {
-  function finalizeWithdrawal(
-    uint256 _l2BlockNumber,
-    uint256 _l2MessageIndex,
-    bytes calldata _message,
-    bytes32[] calldata _merkleProof
-  ) external;
-}
-
-interface IL2Bridge {
-  function finalizeDeposit(
-    address _l1Sender,
-    address _l2Receiver,
-    address _l1Token,
-    uint256 _amount,
-    bytes calldata _data
-  ) external;
-
-  function withdraw(
-    address _l1Receiver,
-    address _l2Token,
-    uint256 _amount
-  ) external;
-
-  function l1TokenAddress(address _l2Token) external view returns (address);
-
-  function l2TokenAddress(address _l1Token) external view returns (address);
-
-  function l1Bridge() external view returns (address);
-}
+import "@matterlabs/zksync-contracts/l1/contracts/bridge/interfaces/IL1Bridge.sol";
+import "@matterlabs/zksync-contracts/l2/contracts/bridge/interfaces/IL2Bridge.sol";
 
 interface Mintable {
   function mint(address usr, uint256 wad) external;
@@ -58,7 +29,7 @@ interface Mintable {
 // Burn tokens on L1 and send a message to unlock tokens on L1 to L1 counterpart
 // Note: when bridge is closed it will still process in progress messages
 
-contract L2DAITokenBridge {
+contract L2DAITokenBridge is IL2Bridge {
   event WithdrawalInitiated(
     address indexed _l1Token,
     address indexed _l2Token,
@@ -101,7 +72,7 @@ contract L2DAITokenBridge {
 
   address public immutable l1Token;
   address public immutable l2Token;
-  address public immutable l1DAITokenBridge;
+  address public immutable l1Bridge;
   uint256 public isOpen = 1;
 
   constructor(
@@ -114,7 +85,7 @@ contract L2DAITokenBridge {
 
     l2Token = _l2Token;
     l1Token = _l1Token;
-    l1DAITokenBridge = _l1DAITokenBridge;
+    l1Bridge = _l1DAITokenBridge;
   }
 
   function close() external auth {
@@ -131,6 +102,8 @@ contract L2DAITokenBridge {
     require(_l2Token == l2Token, "L2DAITokenBridge/token-not-dai");
 
     _initiateWithdrawal(_l1Receiver, _amount);
+
+    emit WithdrawalInitiated(msg.sender, _l1Receiver, _l2Token, _amount);
   }
 
   // When a withdrawal is initiated, we burn the withdrawer's funds to prevent subsequent L2 usage.
@@ -154,11 +127,13 @@ contract L2DAITokenBridge {
     uint256 _amount,
     bytes calldata _data
   ) external {
-    require(msg.sender == l1DAITokenBridge, "only L1 token bridge can call"); // only L1 bridge can call
+    require(msg.sender == l1Bridge, "only L1 token bridge can call"); // only L1 bridge can call
 
     require(_l1Token == l1Token, "L2DAITokenBridge/token-not-dai");
 
     Mintable(l2Token).mint(_to, _amount);
+
+    emit FinalizeDeposit(_from, _to, l2Token, _amount);
   }
 
   function l2TokenAddress(address _l1Token) external view returns (address) {

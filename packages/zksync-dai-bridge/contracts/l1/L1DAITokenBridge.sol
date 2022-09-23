@@ -137,6 +137,8 @@ contract L1DAITokenBridge is IL1Bridge {
     );
 
     depositAmount[msg.sender][txHash] = _amount;
+
+    emit DepositInitiated(msg.sender, _l2Receiver, _l1Token, _amount);
   }
 
   function claimFailedDeposit(
@@ -163,6 +165,8 @@ contract L1DAITokenBridge is IL1Bridge {
 
     depositAmount[_depositSender][_l2TxHash] = 0;
     TokenLike(l1Token).transferFrom(escrow, _depositSender, amount);
+
+    emit ClaimedFailedDeposit(_depositSender, _l1Token, amount);
   }
 
   // To withdraw, merkleproof must be presented by the user. This might be split
@@ -192,6 +196,8 @@ contract L1DAITokenBridge is IL1Bridge {
     isWithdrawalFinalized[_l2BlockNumber][_l2MessageIndex] = true;
 
     TokenLike(l1Token).transferFrom(escrow, l1Receiver, amount);
+
+    emit WithdrawalFinalized(l1Receiver, l1Token, amount);
   }
 
   function readUint32(bytes memory _bytes, uint256 _start)

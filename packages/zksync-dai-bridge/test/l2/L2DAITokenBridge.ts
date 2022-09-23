@@ -194,7 +194,7 @@ describe('L2DAITokenBridge', () => {
 
       expect(await l2DAITokenBridge.l1Token()).to.eq(l1Dai.address)
       expect(await l2DAITokenBridge.l2Token()).to.eq(l2Dai.address)
-      expect(await l2DAITokenBridge.l1DAITokenBridge()).to.eq(l1DAITokenBridge.address)
+      expect(await l2DAITokenBridge.l1Bridge()).to.eq(l1DAITokenBridge.address)
       expect(await l2DAITokenBridge.l2TokenAddress(l1Dai.address)).to.eq(l2Dai.address)
       expect(await l2DAITokenBridge.l1TokenAddress(l2Dai.address)).to.eq(l1Dai.address)
     })
