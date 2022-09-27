@@ -192,7 +192,7 @@ contract DogMock {
     }
 }
 
-contract IntegrationTest is DSSTest {
+contract GenericIntegrationTest is DSSTest {
 
     using GodMode for *;
 
@@ -238,19 +238,18 @@ contract IntegrationTest is DSSTest {
             End end = new End();
 
             rmcd = new MCD();
-            // FIXME this is prone to supplying args in the wrong order - want to improve
-            rmcd.loadCore(
-                address(vat),
-                address(daiJoin),
-                address(dai),
-                address(guest),
-                address(dog),
-                address(pot),
-                address(jug),
-                address(spotter),
-                address(end),
-                address(cure)
-            );
+            rmcd.loadCore({
+                _vat: address(vat),
+                _dai: address(dai),
+                _daiJoin: address(daiJoin),
+                _vow: address(guest),
+                _dog: address(dog),
+                _pot: address(pot),
+                _jug: address(jug),
+                _spotter: address(spotter),
+                _end: address(end),
+                _cure: address(cure)
+            });
             rmcd.init();
         }
         rmcd.end().file("claim", address(claimToken));

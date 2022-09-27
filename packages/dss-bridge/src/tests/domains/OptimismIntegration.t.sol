@@ -21,10 +21,10 @@ pragma solidity ^0.8.14;
 
 import { OptimismDomain } from "dss-test/domains/OptimismDomain.sol";
 
-import "../../IntegrationBase.t.sol";
+import "./IntegrationBase.t.sol";
 
-import { OptimismDomainHost } from "../../../domains/optimism/OptimismDomainHost.sol";
-import { OptimismDomainGuest } from "../../../domains/optimism/OptimismDomainGuest.sol";
+import { OptimismDomainHost } from "../../domains/optimism/OptimismDomainHost.sol";
+import { OptimismDomainGuest } from "../../domains/optimism/OptimismDomainGuest.sol";
 
 contract OptimismIntegrationTest is IntegrationBaseTest {
 
