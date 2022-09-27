@@ -28,11 +28,11 @@ import { OptimismDomainGuest } from "../../../domains/optimism/OptimismDomainGue
 
 contract OptimismIntegrationTest is IntegrationBaseTest {
 
-    function getRemoteDomain() internal virtual override view returns (BridgedDomain) {
+    function setupRemoteDomain() internal virtual override returns (BridgedDomain) {
         return new OptimismDomain("optimism", primaryDomain);
     }
 
-    function getRemoteDai() internal virtual override view returns (address) {
+    function setupRemoteDai() internal virtual override returns (address) {
         // DAI is already deployed on this domain
         return 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1;
     }
@@ -42,21 +42,63 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
         escrow = EscrowLike(mcd.chainlog().getAddress("OPTIMISM_ESCROW"));
         // Pre-calc the guest nonce
         address guestAddr = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), address(this), bytes1(0x09))))));
-        OptimismDomainHost _host = new OptimismDomainHost(DOMAIN_ILK, address(mcd.daiJoin()), address(escrow), mcd.chainlog().getAddress("MCD_ROUTER_TELEPORT_FW_A"), OptimismDomain(remoteDomain).l1messenger(), guestAddr);
-        host.file("glLift", 1_000_000);
-        host.file("glRectify", 1_000_000);
-        host.file("glCage", 1_000_000);
-        host.file("glExit", 1_000_000);
-        host.file("glDeposit", 1_000_000);
+        OptimismDomainHost _host = new OptimismDomainHost(DOMAIN_ILK, address(mcd.daiJoin()), address(escrow), mcd.chainlog().getAddress("MCD_ROUTER_TELEPORT_FW_A"), address(OptimismDomain(address(remoteDomain)).l1messenger()), guestAddr);
+        _host.file("glLift", 1_000_000);
+        _host.file("glRectify", 1_000_000);
+        _host.file("glCage", 1_000_000);
+        _host.file("glExit", 1_000_000);
+        _host.file("glDeposit", 1_000_000);
         host = DomainHost(_host);
 
         // Remote domain
-        remoteDomain.makeActive();
-        guest = DomainGuest(new OptimismDomainGuest(DOMAIN_ILK, address(rmcd.daiJoin()), address(claimToken), OptimismDomain(remoteDomain).l2messenger(), address(host)));
+        remoteDomain.selectFork();
+        OptimismDomainGuest _guest = new OptimismDomainGuest(DOMAIN_ILK, address(rmcd.daiJoin()), address(claimToken), address(OptimismDomain(address(remoteDomain)).l2messenger()), address(host));
         assertEq(address(guest), guestAddr);
+        _guest.file("glRelease", 1_000_000);
+        _guest.file("glPush", 1_000_000);
+        _guest.file("glTell", 1_000_000);
+        _guest.file("glWithdraw", 1_000_000);
+        _guest.file("glFlush", 1_000_000);
+        guest = DomainGuest(_guest);
 
         // Set back to primary before returning control
-        primaryDomain.makeActive();
+        primaryDomain.selectFork();
+    }
+
+    function hostLift(uint256 wad) internal virtual override {
+        OptimismDomainHost(address(host)).lift(wad);
+    }
+
+    function hostRectify() internal virtual override {
+        OptimismDomainHost(address(host)).rectify();
+    }
+
+    function hostCage() internal virtual override {
+        OptimismDomainHost(address(host)).cage();
+    }
+
+    function hostExit(address usr, uint256 wad) internal virtual override {
+        OptimismDomainHost(address(host)).exit(usr, wad);
+    }
+
+    function hostDeposit(address to, uint256 amount) internal virtual override {
+        OptimismDomainHost(address(host)).deposit(to, amount);
+    }
+
+    function guestRelease() internal virtual override {
+        OptimismDomainGuest(address(guest)).release();
+    }
+
+    function guestPush() internal virtual override {
+        OptimismDomainGuest(address(guest)).push();
+    }
+
+    function guestTell() internal virtual override {
+        OptimismDomainGuest(address(guest)).tell();
+    }
+
+    function guestWithdraw(address to, uint256 amount) internal virtual override {
+        OptimismDomainGuest(address(guest)).withdraw(to, amount);
     }
 
 }
