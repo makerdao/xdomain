@@ -102,19 +102,18 @@ abstract contract IntegrationBaseTest is DSSTest {
             End end = new End();
 
             rmcd = new MCD();
-            // FIXME this is prone to supplying args in the wrong order - want to improve
-            rmcd.loadCore(
-                address(vat),
-                address(daiJoin),
-                address(dai),
-                address(0),
-                address(dog),
-                address(pot),
-                address(jug),
-                address(spotter),
-                address(end),
-                address(cure)
-            );
+            rmcd.loadCore({
+                _vat: address(vat),
+                _dai: address(dai),
+                _daiJoin: address(daiJoin),
+                _vow: address(0),
+                _dog: address(dog),
+                _pot: address(pot),
+                _jug: address(jug),
+                _spotter: address(spotter),
+                _end: address(end),
+                _cure: address(cure)
+            });
             rmcd.init();
         }
         primaryDomain.selectFork();
@@ -145,6 +144,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         claimToken.rely(address(guest));
         rmcd.end().file("claim", address(claimToken));
         rmcd.end().file("wait", 1 hours);
+        rmcd.end().file("vow", address(guest));
         guest.file("end", address(rmcd.end()));
         guest.rely(address(rmcd.end()));
         rmcd.vat().rely(address(guest));
@@ -322,7 +322,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         assertEq(Vat(address(rmcd.vat())).surf(), int256(30 * RAD));
     }
 
-    function testGlobalShutdown() public {
+    function testGlobalShutdown2() public {
         assertEq(host.live(), 1);
         assertEq(mcd.vat().live(), 1);
         assertEq(pip.read(), bytes32(WAD));

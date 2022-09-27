@@ -41,8 +41,15 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
         // Primary domain
         escrow = EscrowLike(mcd.chainlog().getAddress("OPTIMISM_ESCROW"));
         // Pre-calc the guest nonce
-        address guestAddr = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), address(this), bytes1(0x09))))));
-        OptimismDomainHost _host = new OptimismDomainHost(DOMAIN_ILK, address(mcd.daiJoin()), address(escrow), mcd.chainlog().getAddress("MCD_ROUTER_TELEPORT_FW_A"), address(OptimismDomain(address(remoteDomain)).l1messenger()), guestAddr);
+        address guestAddr = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), address(this), bytes1(0x0f))))));
+        OptimismDomainHost _host = new OptimismDomainHost(
+            DOMAIN_ILK,
+            address(mcd.daiJoin()),
+            address(escrow),
+            mcd.chainlog().getAddress("MCD_ROUTER_TELEPORT_FW_A"),
+            address(OptimismDomain(address(remoteDomain)).l1messenger()),
+            guestAddr
+        );
         _host.file("glLift", 1_000_000);
         _host.file("glRectify", 1_000_000);
         _host.file("glCage", 1_000_000);
@@ -52,13 +59,19 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
 
         // Remote domain
         remoteDomain.selectFork();
-        OptimismDomainGuest _guest = new OptimismDomainGuest(DOMAIN_ILK, address(rmcd.daiJoin()), address(claimToken), address(OptimismDomain(address(remoteDomain)).l2messenger()), address(host));
-        assertEq(address(guest), guestAddr);
-        _guest.file("glRelease", 1_000_000);
-        _guest.file("glPush", 1_000_000);
-        _guest.file("glTell", 1_000_000);
-        _guest.file("glWithdraw", 1_000_000);
-        _guest.file("glFlush", 1_000_000);
+        OptimismDomainGuest _guest = new OptimismDomainGuest(
+            DOMAIN_ILK,
+            address(rmcd.daiJoin()),
+            address(claimToken),
+            address(OptimismDomain(address(remoteDomain)).l2messenger()),
+            address(host)
+        );
+        assertEq(address(_guest), guestAddr);
+        _guest.filegl("glRelease", 1_000_000);
+        _guest.filegl("glPush", 1_000_000);
+        _guest.filegl("glTell", 1_000_000);
+        _guest.filegl("glWithdraw", 1_000_000);
+        _guest.filegl("glFlush", 1_000_000);
         guest = DomainGuest(_guest);
 
         // Set back to primary before returning control
