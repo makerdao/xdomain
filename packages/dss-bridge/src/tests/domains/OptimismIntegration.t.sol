@@ -28,11 +28,11 @@ import { OptimismDomainGuest } from "../../domains/optimism/OptimismDomainGuest.
 
 contract OptimismIntegrationTest is IntegrationBaseTest {
 
-    function setupRemoteDomain() internal virtual override returns (BridgedDomain) {
-        return new OptimismDomain("optimism", primaryDomain);
+    function setupGuestDomain() internal virtual override returns (BridgedDomain) {
+        return new OptimismDomain("optimism", rootDomain);
     }
 
-    function setupRemoteDai() internal virtual override returns (address) {
+    function setupGuestDai() internal virtual override returns (address) {
         // DAI is already deployed on this domain
         return 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1;
     }
@@ -43,11 +43,11 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
         // Pre-calc the guest nonce
         address guestAddr = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), address(this), bytes1(0x0f))))));
         OptimismDomainHost _host = new OptimismDomainHost(
-            DOMAIN_ILK,
+            HOST_DOMAIN_ILK,
             address(mcd.daiJoin()),
             address(escrow),
             mcd.chainlog().getAddress("MCD_ROUTER_TELEPORT_FW_A"),
-            address(OptimismDomain(address(remoteDomain)).l1messenger()),
+            address(OptimismDomain(address(guestDomain)).l1messenger()),
             guestAddr
         );
         _host.file("glLift", 1_000_000);
@@ -58,12 +58,12 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
         host = DomainHost(_host);
 
         // Remote domain
-        remoteDomain.selectFork();
+        guestDomain.selectFork();
         OptimismDomainGuest _guest = new OptimismDomainGuest(
-            DOMAIN_ILK,
+            HOST_DOMAIN_ILK,
             address(rmcd.daiJoin()),
             address(claimToken),
-            address(OptimismDomain(address(remoteDomain)).l2messenger()),
+            address(OptimismDomain(address(guestDomain)).l2messenger()),
             address(host)
         );
         assertEq(address(_guest), guestAddr);
@@ -75,7 +75,7 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
         guest = DomainGuest(_guest);
 
         // Set back to primary before returning control
-        primaryDomain.selectFork();
+        rootDomain.selectFork();
     }
 
     function hostLift(uint256 wad) internal virtual override {
