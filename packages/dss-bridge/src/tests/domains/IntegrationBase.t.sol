@@ -72,12 +72,12 @@ abstract contract IntegrationBaseTest is DSSTest {
     bytes32 constant HOST_DOMAIN_ILK = "SOME-DOMAIN-A";
     bytes32 constant GUEST_COLL_ILK = "XCHAIN-COLLATERAL-A";
 
-    function setupCrossChain() internal virtual override returns (RootDomain) {
-        return new RootDomain("root");
-    }
-
-    function setupEnv() internal virtual override returns (MCD) {
-        return autoDetectEnv();
+    function setupEnv() internal virtual override {
+        config = loadConfig("integration");
+        rootDomain = new RootDomain(config, "root");
+        rootDomain.selectFork();
+        rootDomain.loadMCDFromChainlog();
+        mcd = rootDomain.mcd(); // For ease of access
     }
 
     function setupGuestDomain() internal virtual returns (BridgedDomain);
@@ -164,7 +164,7 @@ abstract contract IntegrationBaseTest is DSSTest {
     function guestTell() internal virtual;
     function guestWithdraw(address to, uint256 amount) internal virtual;
 
-    function testRaiseDebtCeiling() public {
+    function testRaiseDebtCeiling2() public {
         uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
         (uint256 ink, uint256 art) = mcd.vat().urns(HOST_DOMAIN_ILK, address(host));
         assertEq(ink, 0);

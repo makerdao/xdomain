@@ -22,7 +22,7 @@ pragma solidity ^0.8.14;
 import "dss-test/DSSTest.sol";
 import "ds-value/value.sol";
 
-import { EndAbstract } from "dss-interfaces/Interfaces.sol";
+import { EndAbstract, ChainlogAbstract } from "dss-interfaces/Interfaces.sol";
 
 import { Cure } from "xdomain-dss/Cure.sol";
 import { Dai } from "xdomain-dss/Dai.sol";
@@ -211,8 +211,9 @@ contract GenericIntegrationTest is DSSTest {
     bytes32 constant DOMAIN_ILK = "SOME-DOMAIN-A";
     bytes32 constant REMOTE_COLL_ILK = "XCHAIN-COLLATERAL-A";
 
-    function setupEnv() internal virtual override returns (MCD) {
-        return autoDetectEnv();
+    function setupEnv() internal virtual override {
+        mcd = new MCD();
+        mcd.loadFromChainlog(ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F));
     }
 
     function postSetup() internal virtual override {

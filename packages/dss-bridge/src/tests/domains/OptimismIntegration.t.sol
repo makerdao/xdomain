@@ -29,7 +29,7 @@ import { OptimismDomainGuest } from "../../domains/optimism/OptimismDomainGuest.
 contract OptimismIntegrationTest is IntegrationBaseTest {
 
     function setupGuestDomain() internal virtual override returns (BridgedDomain) {
-        return new OptimismDomain("optimism", rootDomain);
+        return new OptimismDomain(config, "optimism", rootDomain);
     }
 
     function setupGuestDai() internal virtual override returns (address) {
@@ -41,13 +41,13 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
         // Primary domain
         escrow = EscrowLike(mcd.chainlog().getAddress("OPTIMISM_ESCROW"));
         // Pre-calc the guest nonce
-        address guestAddr = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), address(this), bytes1(0x0f))))));
+        address guestAddr = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), address(this), bytes1(0x0e))))));
         OptimismDomainHost _host = new OptimismDomainHost(
             HOST_DOMAIN_ILK,
             address(mcd.daiJoin()),
             address(escrow),
             mcd.chainlog().getAddress("MCD_ROUTER_TELEPORT_FW_A"),
-            address(OptimismDomain(address(guestDomain)).l1messenger()),
+            address(OptimismDomain(address(guestDomain)).l1Messenger()),
             guestAddr
         );
         _host.file("glLift", 1_000_000);
@@ -63,10 +63,10 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
             HOST_DOMAIN_ILK,
             address(rmcd.daiJoin()),
             address(claimToken),
-            address(OptimismDomain(address(guestDomain)).l2messenger()),
+            address(OptimismDomain(address(guestDomain)).l2Messenger()),
             address(host)
         );
-        assertEq(address(_guest), guestAddr);
+        assertEq(address(_guest), guestAddr, "guest address mismatch");
         _guest.filegl("glRelease", 1_000_000);
         _guest.filegl("glPush", 1_000_000);
         _guest.filegl("glTell", 1_000_000);
