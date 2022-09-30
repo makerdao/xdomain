@@ -57,10 +57,12 @@ abstract contract IntegrationBaseTest is DSSTest {
 
     using GodMode for *;
 
+    string config;
     RootDomain rootDomain;
     BridgedDomain guestDomain;
 
     // Host-side contracts
+    MCD mcd;
     EscrowLike escrow;
     BridgeOracle pip;
     DomainHost host;
@@ -74,7 +76,7 @@ abstract contract IntegrationBaseTest is DSSTest {
     bytes32 constant GUEST_COLL_ILK = "XCHAIN-COLLATERAL-A";
 
     function setupEnv() internal virtual override {
-        loadConfig("integration");
+        config = readInput("integration");
 
         rootDomain = new RootDomain(config, "root");
         rootDomain.selectFork();

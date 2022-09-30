@@ -196,6 +196,8 @@ contract GenericIntegrationTest is DSSTest {
 
     using GodMode for *;
 
+    MCD mcd;
+
     // Bridge
     ClaimToken claimToken;
     SimpleDomainHost host;
