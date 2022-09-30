@@ -392,6 +392,30 @@ describe('Dai', () => {
         ).to.be.revertedWith('Dai/permit-expired')
       })
 
+      it('does not approve with invalid owner', async () => {
+        const permitResult = await signERC2612Permit(
+          web3.currentProvider,
+          dai.address,
+          signers.user1.address,
+          signers.user2.address,
+          '1',
+          null,
+          null,
+          '2',
+        )
+        await expect(
+          dai['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
+            ethers.constants.AddressZero,
+            signers.user2.address,
+            '1',
+            permitResult.deadline,
+            permitResult.v,
+            permitResult.r,
+            permitResult.s,
+          ),
+        ).to.be.revertedWith('Dai/invalid-owner')
+      })
+
       it('does not approve with invalid permit', async () => {
         const permitResult = await signERC2612Permit(
           web3.currentProvider,

@@ -245,7 +245,7 @@ contract Dai {
     bytes memory signature
   ) public {
     require(block.timestamp <= deadline, "Dai/permit-expired");
-    require(owner != address(0), "Dai/invalid-permit");
+    require(owner != address(0), "Dai/invalid-owner");
 
     uint256 chainId;
     assembly {
