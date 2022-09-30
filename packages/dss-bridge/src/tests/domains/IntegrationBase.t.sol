@@ -57,6 +57,7 @@ abstract contract IntegrationBaseTest is DSSTest {
 
     using GodMode for *;
 
+    RootDomain rootDomain;
     BridgedDomain guestDomain;
 
     // Host-side contracts
@@ -73,7 +74,8 @@ abstract contract IntegrationBaseTest is DSSTest {
     bytes32 constant GUEST_COLL_ILK = "XCHAIN-COLLATERAL-A";
 
     function setupEnv() internal virtual override {
-        config = loadConfig("integration");
+        loadConfig("integration");
+
         rootDomain = new RootDomain(config, "root");
         rootDomain.selectFork();
         rootDomain.loadMCDFromChainlog();
@@ -182,7 +184,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
 
         // Play the message on L2
-        guestDomain.relayFromHost();
+        guestDomain.relayFromHost(true);
 
         assertEq(rmcd.vat().Line(), 100 * RAD);
     }
@@ -204,7 +206,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         assertEq(host.line(), 100 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
 
-        guestDomain.relayFromHost();
+        guestDomain.relayFromHost(true);
         assertEq(rmcd.vat().Line(), 100 * RAD);
 
         // Pre-mint DAI is not released here
@@ -218,7 +220,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         assertEq(host.line(), 50 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
 
-        guestDomain.relayFromHost();
+        guestDomain.relayFromHost(true);
         assertEq(rmcd.vat().Line(), 50 * RAD);
 
         // Notify the host that the DAI is safe to remove
@@ -227,7 +229,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         assertEq(rmcd.vat().Line(), 50 * RAD);
         assertEq(rmcd.vat().debt(), 0);
 
-        guestDomain.relayToHost();
+        guestDomain.relayToHost(true);
         (ink, art) = mcd.vat().urns(HOST_DOMAIN_ILK, address(host));
         assertEq(ink, 50 ether);
         assertEq(art, 50 ether);
@@ -244,9 +246,9 @@ abstract contract IntegrationBaseTest is DSSTest {
 
         rootDomain.selectFork();
         hostLift(25 ether);
-        guestDomain.relayFromHost();
+        guestDomain.relayFromHost(true);
         guestRelease();
-        guestDomain.relayToHost();
+        guestDomain.relayToHost(true);
 
         (ink, art) = mcd.vat().urns(HOST_DOMAIN_ILK, address(host));
         assertEq(ink, 40 ether);
@@ -263,7 +265,7 @@ abstract contract IntegrationBaseTest is DSSTest {
 
         // Set global DC and add 50 DAI surplus + 20 DAI debt to vow
         hostLift(100 ether);
-        guestDomain.relayFromHost();
+        guestDomain.relayFromHost(true);
         rmcd.vat().suck(address(123), address(guest), 50 * RAD);
         rmcd.vat().suck(address(guest), address(123), 20 * RAD);
 
@@ -275,7 +277,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         assertEq(rmcd.vat().dai(address(guest)), 0);
         assertEq(rmcd.vat().sin(address(guest)), 0);
         assertEq(Vat(address(rmcd.vat())).surf(), -int256(30 * RAD));
-        guestDomain.relayToHost();
+        guestDomain.relayToHost(true);
 
         assertEq(mcd.vat().dai(address(mcd.vow())), vowDai + 30 * RAD);
         assertEq(mcd.vat().sin(address(mcd.vow())), vowSin);
@@ -289,7 +291,7 @@ abstract contract IntegrationBaseTest is DSSTest {
 
         // Set global DC and add 20 DAI surplus + 50 DAI debt to vow
         hostLift(100 ether);
-        guestDomain.relayFromHost();
+        guestDomain.relayFromHost(true);
         rmcd.vat().suck(address(123), address(guest), 20 * RAD);
         rmcd.vat().suck(address(guest), address(123), 50 * RAD);
 
@@ -298,7 +300,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         assertEq(Vat(address(rmcd.vat())).surf(), 0);
 
         guestPush();
-        guestDomain.relayToHost();
+        guestDomain.relayToHost(true);
 
         guestDomain.selectFork();
         assertEq(rmcd.vat().dai(address(guest)), 0);
@@ -310,7 +312,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         assertEq(mcd.vat().dai(address(mcd.vow())), vowDai);
         assertEq(mcd.vat().sin(address(mcd.vow())), vowSin + 30 * RAD);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 130 ether);
-        guestDomain.relayFromHost();
+        guestDomain.relayFromHost(true);
 
         assertEq(Vat(address(rmcd.vat())).surf(), int256(30 * RAD));
         assertEq(rmcd.vat().dai(address(guest)), 30 * RAD);
@@ -329,7 +331,7 @@ abstract contract IntegrationBaseTest is DSSTest {
 
         // Set up some debt in the guest instance
         hostLift(100 ether);
-        guestDomain.relayFromHost();
+        guestDomain.relayFromHost(true);
         rmcd.initIlk(GUEST_COLL_ILK);
         rmcd.vat().file(GUEST_COLL_ILK, "line", 1_000_000 * RAD);
         rmcd.vat().slip(GUEST_COLL_ILK, address(this), 40 ether);
@@ -352,7 +354,7 @@ abstract contract IntegrationBaseTest is DSSTest {
 
         assertEq(mcd.vat().live(), 0);
         assertEq(host.live(), 0);
-        guestDomain.relayFromHost();
+        guestDomain.relayFromHost(true);
         assertEq(guest.live(), 0);
         assertEq(rmcd.vat().live(), 0);
         assertEq(rmcd.vat().debt(), 40 * RAD);
@@ -379,7 +381,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         guestTell();
         assertEq(guest.grain(), 100 ether);
         rmcd.end().flow(GUEST_COLL_ILK);
-        guestDomain.relayToHost();
+        guestDomain.relayToHost(true);
         assertEq(host.cure(), 60 * RAD);    // 60 pre-mint dai is unused
 
         // --- Settle out the Host instance ---
@@ -443,7 +445,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         // Exit to the guest domain
         hostExit(address(this), gems);
         assertEq(mcd.vat().gem(HOST_DOMAIN_ILK, address(this)), 0);
-        guestDomain.relayFromHost();
+        guestDomain.relayFromHost(true);
         uint256 tokens = claimToken.balanceOf(address(this));
         assertApproxEqAbs(tokens, 20 ether, WAD / 10000);
 
@@ -468,7 +470,7 @@ abstract contract IntegrationBaseTest is DSSTest {
 
         hostDeposit(address(123), 100 ether);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
-        guestDomain.relayFromHost();
+        guestDomain.relayFromHost(true);
 
         assertEq(Vat(address(rmcd.vat())).surf(), int256(100 * RAD));
         assertEq(rmcd.dai().balanceOf(address(123)), 100 ether);
@@ -482,7 +484,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         hostDeposit(address(this), 100 ether);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai + 100 ether);
         assertEq(mcd.dai().balanceOf(address(123)), 0);
-        guestDomain.relayFromHost();
+        guestDomain.relayFromHost(true);
 
         rmcd.vat().hope(address(rmcd.daiJoin()));
         rmcd.dai().approve(address(guest), 100 ether);
@@ -492,7 +494,7 @@ abstract contract IntegrationBaseTest is DSSTest {
         guestWithdraw(address(123), 100 ether);
         assertEq(Vat(address(rmcd.vat())).surf(), 0);
         assertEq(rmcd.dai().balanceOf(address(this)), 0);
-        guestDomain.relayToHost();
+        guestDomain.relayToHost(true);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai);
         assertEq(mcd.dai().balanceOf(address(123)), 100 ether);
     }
