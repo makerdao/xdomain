@@ -25,9 +25,12 @@ describe('L2DAITokenBridge', () => {
       const { l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupTest()
       const [user2] = await ethers.getSigners()
 
-      await l2DAITokenBridge
+      const finalizeDepositTx = await l2DAITokenBridge
         .connect(l1TokenBridge)
         .finalizeDeposit(user1.address, user2.address, l1Dai.address, depositAmount, defaultData)
+      await expect(finalizeDepositTx)
+        .to.emit(l2DAITokenBridge, 'FinalizeDeposit')
+        .withArgs(user1.address, user2.address, l2Dai.address, depositAmount)
 
       expect(await l2Dai.balanceOf(user2.address)).to.be.eq(depositAmount)
       expect(await l2Dai.totalSupply()).to.be.eq(depositAmount)
@@ -90,7 +93,10 @@ describe('L2DAITokenBridge', () => {
       const { l2DAITokenBridge, l2Dai, user1, l1DAITokenBridge, zkSyncSysMock } = await setupWithdrawalTest()
 
       await l2Dai.connect(user1).approve(l2DAITokenBridge.address, withdrawAmount)
-      await l2DAITokenBridge.connect(user1).withdraw(user1.address, l2Dai.address, withdrawAmount)
+      const withdrawTx = await l2DAITokenBridge.connect(user1).withdraw(user1.address, l2Dai.address, withdrawAmount)
+      await expect(withdrawTx)
+        .to.emit(l2DAITokenBridge, 'WithdrawalInitiated')
+        .withArgs(user1.address, user1.address, l2Dai.address, withdrawAmount)
 
       const withdrawCrossChainCall = zkSyncSysMock.smocked.sendToL1.calls[0]
 

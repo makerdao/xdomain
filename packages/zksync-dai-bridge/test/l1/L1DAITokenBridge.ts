@@ -32,7 +32,11 @@ describe('L1DAITokenBridge', () => {
       })
 
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
-      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
+      const depositTx = await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
+      await expect(depositTx)
+        .to.emit(l1DAITokenBridge, 'DepositInitiated')
+        .withArgs(user1.address, user2.address, l1Dai.address, depositAmount)
+
       const depositCallToMessengerCall = zkSyncMock.smocked.requestL2Transaction.calls[0]
 
       expect(await l1Dai.balanceOf(user1.address)).to.be.eq(initialTotalL1Supply - depositAmount)
@@ -137,12 +141,15 @@ describe('L1DAITokenBridge', () => {
 
       zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof always OK
 
-      await l1DAITokenBridge.connect(user1).finalizeWithdrawal(
+      const finalizeWithdrawalTx = await l1DAITokenBridge.connect(user1).finalizeWithdrawal(
         blockNumber, // blockNumber
         messageIndex, // messageIndex
         L2toL1message, // message that I want to proof
         proof, // merkle Proof
       )
+      await expect(finalizeWithdrawalTx)
+        .to.emit(l1DAITokenBridge, 'WithdrawalFinalized')
+        .withArgs(user2.address, l1Dai.address, depositAmount)
 
       expect(await l1Dai.balanceOf(user2.address)).to.be.equal(withdrawAmount)
       expect(await l1Dai.balanceOf(l1Escrow.address)).to.be.equal(initialTotalL1Supply - withdrawAmount)
@@ -339,7 +346,7 @@ describe('L1DAITokenBridge', () => {
 
       zkSyncMock.smocked.proveL2LogInclusion.will.return.with(true) //inclusion proof always OK
 
-      await l1DAITokenBridge.connect(user1).claimFailedDeposit(
+      const claimFailedDepositTx = await l1DAITokenBridge.connect(user1).claimFailedDeposit(
         user1.address,
         l1Dai.address,
         txHash,
@@ -347,6 +354,9 @@ describe('L1DAITokenBridge', () => {
         messageIndex, // messageIndex
         proof, // merkle Proof
       )
+      await expect(claimFailedDepositTx)
+        .to.emit(l1DAITokenBridge, 'ClaimedFailedDeposit')
+        .withArgs(user1.address, l1Dai.address, depositAmount)
 
       expect(await l1Dai.balanceOf(user1.address)).to.be.eq(initialTotalL1Supply)
       expect(await l1Dai.balanceOf(l1Escrow.address)).to.be.eq(0)

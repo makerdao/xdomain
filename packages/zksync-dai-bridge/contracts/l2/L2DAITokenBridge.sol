@@ -30,24 +30,6 @@ interface Mintable {
 // Note: when bridge is closed it will still process in progress messages
 
 contract L2DAITokenBridge is IL2Bridge {
-  event WithdrawalInitiated(
-    address indexed _l1Token,
-    address indexed _l2Token,
-    address indexed _from,
-    address _to,
-    uint256 _amount,
-    bytes _data
-  );
-
-  event DepositFinalized(
-    address indexed _l1Token,
-    address indexed _l2Token,
-    address indexed _from,
-    address _to,
-    uint256 _amount,
-    bytes _data
-  );
-
   // --- Auth ---
   mapping(address => uint256) public wards;
 
@@ -66,14 +48,14 @@ contract L2DAITokenBridge is IL2Bridge {
     _;
   }
 
-  event Rely(address indexed usr);
-  event Deny(address indexed usr);
-  event Closed();
-
   address public immutable l1Token;
   address public immutable l2Token;
   address public immutable l1Bridge;
   uint256 public isOpen = 1;
+
+  event Rely(address indexed usr);
+  event Deny(address indexed usr);
+  event Closed();
 
   constructor(
     address _l2Token,
@@ -119,7 +101,6 @@ contract L2DAITokenBridge is IL2Bridge {
   }
 
   // When a deposit is finalized, we credit the account on L2 with the same amount of tokens.
-
   function finalizeDeposit(
     address _from,
     address _to,

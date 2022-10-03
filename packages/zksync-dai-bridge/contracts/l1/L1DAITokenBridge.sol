@@ -36,23 +36,10 @@ interface L2DAITokenBridgeLike {
   ) external;
 }
 
-uint160 constant SYSTEM_CONTRACTS_OFFSET = 0x8000; // 2^15
-address constant BOOTLOADER_ADDRESS = address(SYSTEM_CONTRACTS_OFFSET + 0x01);
-
 // Managed locked funds in L1Escrow and send / receive messages to L2DAITokenBridge counterpart
 // Note: when bridge is closed it will still process in progress messages
 
 contract L1DAITokenBridge is IL1Bridge {
-  // TODO: evaluate constant
-  uint256 constant DEPOSIT_ERGS_LIMIT = 2097152;
-
-  // TODO: evaluate constant
-  uint256 constant DEPLOY_L2_BRIDGE_COUNTERPART_ERGS_LIMIT = 2097152;
-  mapping(uint256 => mapping(uint256 => bool)) public isWithdrawalFinalized;
-  mapping(address => mapping(bytes32 => uint256)) depositAmount;
-
-  event WithdrawalFinalized(address indexed _recipient, uint256 _amount);
-
   // --- Auth ---
   mapping(address => uint256) public wards;
 
@@ -71,9 +58,8 @@ contract L1DAITokenBridge is IL1Bridge {
     _;
   }
 
-  event Rely(address indexed usr);
-  event Deny(address indexed usr);
-
+  uint256 constant DEPOSIT_ERGS_LIMIT = 2097152;
+  address constant BOOTLOADER_ADDRESS = 0x0000000000000000000000000000000000008001; // address(SYSTEM_CONTRACTS_OFFSET + 0x01);
   address public immutable l1Token;
   address public immutable l2Bridge;
   address public immutable l2Token;
@@ -81,6 +67,11 @@ contract L1DAITokenBridge is IL1Bridge {
   IMailbox public immutable zkSyncMailbox;
   uint256 public isOpen = 1;
 
+  mapping(uint256 => mapping(uint256 => bool)) public isWithdrawalFinalized;
+  mapping(address => mapping(bytes32 => uint256)) depositAmount;
+
+  event Rely(address indexed usr);
+  event Deny(address indexed usr);
   event Closed();
 
   constructor(
