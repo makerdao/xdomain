@@ -23,16 +23,6 @@ const errorMessages = {
 }
 
 describe('L1DAITokenBridge', () => {
-  /*
-  it('returns the correct counterpart TokenBridge', async () => {
-    const [l2DaiGateway, zkSyncImpersonator, user1] = await ethers.getSigners()
-    const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupTest({
-      zkSyncImpersonator,
-      user1,
-    })
-    expect(await l1DAITokenBridge.l2DAITokenBridge()).to.be.eq(l2DaiGateway.address)
-  }) */
-
   describe('deposit()', () => {
     it('escrows funds and sends xchain message on deposit', async () => {
       const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
@@ -504,7 +494,7 @@ describe('L1DAITokenBridge', () => {
 
       expect(await l1DAITokenBridge.l1Token()).to.eq(l1Dai.address)
       expect(await l1DAITokenBridge.l2Token()).to.eq(l2Dai.address)
-      expect(await l1DAITokenBridge.l2DAITokenBridge()).to.eq(l2DAITokenBridgeMock.address)
+      expect(await l1DAITokenBridge.l2Bridge()).to.eq(l2DAITokenBridgeMock.address)
       expect(await l1DAITokenBridge.escrow()).to.eq(l1Escrow.address)
       expect(await l1DAITokenBridge.zkSyncMailbox()).to.eq(zkSyncMock.address)
       expect(await l1DAITokenBridge.l2TokenAddress(l1Dai.address)).to.eq(l2Dai.address)

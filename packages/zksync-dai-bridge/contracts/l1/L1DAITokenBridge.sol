@@ -75,7 +75,7 @@ contract L1DAITokenBridge is IL1Bridge {
   event Deny(address indexed usr);
 
   address public immutable l1Token;
-  address public immutable l2DAITokenBridge;
+  address public immutable l2Bridge;
   address public immutable l2Token;
   address public immutable escrow;
   IMailbox public immutable zkSyncMailbox;
@@ -94,7 +94,7 @@ contract L1DAITokenBridge is IL1Bridge {
     emit Rely(msg.sender);
 
     l1Token = _l1Token;
-    l2DAITokenBridge = _l2DAITokenBridge;
+    l2Bridge = _l2DAITokenBridge;
     l2Token = _l2Token;
     escrow = _escrow;
     zkSyncMailbox = _mailbox;
@@ -129,7 +129,7 @@ contract L1DAITokenBridge is IL1Bridge {
     );
 
     txHash = zkSyncMailbox.requestL2Transaction{value: msg.value}(
-      l2DAITokenBridge,
+      l2Bridge,
       0, // l2Value is always 0
       l2TxCalldata,
       DEPOSIT_ERGS_LIMIT,
@@ -182,7 +182,7 @@ contract L1DAITokenBridge is IL1Bridge {
       !isWithdrawalFinalized[_l2BlockNumber][_l2MessageIndex],
       "Withdrawal already processed"
     );
-    L2Message memory l2ToL1Message = L2Message({sender: l2DAITokenBridge, data: _message});
+    L2Message memory l2ToL1Message = L2Message({sender: l2Bridge, data: _message});
 
     (address l1Receiver, uint256 amount) = _parseL2WithdrawalMessage(l2ToL1Message.data);
     bool success = zkSyncMailbox.proveL2MessageInclusion(
