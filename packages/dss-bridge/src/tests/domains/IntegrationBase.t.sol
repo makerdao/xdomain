@@ -168,7 +168,7 @@ abstract contract IntegrationBaseTest is DSSTest {
     function guestTell() internal virtual;
     function guestWithdraw(address to, uint256 amount) internal virtual;
 
-    function testRaiseDebtCeiling2() public {
+    function testRaiseDebtCeiling() public {
         uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
         (uint256 ink, uint256 art) = mcd.vat().urns(HOST_DOMAIN_ILK, address(host));
         assertEq(ink, 0);
