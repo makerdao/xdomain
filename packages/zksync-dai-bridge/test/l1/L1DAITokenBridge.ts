@@ -230,7 +230,7 @@ describe('L1DAITokenBridge', () => {
     })
     it('reverts if wrong L2toL1 message', async () => {
       const [user1, zkSyncImpersonator] = await ethers.getSigners()
-      const { l1DAITokenBridge, zkSyncMock } = await setupWithdrawTest({
+      const { l1DAITokenBridge } = await setupWithdrawTest({
         zkSyncImpersonator,
         user1,
       })
