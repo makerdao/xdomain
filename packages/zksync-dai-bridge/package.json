@@ -9,7 +9,7 @@
     "build:l2": "NETWORK=zksync hardhat compile --network zksync --no-typechain",
     "build:unit": "UNIT_TESTS=1 hardhat compile",
     "clean": "hardhat clean && rm -rf artifacts artifacts-zk cache cache-zk crytic-export corpus",
-    "coverage": "UNIT_TESTS=1 hardhat coverage && istanbul check-coverage --branches 59 --lines 63",
+    "coverage": "UNIT_TESTS=1 hardhat coverage && istanbul check-coverage --branches 100 --lines 100",
     "format": "prettier --check \"./**/*.{ts,sol}\"",
     "format:fix": "prettier --write \"./**/*.{ts,sol}\"",
     "lint": "eslint --ext .ts test test-e2e zksync-helpers hardhat.config.ts",

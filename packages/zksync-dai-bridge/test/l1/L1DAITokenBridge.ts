@@ -20,6 +20,7 @@ const errorMessages = {
   notEOA: 'L1DAITokenBridge/Sender-not-EOA',
   daiInsufficientAllowance: 'Dai/insufficient-allowance',
   daiInsufficientBalance: 'Dai/insufficient-balance',
+  tokenNotDai: 'L1DAITokenBridge/token-not-dai',
 }
 
 describe('L1DAITokenBridge', () => {
@@ -115,9 +116,10 @@ describe('L1DAITokenBridge', () => {
     const withdrawAmount = 100
 
     const errorMessages = {
-      wrongProof: 'nq',
-      wrongL2toL1message: 'nt',
-      withdrawalProcessed: 'Withdrawal already processed',
+      wrongProof: 'L1DAITokenBridge/invalid-proof',
+      wrongL2toL1MessageLength: 'L1DAITokenBridge/bad-msg-length',
+      wrongL2toL1MessageSignature: 'L1DAITokenBridge/bad-msg-sig',
+      withdrawalProcessed: 'L1DAITokenBridge/was-withdrawn',
       daiInsufficientAllowance: 'Dai/insufficient-allowance',
     }
 
@@ -244,8 +246,6 @@ describe('L1DAITokenBridge', () => {
       )
       const proof: any[] = []
 
-      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof rejected
-
       await expect(
         l1DAITokenBridge.connect(user1).finalizeWithdrawal(
           blockNumber, // blockNumber
@@ -253,7 +253,16 @@ describe('L1DAITokenBridge', () => {
           L2toL1message, // message that I want to proof
           proof, // merkle Proof
         ),
-      ).to.be.revertedWith(errorMessages.wrongL2toL1message)
+      ).to.be.revertedWith(errorMessages.wrongL2toL1MessageSignature)
+
+      await expect(
+        l1DAITokenBridge.connect(user1).finalizeWithdrawal(
+          blockNumber, // blockNumber
+          messageIndex, // messageIndex
+          '0x', // message that I want to proof
+          proof, // merkle Proof
+        ),
+      ).to.be.revertedWith(errorMessages.wrongL2toL1MessageLength)
     })
 
     it('reverts if wrong proof', async () => {
@@ -320,12 +329,12 @@ describe('L1DAITokenBridge', () => {
 
   describe('claimFailedDeposit()', () => {
     const errorMessages = {
-      wrongProof: 'Wrong proof',
+      wrongProof: 'L1DAITokenBridge/wrong-proof',
       tokenMismatch: 'L1DAITokenBridge/token-not-dai',
-      nonDepositedDAI: 'Claiming non-deposited DAI',
+      nonDepositedDAI: 'L1DAITokenBridge/not-deposited',
     }
 
-    it('failed deposit claimed successfully', async () => {
+    it('successfully claims a failed deposit', async () => {
       const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
       const { l1Dai, l1DAITokenBridge, zkSyncMock, l1Escrow } = await setupTest({
         zkSyncImpersonator,
@@ -519,6 +528,20 @@ describe('L1DAITokenBridge', () => {
       return [l1Dai, l2DAITokenBridge, l2Dai, l1CrossDomainMessengerMock, l1Escrow]
     },
     authedMethods: [(c) => c.close()],
+  })
+
+  describe('view functions', () => {
+    it('reverts when l2TokenAddress() is called with wrong token', async () => {
+      const [zkSyncImpersonator, user1] = await ethers.getSigners()
+      const { l1DAITokenBridge } = await setupTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      await expect(l1DAITokenBridge.l2TokenAddress(ethers.constants.AddressZero)).to.be.revertedWith(
+        errorMessages.tokenNotDai,
+      )
+    })
   })
 })
 

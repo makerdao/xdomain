@@ -11,9 +11,10 @@ const errorMessages = {
   notOwner: 'L2DAITokenBridge/not-authorized',
   tokenMismatch: 'L2DAITokenBridge/token-not-dai',
   daiNotAuthorized: 'Dai/not-authorized',
-  onlyL1TokenBridge: 'only L1 token bridge can call',
+  onlyL1TokenBridge: 'L2DAITokenBridge/sender-not-l1-bridge',
   l2DaiBridgeClosed: 'L2DAITokenBridge/closed',
   insufficientDaiBalance: 'Dai/insufficient-balance',
+  tokenNotDai: 'L2DAITokenBridge/token-not-dai',
 }
 
 describe('L2DAITokenBridge', () => {
@@ -224,6 +225,21 @@ describe('L2DAITokenBridge', () => {
       return [l2Dai, l1Dai, l1DAITokenBridge]
     },
     authedMethods: [(c) => c.close()],
+  })
+
+  describe('view functions', () => {
+    it('reverts when l1TokenAddress() is called with wrong token', async () => {
+      const { l2DAITokenBridge, user1 } = await setupTest()
+      await expect(l2DAITokenBridge.connect(user1).l1TokenAddress(ethers.constants.AddressZero)).to.be.revertedWith(
+        errorMessages.tokenNotDai,
+      )
+    })
+    it('reverts when l2TokenAddress() is called with wrong token', async () => {
+      const { l2DAITokenBridge, user1 } = await setupTest()
+      await expect(l2DAITokenBridge.connect(user1).l2TokenAddress(ethers.constants.AddressZero)).to.be.revertedWith(
+        errorMessages.tokenNotDai,
+      )
+    })
   })
 })
 

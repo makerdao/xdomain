@@ -105,18 +105,16 @@ contract L1DAITokenBridge is IL1Bridge {
   ) external payable returns (bytes32 txHash) {
     require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
     require(isOpen == 1, "L1DAITokenBridge/closed");
-    require(_amount > 0, "1T");
-    // empty deposit amount  TODO: do we need that check ?
 
     TokenLike(l1Token).transferFrom(msg.sender, escrow, _amount);
-    //bytes memory emptyBytes = "";
+
     bytes memory l2TxCalldata = abi.encodeWithSelector(
       L2DAITokenBridgeLike.finalizeDeposit.selector,
       msg.sender,
       _l2Receiver,
       _l1Token,
       _amount,
-      "" // TODO: Do we pass empty bytes here ?
+      "" // _data is not used in this bridge but still kept as an argument of finalizeDeposit for consistency with ZkSync's standard ERC20 bridge
     );
 
     txHash = zkSyncMailbox.requestL2Transaction{value: msg.value}(
@@ -149,10 +147,10 @@ contract L1DAITokenBridge is IL1Bridge {
       l2Log,
       _merkleProof
     );
-    require(success, "Wrong proof");
+    require(success, "L1DAITokenBridge/wrong-proof");
 
     uint256 amount = depositAmount[_depositSender][_l2TxHash];
-    require(amount > 0, "Claiming non-deposited DAI");
+    require(amount > 0, "L1DAITokenBridge/not-deposited");
 
     depositAmount[_depositSender][_l2TxHash] = 0;
     TokenLike(l1Token).transferFrom(escrow, _depositSender, amount);
@@ -171,7 +169,7 @@ contract L1DAITokenBridge is IL1Bridge {
   ) external {
     require(
       !isWithdrawalFinalized[_l2BlockNumber][_l2MessageIndex],
-      "Withdrawal already processed"
+      "L1DAITokenBridge/was-withdrawn"
     );
     L2Message memory l2ToL1Message = L2Message({sender: l2Bridge, data: _message});
 
@@ -182,7 +180,7 @@ contract L1DAITokenBridge is IL1Bridge {
       l2ToL1Message,
       _merkleProof
     );
-    require(success, "nq");
+    require(success, "L1DAITokenBridge/invalid-proof");
 
     isWithdrawalFinalized[_l2BlockNumber][_l2MessageIndex] = true;
 
@@ -231,10 +229,10 @@ contract L1DAITokenBridge is IL1Bridge {
   {
     // Check that message length is correct.
     // It should be equal to the length of the function signature + address  + uint256 = 4 + 20 + + 32 = 56 (bytes).
-    require(_l2ToL1message.length == 56, "kk");
+    require(_l2ToL1message.length == 56, "L1DAITokenBridge/bad-msg-length");
 
     (uint32 functionSignature, uint256 offset) = readUint32(_l2ToL1message, 0);
-    require(bytes4(functionSignature) == this.finalizeWithdrawal.selector, "nt");
+    require(bytes4(functionSignature) == this.finalizeWithdrawal.selector, "L1DAITokenBridge/bad-msg-sig");
 
     (l1Receiver, offset) = readAddress(_l2ToL1message, offset);
     (amount, offset) = readUint256(_l2ToL1message, offset);

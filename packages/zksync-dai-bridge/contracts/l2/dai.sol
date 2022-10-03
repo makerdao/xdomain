@@ -67,17 +67,13 @@ contract Dai {
     require((z = x + y) >= x);
   }
 
-  function _sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-    require((z = x - y) <= x);
-  }
-
   // --- EIP712 niceties ---
   uint256 public immutable deploymentChainId;
   bytes32 private immutable _DOMAIN_SEPARATOR;
   bytes32 public constant PERMIT_TYPEHASH =
     keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
-  constructor() public {
+  constructor() {
     wards[msg.sender] = 1;
     emit Rely(msg.sender);
 
