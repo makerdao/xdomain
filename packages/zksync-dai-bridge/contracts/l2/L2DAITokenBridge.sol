@@ -70,6 +70,16 @@ contract L2DAITokenBridge is IL2Bridge {
     l1Bridge = _l1DAITokenBridge;
   }
 
+  function l2TokenAddress(address _l1Token) external view returns (address) {
+    require(_l1Token == l1Token, "L2DAITokenBridge/token-not-dai");
+    return l2Token;
+  }
+
+  function l1TokenAddress(address _l2Token) external view returns (address) {
+    require(_l2Token == l2Token, "L2DAITokenBridge/token-not-dai");
+    return l1Token;
+  }
+
   function close() external auth {
     isOpen = 0;
 
@@ -106,7 +116,7 @@ contract L2DAITokenBridge is IL2Bridge {
     address _to,
     address _l1Token,
     uint256 _amount,
-    bytes calldata _data
+    bytes calldata /* _data */
   ) external {
     require(msg.sender == l1Bridge, "L2DAITokenBridge/sender-not-l1-bridge"); // only L1 bridge can call
 
@@ -115,17 +125,5 @@ contract L2DAITokenBridge is IL2Bridge {
     Mintable(l2Token).mint(_to, _amount);
 
     emit FinalizeDeposit(_from, _to, l2Token, _amount);
-  }
-
-  function l2TokenAddress(address _l1Token) external view returns (address) {
-    require(_l1Token == l1Token, "L2DAITokenBridge/token-not-dai");
-
-    return l2Token;
-  }
-
-  function l1TokenAddress(address _l2Token) external view returns (address) {
-    require(_l2Token == l2Token, "L2DAITokenBridge/token-not-dai");
-
-    return l1Token;
   }
 }

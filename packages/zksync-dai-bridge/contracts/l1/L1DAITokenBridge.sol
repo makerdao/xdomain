@@ -91,6 +91,11 @@ contract L1DAITokenBridge is IL1Bridge {
     zkSyncMailbox = _mailbox;
   }
 
+  function l2TokenAddress(address _l1Token) public view returns (address) {
+    require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
+    return l2Token;
+  }
+
   function close() external auth {
     isOpen = 0;
 
@@ -189,58 +194,23 @@ contract L1DAITokenBridge is IL1Bridge {
     emit WithdrawalFinalized(l1Receiver, l1Token, amount);
   }
 
-  function readUint32(bytes memory _bytes, uint256 _start)
-    internal
-    pure
-    returns (uint32 result, uint256 offset)
-  {
-    assembly {
-      offset := add(_start, 4)
-      result := mload(add(_bytes, offset))
-    }
-  }
-
-  function readUint256(bytes memory _bytes, uint256 _start)
-    internal
-    pure
-    returns (uint256 result, uint256 offset)
-  {
-    assembly {
-      offset := add(_start, 32)
-      result := mload(add(_bytes, offset))
-    }
-  }
-
-  function readAddress(bytes memory _bytes, uint256 _start)
-    internal
-    pure
-    returns (address result, uint256 offset)
-  {
-    assembly {
-      offset := add(_start, 20)
-      result := mload(add(_bytes, offset))
-    }
-  }
-
   function _parseL2WithdrawalMessage(bytes memory _l2ToL1message)
     internal
     pure
     returns (address l1Receiver, uint256 amount)
   {
-    // Check that message length is correct.
-    // It should be equal to the length of the function signature + address  + uint256 = 4 + 20 + + 32 = 56 (bytes).
+    // _l2ToL1message = {size:32}{funSig:4}{l1Receiver:20}{amount:32} => _l2ToL1message.length = 4 + 20 + 32 = 56 (bytes).
     require(_l2ToL1message.length == 56, "L1DAITokenBridge/bad-msg-length");
 
-    (uint32 functionSignature, uint256 offset) = readUint32(_l2ToL1message, 0);
-    require(bytes4(functionSignature) == this.finalizeWithdrawal.selector, "L1DAITokenBridge/bad-msg-sig");
+    uint32 funSig;
+    assembly {
+      funSig := mload(add(_l2ToL1message, 4))
+    }
+    require(bytes4(funSig) == this.finalizeWithdrawal.selector, "L1DAITokenBridge/bad-msg-sig");
 
-    (l1Receiver, offset) = readAddress(_l2ToL1message, offset);
-    (amount, offset) = readUint256(_l2ToL1message, offset);
-  }
-
-  function l2TokenAddress(address _l1Token) public view returns (address) {
-    require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
-
-    return l2Token;
+    assembly {
+      l1Receiver := mload(add(_l2ToL1message, 24))
+      amount := mload(add(_l2ToL1message, 56))
+    }
   }
 }
