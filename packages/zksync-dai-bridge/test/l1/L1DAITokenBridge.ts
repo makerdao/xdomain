@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
 import { Dai__factory, L1DAITokenBridge__factory, L1Escrow__factory } from '../../typechain-types'
-import { deployContractMock, deployZkSyncContractMock } from '../../zksync-helpers'
+import { deployContractMock, deployL1ZkSyncContractMock } from '../../zksync-helpers'
 
 const initialTotalL1Supply = 3000
 const depositAmount = 100
@@ -20,19 +20,10 @@ const errorMessages = {
   notEOA: 'L1DAITokenBridge/Sender-not-EOA',
   daiInsufficientAllowance: 'Dai/insufficient-allowance',
   daiInsufficientBalance: 'Dai/insufficient-balance',
+  tokenNotDai: 'L1DAITokenBridge/token-not-dai',
 }
 
 describe('L1DAITokenBridge', () => {
-  /*
-  it('returns the correct counterpart TokenBridge', async () => {
-    const [l2DaiGateway, zkSyncImpersonator, user1] = await ethers.getSigners()
-    const { l1Dai, l2Dai, l1DAITokenBridge, zkSyncMock, l2DAITokenBridge, l1Escrow } = await setupTest({
-      zkSyncImpersonator,
-      user1,
-    })
-    expect(await l1DAITokenBridge.l2DAITokenBridge()).to.be.eq(l2DaiGateway.address)
-  }) */
-
   describe('deposit()', () => {
     it('escrows funds and sends xchain message on deposit', async () => {
       const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
@@ -42,7 +33,11 @@ describe('L1DAITokenBridge', () => {
       })
 
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
-      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
+      const depositTx = await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
+      await expect(depositTx)
+        .to.emit(l1DAITokenBridge, 'DepositInitiated')
+        .withArgs(user1.address, user2.address, l1Dai.address, depositAmount)
+
       const depositCallToMessengerCall = zkSyncMock.smocked.requestL2Transaction.calls[0]
 
       expect(await l1Dai.balanceOf(user1.address)).to.be.eq(initialTotalL1Supply - depositAmount)
@@ -121,9 +116,10 @@ describe('L1DAITokenBridge', () => {
     const withdrawAmount = 100
 
     const errorMessages = {
-      wrongProof: 'nq',
-      wrongL2toL1message: 'nt',
-      withdrawalProcessed: 'Withdrawal already processed',
+      wrongProof: 'L1DAITokenBridge/invalid-proof',
+      wrongL2toL1MessageLength: 'L1DAITokenBridge/bad-msg-length',
+      wrongL2toL1MessageSignature: 'L1DAITokenBridge/bad-msg-sig',
+      withdrawalProcessed: 'L1DAITokenBridge/was-withdrawn',
       daiInsufficientAllowance: 'Dai/insufficient-allowance',
     }
 
@@ -147,12 +143,15 @@ describe('L1DAITokenBridge', () => {
 
       zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof always OK
 
-      await l1DAITokenBridge.connect(user1).finalizeWithdrawal(
+      const finalizeWithdrawalTx = await l1DAITokenBridge.connect(user1).finalizeWithdrawal(
         blockNumber, // blockNumber
         messageIndex, // messageIndex
         L2toL1message, // message that I want to proof
         proof, // merkle Proof
       )
+      await expect(finalizeWithdrawalTx)
+        .to.emit(l1DAITokenBridge, 'WithdrawalFinalized')
+        .withArgs(user2.address, l1Dai.address, depositAmount)
 
       expect(await l1Dai.balanceOf(user2.address)).to.be.equal(withdrawAmount)
       expect(await l1Dai.balanceOf(l1Escrow.address)).to.be.equal(initialTotalL1Supply - withdrawAmount)
@@ -231,7 +230,7 @@ describe('L1DAITokenBridge', () => {
     })
     it('reverts if wrong L2toL1 message', async () => {
       const [user1, zkSyncImpersonator] = await ethers.getSigners()
-      const { l1DAITokenBridge, zkSyncMock } = await setupWithdrawTest({
+      const { l1DAITokenBridge } = await setupWithdrawTest({
         zkSyncImpersonator,
         user1,
       })
@@ -247,8 +246,6 @@ describe('L1DAITokenBridge', () => {
       )
       const proof: any[] = []
 
-      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof rejected
-
       await expect(
         l1DAITokenBridge.connect(user1).finalizeWithdrawal(
           blockNumber, // blockNumber
@@ -256,7 +253,16 @@ describe('L1DAITokenBridge', () => {
           L2toL1message, // message that I want to proof
           proof, // merkle Proof
         ),
-      ).to.be.revertedWith(errorMessages.wrongL2toL1message)
+      ).to.be.revertedWith(errorMessages.wrongL2toL1MessageSignature)
+
+      await expect(
+        l1DAITokenBridge.connect(user1).finalizeWithdrawal(
+          blockNumber, // blockNumber
+          messageIndex, // messageIndex
+          '0x', // message that I want to proof
+          proof, // merkle Proof
+        ),
+      ).to.be.revertedWith(errorMessages.wrongL2toL1MessageLength)
     })
 
     it('reverts if wrong proof', async () => {
@@ -323,12 +329,12 @@ describe('L1DAITokenBridge', () => {
 
   describe('claimFailedDeposit()', () => {
     const errorMessages = {
-      wrongProof: 'Wrong proof',
+      wrongProof: 'L1DAITokenBridge/wrong-proof',
       tokenMismatch: 'L1DAITokenBridge/token-not-dai',
-      nonDepositedDAI: 'Claiming non-deposited DAI',
+      nonDepositedDAI: 'L1DAITokenBridge/not-deposited',
     }
 
-    it('failed deposit claimed successfully', async () => {
+    it('successfully claims a failed deposit', async () => {
       const [zkSyncImpersonator, user1, user2] = await ethers.getSigners()
       const { l1Dai, l1DAITokenBridge, zkSyncMock, l1Escrow } = await setupTest({
         zkSyncImpersonator,
@@ -349,7 +355,7 @@ describe('L1DAITokenBridge', () => {
 
       zkSyncMock.smocked.proveL2LogInclusion.will.return.with(true) //inclusion proof always OK
 
-      await l1DAITokenBridge.connect(user1).claimFailedDeposit(
+      const claimFailedDepositTx = await l1DAITokenBridge.connect(user1).claimFailedDeposit(
         user1.address,
         l1Dai.address,
         txHash,
@@ -357,6 +363,9 @@ describe('L1DAITokenBridge', () => {
         messageIndex, // messageIndex
         proof, // merkle Proof
       )
+      await expect(claimFailedDepositTx)
+        .to.emit(l1DAITokenBridge, 'ClaimedFailedDeposit')
+        .withArgs(user1.address, l1Dai.address, depositAmount)
 
       expect(await l1Dai.balanceOf(user1.address)).to.be.eq(initialTotalL1Supply)
       expect(await l1Dai.balanceOf(l1Escrow.address)).to.be.eq(0)
@@ -504,9 +513,10 @@ describe('L1DAITokenBridge', () => {
 
       expect(await l1DAITokenBridge.l1Token()).to.eq(l1Dai.address)
       expect(await l1DAITokenBridge.l2Token()).to.eq(l2Dai.address)
-      expect(await l1DAITokenBridge.l2DAITokenBridge()).to.eq(l2DAITokenBridgeMock.address)
+      expect(await l1DAITokenBridge.l2Bridge()).to.eq(l2DAITokenBridgeMock.address)
       expect(await l1DAITokenBridge.escrow()).to.eq(l1Escrow.address)
       expect(await l1DAITokenBridge.zkSyncMailbox()).to.eq(zkSyncMock.address)
+      expect(await l1DAITokenBridge.l2TokenAddress(l1Dai.address)).to.eq(l2Dai.address)
     })
   })
 
@@ -519,11 +529,25 @@ describe('L1DAITokenBridge', () => {
     },
     authedMethods: [(c) => c.close()],
   })
+
+  describe('view functions', () => {
+    it('reverts when l2TokenAddress() is called with wrong token', async () => {
+      const [zkSyncImpersonator, user1] = await ethers.getSigners()
+      const { l1DAITokenBridge } = await setupTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      await expect(l1DAITokenBridge.l2TokenAddress(ethers.constants.AddressZero)).to.be.revertedWith(
+        errorMessages.tokenNotDai,
+      )
+    })
+  })
 })
 
 async function setupTest(signers: { zkSyncImpersonator: SignerWithAddress; user1: SignerWithAddress }) {
   const l2DAITokenBridge = await deployContractMock('L2DAITokenBridge')
-  const zkSyncMock = await deployZkSyncContractMock({ address: signers.zkSyncImpersonator.address })
+  const zkSyncMock = await deployL1ZkSyncContractMock({ address: signers.zkSyncImpersonator.address })
 
   const l1Dai = await simpleDeploy<Dai__factory>('Dai', [])
   const l2Dai = await simpleDeploy<Dai__factory>('Dai', [])

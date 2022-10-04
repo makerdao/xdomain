@@ -20,6 +20,13 @@ pragma solidity ^0.8.15;
 
 // Improved Dai token
 
+interface IERC1271 {
+  function isValidSignature(bytes32 hash, bytes memory signature)
+    external
+    view
+    returns (bytes4 magicValue);
+}
+
 contract Dai {
   // --- Auth ---
   mapping(address => uint256) public wards;
@@ -60,17 +67,13 @@ contract Dai {
     require((z = x + y) >= x);
   }
 
-  function _sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-    require((z = x - y) <= x);
-  }
-
   // --- EIP712 niceties ---
   uint256 public immutable deploymentChainId;
   bytes32 private immutable _DOMAIN_SEPARATOR;
   bytes32 public constant PERMIT_TYPEHASH =
     keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
-  constructor() public {
+  constructor() {
     wards[msg.sender] = 1;
     emit Rely(msg.sender);
 
@@ -202,16 +205,43 @@ contract Dai {
   }
 
   // --- Approve by signature ---
+
+  function _isValidSignature(
+    address signer,
+    bytes32 hash,
+    bytes memory signature
+  ) internal view returns (bool) {
+    if (signature.length == 65) {
+      bytes32 r;
+      bytes32 s;
+      uint8 v;
+      assembly {
+        r := mload(add(signature, 0x20))
+        s := mload(add(signature, 0x40))
+        v := byte(0, mload(add(signature, 0x60)))
+      }
+      if (signer == ecrecover(hash, v, r, s)) {
+        return true;
+      }
+    }
+
+    (bool success, bytes memory result) = signer.staticcall(
+      abi.encodeWithSelector(IERC1271.isValidSignature.selector, hash, signature)
+    );
+    return (success &&
+      result.length == 32 &&
+      abi.decode(result, (bytes32)) == bytes32(IERC1271.isValidSignature.selector));
+  }
+
   function permit(
     address owner,
     address spender,
     uint256 value,
     uint256 deadline,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
-  ) external {
+    bytes memory signature
+  ) public {
     require(block.timestamp <= deadline, "Dai/permit-expired");
+    require(owner != address(0), "Dai/invalid-owner");
 
     uint256 chainId;
     assembly {
@@ -226,9 +256,21 @@ contract Dai {
       )
     );
 
-    require(owner != address(0) && owner == ecrecover(digest, v, r, s), "Dai/invalid-permit");
+    require(_isValidSignature(owner, digest, signature), "Dai/invalid-permit");
 
     allowance[owner][spender] = value;
     emit Approval(owner, spender, value);
+  }
+
+  function permit(
+    address owner,
+    address spender,
+    uint256 value,
+    uint256 deadline,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) external {
+    permit(owner, spender, value, deadline, abi.encodePacked(r, s, v));
   }
 }

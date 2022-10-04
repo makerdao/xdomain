@@ -1,3 +1,5 @@
+/*eslint-disable eqeqeq*/
+
 import { hexToUtf8 } from './lib'
 import { call, getChainId, RSV, signData } from './rpc'
 
@@ -129,6 +131,7 @@ export const signERC2612Permit = async (
   deadline?: number,
   nonce?: number,
   version: string = '1',
+  signer?: string,
 ): Promise<ERC2612PermitMessage & RSV> => {
   const tokenAddress = (token as Domain).verifyingContract || (token as string)
 
@@ -136,13 +139,14 @@ export const signERC2612Permit = async (
     owner,
     spender,
     value,
-    nonce: nonce || (await call(provider, tokenAddress, `${NONCES_FN}${zeros(24)}${owner.substr(2)}`)),
+    nonce:
+      nonce != undefined ? nonce : await call(provider, tokenAddress, `${NONCES_FN}${zeros(24)}${owner.substr(2)}`),
     deadline: deadline || MAX_INT,
   }
 
   const domain = await getDomain(provider, token, version)
   const typedData = createTypedERC2612Data(message, domain)
-  const sig = await signData(provider, owner, typedData)
+  const sig = await signData(provider, signer || owner, typedData)
 
   return { ...sig, ...message }
 }

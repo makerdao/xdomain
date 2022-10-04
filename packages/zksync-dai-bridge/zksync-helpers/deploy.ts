@@ -1,5 +1,5 @@
 import { Deployer } from '@matterlabs/hardhat-zksync-deploy'
-import { Contract, Signer } from 'ethers'
+import { Contract, ContractFactory, Signer } from 'ethers'
 import fs from 'fs'
 import { ethers } from 'hardhat'
 import * as hre from 'hardhat'
@@ -27,7 +27,7 @@ export async function deployL1Contract<T extends Contract>(
     throw new Error(`${jsonFilePath}  doesnt exist!`)
   }
   const json = JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'))
-  const factory = await ethers.getContractFactory(json.abi, json.bytecode)
+  const factory = (await ethers.getContractFactory(json.abi, json.bytecode)) as ContractFactory
   const contractFactory = new ethers.ContractFactory(factory.interface, factory.bytecode, l1Signer)
   const contractDeployed = await contractFactory.deploy(...args)
   const contract = await contractDeployed.deployed()
