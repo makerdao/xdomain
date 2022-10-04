@@ -4,7 +4,7 @@ import { ethers } from 'hardhat'
 import { utils } from 'zksync-web3'
 
 import { Dai__factory, L2DAITokenBridge__factory } from '../../typechain-types'
-import { deployContractMock, deployL2ZkSyncContractMock } from '../../zksync-helpers/mocks'
+import { deployContractMock, deployL1MessengerMock } from '../../zksync-helpers/mocks'
 
 const initialTotalL2Supply = 3000
 const errorMessages = {
@@ -130,7 +130,6 @@ describe('L2DAITokenBridge', () => {
     })
 
     it('reverts when called with a different token', async () => {
-      //const { l1TokenBridge, l2DAITokenBridge, l1Dai, l2Dai, user1 } = await setupWithdrawalTest()
       const { l2DAITokenBridge, user1 } = await setupWithdrawalTest()
       const [dummyL1Erc20] = await ethers.getSigners()
 
@@ -261,7 +260,7 @@ async function setupTest() {
 async function setupWithdrawalTest() {
   const harness = await setupTest()
   const l1DAITokenBridge = await deployContractMock('L1DAITokenBridge')
-  const zkSyncSysMock = await deployL2ZkSyncContractMock({
+  const zkSyncSysMock = await deployL1MessengerMock({
     address: utils.L1_MESSENGER_ADDRESS,
   })
 

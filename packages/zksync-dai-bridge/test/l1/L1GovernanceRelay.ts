@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
 import { L1GovernanceRelay__factory } from '../../typechain-types'
-import { deployContractMock, deployL1ZkSyncContractMock } from '../../zksync-helpers'
+import { deployContractMock, deployZkSyncContractMock } from '../../zksync-helpers'
 
 const errorMessages = {
   notAuthed: 'L1GovernanceRelay/not-authorized',
@@ -75,7 +75,7 @@ describe('L1GovernanceRelay', () => {
 
 async function setupTest(signers: { zkSyncImpersonator: SignerWithAddress }) {
   const l2GovernanceRelay = await deployContractMock('L2GovernanceRelay')
-  const zkSyncMock = await deployL1ZkSyncContractMock({ address: signers.zkSyncImpersonator.address })
+  const zkSyncMock = await deployZkSyncContractMock({ address: signers.zkSyncImpersonator.address })
 
   const l1GovernanceRelay = await simpleDeploy<L1GovernanceRelay__factory>('L1GovernanceRelay', [
     l2GovernanceRelay.address,

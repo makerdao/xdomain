@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
 import { Dai__factory, L1DAITokenBridge__factory, L1Escrow__factory } from '../../typechain-types'
-import { deployContractMock, deployL1ZkSyncContractMock } from '../../zksync-helpers'
+import { deployContractMock, deployZkSyncContractMock } from '../../zksync-helpers'
 
 const initialTotalL1Supply = 3000
 const depositAmount = 100
@@ -547,7 +547,7 @@ describe('L1DAITokenBridge', () => {
 
 async function setupTest(signers: { zkSyncImpersonator: SignerWithAddress; user1: SignerWithAddress }) {
   const l2DAITokenBridge = await deployContractMock('L2DAITokenBridge')
-  const zkSyncMock = await deployL1ZkSyncContractMock({ address: signers.zkSyncImpersonator.address })
+  const zkSyncMock = await deployZkSyncContractMock({ address: signers.zkSyncImpersonator.address })
 
   const l1Dai = await simpleDeploy<Dai__factory>('Dai', [])
   const l2Dai = await simpleDeploy<Dai__factory>('Dai', [])
