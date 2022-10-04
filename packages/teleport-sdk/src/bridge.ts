@@ -3,7 +3,6 @@ import { BigNumber, BigNumberish, Contract, ContractTransaction, ethers, Overrid
 import { hexlify, hexZeroPad } from 'ethers/lib/utils'
 
 import {
-  ArbitrumDstDomainId,
   DEFAULT_RPC_URLS,
   DomainDescription,
   DomainId,
@@ -13,8 +12,10 @@ import {
   getRelayGasFee,
   getSdk,
   isArbitrumMessageInOutbox,
+  isOptimismMessageReadyToBeRelayed,
   Relay,
   relayArbitrumMessage,
+  relayOptimismMessage,
   RelayParams,
   requestAndWaitForRelay,
   signAndCreateRelayTask,
@@ -339,21 +340,35 @@ export class TeleportBridge {
   }
 
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {
-    if (this.srcDomain === 'ARB-GOER-A') {
+    if (['ARB-GOER-A', 'ARB-ONE-A'].includes(this.srcDomain)) {
       if (this.settings.useFakeArbitrumOutbox) return true
       return await isArbitrumMessageInOutbox(txHash, this.srcDomainProvider, this.dstDomainProvider)
     }
+
+    if (['OPT-GOER-A', 'OPT-MAIN-A'].includes(this.srcDomain)) {
+      return await isOptimismMessageReadyToBeRelayed(txHash, this.srcDomainProvider, this.dstDomainProvider)
+    }
+
     return false
   }
 
   public async mintWithoutOracles(sender: Signer, txHash: string, overrides?: Overrides): Promise<ContractTransaction> {
-    if (this.srcDomain === 'ARB-GOER-A') {
+    if (['ARB-GOER-A', 'ARB-ONE-A'].includes(this.srcDomain)) {
       return await relayArbitrumMessage(
         txHash,
         sender.connect(this.dstDomainProvider),
-        this.dstDomain as ArbitrumDstDomainId,
         this.srcDomainProvider,
         this.settings.useFakeArbitrumOutbox,
+        overrides,
+      )
+    }
+
+    if (['OPT-GOER-A', 'OPT-MAIN-A'].includes(this.srcDomain)) {
+      return await relayOptimismMessage(
+        txHash,
+        sender.connect(this.dstDomainProvider),
+        this.srcDomainProvider,
+        this.dstDomainProvider,
         overrides,
       )
     }

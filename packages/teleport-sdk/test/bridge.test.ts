@@ -6,7 +6,7 @@ import { expect, use } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import { ContractTransaction, ethers } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
-import { RetryProvider, RetryWallet } from 'xdomain-utils'
+import { RetryProvider, RetryWallet, sleep } from 'xdomain-utils'
 
 import {
   approveSrcGateway,
@@ -585,23 +585,35 @@ describe('TeleportBridge', () => {
   describe('Using the slow path', () => {
     async function testMintWithoutOracles({
       srcDomain,
+      waitTimeMs,
       settings,
       useWrapper,
     }: {
       srcDomain: DomainDescription
-      settings: BridgeSettings
+      waitTimeMs?: number
+      settings?: BridgeSettings
       useWrapper?: boolean
     }) {
+      settings ||= {}
+      waitTimeMs ||= 0
       const { l1User } = await getTestWallets(srcDomain)
       const { bridge, txHash } = await testInitTeleport({ srcDomain, settings, useWrapper })
 
+      const startTime = Date.now()
       let canMint: boolean
-      if (useWrapper) {
-        canMint = await canMintWithoutOracle({ srcDomain, settings, txHash })
-      } else {
-        canMint = await bridge!.canMintWithoutOracle(txHash)
+      while (true) {
+        if (useWrapper) {
+          canMint = await canMintWithoutOracle({ srcDomain, settings, txHash })
+        } else {
+          canMint = await bridge!.canMintWithoutOracle(txHash)
+        }
+        if (canMint || Date.now() - startTime >= waitTimeMs) {
+          break
+        }
+        await sleep(2000)
       }
-      expect(canMint).to.be.eq(settings.useFakeArbitrumOutbox || false)
+
+      expect(canMint).to.be.eq(waitTimeMs > 0 || settings.useFakeArbitrumOutbox || false)
 
       if (canMint) {
         const initialDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
@@ -617,21 +629,32 @@ describe('TeleportBridge', () => {
           tx = await bridge!.mintWithoutOracles(l1User, txHash)
         }
 
-        await tx.wait()
+        const txReceipt = await tx.wait()
+        console.log(`Dai minted via slow path: ${txReceipt.transactionHash}`)
 
         const finalDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
         expect(finalDstBalance).to.be.gt(initialDstBalance)
       }
     }
 
-    it('should mint without oracles (fake outbox, goerli-arbitrum)', async () => {
+    // only works if USE_TEST_GOERLI is set to true in ../eth-sdk/config.ts
+    it.skip('should mint without oracles (fake outbox, goerli-arbitrum)', async () => {
       await testMintWithoutOracles({ srcDomain: 'arbitrum-goerli-testnet', settings: { useFakeArbitrumOutbox: true } })
     })
 
-    it('should mint without oracles (fake outbox, goerli-arbitrum, wrapper)', async () => {
+    // only works if USE_TEST_GOERLI is set to true in ../eth-sdk/config.ts
+    it.skip('should mint without oracles (fake outbox, goerli-arbitrum, wrapper)', async () => {
       await testMintWithoutOracles({
         srcDomain: 'arbitrum-goerli-testnet',
         settings: { useFakeArbitrumOutbox: true },
+        useWrapper: true,
+      })
+    })
+
+    it('should mint without oracles (goerli-optimism, wrapper)', async () => {
+      await testMintWithoutOracles({
+        srcDomain: 'optimism-goerli-testnet',
+        waitTimeMs: 600000,
         useWrapper: true,
       })
     })

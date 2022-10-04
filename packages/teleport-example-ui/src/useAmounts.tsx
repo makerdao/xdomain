@@ -16,7 +16,7 @@ export function useAmounts(srcChainId: DomainChainId, account?: string) {
   let valid = true
 
   const maxFeePercentage = parseEther(amount || '0').eq(0)
-    ? 0
+    ? parseEther('1')
     : parseEther(bridgeFee || amount || '0')
         .mul(parseEther('1'))
         .div(parseEther(amount!))
@@ -74,6 +74,9 @@ export function useAmounts(srcChainId: DomainChainId, account?: string) {
   useEffect(() => {
     const srcDomain = getSdkDomainId(srcChainId)
     const getAmountAfterFees = async () => {
+      setBridgeFee(undefined)
+      setRelayFee(undefined)
+      setFee(undefined)
       const { bridgeFee: bridgeFeeBN, relayFee: relayFeeBN } = await getAmounts({
         srcDomain,
         withdrawn: parseEther(amount || '0'),
@@ -81,10 +84,7 @@ export function useAmounts(srcChainId: DomainChainId, account?: string) {
 
       setBridgeFee(formatEther(bridgeFeeBN))
 
-      if (relayFeeBN === undefined) {
-        setRelayFee(undefined)
-        setFee(undefined)
-      } else {
+      if (relayFeeBN !== undefined) {
         const totalFeeBN = bridgeFeeBN.add(relayFeeBN)
         setRelayFee(formatEther(relayFeeBN))
         setFee(formatEther(totalFeeBN))

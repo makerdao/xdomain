@@ -1,20 +1,13 @@
 import { getL2Network, L2ToL1MessageStatus, L2TransactionReceipt } from '@arbitrum/sdk'
-import { Provider } from '@ethersproject/providers'
+import { Provider } from '@ethersproject/abstract-provider'
 import { ContractTransaction, Overrides, Signer } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
-import { Dictionary } from 'ts-essentials'
 
 import { getGoerliSdk } from './sdk'
 import { FakeOutbox } from './sdk/esm/types'
 
-export type ArbitrumDstDomainId = 'ETH-GOER-A' // | 'ETHEREUM-MASTER-1'
-
-function getFakeArbitrumOutbox(senderOrProvider: Signer | Provider, domain: ArbitrumDstDomainId): FakeOutbox {
-  const sdkProviders: Dictionary<Function, ArbitrumDstDomainId> = {
-    'ETH-GOER-A': getGoerliSdk,
-    // 'ETHEREUM-MASTER-1': getMainnetSdk
-  }
-  const { FakeOutbox } = sdkProviders[domain](senderOrProvider as any)[domain]
+function getFakeArbitrumOutbox(senderOrProvider: Signer | Provider): FakeOutbox {
+  const { FakeOutbox } = getGoerliSdk(senderOrProvider as any)['ETH-GOER-A'] as any
   return FakeOutbox
 }
 
@@ -35,7 +28,6 @@ export async function isArbitrumMessageInOutbox(
 export async function relayArbitrumMessage(
   txHash: string,
   sender: Signer,
-  dstDomain: ArbitrumDstDomainId,
   srcDomainProvider: Provider,
   useFakeOutbox: boolean,
   overrides?: Overrides,
@@ -50,7 +42,7 @@ export async function relayArbitrumMessage(
     ])
     const txToL1Event = receipt.logs.find(({ topics }) => topics[0] === iface.getEventTopic('TxToL1'))!
     const { to, data } = iface.parseLog(txToL1Event).args
-    const fakeOutbox = getFakeArbitrumOutbox(sender, dstDomain)
+    const fakeOutbox = getFakeArbitrumOutbox(sender)
     return await fakeOutbox!.executeTransaction(0, [], 0, txToL1Event.address, to, 0, 0, 0, 0, data, {
       ...overrides,
     })

@@ -4,12 +4,8 @@ exports.relayArbitrumMessage = exports.isArbitrumMessageInOutbox = void 0;
 const sdk_1 = require("@arbitrum/sdk");
 const utils_1 = require("ethers/lib/utils");
 const sdk_2 = require("./sdk");
-function getFakeArbitrumOutbox(senderOrProvider, domain) {
-    const sdkProviders = {
-        'ETH-GOER-A': sdk_2.getGoerliSdk,
-        // 'ETHEREUM-MASTER-1': getMainnetSdk
-    };
-    const { FakeOutbox } = sdkProviders[domain](senderOrProvider)[domain];
+function getFakeArbitrumOutbox(senderOrProvider) {
+    const { FakeOutbox } = (0, sdk_2.getGoerliSdk)(senderOrProvider)['ETH-GOER-A'];
     return FakeOutbox;
 }
 async function isArbitrumMessageInOutbox(txHash, srcDomainProvider, dstDomainProvider) {
@@ -23,7 +19,7 @@ async function isArbitrumMessageInOutbox(txHash, srcDomainProvider, dstDomainPro
     return status === sdk_1.L2ToL1MessageStatus.CONFIRMED;
 }
 exports.isArbitrumMessageInOutbox = isArbitrumMessageInOutbox;
-async function relayArbitrumMessage(txHash, sender, dstDomain, srcDomainProvider, useFakeOutbox, overrides) {
+async function relayArbitrumMessage(txHash, sender, srcDomainProvider, useFakeOutbox, overrides) {
     const receipt = await srcDomainProvider.getTransactionReceipt(txHash);
     if (useFakeOutbox) {
         const l2Network = await (0, sdk_1.getL2Network)(srcDomainProvider);
@@ -34,7 +30,7 @@ async function relayArbitrumMessage(txHash, sender, dstDomain, srcDomainProvider
         ]);
         const txToL1Event = receipt.logs.find(({ topics }) => topics[0] === iface.getEventTopic('TxToL1'));
         const { to, data } = iface.parseLog(txToL1Event).args;
-        const fakeOutbox = getFakeArbitrumOutbox(sender, dstDomain);
+        const fakeOutbox = getFakeArbitrumOutbox(sender);
         return await fakeOutbox.executeTransaction(0, [], 0, txToL1Event.address, to, 0, 0, 0, 0, data, {
             ...overrides,
         });

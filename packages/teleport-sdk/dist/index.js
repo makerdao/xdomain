@@ -22,6 +22,7 @@ __exportStar(require("./domains"), exports);
 __exportStar(require("./guid"), exports);
 __exportStar(require("./mint"), exports);
 __exportStar(require("./multicall"), exports);
+__exportStar(require("./optimism"), exports);
 __exportStar(require("./relay"), exports);
 __exportStar(require("./utils"), exports);
 __exportStar(require("./wrappers"), exports);

@@ -106,16 +106,22 @@ class TeleportBridge {
         return await (0, _1.requestAndWaitForRelay)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated);
     }
     async canMintWithoutOracle(txHash) {
-        if (this.srcDomain === 'ARB-GOER-A') {
+        if (['ARB-GOER-A', 'ARB-ONE-A'].includes(this.srcDomain)) {
             if (this.settings.useFakeArbitrumOutbox)
                 return true;
             return await (0, _1.isArbitrumMessageInOutbox)(txHash, this.srcDomainProvider, this.dstDomainProvider);
         }
+        if (['OPT-GOER-A', 'OPT-MAIN-A'].includes(this.srcDomain)) {
+            return await (0, _1.isOptimismMessageReadyToBeRelayed)(txHash, this.srcDomainProvider, this.dstDomainProvider);
+        }
         return false;
     }
     async mintWithoutOracles(sender, txHash, overrides) {
-        if (this.srcDomain === 'ARB-GOER-A') {
-            return await (0, _1.relayArbitrumMessage)(txHash, sender.connect(this.dstDomainProvider), this.dstDomain, this.srcDomainProvider, this.settings.useFakeArbitrumOutbox, overrides);
+        if (['ARB-GOER-A', 'ARB-ONE-A'].includes(this.srcDomain)) {
+            return await (0, _1.relayArbitrumMessage)(txHash, sender.connect(this.dstDomainProvider), this.srcDomainProvider, this.settings.useFakeArbitrumOutbox, overrides);
+        }
+        if (['OPT-GOER-A', 'OPT-MAIN-A'].includes(this.srcDomain)) {
+            return await (0, _1.relayOptimismMessage)(txHash, sender.connect(this.dstDomainProvider), this.srcDomainProvider, this.dstDomainProvider, overrides);
         }
         throw new Error(`mintWithoutOracles not yet supported for source domain ${this.srcDomain}`);
     }
