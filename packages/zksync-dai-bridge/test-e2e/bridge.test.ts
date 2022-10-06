@@ -68,7 +68,7 @@ describe('bridge', function () {
     ;({ l1Signer, l2Signer } = await setupSigners())
 
     l2Dai = await deployL2Contract(l2Signer, 'Dai')
-    l1Dai = await deployL1Contract(l1Signer, 'L1Dai')
+    l1Dai = await deployL1Contract(l1Signer, 'L1Dai', [], 'l1/test')
     l1Escrow = await deployL1Contract(l1Signer, 'L1Escrow')
     ;({ l1DAITokenBridge, l2DAITokenBridge } = await deployBridges(l1Signer, l2Signer, l1Dai, l2Dai, l1Escrow))
     await approveBridges(l1Dai, l2Dai, l1DAITokenBridge, l2DAITokenBridge)

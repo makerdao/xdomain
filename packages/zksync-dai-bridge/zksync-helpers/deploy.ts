@@ -21,8 +21,9 @@ export async function deployL1Contract<T extends Contract>(
   l1Signer: Signer,
   contractName: string,
   args: Array<any> = [],
+  subdirectory: string = 'l1',
 ): Promise<T> {
-  const jsonFilePath = `./artifacts/contracts/l1/${contractName}.sol/${contractName}.json`
+  const jsonFilePath = `./artifacts/contracts/${subdirectory}/${contractName}.sol/${contractName}.json`
   if (!fs.existsSync(jsonFilePath)) {
     throw new Error(`${jsonFilePath}  doesnt exist!`)
   }
