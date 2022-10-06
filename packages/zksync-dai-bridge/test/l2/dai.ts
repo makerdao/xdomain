@@ -36,7 +36,7 @@ describe('Dai', () => {
         toUtf8Bytes('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
       )
       const nameHash = keccak256(toUtf8Bytes('Dai Stablecoin'))
-      const versionHash = keccak256(toUtf8Bytes('2'))
+      const versionHash = keccak256(toUtf8Bytes('3'))
       const chainId = hexZeroPad((await dai.deploymentChainId()).toHexString(), 32)
       const contractAddress = hexZeroPad(dai.address, 32)
       const domainSeparator = keccak256(hexConcat([eip721DomainHash, nameHash, versionHash, chainId, contractAddress]))
@@ -323,7 +323,6 @@ describe('Dai', () => {
           '1',
           null,
           null,
-          '2',
         )
         await expect(
           dai['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
@@ -353,7 +352,6 @@ describe('Dai', () => {
           '1',
           null,
           null,
-          '2',
         )
         await dai['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
           signers.user1.address,
@@ -377,7 +375,6 @@ describe('Dai', () => {
           '1',
           null,
           null,
-          '2',
         )
         await expect(
           dai['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
@@ -401,7 +398,6 @@ describe('Dai', () => {
           '1',
           null,
           null,
-          '2',
         )
         await expect(
           dai['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
@@ -425,7 +421,6 @@ describe('Dai', () => {
           '1',
           null,
           null,
-          '2',
         )
         await expect(
           dai['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
@@ -464,7 +459,7 @@ describe('Dai', () => {
               '1', // value
               null,
               nonce,
-              '2', // version
+              '3', // version
               owner.address, // signer
             ),
           ),

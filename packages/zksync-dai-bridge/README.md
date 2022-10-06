@@ -17,7 +17,7 @@ certifiyng for failed message) to reclaim their deposit.
 
 ## L2DAITokenBridge
 
-- `withdarw()` - burns DAI and sends L2 --> L1 request to L1DAITokenBridge to release DAI from Escrow
+- `withdraw()` - burns DAI and sends L2 --> L1 request to L1DAITokenBridge to release DAI from Escrow
 - `finalizeDeposit()` - callable only from L1 bridge, finalizes the deposit from L1 by minting canonical L2 DAI
 - `close()` - closes the bridge. Only via Governance Relayer.
 
