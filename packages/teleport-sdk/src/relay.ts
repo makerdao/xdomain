@@ -55,9 +55,9 @@ const DEFAULT_MAX_FEE_PERCENTAGE = parseEther('0.1') // 10%
 
 function getEstimatedRelayGasLimit(relay: BasicRelay | TrustedRelay): string {
   if (relay.hasOwnProperty('signers')) {
-    return '420000' // = 385462 + a small margin (estimate for TrustedRelay)
+    return '520000' // = 385462 + a small margin (estimate for TrustedRelay)
   }
-  return '400000' // = 371516 + a small margin (estimate for BasicRelay)
+  return '500000' // = 371516 + a small margin (estimate for BasicRelay)
 }
 
 async function queryGelatoApi(url: string, method: 'get' | 'post', params?: Object): Promise<any> {
