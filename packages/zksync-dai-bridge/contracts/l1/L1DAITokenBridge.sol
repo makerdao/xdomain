@@ -76,7 +76,7 @@ contract L1DAITokenBridge is IL1Bridge {
 
     constructor(
         address _l1Token,
-        address _l2DAITokenBridge,
+        address _l2Bridge,
         address _l2Token,
         address _escrow,
         IMailbox _mailbox
@@ -85,13 +85,13 @@ contract L1DAITokenBridge is IL1Bridge {
         emit Rely(msg.sender);
 
         l1Token = _l1Token;
-        l2Bridge = _l2DAITokenBridge;
+        l2Bridge = _l2Bridge;
         l2Token = _l2Token;
         escrow = _escrow;
         zkSyncMailbox = _mailbox;
     }
 
-    function l2TokenAddress(address _l1Token) public view returns (address) {
+    function l2TokenAddress(address _l1Token) external view returns (address) {
         require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
         return l2Token;
     }

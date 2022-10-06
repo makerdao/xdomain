@@ -48,8 +48,8 @@ contract L2DAITokenBridge is IL2Bridge {
         _;
     }
 
-    address public immutable l1Token;
     address public immutable l2Token;
+    address public immutable l1Token;
     address public immutable l1Bridge;
     uint256 public isOpen = 1;
 
@@ -60,14 +60,14 @@ contract L2DAITokenBridge is IL2Bridge {
     constructor(
         address _l2Token,
         address _l1Token,
-        address _l1DAITokenBridge
+        address _l1Bridge
     ) {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
 
         l2Token = _l2Token;
         l1Token = _l1Token;
-        l1Bridge = _l1DAITokenBridge;
+        l1Bridge = _l1Bridge;
     }
 
     function l2TokenAddress(address _l1Token) external view returns (address) {
@@ -100,7 +100,7 @@ contract L2DAITokenBridge is IL2Bridge {
 
     // When a withdrawal is initiated, we burn the withdrawer's funds to prevent subsequent L2 usage.
     function _initiateWithdrawal(address _to, uint256 _amount) internal {
-        // do not allow initiaitng new xchain messages if bridge is closed
+        // do not allow initiating new xchain messages if bridge is closed
         require(isOpen == 1, "L2DAITokenBridge/closed");
 
         Mintable(l2Token).burn(msg.sender, _amount);
