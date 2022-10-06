@@ -39,7 +39,7 @@ class TeleportBridge {
         const sdk = (0, _1.getSdk)(this.dstDomain, this.dstDomainProvider);
         const oracleAuth = sdk.TeleportOracleAuth;
         const threshold = (await oracleAuth.threshold()).toNumber();
-        return await (0, _1.waitForAttestations)(txHash, threshold, oracleAuth.isValid, pollingIntervalMs, teleportGUID, timeoutMs, onNewSignatureReceived);
+        return await (0, _1.waitForAttestations)(this.dstDomain, txHash, threshold, oracleAuth.isValid, pollingIntervalMs, teleportGUID, timeoutMs, onNewSignatureReceived);
     }
     async getSrcBalance(userAddress) {
         return await _getDaiBalance(userAddress, this.srcDomain, this.srcDomainProvider);

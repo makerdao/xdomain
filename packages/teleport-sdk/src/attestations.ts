@@ -2,10 +2,21 @@ import axios from 'axios'
 import { BigNumber } from 'ethers'
 import { arrayify, hashMessage, hexConcat } from 'ethers/lib/utils'
 
-import { decodeTeleportData, getGuidHash, sleep, TeleportGUID } from '.'
+import { decodeTeleportData, DomainId, getGuidHash, sleep, TeleportGUID } from '.'
 import { TeleportOracleAuth } from './sdk/esm/types'
 
-const ORACLE_API_URL = 'https://lair.chroniclelabs.org'
+export const ORACLE_API_URLS: { [domain in DomainId]: string } = {
+  'ETH-GOER-A': 'https://current-stage-goerli-lair.chroniclelabs.org',
+  'ETH-MAIN-A': 'https://lair.prod.makerops.services',
+  'RINKEBY-SLAVE-ARBITRUM-1': '',
+  'RINKEBY-MASTER-1': '',
+  'KOVAN-SLAVE-OPTIMISM-1': '',
+  'KOVAN-MASTER-1': '',
+  'OPT-GOER-A': '',
+  'ARB-GOER-A': '',
+  'OPT-MAIN-A': '',
+  'ARB-ONE-A': '',
+}
 
 interface OracleData {
   data: { event: string; hash: string }
@@ -26,8 +37,8 @@ interface Attestation {
   }>
 }
 
-async function fetchAttestations(txHash: string): Promise<Attestation[]> {
-  const response = await axios.get(ORACLE_API_URL, {
+async function fetchAttestations(txHash: string, dstDomain: DomainId): Promise<Attestation[]> {
+  const response = await axios.get(ORACLE_API_URLS[dstDomain], {
     params: {
       type: 'teleport_evm',
       index: txHash,
@@ -57,6 +68,7 @@ async function fetchAttestations(txHash: string): Promise<Attestation[]> {
 }
 
 export async function waitForAttestations(
+  dstDomain: DomainId,
   txHash: string,
   threshold: number,
   isValidAttestation: TeleportOracleAuth['isValid'],
@@ -74,7 +86,7 @@ export async function waitForAttestations(
   let prevNumSigs: number | undefined
 
   while (true) {
-    const attestations = await fetchAttestations(txHash)
+    const attestations = await fetchAttestations(txHash, dstDomain)
     if (attestations.length > 1 && !teleportGUID) {
       throw new Error('Ambiguous teleportGUID: more than one teleport found in tx but no teleportGUID specified')
     }

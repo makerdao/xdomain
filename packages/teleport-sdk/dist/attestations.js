@@ -3,14 +3,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.waitForAttestations = void 0;
+exports.waitForAttestations = exports.ORACLE_API_URLS = void 0;
 const axios_1 = __importDefault(require("axios"));
 const ethers_1 = require("ethers");
 const utils_1 = require("ethers/lib/utils");
 const _1 = require(".");
-const ORACLE_API_URL = 'https://lair.chroniclelabs.org';
-async function fetchAttestations(txHash) {
-    const response = await axios_1.default.get(ORACLE_API_URL, {
+exports.ORACLE_API_URLS = {
+    'ETH-GOER-A': 'https://current-stage-goerli-lair.chroniclelabs.org',
+    'ETH-MAIN-A': 'https://lair.prod.makerops.services',
+    'RINKEBY-SLAVE-ARBITRUM-1': '',
+    'RINKEBY-MASTER-1': '',
+    'KOVAN-SLAVE-OPTIMISM-1': '',
+    'KOVAN-MASTER-1': '',
+    'OPT-GOER-A': '',
+    'ARB-GOER-A': '',
+    'OPT-MAIN-A': '',
+    'ARB-ONE-A': '',
+};
+async function fetchAttestations(txHash, dstDomain) {
+    const response = await axios_1.default.get(exports.ORACLE_API_URLS[dstDomain], {
         params: {
             type: 'teleport_evm',
             index: txHash,
@@ -32,13 +43,13 @@ async function fetchAttestations(txHash) {
     }
     return Array.from(teleports.values());
 }
-async function waitForAttestations(txHash, threshold, isValidAttestation, pollingIntervalMs, teleportGUID, timeoutMs, onNewSignatureReceived) {
+async function waitForAttestations(dstDomain, txHash, threshold, isValidAttestation, pollingIntervalMs, teleportGUID, timeoutMs, onNewSignatureReceived) {
     const startTime = Date.now();
     let signatures;
     let guid;
     let prevNumSigs;
     while (true) {
-        const attestations = await fetchAttestations(txHash);
+        const attestations = await fetchAttestations(txHash, dstDomain);
         if (attestations.length > 1 && !teleportGUID) {
             throw new Error('Ambiguous teleportGUID: more than one teleport found in tx but no teleportGUID specified');
         }

@@ -137,6 +137,7 @@ export class TeleportBridge {
     const threshold = (await oracleAuth.threshold()).toNumber()
 
     return await waitForAttestations(
+      this.dstDomain,
       txHash,
       threshold,
       oracleAuth.isValid,
