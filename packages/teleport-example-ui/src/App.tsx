@@ -30,7 +30,7 @@ function App() {
   const [relayerSelected, setRelayerSelected] = useLocalStorage('relayerSelected', true)
   const { connectWallet, disconnectWallet, account, chainId: walletChainId, provider } = useConnectedWallet()
 
-  const [srcChainId, setSrcChainId] = useLocalStorage<SrcDomainChainId>('srcChainId', 42161)
+  const [srcChainId, setSrcChainId] = useLocalStorage<SrcDomainChainId>('_srcChainId', 42161)
   const [searchParams] = useSearchParams({})
   const urlChainIdString = searchParams.get('chainId')
   const urlChainId = urlChainIdString ? Number(urlChainIdString) : undefined
