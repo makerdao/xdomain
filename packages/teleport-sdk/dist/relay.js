@@ -31,9 +31,9 @@ function getDefaultExpiry() {
 const DEFAULT_MAX_FEE_PERCENTAGE = (0, utils_1.parseEther)('0.1'); // 10%
 function getEstimatedRelayGasLimit(relay) {
     if (relay.hasOwnProperty('signers')) {
-        return '520000'; // = 385462 + a small margin (estimate for TrustedRelay)
+        return '620000'; // = 385462 + a small margin (estimate for TrustedRelay)
     }
-    return '500000'; // = 371516 + a small margin (estimate for BasicRelay)
+    return '600000'; // = 371516 + a small margin (estimate for BasicRelay)
 }
 async function queryGelatoApi(url, method, params) {
     var _a;
