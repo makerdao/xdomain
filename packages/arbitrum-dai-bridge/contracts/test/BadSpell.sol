@@ -3,9 +3,9 @@
 pragma solidity ^0.6.11;
 
 contract BadSpell {
-  uint256 public someVar;
+    uint256 public someVar;
 
-  function abort() external pure {
-    require(false, "ABORT!");
-  }
+    function abort() external pure {
+        require(false, "ABORT!");
+    }
 }

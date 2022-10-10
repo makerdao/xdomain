@@ -17,58 +17,58 @@
 pragma solidity 0.8.15;
 
 interface TeleportJoinLike {
-  function settle(bytes32 sourceDomain, uint256 batchedDaiToFlush) external;
+    function settle(bytes32 sourceDomain, uint256 batchedDaiToFlush) external;
 }
 
 interface VatLike {
-  function can(address bit, address usr) external view returns (uint256);
+    function can(address bit, address usr) external view returns (uint256);
 
-  function hope(address usr) external;
+    function hope(address usr) external;
 
-  function suck(
-    address u,
-    address v,
-    uint256 rad
-  ) external;
+    function suck(
+        address u,
+        address v,
+        uint256 rad
+    ) external;
 }
 
 interface DaiJoinLike {
-  function exit(address usr, uint256 wad) external;
+    function exit(address usr, uint256 wad) external;
 }
 
 contract PushBadDebtSpell {
-  uint256 public constant RAY = 10**27;
+    uint256 public constant RAY = 10**27;
 
-  TeleportJoinLike public immutable teleportJoin;
-  VatLike public immutable vat;
-  DaiJoinLike public immutable daiJoin;
-  address public immutable vow;
-  bytes32 public immutable sourceDomain;
-  uint256 public immutable badDebt;
+    TeleportJoinLike public immutable teleportJoin;
+    VatLike public immutable vat;
+    DaiJoinLike public immutable daiJoin;
+    address public immutable vow;
+    bytes32 public immutable sourceDomain;
+    uint256 public immutable badDebt;
 
-  constructor(
-    TeleportJoinLike _teleportJoin,
-    VatLike _vat,
-    DaiJoinLike _daiJoin,
-    address _vow,
-    bytes32 _sourceDomain,
-    uint256 _badDebt
-  ) {
-    teleportJoin = _teleportJoin;
-    vat = _vat;
-    daiJoin = _daiJoin;
-    vow = _vow;
-    sourceDomain = _sourceDomain;
-    badDebt = _badDebt;
-  }
-
-  function execute() external {
-    if (vat.can(address(this), address(daiJoin)) == 0) {
-      vat.hope(address(daiJoin));
+    constructor(
+        TeleportJoinLike _teleportJoin,
+        VatLike _vat,
+        DaiJoinLike _daiJoin,
+        address _vow,
+        bytes32 _sourceDomain,
+        uint256 _badDebt
+    ) {
+        teleportJoin = _teleportJoin;
+        vat = _vat;
+        daiJoin = _daiJoin;
+        vow = _vow;
+        sourceDomain = _sourceDomain;
+        badDebt = _badDebt;
     }
 
-    vat.suck(vow, address(this), badDebt * RAY);
-    daiJoin.exit(address(teleportJoin), badDebt);
-    teleportJoin.settle(sourceDomain, badDebt);
-  }
+    function execute() external {
+        if (vat.can(address(this), address(daiJoin)) == 0) {
+            vat.hope(address(daiJoin));
+        }
+
+        vat.suck(vow, address(this), badDebt * RAY);
+        daiJoin.exit(address(teleportJoin), badDebt);
+        teleportJoin.settle(sourceDomain, badDebt);
+    }
 }
