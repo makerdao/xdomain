@@ -22,7 +22,7 @@ pragma solidity ^0.8.14;
 import "dss-test/DSSTest.sol";
 import "ds-value/value.sol";
 
-import { EndAbstract } from "dss-interfaces/Interfaces.sol";
+import { EndAbstract, ChainlogAbstract } from "dss-interfaces/Interfaces.sol";
 
 import { Cure } from "xdomain-dss/Cure.sol";
 import { Dai } from "xdomain-dss/Dai.sol";
@@ -34,7 +34,7 @@ import { Spotter } from "xdomain-dss/Spotter.sol";
 import { Vat } from "xdomain-dss/Vat.sol";
 
 import { ClaimToken } from "../ClaimToken.sol";
-import { DomainHost, TeleportGUID, TeleportGUIDHelper } from "../DomainHost.sol";
+import { DomainHost, TeleportGUID } from "../DomainHost.sol";
 import { DomainGuest } from "../DomainGuest.sol";
 import { BridgeOracle } from "../BridgeOracle.sol";
 
@@ -89,6 +89,14 @@ contract SimpleDomainHost is DomainHost {
         (bool success, bytes memory response) = address(guest).call(_deposit(to, amount));
         revertNoSuccess(success, response);
     }
+    function initializeRegisterMint(TeleportGUID calldata teleport) external {
+        (bool success, bytes memory response) = address(guest).call(_initializeRegisterMint(teleport));
+        revertNoSuccess(success, response);
+    }
+    function initializeSettle(uint256 index) external {
+        (bool success, bytes memory response) = address(guest).call(_initializeSettle(index));
+        revertNoSuccess(success, response);
+    }
 
 }
 
@@ -96,7 +104,7 @@ contract SimpleDomainGuest is DomainGuest {
 
     DomainHost host;
 
-    constructor(bytes32 _domain, address _daiJoin, address _claimToken, address _host) DomainGuest(_domain, _daiJoin, _claimToken) {
+    constructor(bytes32 _domain, address _daiJoin, address _claimToken, address _host, address _router) DomainGuest(_domain, _daiJoin, _claimToken, _router) {
         host = DomainHost(_host);
     }
 
@@ -134,49 +142,12 @@ contract SimpleDomainGuest is DomainGuest {
         (bool success, bytes memory response) = address(host).call(_withdraw(to, amount));
         revertNoSuccess(success, response);
     }
-    function initiateTeleport(
-        bytes32 targetDomain,
-        address receiver,
-        uint128 amount
-    ) external {
-        (bool success, bytes memory response) = address(host).call(_initiateTeleport(
-            targetDomain,
-            TeleportGUIDHelper.addressToBytes32(receiver),
-            amount,
-            0
-        ));
+    function initializeRegisterMint(TeleportGUID calldata teleport) external {
+        (bool success, bytes memory response) = address(host).call(_initializeRegisterMint(teleport));
         revertNoSuccess(success, response);
     }
-    function initiateTeleport(
-        bytes32 targetDomain,
-        address receiver,
-        uint128 amount,
-        address operator
-    ) external {
-        (bool success, bytes memory response) = address(host).call(_initiateTeleport(
-            targetDomain,
-            TeleportGUIDHelper.addressToBytes32(receiver),
-            amount,
-            TeleportGUIDHelper.addressToBytes32(operator)
-        ));
-        revertNoSuccess(success, response);
-    }
-    function initiateTeleport(
-        bytes32 targetDomain,
-        bytes32 receiver,
-        uint128 amount,
-        bytes32 operator
-    ) external {
-        (bool success, bytes memory response) = address(host).call(_initiateTeleport(
-            targetDomain,
-            receiver,
-            amount,
-            operator
-        ));
-        revertNoSuccess(success, response);
-    }
-    function flush(bytes32 targetDomain) external {
-        (bool success, bytes memory response) = address(host).call(_flush(targetDomain));
+    function initializeSettle(uint256 index) external {
+        (bool success, bytes memory response) = address(host).call(_initializeSettle(index));
         revertNoSuccess(success, response);
     }
 
@@ -196,6 +167,8 @@ contract IntegrationTest is DSSTest {
 
     using GodMode for *;
 
+    MCD mcd;
+
     // Bridge
     ClaimToken claimToken;
     SimpleDomainHost host;
@@ -211,8 +184,9 @@ contract IntegrationTest is DSSTest {
     bytes32 constant DOMAIN_ILK = "SOME-DOMAIN-A";
     bytes32 constant REMOTE_COLL_ILK = "XCHAIN-COLLATERAL-A";
 
-    function setupEnv() internal virtual override returns (MCD) {
-        return autoDetectEnv();
+    function setupEnv() internal virtual override {
+        mcd = new MCD();
+        mcd.loadFromChainlog(ChainlogAbstract(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F));
     }
 
     function postSetup() internal virtual override {
@@ -224,7 +198,7 @@ contract IntegrationTest is DSSTest {
         Vat vat = new Vat();
         Dai dai = new Dai();
         DaiJoin daiJoin = new DaiJoin(address(vat), address(dai));
-        guest = new SimpleDomainGuest(DOMAIN_ILK, address(daiJoin), address(claimToken), address(host));
+        guest = new SimpleDomainGuest(DOMAIN_ILK, address(daiJoin), address(claimToken), address(host), address(0));
         pip = new BridgeOracle(address(host));
         claimToken.rely(address(guest));
 

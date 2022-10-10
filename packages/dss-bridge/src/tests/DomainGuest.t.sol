@@ -25,16 +25,17 @@ import { DaiJoinMock } from "./mocks/DaiJoinMock.sol";
 import { DaiMock } from "./mocks/DaiMock.sol";
 import { EndMock } from "./mocks/EndMock.sol";
 import { EscrowMock } from "./mocks/EscrowMock.sol";
+import { RouterMock } from "./mocks/RouterMock.sol";
 import { VatMock } from "./mocks/VatMock.sol";
 import { ClaimToken } from "../ClaimToken.sol";
-import { DomainGuest, DomainHost, TeleportGUID, TeleportGUIDHelper } from "../DomainGuest.sol";
+import { DomainGuest, DomainHost, TeleportGUID, getGUIDHash, Settlement } from "../DomainGuest.sol";
 
 contract EmptyDomainGuest is DomainGuest {
 
     bool forceIsHost = true;
     bytes public lastPayload;
 
-    constructor(bytes32 _domain, address _daiJoin, address _claimToken) DomainGuest(_domain, _daiJoin, _claimToken) {}
+    constructor(bytes32 _domain, address _daiJoin, address _claimToken, address _router) DomainGuest(_domain, _daiJoin, _claimToken, _router) {}
 
     function setIsHost(bool v) external {
         forceIsHost = v;
@@ -55,41 +56,11 @@ contract EmptyDomainGuest is DomainGuest {
     function withdraw(address to, uint256 amount) external {
         lastPayload = _withdraw(to, amount);
     }
-    function initiateTeleport(
-        bytes32 targetDomain,
-        address receiver,
-        uint128 amount
-    ) external {
-        lastPayload = _initiateTeleport(
-            targetDomain,
-            TeleportGUIDHelper.addressToBytes32(receiver),
-            amount,
-            0
-        );
+    function initializeRegisterMint(TeleportGUID calldata teleport) external {
+        lastPayload = _initializeRegisterMint(teleport);
     }
-    function initiateTeleport(
-        bytes32 targetDomain,
-        address receiver,
-        uint128 amount,
-        address operator
-    ) external {
-        lastPayload = _initiateTeleport(
-            targetDomain,
-            TeleportGUIDHelper.addressToBytes32(receiver),
-            amount,
-            TeleportGUIDHelper.addressToBytes32(operator)
-        );
-    }
-    function initiateTeleport(
-        bytes32 targetDomain,
-        bytes32 receiver,
-        uint128 amount,
-        bytes32 operator
-    ) external {
-        lastPayload = _initiateTeleport(targetDomain, receiver, amount, operator);
-    }
-    function flush(bytes32 targetDomain) external {
-        lastPayload = _flush(targetDomain);
+    function initializeSettle(uint256 index) external {
+        lastPayload = _initializeSettle(index);
     }
 
 }
@@ -107,6 +78,7 @@ contract DomainGuestTest is DSSTest {
     DaiJoinMock daiJoin;
     DaiMock dai;
     EndMock end;
+    RouterMock router;
 
     ClaimToken claimToken;
     EmptyDomainGuest guest;
@@ -114,7 +86,6 @@ contract DomainGuestTest is DSSTest {
     bytes32 constant SOURCE_DOMAIN = "SOME-DOMAIN-A";
     bytes32 constant TARGET_DOMAIN = "SOME-DOMAIN-B";
 
-    event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
     event Lift(int256 line);
     event Release(uint256 burned);
     event Push(int256 surplus);
@@ -124,22 +95,26 @@ contract DomainGuestTest is DSSTest {
     event Exit(address indexed usr, uint256 wad);
     event Deposit(address indexed to, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
-    event InitiateTeleport(TeleportGUID teleport);
-    event Flush(bytes32 indexed targetDomain, uint256 dai);
+    event RegisterMint(TeleportGUID teleport);
+    event InitializeRegisterMint(TeleportGUID teleport);
+    event FinalizeRegisterMint(TeleportGUID teleport);
+    event Settle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount);
+    event InitializeSettle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount);
+    event FinalizeSettle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount);
 
     function postSetup() internal virtual override {
         vat = new VatMock();
         dai = new DaiMock();
         daiJoin = new DaiJoinMock(address(vat), address(dai));
         end = new EndMock(address(vat));
+        router = new RouterMock(address(dai));
 
         claimToken = new ClaimToken();
-        guest = new EmptyDomainGuest(SOURCE_DOMAIN, address(daiJoin), address(claimToken));
+        guest = new EmptyDomainGuest(SOURCE_DOMAIN, address(daiJoin), address(claimToken), address(router));
         guest.file("end", address(end));
 
         vat.hope(address(daiJoin));
         dai.approve(address(guest), type(uint256).max);
-        guest.file("validDomains", TARGET_DOMAIN, 1);
         claimToken.rely(address(guest));
     }
 
@@ -148,9 +123,11 @@ contract DomainGuestTest is DSSTest {
         assertEq(address(guest.vat()), address(vat));
         assertEq(address(guest.daiJoin()), address(daiJoin));
         assertEq(address(guest.dai()), address(dai));
+        assertEq(address(guest.router()), address(router));
 
         assertEq(vat.can(address(guest), address(daiJoin)), 1);
         assertEq(dai.allowance(address(guest), address(daiJoin)), type(uint256).max);
+        assertEq(dai.allowance(address(guest), address(router)), type(uint256).max);
         assertEq(guest.wards(address(this)), 1);
         assertEq(guest.live(), 1);
     }
@@ -162,39 +139,19 @@ contract DomainGuestTest is DSSTest {
     function testFile() public {
         checkFileAddress(address(guest), "DomainGuest", ["end"]);
         checkFileUint(address(guest), "DomainGuest", ["dust"]);
-
-        // Also check the validDomains
-        guest.file("validDomains", TARGET_DOMAIN, 0);
-        assertEq(guest.validDomains(TARGET_DOMAIN), 0);
-
-        vm.expectEmit(true, true, true, true);
-        emit File("validDomains", TARGET_DOMAIN, 1);
-        guest.file("validDomains", TARGET_DOMAIN, 1);
-        assertEq(guest.validDomains(TARGET_DOMAIN), 1);
-
-        // Invalid name
-        vm.expectRevert("DomainGuest/file-unrecognized-param");
-        guest.file("badWhat", TARGET_DOMAIN, 1);
-
-        // Invalid value
-        vm.expectRevert("DomainGuest/invalid-data");
-        guest.file("validDomains", TARGET_DOMAIN, 2);
-
-        // Not authed
-        guest.deny(address(this));
-        vm.expectRevert("DomainGuest/not-authorized");
-        guest.file("validDomains", TARGET_DOMAIN, 1);
     }
 
     function testHostOnly() public {
         guest.setIsHost(false);
 
-        bytes[] memory funcs = new bytes[](5);
+        bytes[] memory funcs = new bytes[](7);
         funcs[0] = abi.encodeWithSelector(DomainGuest.lift.selector, 0, 0, 0);
         funcs[1] = abi.encodeWithSelector(DomainGuest.rectify.selector, 0, 0, 0);
         funcs[2] = abi.encodeWithSelector(DomainGuest.cage.selector, 0, 0, 0);
         funcs[3] = abi.encodeWithSelector(DomainGuest.exit.selector, 0, 0, 0);
         funcs[4] = abi.encodeWithSelector(DomainGuest.deposit.selector, 0, 0, 0);
+        funcs[5] = abi.encodeWithSelector(DomainGuest.finalizeRegisterMint.selector, 0, 0, 0, 0, 0, 0, 0);
+        funcs[6] = abi.encodeWithSelector(DomainGuest.finalizeSettle.selector, 0, 0, 0);
 
         for (uint256 i = 0; i < funcs.length; i++) {
             assertRevert(address(guest), funcs[i], "DomainGuest/not-host");
@@ -497,64 +454,144 @@ contract DomainGuestTest is DSSTest {
         assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.withdraw.selector, address(123), 100 ether));
     }
 
-    function testInitiateTeleport() public {
-        vat.suck(address(123), address(this), 100 * RAD);
-        daiJoin.exit(address(this), 100 ether);
-
-        assertEq(dai.balanceOf(address(this)), 100 ether);
-        assertEq(guest.batchedDaiToFlush(TARGET_DOMAIN), 0);
-        assertEq(guest.nonce(), 0);
-        assertEq(vat.surf(), 0);
-
+    function testRegisterMint() public {
         TeleportGUID memory teleport = TeleportGUID({
             sourceDomain: SOURCE_DOMAIN,
             targetDomain: TARGET_DOMAIN,
-            receiver: TeleportGUIDHelper.addressToBytes32(address(123)),
-            operator: TeleportGUIDHelper.addressToBytes32(address(0)),
+            receiver: bytes32(0),
+            operator: bytes32(0),
             amount: 100 ether,
             nonce: 0,
             timestamp: uint48(block.timestamp)
         });
 
-        vm.expectEmit(true, true, true, true);
-        emit InitiateTeleport(teleport);
-        guest.initiateTeleport(TARGET_DOMAIN, address(123), 100 ether);
+        assertEq(guest.teleports(getGUIDHash(teleport)), false);
 
-        assertEq(dai.balanceOf(address(this)), 0);
-        assertEq(guest.batchedDaiToFlush(TARGET_DOMAIN), 100 ether);
+        vm.expectEmit(true, true, true, true);
+        emit RegisterMint(teleport);
+        guest.registerMint(teleport);
+
+        assertEq(guest.teleports(getGUIDHash(teleport)), true);
+    }
+
+    function testInitializeRegisterMint() public {
+        TeleportGUID memory teleport = TeleportGUID({
+            sourceDomain: SOURCE_DOMAIN,
+            targetDomain: TARGET_DOMAIN,
+            receiver: bytes32(0),
+            operator: bytes32(0),
+            amount: 100 ether,
+            nonce: 0,
+            timestamp: uint48(block.timestamp)
+        });
+
+        guest.registerMint(teleport);
+
+        vm.expectEmit(true, true, true, true);
+        emit InitializeRegisterMint(teleport);
+        guest.initializeRegisterMint(teleport);
+
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.finalizeRegisterMint.selector, teleport));
+    }
+
+    function testInitializeRegisterMintNotRegistered() public {
+        TeleportGUID memory teleport = TeleportGUID({
+            sourceDomain: SOURCE_DOMAIN,
+            targetDomain: TARGET_DOMAIN,
+            receiver: bytes32(0),
+            operator: bytes32(0),
+            amount: 100 ether,
+            nonce: 0,
+            timestamp: uint48(block.timestamp)
+        });
+
+        vm.expectRevert("DomainGuest/teleport-not-registered");
+        guest.initializeRegisterMint(teleport);
+    }
+
+    function testFinalizeRegisterMint() public {
+        TeleportGUID memory teleport = TeleportGUID({
+            sourceDomain: SOURCE_DOMAIN,
+            targetDomain: TARGET_DOMAIN,
+            receiver: bytes32(0),
+            operator: bytes32(0),
+            amount: 100 ether,
+            nonce: 0,
+            timestamp: uint48(block.timestamp)
+        });
+
+        guest.finalizeRegisterMint(teleport);
+
+        vm.expectEmit(true, true, true, true);
+        emit FinalizeRegisterMint(teleport);
+        guest.finalizeRegisterMint(teleport);
+    }
+
+    function testSettle() public {
+        vat.suck(address(123), address(this), 100 * RAD);
+        daiJoin.exit(address(guest), 100 ether);
+
+        assertEq(guest.settlementQueueCount(), 0);
+        assertEq(vat.surf(), 0);
+
+        vm.expectEmit(true, true, true, true);
+        emit Settle(SOURCE_DOMAIN, TARGET_DOMAIN, 100 ether);
+        guest.settle(SOURCE_DOMAIN, TARGET_DOMAIN, 100 ether);
+
+        assertEq(guest.settlementQueueCount(), 1);
         assertEq(vat.surf(), -int256(100 * RAD));
-        assertEq(guest.nonce(), 1);
-        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.teleportSlowPath.selector, teleport));
+        (bytes32 sourceDomain, bytes32 targetDomain, uint256 amount, bool sent) = guest.settlementQueue(0);
+        assertEq(sourceDomain, SOURCE_DOMAIN);
+        assertEq(targetDomain, TARGET_DOMAIN);
+        assertEq(amount, 100 ether);
+        assertEq(sent, false);
     }
 
-    function testInitiateTeleportInvalidDomain() public {
+    function testInitializeSettle() public {
         vat.suck(address(123), address(this), 100 * RAD);
-        daiJoin.exit(address(this), 100 ether);
-        guest.file("validDomains", TARGET_DOMAIN, 0);
+        daiJoin.exit(address(guest), 100 ether);
 
-        vm.expectRevert("DomainGuest/invalid-domain");
-        guest.initiateTeleport(TARGET_DOMAIN, address(123), 100 ether);
-    }
-
-    function testFlush() public {
-        // To batch some DAI
-        vat.suck(address(123), address(this), 100 * RAD);
-        daiJoin.exit(address(this), 100 ether);
-        guest.initiateTeleport(TARGET_DOMAIN, address(123), 100 ether);
-
-        assertEq(guest.batchedDaiToFlush(TARGET_DOMAIN), 100 ether);
+        guest.settle(SOURCE_DOMAIN, TARGET_DOMAIN, 100 ether);
 
         vm.expectEmit(true, true, true, true);
-        emit Flush(TARGET_DOMAIN, 100 ether);
-        guest.flush(TARGET_DOMAIN);
+        emit InitializeSettle(SOURCE_DOMAIN, TARGET_DOMAIN, 100 ether);
+        guest.initializeSettle(0);
 
-        assertEq(guest.batchedDaiToFlush(TARGET_DOMAIN), 0);
-        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.flush.selector, TARGET_DOMAIN, 100 ether));
+        assertEq(guest.settlementQueueCount(), 1);
+        (bytes32 sourceDomain, bytes32 targetDomain, uint256 amount, bool sent) = guest.settlementQueue(0);
+        assertEq(sourceDomain, SOURCE_DOMAIN);
+        assertEq(targetDomain, TARGET_DOMAIN);
+        assertEq(amount, 100 ether);
+        assertEq(sent, true);
+        assertEq(guest.lastPayload(), abi.encodeWithSelector(DomainHost.finalizeSettle.selector, SOURCE_DOMAIN, TARGET_DOMAIN, 100 ether));
     }
 
-    function testFlushNoDaiToFlush() public {
-        vm.expectRevert("DomainGuest/zero-dai-flush");
-        guest.flush(TARGET_DOMAIN);
+    function testInitializeSettleNotFound() public {
+        vm.expectRevert("DomainGuest/settlement-not-found");
+        guest.initializeSettle(0);
+    }
+
+    function testInitializeSettleAlreadySent() public {
+        vat.suck(address(123), address(this), 100 * RAD);
+        daiJoin.exit(address(guest), 100 ether);
+
+        guest.settle(SOURCE_DOMAIN, TARGET_DOMAIN, 100 ether);
+        guest.initializeSettle(0);
+
+        vm.expectRevert("DomainGuest/settlement-already-sent");
+        guest.initializeSettle(0);
+    }
+
+    function testFinalizeSettle() public {
+        assertEq(dai.balanceOf(address(router)), 0);
+        assertEq(vat.surf(), 0);
+
+        vm.expectEmit(true, true, true, true);
+        emit FinalizeSettle(SOURCE_DOMAIN, TARGET_DOMAIN, 100 ether);
+        guest.finalizeSettle(SOURCE_DOMAIN, TARGET_DOMAIN, 100 ether);
+
+        assertEq(dai.balanceOf(address(router)), 100 ether);
+        assertEq(vat.surf(), int256(100 * RAD));
     }
 
 }

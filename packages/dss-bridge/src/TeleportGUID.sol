@@ -30,8 +30,15 @@ struct TeleportGUID {
     uint48 timestamp;
 }
 
-library TeleportGUIDHelper {
-    function addressToBytes32(address addr) internal pure returns (bytes32) {
-        return bytes32(uint256(uint160(addr)));
-    }
+// solhint-disable-next-line func-visibility
+function getGUIDHash(TeleportGUID memory teleportGUID) pure returns (bytes32 guidHash) {
+    guidHash = keccak256(abi.encode(
+        teleportGUID.sourceDomain,
+        teleportGUID.targetDomain,
+        teleportGUID.receiver,
+        teleportGUID.operator,
+        teleportGUID.amount,
+        teleportGUID.nonce,
+        teleportGUID.timestamp
+    ));
 }
