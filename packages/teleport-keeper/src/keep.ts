@@ -1,5 +1,5 @@
 import { Signer } from 'ethers'
-import { formatBytes32String, formatEther } from 'ethers/lib/utils'
+import { formatBytes32String, formatEther, parseBytes32String } from 'ethers/lib/utils'
 
 import { WormholeOutboundGateway } from './abis/WormholeOutboundGateway'
 import { FinalizeMessage } from './domains'
@@ -18,28 +18,32 @@ export async function keep({
   l2Signer: Signer
   finalizeMessage: FinalizeMessage
 }) {
-  console.log('== FLUSHING DEBT')
+  const flushedDomain = parseBytes32String(await teleportOutboundGateway.domain())
+
+  console.log(`============ FLUSHING DEBT from ${flushedDomain} to ${domainToFlush} ============`)
   await flushL2Gateway(teleportOutboundGateway, domainToFlush)
 
-  console.log('== FINALIZING PAST FLUSHES')
+  console.log(`============ FINALIZING PAST FLUSHES from ${flushedDomain} to ${domainToFlush} ==`)
   const cutoffTimestamp = new Date().getTime() / 1000 - maxTtlForMessages
   const cutoffBlock = await findNearestBlock(l2Signer.provider!, cutoffTimestamp)
   await findMessagesToFlush(teleportOutboundGateway, domainToFlush, cutoffBlock.number, finalizeMessage)
 }
 
-async function flushL2Gateway(gateway: WormholeOutboundGateway, domain: string) {
-  const domainEncoded = formatBytes32String(domain)
-  const daiToFlush = await gateway.batchedDaiToFlush(domainEncoded)
+async function flushL2Gateway(gateway: WormholeOutboundGateway, targetDomain: string) {
+  const targetDomainEncoded = formatBytes32String(targetDomain)
+  const daiToFlush = await gateway.batchedDaiToFlush(targetDomainEncoded)
 
-  console.log(`DAI waiting to be flushed to ${domain}: ${formatEther(daiToFlush)}`)
+  const flushedDomain = parseBytes32String(await gateway.domain())
+  console.log(`DAI waiting to be flushed from ${flushedDomain} to ${targetDomain}: ${formatEther(daiToFlush)}`)
 
   if (daiToFlush.eq(0)) {
     console.log('Skipping...')
     return
   }
 
-  await gateway.flush(domainEncoded)
-  console.log(`Domain ${domain} FLUSHED!`)
+  await gateway.flush(targetDomainEncoded)
+
+  console.log(`Domain ${flushedDomain} FLUSHED!`)
 }
 
 async function findMessagesToFlush(

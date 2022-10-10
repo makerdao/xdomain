@@ -1,4 +1,4 @@
-name: Testnet Teleport Flush Keepers
+name: Goerli Teleport Flush Keeper
 
 on:
   push:
@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  arbitrum-rinkeby-teleport-keeper:
-    name: Arbitrum Rinkeby Teleport Keeper
+  goerli-teleport-keeper:
+    name: Goerli Teleport Keeper
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -26,18 +26,4 @@ jobs:
       - name: Build keeper container
         run: docker build -t teleport-keeper .
       - name: Run keeper container
-        run: docker run -t teleport-keeper ${{ secrets.RINKEBY_RPC_URL }} ${{ secrets.TEST_KEEPER_PRIV_KEY }}
-
-  optimism-kovan-teleport-keeper:
-    name: Optimism Kovan Teleport Keeper
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./packages/teleport-keeper
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v2
-      - name: Build keeper container
-        run: docker build -t teleport-keeper .
-      - name: Run keeper container
-        run: docker run -t teleport-keeper ${{ secrets.KOVAN_RPC_URL }} ${{ secrets.TEST_KEEPER_PRIV_KEY }}
+        run: docker run -t teleport-keeper ${{ secrets.GOERLI_RPC_URL }} ${{ secrets.TEST_KEEPER_PRIV_KEY }}
