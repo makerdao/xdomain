@@ -35,7 +35,7 @@ import { Spotter } from "xdomain-dss/Spotter.sol";
 import { Vat } from "xdomain-dss/Vat.sol";
 
 import { ClaimToken } from "../../ClaimToken.sol";
-import { DomainHost, TeleportGUID, TeleportGUIDHelper } from "../../DomainHost.sol";
+import { DomainHost, TeleportGUID } from "../../DomainHost.sol";
 import { DomainGuest } from "../../DomainGuest.sol";
 import { BridgeOracle } from "../../BridgeOracle.sol";
 

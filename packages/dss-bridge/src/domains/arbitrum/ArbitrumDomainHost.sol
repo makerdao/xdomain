@@ -19,7 +19,7 @@
 
 pragma solidity ^0.8.14;
 
-import {DomainHost} from "../../DomainHost.sol";
+import {DomainHost,TeleportGUID} from "../../DomainHost.sol";
 import {DomainGuest} from "../../DomainGuest.sol";
 
 interface InboxLike {
@@ -50,14 +50,16 @@ contract ArbitrumDomainHost is DomainHost {
     InboxLike public immutable inbox;
     address public immutable guest;
 
-    uint32 public glLift;
-    uint32 public glRectify;
-    uint32 public glCage;
-    uint32 public glExit;
-    uint32 public glDeposit;
+    uint256 public glLift;
+    uint256 public glRectify;
+    uint256 public glCage;
+    uint256 public glExit;
+    uint256 public glDeposit;
+    uint256 public glInitializeRegisterMint;
+    uint256 public glInitializeSettle;
 
     // --- Events ---
-    event File(bytes32 indexed what, uint32 data);
+    event File(bytes32 indexed what, uint256 data);
 
     constructor(
         bytes32 _ilk,
@@ -71,12 +73,14 @@ contract ArbitrumDomainHost is DomainHost {
         guest = _guest;
     }
 
-    function file(bytes32 what, uint32 data) external auth {
+    function file(bytes32 what, uint256 data) external auth {
         if (what == "glLift") glLift = data;
         else if (what == "glRectify") glRectify = data;
         else if (what == "glCage") glCage = data;
         else if (what == "glExit") glExit = data;
         else if (what == "glDeposit") glDeposit = data;
+        else if (what == "glInitializeRegisterMint") glInitializeRegisterMint = data;
+        else if (what == "glInitializeSettle") glInitializeSettle = data;
         else revert("OptimismDomainHost/file-unrecognized-param");
         emit File(what, data);
     }
@@ -230,6 +234,66 @@ contract ArbitrumDomainHost is DomainHost {
         deposit(
             to,
             amount,
+            maxSubmissionCost,
+            glDeposit,
+            gasPriceBid
+        );
+    }
+
+    function initializeRegisterMint(
+        TeleportGUID calldata teleport,
+        uint256 maxSubmissionCost,
+        uint256 maxGas,
+        uint256 gasPriceBid
+    ) public payable {
+        inbox.createRetryableTicket{value: msg.value}(
+            guest,
+            0, // we always assume that l2CallValue = 0
+            maxSubmissionCost,
+            msg.sender,
+            msg.sender,
+            maxGas,
+            gasPriceBid,
+            _initializeRegisterMint(teleport)
+        );
+    }
+    function initializeRegisterMint(
+        TeleportGUID calldata teleport,
+        uint256 maxSubmissionCost,
+        uint256 gasPriceBid
+    ) external payable {
+        initializeRegisterMint(
+            teleport,
+            maxSubmissionCost,
+            glInitializeRegisterMint,
+            gasPriceBid
+        );
+    }
+
+    function initializeSettle(
+        uint256 index,
+        uint256 maxSubmissionCost,
+        uint256 maxGas,
+        uint256 gasPriceBid
+    ) public payable {
+        inbox.createRetryableTicket{value: msg.value}(
+            guest,
+            0, // we always assume that l2CallValue = 0
+            maxSubmissionCost,
+            msg.sender,
+            msg.sender,
+            maxGas,
+            gasPriceBid,
+            _initializeSettle(index)
+        );
+    }
+    function initializeSettle(
+        uint256 index,
+        uint256 maxSubmissionCost,
+        uint256 gasPriceBid
+    ) external payable {
+        initializeSettle(
+            index,
             maxSubmissionCost,
             glDeposit,
             gasPriceBid

@@ -19,7 +19,7 @@
 
 pragma solidity ^0.8.14;
 
-import {DomainHost} from "../../DomainHost.sol";
+import {DomainHost,TeleportGUID} from "../../DomainHost.sol";
 import {DomainGuest} from "../../DomainGuest.sol";
 
 interface L1MessengerLike {
@@ -38,6 +38,8 @@ contract OptimismDomainHost is DomainHost {
     uint32 public glCage;
     uint32 public glExit;
     uint32 public glDeposit;
+    uint32 public glInitializeRegisterMint;
+    uint32 public glInitializeSettle;
 
     // --- Events ---
     event File(bytes32 indexed what, uint32 data);
@@ -60,6 +62,8 @@ contract OptimismDomainHost is DomainHost {
         else if (what == "glCage") glCage = data;
         else if (what == "glExit") glExit = data;
         else if (what == "glDeposit") glDeposit = data;
+        else if (what == "glInitializeRegisterMint") glInitializeRegisterMint = data;
+        else if (what == "glInitializeSettle") glInitializeSettle = data;
         else revert("OptimismDomainHost/file-unrecognized-param");
         emit File(what, data);
     }
@@ -139,6 +143,36 @@ contract OptimismDomainHost is DomainHost {
         l1messenger.sendMessage(
             guest,
             _deposit(to, amount),
+            gasLimit
+        );
+    }
+
+    function initializeRegisterMint(TeleportGUID calldata teleport) external {
+        l1messenger.sendMessage(
+            guest,
+            _initializeRegisterMint(teleport),
+            glInitializeRegisterMint
+        );
+    }
+    function initializeRegisterMint(TeleportGUID calldata teleport, uint32 gasLimit) external {
+        l1messenger.sendMessage(
+            guest,
+            _initializeRegisterMint(teleport),
+            gasLimit
+        );
+    }
+
+    function initializeSettle(uint256 index) external {
+        l1messenger.sendMessage(
+            guest,
+            _initializeSettle(index),
+            glInitializeSettle
+        );
+    }
+    function initializeSettle(uint256 index, uint32 gasLimit) external {
+        l1messenger.sendMessage(
+            guest,
+            _initializeSettle(index),
             gasLimit
         );
     }

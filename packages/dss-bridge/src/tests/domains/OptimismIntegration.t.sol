@@ -55,6 +55,8 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
         _host.file("glCage", 1_000_000);
         _host.file("glExit", 1_000_000);
         _host.file("glDeposit", 1_000_000);
+        _host.file("glInitializeRegisterMint", 1_000_000);
+        _host.file("glInitializeSettle", 1_000_000);
         host = DomainHost(_host);
 
         // Remote domain
@@ -63,6 +65,7 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
             HOST_DOMAIN_ILK,
             address(rmcd.daiJoin()),
             address(claimToken),
+            address(0),
             address(OptimismDomain(address(guestDomain)).l2Messenger()),
             address(host)
         );
@@ -72,6 +75,8 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
         _guest.filegl("glTell", 1_000_000);
         _guest.filegl("glWithdraw", 1_000_000);
         _guest.filegl("glFlush", 1_000_000);
+        _guest.filegl("glInitializeRegisterMint", 1_000_000);
+        _guest.filegl("glInitializeSettle", 1_000_000);
         guest = DomainGuest(_guest);
 
         // Set back to primary before returning control

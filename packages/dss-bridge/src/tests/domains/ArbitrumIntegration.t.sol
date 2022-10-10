@@ -55,6 +55,8 @@ contract ArbitrumIntegrationTest is IntegrationBaseTest {
         _host.file("glCage", 1_000_000);
         _host.file("glExit", 1_000_000);
         _host.file("glDeposit", 1_000_000);
+        _host.file("glInitializeRegisterMint", 1_000_000);
+        _host.file("glInitializeSettle", 1_000_000);
         host = DomainHost(_host);
 
         // Remote domain
@@ -63,6 +65,7 @@ contract ArbitrumIntegrationTest is IntegrationBaseTest {
             HOST_DOMAIN_ILK,
             address(rmcd.daiJoin()),
             address(claimToken),
+            address(0),
             address(ArbitrumDomain(address(guestDomain)).arbSys()),
             address(host)
         );

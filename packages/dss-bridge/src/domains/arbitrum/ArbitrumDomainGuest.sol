@@ -19,7 +19,7 @@
 
 pragma solidity ^0.8.14;
 
-import {DomainGuest,TeleportGUID,TeleportGUIDHelper} from "../../DomainGuest.sol";
+import {DomainGuest,TeleportGUID} from "../../DomainGuest.sol";
 import {DomainHost} from "../../DomainHost.sol";
 
 interface ArbSysLike {
@@ -38,9 +38,10 @@ contract ArbitrumDomainGuest is DomainGuest {
         bytes32 _domain,
         address _daiJoin,
         address _claimToken,
+        address _router,
         address _arbSys,
         address _host
-    ) DomainGuest(_domain, _daiJoin, _claimToken) {
+    ) DomainGuest(_domain, _daiJoin, _claimToken, _router) {
         arbSys = ArbSysLike(_arbSys);
         host = _host;
     }
@@ -79,52 +80,17 @@ contract ArbitrumDomainGuest is DomainGuest {
         );
     }
 
-    function initiateTeleport(
-        bytes32 targetDomain,
-        address receiver,
-        uint128 amount
-    ) external {
-        initiateTeleport(
-            targetDomain,
-            TeleportGUIDHelper.addressToBytes32(receiver),
-            amount,
-            0
-        );
-    }
-    function initiateTeleport(
-        bytes32 targetDomain,
-        address receiver,
-        uint128 amount,
-        address operator
-    ) external {
-        initiateTeleport(
-            targetDomain,
-            TeleportGUIDHelper.addressToBytes32(receiver),
-            amount,
-            TeleportGUIDHelper.addressToBytes32(operator)
-        );
-    }
-    function initiateTeleport(
-        bytes32 targetDomain,
-        bytes32 receiver,
-        uint128 amount,
-        bytes32 operator
-    ) public {
+    function initializeRegisterMint(TeleportGUID calldata teleport) external {
         arbSys.sendTxToL1(
             host,
-            _initiateTeleport(
-                targetDomain,
-                receiver,
-                amount,
-                operator
-            )
+            _initializeRegisterMint(teleport)
         );
     }
 
-    function flush(bytes32 targetDomain) external {
+    function initializeSettle(uint256 index) external {
         arbSys.sendTxToL1(
             host,
-            _flush(targetDomain)
+            _initializeSettle(index)
         );
     }
 
