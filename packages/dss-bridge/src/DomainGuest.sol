@@ -52,14 +52,26 @@ interface EndLike {
     function debt() external view returns (uint256);
 }
 
+interface RouterLike {
+    function settle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount) external;
+    function registerMint(TeleportGUID calldata teleport) external;
+}
+
+struct Settlement {
+    bytes32 sourceDomain;
+    bytes32 targetDomain;
+    uint256 amount;
+    bool    sent;
+}
+
 /// @title Support for xchain MCD, canonical DAI and Maker Teleport - remote instance
 /// @dev This is just the business logic which needs concrete message-passing implementation
 abstract contract DomainGuest {
     
     // --- Data ---
     mapping (address => uint256) public wards;
-    mapping (bytes32 => uint256) public validDomains;
-    mapping (bytes32 => uint256) public batchedDaiToFlush;
+    mapping (bytes32 => bool)    public teleports;
+    Settlement[]                 public settlementQueue;
 
     EndLike public end;
     uint256 public lid;         // Local ordering id
@@ -67,7 +79,6 @@ abstract contract DomainGuest {
     int256  public line;        // Keep track of changes in line
     uint256 public grain;       // Keep track of the pre-minted DAI in the remote escrow [WAD]
     uint256 public live;
-    uint80  public nonce;
     uint256 public dust;        // The dust limit for preventing spam attacks [RAD]
 
     bytes32     public immutable domain;
@@ -75,6 +86,7 @@ abstract contract DomainGuest {
     DaiJoinLike public immutable daiJoin;
     TokenLike   public immutable dai;
     TokenLike   public immutable claimToken;
+    RouterLike  public immutable router;
 
     uint256 constant RAY = 10 ** 27;
 
@@ -85,7 +97,6 @@ abstract contract DomainGuest {
     event Deny(address indexed usr);
     event File(bytes32 indexed what, address data);
     event File(bytes32 indexed what, uint256 data);
-    event File(bytes32 indexed what, bytes32 indexed domain, uint256 data);
     event Lift(int256 dline);
     event Release(uint256 burned);
     event Push(int256 surplus);
@@ -95,8 +106,12 @@ abstract contract DomainGuest {
     event Exit(address indexed usr, uint256 wad);
     event Deposit(address indexed to, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
-    event InitiateTeleport(TeleportGUID teleport);
-    event Flush(bytes32 indexed targetDomain, uint256 dai);
+    event RegisterMint(TeleportGUID teleport);
+    event InitializeRegisterMint(TeleportGUID teleport);
+    event FinalizeRegisterMint(TeleportGUID teleport);
+    event Settle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount);
+    event InitializeSettle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount);
+    event FinalizeSettle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount);
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainGuest/not-authorized");
@@ -119,7 +134,7 @@ abstract contract DomainGuest {
         _;
     }
 
-    constructor(bytes32 _domain, address _daiJoin, address _claimToken) {
+    constructor(bytes32 _domain, address _daiJoin, address _claimToken, address _router) {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
 
@@ -128,9 +143,11 @@ abstract contract DomainGuest {
         vat = daiJoin.vat();
         dai = daiJoin.dai();
         claimToken = TokenLike(_claimToken);
+        router = RouterLike(_router);
 
         vat.hope(_daiJoin);
         dai.approve(_daiJoin, type(uint256).max);
+        dai.approve(_router, type(uint256).max);
 
         live = 1;
     }
@@ -170,17 +187,6 @@ abstract contract DomainGuest {
         if (what == "dust") dust = data;
         else revert("DomainGuest/file-unrecognized-param");
         emit File(what, data);
-    }
-
-    function file(bytes32 what, bytes32 _domain, uint256 data) external auth {
-        if (what == "validDomains") {
-            require(data <= 1, "DomainGuest/invalid-data");
-
-            validDomains[_domain] = data;
-        } else {
-            revert("DomainGuest/file-unrecognized-param");
-        }
-        emit File(what, _domain, data);
     }
 
     // --- MCD Support ---
@@ -312,45 +318,57 @@ abstract contract DomainGuest {
     }
 
     // --- Maker Teleport Support ---
-    function _initiateTeleport(
-        bytes32 targetDomain,
-        bytes32 receiver,
-        uint128 amount,
-        bytes32 operator
-    ) internal returns (bytes memory payload) {
-        // Disallow initiating new teleport transfer if targetDomain has not been whitelisted
-        require(validDomains[targetDomain] == 1, "DomainGuest/invalid-domain");
+    function registerMint(TeleportGUID calldata teleport) external auth {
+        teleports[getGUIDHash(teleport)] = true;
 
-        TeleportGUID memory teleport = TeleportGUID({
-            sourceDomain: domain,
-            targetDomain: targetDomain,
-            receiver: receiver,
-            operator: operator,
-            amount: amount,
-            nonce: nonce++,
-            timestamp: uint48(block.timestamp)
-        });
+        emit RegisterMint(teleport);
+    }
+    function _initializeRegisterMint(TeleportGUID calldata teleport) internal returns (bytes memory payload) {
+        // There is no issue with resending these messages as the end TeleportJoin will enforce only-once execution
+        require(teleports[getGUIDHash(teleport)], "DomainGuest/teleport-not-registered");
 
-        batchedDaiToFlush[targetDomain] += amount;
-        require(dai.transferFrom(msg.sender, address(this), amount), "DomainHost/transfer-failed");
-        daiJoin.join(address(this), amount);
-        vat.swell(address(this), -_int256(amount * RAY));
+        payload = abi.encodeWithSelector(DomainHost.finalizeRegisterMint.selector, teleport);
 
-        payload = abi.encodeWithSelector(DomainHost.teleportSlowPath.selector, teleport);
+        emit InitializeRegisterMint(teleport);
+    }
+    function finalizeRegisterMint(TeleportGUID calldata teleport) external hostOnly {
+        router.registerMint(teleport);
 
-        emit InitiateTeleport(teleport);
+        emit FinalizeRegisterMint(teleport);
     }
 
-    function _flush(bytes32 targetDomain) internal returns (bytes memory payload) {
-        // We do not check for valid domain because previously valid domains still need their DAI flushed
-        uint256 daiToFlush = batchedDaiToFlush[targetDomain];
-        require(daiToFlush > 0, "DomainGuest/zero-dai-flush");
+    function settle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount) external auth {
+        daiJoin.join(address(this), amount);
+        vat.swell(address(this), -_int256(amount * RAY));
+        settlementQueue.push(Settlement({
+            sourceDomain: sourceDomain,
+            targetDomain: targetDomain,
+            amount: amount,
+            sent: false
+        }));
 
-        batchedDaiToFlush[targetDomain] = 0;
+        emit Settle(sourceDomain, targetDomain, amount);
+    }
+    function _initializeSettle(uint256 index) internal returns (bytes memory payload) {
+        require(index < settlementQueue.length, "DomainGuest/settlement-not-found");
+        Settlement memory settlement = settlementQueue[index];
+        require(!settlement.sent, "DomainGuest/settlement-already-sent");
+        settlementQueue[index].sent = true;
 
-        payload = abi.encodeWithSelector(DomainHost.flush.selector, targetDomain, daiToFlush);
+        payload = abi.encodeWithSelector(DomainHost.finalizeSettle.selector, settlement.sourceDomain, settlement.targetDomain, settlement.amount);
 
-        emit Flush(targetDomain, daiToFlush);
+        emit InitializeSettle(settlement.sourceDomain, settlement.targetDomain, settlement.amount);
+    }
+    function finalizeSettle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount) external hostOnly {
+        vat.swell(address(this), _int256(amount * RAY));
+        daiJoin.exit(address(this), amount);
+        router.settle(sourceDomain, targetDomain, amount);
+
+        emit FinalizeSettle(sourceDomain, targetDomain, amount);
+    }
+
+    function settlementQueueCount() external view returns (uint256) {
+        return settlementQueue.length;
     }
     
 }

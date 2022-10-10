@@ -42,17 +42,21 @@ interface DaiJoinLike {
 
 interface DaiLike {
     function balanceOf(address usr) external view returns (uint256);
+    function transfer(address dst, uint256 wad) external returns (bool);
     function transferFrom(address src, address dst, uint256 wad) external returns (bool);
     function approve(address usr, uint wad) external returns (bool);
 }
 
 interface RouterLike {
-    function requestMint(
-        TeleportGUID calldata teleportGUID,
-        uint256 maxFeePercentage,
-        uint256 operatorFee
-    ) external returns (uint256 postFeeAmount, uint256 totalFee);
-    function settle(bytes32 targetDomain, uint256 batchedDaiToFlush) external;
+    function settle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount) external;
+    function registerMint(TeleportGUID calldata teleport) external;
+}
+
+struct Settlement {
+    bytes32 sourceDomain;
+    bytes32 targetDomain;
+    uint256 amount;
+    bool    sent;
 }
 
 /// @title Support for xchain MCD, canonical DAI and Maker Teleport
@@ -61,6 +65,8 @@ abstract contract DomainHost {
 
     // --- Data ---
     mapping (address => uint256) public wards;
+    mapping (bytes32 => bool)    public teleports;
+    Settlement[]                 public settlementQueue;
 
     bytes32     public immutable ilk;
     VatLike     public immutable vat;
@@ -98,8 +104,12 @@ abstract contract DomainHost {
     event Deposit(address indexed to, uint256 amount);
     event UndoDeposit(address indexed originalSender, uint256 amount);
     event Withdraw(address indexed to, uint256 amount);
-    event TeleportSlowPath(TeleportGUID teleport);
-    event Flush(bytes32 targetDomain, uint256 daiToFlush);
+    event RegisterMint(TeleportGUID teleport);
+    event InitializeRegisterMint(TeleportGUID teleport);
+    event FinalizeRegisterMint(TeleportGUID teleport);
+    event Settle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount);
+    event InitializeSettle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount);
+    event FinalizeSettle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount);
 
     modifier auth {
         require(wards[msg.sender] == 1, "DomainHost/not-authorized");
@@ -347,20 +357,55 @@ abstract contract DomainHost {
     // --- Maker Teleport Support ---
 
     /// @notice Finalize a teleport registration via the slow path
-    function teleportSlowPath(TeleportGUID calldata teleport) external guestOnly {
-        router.requestMint(teleport, 0, 0);
+    function registerMint(TeleportGUID calldata teleport) external auth {
+        teleports[getGUIDHash(teleport)] = true;
 
-        emit TeleportSlowPath(teleport);
+        emit RegisterMint(teleport);
+    }
+    function _initializeRegisterMint(TeleportGUID calldata teleport) internal returns (bytes memory payload) {
+        // There is no issue with resending these messages as the end TeleportJoin will enforce only-once execution
+        require(teleports[getGUIDHash(teleport)], "DomainHost/teleport-not-registered");
+
+        payload = abi.encodeWithSelector(DomainGuest.finalizeRegisterMint.selector, teleport);
+
+        emit InitializeRegisterMint(teleport);
+    }
+    function finalizeRegisterMint(TeleportGUID calldata teleport) external guestOnly {
+        router.registerMint(teleport);
+
+        emit FinalizeRegisterMint(teleport);
     }
 
-    /// @notice Flush any accumulated DAI
-    function flush(bytes32 targetDomain, uint256 daiToFlush) external guestOnly {
-        // Pull DAI from the escrow to this contract
-        dai.transferFrom(escrow, address(this), daiToFlush);
-        // The router will pull the DAI from this contract
-        router.settle(targetDomain, daiToFlush);
+    function settle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount) external auth {
+        require(dai.transfer(escrow, amount), "DomainHost/transfer-failed");
+        settlementQueue.push(Settlement({
+            sourceDomain: sourceDomain,
+            targetDomain: targetDomain,
+            amount: amount,
+            sent: false
+        }));
 
-        emit Flush(targetDomain, daiToFlush);
+        emit Settle(sourceDomain, targetDomain, amount);
+    }
+    function _initializeSettle(uint256 index) internal returns (bytes memory payload) {
+        require(index < settlementQueue.length, "DomainHost/settlement-not-found");
+        Settlement memory settlement = settlementQueue[index];
+        require(!settlement.sent, "DomainHost/settlement-already-sent");
+        settlementQueue[index].sent = true;
+
+        payload = abi.encodeWithSelector(DomainGuest.finalizeSettle.selector, settlement.sourceDomain, settlement.targetDomain, settlement.amount);
+
+        emit InitializeSettle(settlement.sourceDomain, settlement.targetDomain, settlement.amount);
+    }
+    function finalizeSettle(bytes32 sourceDomain, bytes32 targetDomain, uint256 amount) external guestOnly {
+        require(dai.transferFrom(escrow, address(this), amount), "DomainHost/transfer-failed");
+        router.settle(sourceDomain, targetDomain, amount);
+
+        emit FinalizeSettle(sourceDomain, targetDomain, amount);
+    }
+
+    function settlementQueueCount() external view returns (uint256) {
+        return settlementQueue.length;
     }
 
 }
