@@ -14,7 +14,7 @@ import {
 } from 'ethers'
 
 import { OnEvent, TypedEvent, TypedEventFilter, TypedListener } from './common'
-export declare type WormholeGUIDStruct = {
+export declare type TeleportGUIDStruct = {
   sourceDomain: BytesLike
   targetDomain: BytesLike
   receiver: BytesLike
@@ -23,7 +23,7 @@ export declare type WormholeGUIDStruct = {
   nonce: BigNumberish
   timestamp: BigNumberish
 }
-export declare type WormholeGUIDStructOutput = [string, string, string, string, BigNumber, BigNumber, number] & {
+export declare type TeleportGUIDStructOutput = [string, string, string, string, BigNumber, BigNumber, number] & {
   sourceDomain: string
   targetDomain: string
   receiver: string
@@ -32,8 +32,8 @@ export declare type WormholeGUIDStructOutput = [string, string, string, string, 
   nonce: BigNumber
   timestamp: number
 }
-export interface WormholeOutboundGatewayInterface extends utils.Interface {
-  contractName: 'WormholeOutboundGateway'
+export interface TeleportOutboundGatewayInterface extends utils.Interface {
+  contractName: 'TeleportOutboundGateway'
   functions: {
     'batchedDaiToFlush(bytes32)': FunctionFragment
     'close()': FunctionFragment
@@ -41,9 +41,9 @@ export interface WormholeOutboundGatewayInterface extends utils.Interface {
     'domain()': FunctionFragment
     'file(bytes32,bytes32,uint256)': FunctionFragment
     'flush(bytes32)': FunctionFragment
-    'initiateWormhole(bytes32,address,uint128)': FunctionFragment
+    'initiateTeleport(bytes32,address,uint128)': FunctionFragment
     'isOpen()': FunctionFragment
-    'l1WormholeGateway()': FunctionFragment
+    'l1TeleportGateway()': FunctionFragment
     'l2Token()': FunctionFragment
     'messenger()': FunctionFragment
     'rely(address)': FunctionFragment
@@ -56,9 +56,9 @@ export interface WormholeOutboundGatewayInterface extends utils.Interface {
   encodeFunctionData(functionFragment: 'domain', values?: undefined): string
   encodeFunctionData(functionFragment: 'file', values: [BytesLike, BytesLike, BigNumberish]): string
   encodeFunctionData(functionFragment: 'flush', values: [BytesLike]): string
-  encodeFunctionData(functionFragment: 'initiateWormhole', values: [BytesLike, string, BigNumberish]): string
+  encodeFunctionData(functionFragment: 'initiateTeleport', values: [BytesLike, string, BigNumberish]): string
   encodeFunctionData(functionFragment: 'isOpen', values?: undefined): string
-  encodeFunctionData(functionFragment: 'l1WormholeGateway', values?: undefined): string
+  encodeFunctionData(functionFragment: 'l1TeleportGateway', values?: undefined): string
   encodeFunctionData(functionFragment: 'l2Token', values?: undefined): string
   encodeFunctionData(functionFragment: 'messenger', values?: undefined): string
   encodeFunctionData(functionFragment: 'rely', values: [string]): string
@@ -70,9 +70,9 @@ export interface WormholeOutboundGatewayInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: 'domain', data: BytesLike): Result
   decodeFunctionResult(functionFragment: 'file', data: BytesLike): Result
   decodeFunctionResult(functionFragment: 'flush', data: BytesLike): Result
-  decodeFunctionResult(functionFragment: 'initiateWormhole', data: BytesLike): Result
+  decodeFunctionResult(functionFragment: 'initiateTeleport', data: BytesLike): Result
   decodeFunctionResult(functionFragment: 'isOpen', data: BytesLike): Result
-  decodeFunctionResult(functionFragment: 'l1WormholeGateway', data: BytesLike): Result
+  decodeFunctionResult(functionFragment: 'l1TeleportGateway', data: BytesLike): Result
   decodeFunctionResult(functionFragment: 'l2Token', data: BytesLike): Result
   decodeFunctionResult(functionFragment: 'messenger', data: BytesLike): Result
   decodeFunctionResult(functionFragment: 'rely', data: BytesLike): Result
@@ -84,14 +84,14 @@ export interface WormholeOutboundGatewayInterface extends utils.Interface {
     'File(bytes32,bytes32,uint256)': EventFragment
     'Flushed(bytes32,uint256)': EventFragment
     'Rely(address)': EventFragment
-    'WormholeInitialized(tuple)': EventFragment
+    'TeleportInitialized(tuple)': EventFragment
   }
   getEvent(nameOrSignatureOrTopic: 'Closed'): EventFragment
   getEvent(nameOrSignatureOrTopic: 'Deny'): EventFragment
   getEvent(nameOrSignatureOrTopic: 'File'): EventFragment
   getEvent(nameOrSignatureOrTopic: 'Flushed'): EventFragment
   getEvent(nameOrSignatureOrTopic: 'Rely'): EventFragment
-  getEvent(nameOrSignatureOrTopic: 'WormholeInitialized'): EventFragment
+  getEvent(nameOrSignatureOrTopic: 'TeleportInitialized'): EventFragment
 }
 export declare type ClosedEvent = TypedEvent<[], {}>
 export declare type ClosedEventFilter = TypedEventFilter<ClosedEvent>
@@ -126,19 +126,19 @@ export declare type RelyEvent = TypedEvent<
   }
 >
 export declare type RelyEventFilter = TypedEventFilter<RelyEvent>
-export declare type WormholeInitializedEvent = TypedEvent<
-  [WormholeGUIDStructOutput],
+export declare type TeleportInitializedEvent = TypedEvent<
+  [TeleportGUIDStructOutput],
   {
-    wormhole: WormholeGUIDStructOutput
+    teleport: TeleportGUIDStructOutput
   }
 >
-export declare type WormholeInitializedEventFilter = TypedEventFilter<WormholeInitializedEvent>
-export interface WormholeOutboundGateway extends BaseContract {
-  contractName: 'WormholeOutboundGateway'
+export declare type TeleportInitializedEventFilter = TypedEventFilter<TeleportInitializedEvent>
+export interface TeleportOutboundGateway extends BaseContract {
+  contractName: 'TeleportOutboundGateway'
   connect(signerOrProvider: Signer | Provider | string): this
   attach(addressOrName: string): this
   deployed(): Promise<this>
-  interface: WormholeOutboundGatewayInterface
+  interface: TeleportOutboundGatewayInterface
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
@@ -180,7 +180,7 @@ export interface WormholeOutboundGateway extends BaseContract {
         from?: string | Promise<string>
       },
     ): Promise<ContractTransaction>
-    'initiateWormhole(bytes32,address,uint128)'(
+    'initiateTeleport(bytes32,address,uint128)'(
       targetDomain: BytesLike,
       receiver: string,
       amount: BigNumberish,
@@ -188,7 +188,7 @@ export interface WormholeOutboundGateway extends BaseContract {
         from?: string | Promise<string>
       },
     ): Promise<ContractTransaction>
-    'initiateWormhole(bytes32,address,uint128,address)'(
+    'initiateTeleport(bytes32,address,uint128,address)'(
       targetDomain: BytesLike,
       receiver: string,
       amount: BigNumberish,
@@ -197,7 +197,7 @@ export interface WormholeOutboundGateway extends BaseContract {
         from?: string | Promise<string>
       },
     ): Promise<ContractTransaction>
-    'initiateWormhole(bytes32,bytes32,uint128,bytes32)'(
+    'initiateTeleport(bytes32,bytes32,uint128,bytes32)'(
       targetDomain: BytesLike,
       receiver: BytesLike,
       amount: BigNumberish,
@@ -207,7 +207,7 @@ export interface WormholeOutboundGateway extends BaseContract {
       },
     ): Promise<ContractTransaction>
     isOpen(overrides?: CallOverrides): Promise<[BigNumber]>
-    l1WormholeGateway(overrides?: CallOverrides): Promise<[string]>
+    l1TeleportGateway(overrides?: CallOverrides): Promise<[string]>
     l2Token(overrides?: CallOverrides): Promise<[string]>
     messenger(overrides?: CallOverrides): Promise<[string]>
     rely(
@@ -246,7 +246,7 @@ export interface WormholeOutboundGateway extends BaseContract {
       from?: string | Promise<string>
     },
   ): Promise<ContractTransaction>
-  'initiateWormhole(bytes32,address,uint128)'(
+  'initiateTeleport(bytes32,address,uint128)'(
     targetDomain: BytesLike,
     receiver: string,
     amount: BigNumberish,
@@ -254,7 +254,7 @@ export interface WormholeOutboundGateway extends BaseContract {
       from?: string | Promise<string>
     },
   ): Promise<ContractTransaction>
-  'initiateWormhole(bytes32,address,uint128,address)'(
+  'initiateTeleport(bytes32,address,uint128,address)'(
     targetDomain: BytesLike,
     receiver: string,
     amount: BigNumberish,
@@ -263,7 +263,7 @@ export interface WormholeOutboundGateway extends BaseContract {
       from?: string | Promise<string>
     },
   ): Promise<ContractTransaction>
-  'initiateWormhole(bytes32,bytes32,uint128,bytes32)'(
+  'initiateTeleport(bytes32,bytes32,uint128,bytes32)'(
     targetDomain: BytesLike,
     receiver: BytesLike,
     amount: BigNumberish,
@@ -273,7 +273,7 @@ export interface WormholeOutboundGateway extends BaseContract {
     },
   ): Promise<ContractTransaction>
   isOpen(overrides?: CallOverrides): Promise<BigNumber>
-  l1WormholeGateway(overrides?: CallOverrides): Promise<string>
+  l1TeleportGateway(overrides?: CallOverrides): Promise<string>
   l2Token(overrides?: CallOverrides): Promise<string>
   messenger(overrides?: CallOverrides): Promise<string>
   rely(
@@ -291,20 +291,20 @@ export interface WormholeOutboundGateway extends BaseContract {
     domain(overrides?: CallOverrides): Promise<string>
     file(what: BytesLike, domain: BytesLike, data: BigNumberish, overrides?: CallOverrides): Promise<void>
     flush(targetDomain: BytesLike, overrides?: CallOverrides): Promise<void>
-    'initiateWormhole(bytes32,address,uint128)'(
+    'initiateTeleport(bytes32,address,uint128)'(
       targetDomain: BytesLike,
       receiver: string,
       amount: BigNumberish,
       overrides?: CallOverrides,
     ): Promise<void>
-    'initiateWormhole(bytes32,address,uint128,address)'(
+    'initiateTeleport(bytes32,address,uint128,address)'(
       targetDomain: BytesLike,
       receiver: string,
       amount: BigNumberish,
       operator: string,
       overrides?: CallOverrides,
     ): Promise<void>
-    'initiateWormhole(bytes32,bytes32,uint128,bytes32)'(
+    'initiateTeleport(bytes32,bytes32,uint128,bytes32)'(
       targetDomain: BytesLike,
       receiver: BytesLike,
       amount: BigNumberish,
@@ -312,7 +312,7 @@ export interface WormholeOutboundGateway extends BaseContract {
       overrides?: CallOverrides,
     ): Promise<void>
     isOpen(overrides?: CallOverrides): Promise<BigNumber>
-    l1WormholeGateway(overrides?: CallOverrides): Promise<string>
+    l1TeleportGateway(overrides?: CallOverrides): Promise<string>
     l2Token(overrides?: CallOverrides): Promise<string>
     messenger(overrides?: CallOverrides): Promise<string>
     rely(usr: string, overrides?: CallOverrides): Promise<void>
@@ -330,8 +330,8 @@ export interface WormholeOutboundGateway extends BaseContract {
     Flushed(targetDomain?: BytesLike | null, dai?: null): FlushedEventFilter
     'Rely(address)'(usr?: string | null): RelyEventFilter
     Rely(usr?: string | null): RelyEventFilter
-    'WormholeInitialized(tuple)'(wormhole?: null): WormholeInitializedEventFilter
-    WormholeInitialized(wormhole?: null): WormholeInitializedEventFilter
+    'TeleportInitialized(tuple)'(teleport?: null): TeleportInitializedEventFilter
+    TeleportInitialized(teleport?: null): TeleportInitializedEventFilter
   }
   estimateGas: {
     batchedDaiToFlush(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>
@@ -361,7 +361,7 @@ export interface WormholeOutboundGateway extends BaseContract {
         from?: string | Promise<string>
       },
     ): Promise<BigNumber>
-    'initiateWormhole(bytes32,address,uint128)'(
+    'initiateTeleport(bytes32,address,uint128)'(
       targetDomain: BytesLike,
       receiver: string,
       amount: BigNumberish,
@@ -369,7 +369,7 @@ export interface WormholeOutboundGateway extends BaseContract {
         from?: string | Promise<string>
       },
     ): Promise<BigNumber>
-    'initiateWormhole(bytes32,address,uint128,address)'(
+    'initiateTeleport(bytes32,address,uint128,address)'(
       targetDomain: BytesLike,
       receiver: string,
       amount: BigNumberish,
@@ -378,7 +378,7 @@ export interface WormholeOutboundGateway extends BaseContract {
         from?: string | Promise<string>
       },
     ): Promise<BigNumber>
-    'initiateWormhole(bytes32,bytes32,uint128,bytes32)'(
+    'initiateTeleport(bytes32,bytes32,uint128,bytes32)'(
       targetDomain: BytesLike,
       receiver: BytesLike,
       amount: BigNumberish,
@@ -388,7 +388,7 @@ export interface WormholeOutboundGateway extends BaseContract {
       },
     ): Promise<BigNumber>
     isOpen(overrides?: CallOverrides): Promise<BigNumber>
-    l1WormholeGateway(overrides?: CallOverrides): Promise<BigNumber>
+    l1TeleportGateway(overrides?: CallOverrides): Promise<BigNumber>
     l2Token(overrides?: CallOverrides): Promise<BigNumber>
     messenger(overrides?: CallOverrides): Promise<BigNumber>
     rely(
@@ -428,7 +428,7 @@ export interface WormholeOutboundGateway extends BaseContract {
         from?: string | Promise<string>
       },
     ): Promise<PopulatedTransaction>
-    'initiateWormhole(bytes32,address,uint128)'(
+    'initiateTeleport(bytes32,address,uint128)'(
       targetDomain: BytesLike,
       receiver: string,
       amount: BigNumberish,
@@ -436,7 +436,7 @@ export interface WormholeOutboundGateway extends BaseContract {
         from?: string | Promise<string>
       },
     ): Promise<PopulatedTransaction>
-    'initiateWormhole(bytes32,address,uint128,address)'(
+    'initiateTeleport(bytes32,address,uint128,address)'(
       targetDomain: BytesLike,
       receiver: string,
       amount: BigNumberish,
@@ -445,7 +445,7 @@ export interface WormholeOutboundGateway extends BaseContract {
         from?: string | Promise<string>
       },
     ): Promise<PopulatedTransaction>
-    'initiateWormhole(bytes32,bytes32,uint128,bytes32)'(
+    'initiateTeleport(bytes32,bytes32,uint128,bytes32)'(
       targetDomain: BytesLike,
       receiver: BytesLike,
       amount: BigNumberish,
@@ -455,7 +455,7 @@ export interface WormholeOutboundGateway extends BaseContract {
       },
     ): Promise<PopulatedTransaction>
     isOpen(overrides?: CallOverrides): Promise<PopulatedTransaction>
-    l1WormholeGateway(overrides?: CallOverrides): Promise<PopulatedTransaction>
+    l1TeleportGateway(overrides?: CallOverrides): Promise<PopulatedTransaction>
     l2Token(overrides?: CallOverrides): Promise<PopulatedTransaction>
     messenger(overrides?: CallOverrides): Promise<PopulatedTransaction>
     rely(

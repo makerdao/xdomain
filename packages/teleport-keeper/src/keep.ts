@@ -1,7 +1,7 @@
 import { Signer } from 'ethers'
 import { formatBytes32String, formatEther, parseBytes32String } from 'ethers/lib/utils'
 
-import { WormholeOutboundGateway } from './abis/WormholeOutboundGateway'
+import { TeleportOutboundGateway } from './abis/TeleportOutboundGateway'
 import { FinalizeMessage } from './domains'
 import { findNearestBlock } from './utils'
 
@@ -12,7 +12,7 @@ export async function keep({
   l2Signer,
   finalizeMessage,
 }: {
-  teleportOutboundGateway: WormholeOutboundGateway
+  teleportOutboundGateway: TeleportOutboundGateway
   domainToFlush: string
   maxTtlForMessages: number
   l2Signer: Signer
@@ -29,7 +29,7 @@ export async function keep({
   await findMessagesToFlush(teleportOutboundGateway, domainToFlush, cutoffBlock.number, finalizeMessage)
 }
 
-async function flushL2Gateway(gateway: WormholeOutboundGateway, targetDomain: string) {
+async function flushL2Gateway(gateway: TeleportOutboundGateway, targetDomain: string) {
   const targetDomainEncoded = formatBytes32String(targetDomain)
   const daiToFlush = await gateway.batchedDaiToFlush(targetDomainEncoded)
 
@@ -47,7 +47,7 @@ async function flushL2Gateway(gateway: WormholeOutboundGateway, targetDomain: st
 }
 
 async function findMessagesToFlush(
-  gateway: WormholeOutboundGateway,
+  gateway: TeleportOutboundGateway,
   domain: string,
   cutoffBlock: number,
   finalizeMessage: FinalizeMessage,

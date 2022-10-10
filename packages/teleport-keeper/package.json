@@ -1,7 +1,7 @@
 {
-  "name": "wormhole-keeper",
+  "name": "teleport-keeper",
   "version": "1.0.0",
-  "description": "Keeper for wormhole sdk",
+  "description": "Keeper for teleport sdk",
   "files": [
     "/dist"
   ],
