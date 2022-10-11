@@ -1,10 +1,10 @@
 import { providers } from 'ethers'
 
 import * as sdks from './sdk'
-import { KovanSdk, OptimismKovanSdk } from './sdk'
+import { GoerliSdk, OptimismGoerliTestnetSdk } from './sdk'
 
-export type L1Sdk = KovanSdk
-export type L2Sdk = OptimismKovanSdk
+export type L1Sdk = GoerliSdk
+export type L2Sdk = OptimismGoerliTestnetSdk
 
 export function getL1SdkBasedOnNetworkName(sdkName: string, provider: providers.Provider): L1Sdk {
   const SDK = (sdks as any)[`get${sdkName}Sdk`]

@@ -1,6 +1,6 @@
 import { BigNumber, ethers, providers } from 'ethers'
 
-import { bridgeInvariant } from '../monitoring/bridgeInvariant'
+import { bridgeInvariant, DomainId } from '../monitoring/bridgeInvariant'
 import { monitorTeleportFlush } from '../monitoring/teleportFlush'
 import { monitorTeleportMints } from '../monitoring/teleportMints'
 import { monitorTeleportSettle } from '../monitoring/teleportSettle'
@@ -97,7 +97,7 @@ export async function monitor({
       const l2Provider = new ethers.providers.JsonRpcProvider(slave.l2Rpc)
       const l2Sdk = getL2SdkBasedOnNetworkName(slave.sdkName, l2Provider)
 
-      const balances = await bridgeInvariant(l1Sdk, l2Sdk)
+      const balances = await bridgeInvariant(l1Sdk, l2Sdk, slave.name as DomainId)
       metrics[makeMetricName('teleport_l1_dai_balance', labels)] = balances.l1Balance
       metrics[makeMetricName('teleport_l2_dai_balance', labels)] = balances.l2Balance
       metrics[makeMetricName('teleport_bad_debt_l1_block', labels)] = blockNumber
