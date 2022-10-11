@@ -1,5 +1,5 @@
 import { L2ToL1MessageStatus, L2TransactionReceipt } from '@arbitrum/sdk'
-import { CrossChainMessenger, MessageStatus } from '@eth-optimism/sdk'
+import { CrossChainMessenger, MessageStatus, SignerLike } from '@eth-optimism/sdk'
 import assert from 'assert'
 import { Signer } from 'ethers'
 
@@ -8,7 +8,14 @@ export type MakeFinalizeMessage = (l1Signer: Signer, l2Signer: Signer) => Promis
 
 export async function makeFinalizeMessageForOptimism(l1Signer: Signer, l2Signer: Signer): Promise<FinalizeMessage> {
   const l1ChainId = await l1Signer.getChainId()
-  const sdk = new CrossChainMessenger({ l1SignerOrProvider: l1Signer, l2SignerOrProvider: l2Signer, l1ChainId })
+  const l2ChainId = await l2Signer.getChainId()
+
+  const sdk = new CrossChainMessenger({
+    l1SignerOrProvider: l1Signer as SignerLike,
+    l2SignerOrProvider: l2Signer as SignerLike,
+    l1ChainId,
+    l2ChainId,
+  })
 
   return async (txHash) => {
     const messageStatus = await sdk.getMessageStatus(txHash)
@@ -41,7 +48,7 @@ export async function makeFinalizeMessageForArbitrum(l1Signer: Signer, l2Signer:
   return async (txHash) => {
     const tx = await l2Signer.provider!.getTransactionReceipt(txHash)
     const l2Tx = new L2TransactionReceipt(tx)
-    const l2Message = (await l2Tx.getL2ToL1Messages(l1Signer, l2Signer.provider!))[0]
+    const l2Message = (await l2Tx.getL2ToL1Messages(l1Signer))[0]
     assert(l2Message, 'No messages found!')
 
     const status = await l2Message.status(l2Signer.provider!)

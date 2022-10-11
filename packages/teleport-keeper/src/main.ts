@@ -1,6 +1,6 @@
 import { Contract, ethers } from 'ethers'
 
-import { WormholeOutboundGateway } from './abis/WormholeOutboundGateway'
+import { TeleportOutboundGateway } from './abis/TeleportOutboundGateway'
 import { idsToChains, networks } from './config'
 import { keep } from './keep'
 
@@ -23,7 +23,7 @@ export async function main(l1Rpc: string, privKey: string) {
     const l2Signer = l1Signer.connect(l2Provider)
 
     for (const domainToFlush of c.domainsToFlush) {
-      console.log(`Flushing ${c.name} -> ${domainToFlush}`)
+      console.log(`\nFlushing ${c.name} -> ${domainToFlush}`)
 
       await keep({
         domainToFlush: domainToFlush,
@@ -32,9 +32,9 @@ export async function main(l1Rpc: string, privKey: string) {
         maxTtlForMessages: c.maxTtlForMessages,
         teleportOutboundGateway: new Contract(
           c.teleportOutboundGateway,
-          require('./abis/WormholeOutboundGateway.json'),
+          require('./abis/TeleportOutboundGateway.json'),
           l2Signer,
-        ) as WormholeOutboundGateway,
+        ) as TeleportOutboundGateway,
       })
     }
   }

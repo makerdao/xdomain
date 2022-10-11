@@ -2,7 +2,7 @@
   {
     "inputs": [
       { "internalType": "address", "name": "_l2Token", "type": "address" },
-      { "internalType": "address", "name": "_l1DaiWormholeGateway", "type": "address" },
+      { "internalType": "address", "name": "_l1DaiTeleportGateway", "type": "address" },
       { "internalType": "bytes32", "name": "_domain", "type": "bytes32" }
     ],
     "stateMutability": "nonpayable",
@@ -65,12 +65,12 @@
           { "internalType": "uint48", "name": "timestamp", "type": "uint48" }
         ],
         "indexed": false,
-        "internalType": "struct WormholeGUID",
-        "name": "wormhole",
+        "internalType": "struct TeleportGUID",
+        "name": "teleport",
         "type": "tuple"
       }
     ],
-    "name": "WormholeInitialized",
+    "name": "TeleportInitialized",
     "type": "event"
   },
   {
@@ -119,7 +119,7 @@
       { "internalType": "address", "name": "receiver", "type": "address" },
       { "internalType": "uint128", "name": "amount", "type": "uint128" }
     ],
-    "name": "initiateWormhole",
+    "name": "initiateTeleport",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -131,7 +131,7 @@
       { "internalType": "uint128", "name": "amount", "type": "uint128" },
       { "internalType": "address", "name": "operator", "type": "address" }
     ],
-    "name": "initiateWormhole",
+    "name": "initiateTeleport",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -143,7 +143,7 @@
       { "internalType": "uint128", "name": "amount", "type": "uint128" },
       { "internalType": "bytes32", "name": "operator", "type": "bytes32" }
     ],
-    "name": "initiateWormhole",
+    "name": "initiateTeleport",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -157,7 +157,7 @@
   },
   {
     "inputs": [],
-    "name": "l1DaiWormholeGateway",
+    "name": "l1DaiTeleportGateway",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
