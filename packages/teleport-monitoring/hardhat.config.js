@@ -7,7 +7,8 @@ module.exports = {
     hardhat: {
       forking: {
         enabled: true,
-        url: process.env.L1_RPC,
+        url: process.env.TEST_RPC,
+        blockNumber: 31687289,
       },
     },
   },
