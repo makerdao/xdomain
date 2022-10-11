@@ -11,11 +11,11 @@ import { FlushRepository } from '../peripherals/db/FlushRepository'
 import { SettleRepository } from '../peripherals/db/SettleRepository'
 import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
 import { TeleportRepository } from '../peripherals/db/TeleportRepository'
-import { getKovanSdk } from '../sdk'
+import { getGoerliSdk } from '../sdk'
 import { monitor } from './monitor'
 
 describe('Monitoring', () => {
-  const kovanProxy = '0x0e4725db88Bb038bBa4C4723e91Ba183BE11eDf3'
+  const goerliPauseProxy = '0x5DCdbD3cCF9B09EAAD03bc5f50fA2B3d3ACA0121'
   const hhProvider = hre.ethers.provider as providers.Provider
   const signers = [Wallet.createRandom()]
   const receiver = Wallet.createRandom().connect(hhProvider)
@@ -23,12 +23,12 @@ describe('Monitoring', () => {
   const prisma = setupDatabaseTestSuite()
 
   it('detects bad debt', async () => {
-    const sourceDomain = 'KOVAN-SLAVE-OPTIMISM-1'
-    const targetDomain = 'KOVAN-MASTER-1'
+    const sourceDomain = 'OPT-GOER-A'
+    const targetDomain = 'ETH-GOER-A'
     const daiToMint = 2137
 
     // start monitoring
-    const network = networks[chainIds.KOVAN]
+    const network = networks[chainIds.GOERLI]
     const l2Provider = new ethers.providers.JsonRpcProvider(network.slaves[0].l2Rpc)
     const teleportRepository = new TeleportRepository(prisma)
     const settleRepository = new SettleRepository(prisma)
@@ -61,8 +61,8 @@ describe('Monitoring', () => {
     cancel = _cancel
 
     // print unbacked DAI
-    const sdk = getKovanSdk(hhProvider as any)
-    const impersonator = await impersonateAccount(kovanProxy, hhProvider)
+    const sdk = getGoerliSdk(hhProvider as any)
+    const impersonator = await impersonateAccount(goerliPauseProxy, hhProvider)
     await mintEther(receiver.address, hhProvider)
     await sdk.oracleAuth.connect(impersonator).addSigners(signers.map((s) => s.address))
     const teleport = {
@@ -81,8 +81,8 @@ describe('Monitoring', () => {
 
     // assert
     await waitForExpect(() => {
-      expect(metrics['teleport_bad_debt{domain="KOVAN-MASTER-1",network="kovan"}']).toEqual(daiToMint.toString())
-    }, 10_000)
+      expect(metrics['teleport_bad_debt{domain="ETH-GOER-A",network="goerli"}']).toEqual(daiToMint.toString())
+    }, 60_000)
   })
 
   afterEach(async () => {
