@@ -51,10 +51,10 @@
   dependencies:
     "@cspotcode/source-map-consumer" "0.8.0"
 
-"@dethcrypto/eth-sdk@^0.3.3":
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/@dethcrypto/eth-sdk/-/eth-sdk-0.3.3.tgz#403a378c1f397abf09e24a0a0065b319bc4b5f32"
-  integrity sha512-Q0UI8hyl3BAC9fTce46z7fbMXZkK5aXGFxcEhwre0hTvpCU5T9nVUVngcOoniFRRtgAadhrYknHGQ6TpymKlvA==
+"@dethcrypto/eth-sdk@^0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@dethcrypto/eth-sdk/-/eth-sdk-0.3.2.tgz#f565e7a2da159940e9e2100b34159435e8fa6926"
+  integrity sha512-7rHLAQku6UvplBu3tThHArZ2eotA1FjUQhnfUmDfvR/tbgxfFRnUuwCYLQRTDIhUZbWmwFBMyWvXLyN+mYuMDw==
   dependencies:
     "@typechain/ethers-v5" "^10.0.0"
     chalk "^4.1.2"

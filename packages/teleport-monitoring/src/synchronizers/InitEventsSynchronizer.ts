@@ -33,7 +33,7 @@ export class InitEventsSynchronizer extends GenericSynchronizer {
   }
 
   async sync(from: number, to: number) {
-    const filter = this.l2Sdk.teleportGateway.filters.TeleportInitialized()
+    const filter = this.l2Sdk.teleportGateway.filters.WormholeInitialized()
 
     const newTeleports = await this.l2Sdk.teleportGateway.queryFilter(filter, from, to - 1)
     console.log(`[${this.syncName}] Found ${newTeleports.length} new teleports`)
