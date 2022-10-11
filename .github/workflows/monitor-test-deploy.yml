@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://postgres:password@localhost:5432/local
-      TEST_RPC: ${{ secrets.KOVAN_RPC_URL }}
+      L1_RPC: ${{ secrets.GOERLI_RPC_URL }}
     defaults:
       run:
         working-directory: ./packages/teleport-monitoring
