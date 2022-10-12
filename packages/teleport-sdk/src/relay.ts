@@ -55,9 +55,9 @@ const DEFAULT_MAX_FEE_PERCENTAGE = parseEther('0.1') // 10%
 
 function getEstimatedRelayGasLimit(relay: BasicRelay | TrustedRelay): string {
   if (relay.hasOwnProperty('signers')) {
-    return '620000' // = 385462 + a small margin (estimate for TrustedRelay)
+    return '490000' // = 385462 + a small margin (estimate for TrustedRelay)
   }
-  return '600000' // = 371516 + a small margin (estimate for BasicRelay)
+  return '470000' // = 371516 + a small margin (estimate for BasicRelay)
 }
 
 async function queryGelatoApi(url: string, method: 'get' | 'post', params?: Object): Promise<any> {
@@ -151,7 +151,7 @@ async function getRelayCalldata(
   return calldata
 }
 
-async function createRelayTask(relay: Relay, calldata: string, gasLimit: BigNumberish): Promise<string> {
+async function createRelayTask(relay: Relay, calldata: string): Promise<string> {
   const { chainId } = await relay.provider.getNetwork()
   const token = await relay.dai()
   const { taskId } = await queryGelatoApi(`relays/v2/call-with-sync-fee`, 'post', {
@@ -159,7 +159,6 @@ async function createRelayTask(relay: Relay, calldata: string, gasLimit: BigNumb
     target: relay.address,
     data: calldata,
     feeToken: token,
-    gasLimit: gasLimit.toString(),
   })
   return taskId
 }
@@ -326,7 +325,7 @@ export async function signAndCreateRelayTask(
     to,
     data,
   )
-  const taskId = await createRelayTask(relay, relayData, getEstimatedRelayGasLimit(relay))
+  const taskId = await createRelayTask(relay, relayData)
   return taskId
 }
 
