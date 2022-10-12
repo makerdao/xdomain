@@ -53,6 +53,19 @@ export const DOMAINS = [
 
 export type DomainId = typeof DOMAINS[number]
 
+export const DOMAIN_CHAIN_IDS: { [domain in DomainId]: number } = {
+  'RINKEBY-SLAVE-ARBITRUM-1': 421611,
+  'RINKEBY-MASTER-1': 4,
+  'KOVAN-SLAVE-OPTIMISM-1': 69,
+  'KOVAN-MASTER-1': 42,
+  'OPT-GOER-A': 420,
+  'ARB-GOER-A': 421613,
+  'ETH-GOER-A': 5,
+  'OPT-MAIN-A': 10,
+  'ARB-ONE-A': 42161,
+  'ETH-MAIN-A': 1,
+}
+
 export const DEFAULT_RPC_URLS: Dictionary<string, DomainId> = {
   'RINKEBY-SLAVE-ARBITRUM-1': 'https://rinkeby.arbitrum.io/rpc',
   'RINKEBY-MASTER-1': 'https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',

@@ -4,6 +4,7 @@ import { hexlify, hexZeroPad } from 'ethers/lib/utils'
 
 import {
   DEFAULT_RPC_URLS,
+  DOMAIN_CHAIN_IDS,
   DomainDescription,
   DomainId,
   getDefaultDstDomain,
@@ -347,7 +348,13 @@ export class TeleportBridge {
     }
 
     if (['OPT-GOER-A', 'OPT-MAIN-A'].includes(this.srcDomain)) {
-      return await isOptimismMessageReadyToBeRelayed(txHash, this.srcDomainProvider, this.dstDomainProvider)
+      return await isOptimismMessageReadyToBeRelayed(
+        txHash,
+        DOMAIN_CHAIN_IDS[this.srcDomain],
+        DOMAIN_CHAIN_IDS[this.dstDomain],
+        this.srcDomainProvider,
+        this.dstDomainProvider,
+      )
     }
 
     return false
@@ -365,7 +372,15 @@ export class TeleportBridge {
     }
 
     if (['OPT-GOER-A', 'OPT-MAIN-A'].includes(this.srcDomain)) {
-      return await relayOptimismMessage(txHash, sender, this.srcDomainProvider, this.dstDomainProvider, overrides)
+      return await relayOptimismMessage(
+        txHash,
+        sender,
+        DOMAIN_CHAIN_IDS[this.srcDomain],
+        DOMAIN_CHAIN_IDS[this.dstDomain],
+        this.srcDomainProvider,
+        this.dstDomainProvider,
+        overrides,
+      )
     }
 
     throw new Error(`mintWithoutOracles not yet supported for source domain ${this.srcDomain}`)

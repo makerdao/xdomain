@@ -112,7 +112,7 @@ class TeleportBridge {
             return await (0, _1.isArbitrumMessageInOutbox)(txHash, this.srcDomainProvider, this.dstDomainProvider);
         }
         if (['OPT-GOER-A', 'OPT-MAIN-A'].includes(this.srcDomain)) {
-            return await (0, _1.isOptimismMessageReadyToBeRelayed)(txHash, this.srcDomainProvider, this.dstDomainProvider);
+            return await (0, _1.isOptimismMessageReadyToBeRelayed)(txHash, _1.DOMAIN_CHAIN_IDS[this.srcDomain], _1.DOMAIN_CHAIN_IDS[this.dstDomain], this.srcDomainProvider, this.dstDomainProvider);
         }
         return false;
     }
@@ -121,7 +121,7 @@ class TeleportBridge {
             return await (0, _1.relayArbitrumMessage)(txHash, sender, this.srcDomainProvider, this.settings.useFakeArbitrumOutbox, overrides);
         }
         if (['OPT-GOER-A', 'OPT-MAIN-A'].includes(this.srcDomain)) {
-            return await (0, _1.relayOptimismMessage)(txHash, sender, this.srcDomainProvider, this.dstDomainProvider, overrides);
+            return await (0, _1.relayOptimismMessage)(txHash, sender, _1.DOMAIN_CHAIN_IDS[this.srcDomain], _1.DOMAIN_CHAIN_IDS[this.dstDomain], this.srcDomainProvider, this.dstDomainProvider, overrides);
         }
         throw new Error(`mintWithoutOracles not yet supported for source domain ${this.srcDomain}`);
     }

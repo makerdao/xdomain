@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSdk = exports.getDefaultDstDomain = exports.getLikelyDomainId = exports.DEFAULT_RPC_URLS = exports.DOMAINS = void 0;
+exports.getSdk = exports.getDefaultDstDomain = exports.getLikelyDomainId = exports.DEFAULT_RPC_URLS = exports.DOMAIN_CHAIN_IDS = exports.DOMAINS = void 0;
 const ethers_1 = require("ethers");
 const sdk_1 = require("./sdk");
 exports.DOMAINS = [
@@ -15,6 +15,18 @@ exports.DOMAINS = [
     'ARB-ONE-A',
     'ETH-MAIN-A',
 ];
+exports.DOMAIN_CHAIN_IDS = {
+    'RINKEBY-SLAVE-ARBITRUM-1': 421611,
+    'RINKEBY-MASTER-1': 4,
+    'KOVAN-SLAVE-OPTIMISM-1': 69,
+    'KOVAN-MASTER-1': 42,
+    'OPT-GOER-A': 420,
+    'ARB-GOER-A': 421613,
+    'ETH-GOER-A': 5,
+    'OPT-MAIN-A': 10,
+    'ARB-ONE-A': 42161,
+    'ETH-MAIN-A': 1,
+};
 exports.DEFAULT_RPC_URLS = {
     'RINKEBY-SLAVE-ARBITRUM-1': 'https://rinkeby.arbitrum.io/rpc',
     'RINKEBY-MASTER-1': 'https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
