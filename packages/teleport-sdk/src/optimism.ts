@@ -37,9 +37,6 @@ export async function relayOptimismMessage(
   overrides?: Overrides,
 ): Promise<ContractTransaction> {
   const crossChainMessenger = await getOptimismCrossChainMessenger(srcDomainProvider, dstDomainProvider)
-  const msgStatus = await crossChainMessenger.getMessageStatus(txHash)
-  if (msgStatus !== MessageStatus.READY_FOR_RELAY)
-    throw new Error(`Optimism L1>L2 message is not ready for relay: message status is "${MessageStatus[msgStatus]}"`)
   const finalizeTx = await crossChainMessenger.finalizeMessage(txHash, { signer: sender, overrides })
   return finalizeTx
 }

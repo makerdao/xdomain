@@ -23,9 +23,6 @@ async function isOptimismMessageReadyToBeRelayed(txHash, srcDomainProvider, dstD
 exports.isOptimismMessageReadyToBeRelayed = isOptimismMessageReadyToBeRelayed;
 async function relayOptimismMessage(txHash, sender, srcDomainProvider, dstDomainProvider, overrides) {
     const crossChainMessenger = await getOptimismCrossChainMessenger(srcDomainProvider, dstDomainProvider);
-    const msgStatus = await crossChainMessenger.getMessageStatus(txHash);
-    if (msgStatus !== sdk_1.MessageStatus.READY_FOR_RELAY)
-        throw new Error(`Optimism L1>L2 message is not ready for relay: message status is "${sdk_1.MessageStatus[msgStatus]}"`);
     const finalizeTx = await crossChainMessenger.finalizeMessage(txHash, { signer: sender, overrides });
     return finalizeTx;
 }
