@@ -357,7 +357,7 @@ export class TeleportBridge {
     if (['ARB-GOER-A', 'ARB-ONE-A'].includes(this.srcDomain)) {
       return await relayArbitrumMessage(
         txHash,
-        sender.connect(this.dstDomainProvider),
+        sender,
         this.srcDomainProvider,
         this.settings.useFakeArbitrumOutbox,
         overrides,
@@ -365,13 +365,7 @@ export class TeleportBridge {
     }
 
     if (['OPT-GOER-A', 'OPT-MAIN-A'].includes(this.srcDomain)) {
-      return await relayOptimismMessage(
-        txHash,
-        sender.connect(this.dstDomainProvider),
-        this.srcDomainProvider,
-        this.dstDomainProvider,
-        overrides,
-      )
+      return await relayOptimismMessage(txHash, sender, this.srcDomainProvider, this.dstDomainProvider, overrides)
     }
 
     throw new Error(`mintWithoutOracles not yet supported for source domain ${this.srcDomain}`)

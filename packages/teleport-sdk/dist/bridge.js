@@ -118,10 +118,10 @@ class TeleportBridge {
     }
     async mintWithoutOracles(sender, txHash, overrides) {
         if (['ARB-GOER-A', 'ARB-ONE-A'].includes(this.srcDomain)) {
-            return await (0, _1.relayArbitrumMessage)(txHash, sender.connect(this.dstDomainProvider), this.srcDomainProvider, this.settings.useFakeArbitrumOutbox, overrides);
+            return await (0, _1.relayArbitrumMessage)(txHash, sender, this.srcDomainProvider, this.settings.useFakeArbitrumOutbox, overrides);
         }
         if (['OPT-GOER-A', 'OPT-MAIN-A'].includes(this.srcDomain)) {
-            return await (0, _1.relayOptimismMessage)(txHash, sender.connect(this.dstDomainProvider), this.srcDomainProvider, this.dstDomainProvider, overrides);
+            return await (0, _1.relayOptimismMessage)(txHash, sender, this.srcDomainProvider, this.dstDomainProvider, overrides);
         }
         throw new Error(`mintWithoutOracles not yet supported for source domain ${this.srcDomain}`);
     }
