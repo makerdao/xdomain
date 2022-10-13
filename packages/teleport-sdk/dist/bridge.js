@@ -106,6 +106,16 @@ class TeleportBridge {
         return await (0, _1.requestAndWaitForRelay)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated);
     }
     async canMintWithoutOracle(txHash) {
+        try {
+            const teleportGUID = await (0, _1.getTeleportGuid)(txHash, this.srcDomainProvider, (0, _1.getSdk)(this.srcDomain, this.srcDomainProvider).TeleportOutboundGateway.interface);
+            const { bridgeFee } = await (0, _1.getFeesAndMintableAmounts)(this.srcDomain, this.dstDomain, this.dstDomainProvider, teleportGUID);
+            if (bridgeFee.gt(0))
+                return false; // can only mint via slow path if fees are 0 (e.g. after 8 days TTL), otherwise slow path mint will fail
+        }
+        catch (e) {
+            console.error(e);
+            return false;
+        }
         if (['ARB-GOER-A', 'ARB-ONE-A'].includes(this.srcDomain)) {
             if (this.settings.useFakeArbitrumOutbox)
                 return true;

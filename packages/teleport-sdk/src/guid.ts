@@ -1,4 +1,8 @@
+import { providers } from 'ethers'
 import { keccak256 } from 'ethers/lib/utils'
+
+import { TeleportOutboundGatewayInterface } from './sdk/esm/types/TeleportOutboundGateway.d'
+import { waitForTxReceipt } from './utils'
 
 export interface TeleportGUID {
   sourceDomain: string
@@ -35,4 +39,18 @@ export function getGuidHash(teleportGUID: TeleportGUID): string {
       .map((hex) => hex.slice(2))
       .join('')
   return keccak256(teleportData)
+}
+
+export async function getTeleportGuid(
+  txHash: string,
+  srcDomainProvider: providers.Provider,
+  teleportOutboundGatewayInterface: TeleportOutboundGatewayInterface,
+): Promise<TeleportGUID> {
+  const teleportInitializedEventHash = teleportOutboundGatewayInterface.getEventTopic('TeleportInitialized')
+  const receipt = await waitForTxReceipt(srcDomainProvider, txHash)
+  const teleportInitializedEvent = receipt.logs.find((e) => e.topics[0] === teleportInitializedEventHash)
+  if (!teleportInitializedEvent) {
+    throw new Error(`getTeleportGuid: no TeleportInitialized event found for txHash=${txHash}`)
+  }
+  return decodeTeleportData(teleportInitializedEvent.data)
 }

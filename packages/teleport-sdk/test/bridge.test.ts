@@ -583,6 +583,11 @@ describe('TeleportBridge', () => {
   })
 
   describe('Using the slow path', () => {
+    // IMPORTANT NOTE:
+    // Slow path mints on testnet may only succeed when the amount is so small that the bridge fee based on that amount rounds down to 0.
+    // This is because we are not waiting for the 8 days TTL normally required for the fee to become 0.
+    expect(amount).to.be.lt(10) // should allow succesfull tests with linear fee as high as 10%
+
     async function testMintWithoutOracles({
       srcDomain,
       waitTimeMs,

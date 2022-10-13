@@ -12,6 +12,7 @@ import {
   getLikelyDomainId,
   getRelayGasFee,
   getSdk,
+  getTeleportGuid,
   isArbitrumMessageInOutbox,
   isOptimismMessageReadyToBeRelayed,
   Relay,
@@ -342,6 +343,24 @@ export class TeleportBridge {
   }
 
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {
+    try {
+      const teleportGUID = await getTeleportGuid(
+        txHash,
+        this.srcDomainProvider,
+        getSdk(this.srcDomain, this.srcDomainProvider).TeleportOutboundGateway!.interface,
+      )
+      const { bridgeFee } = await getFeesAndMintableAmounts(
+        this.srcDomain,
+        this.dstDomain,
+        this.dstDomainProvider,
+        teleportGUID,
+      )
+      if (bridgeFee.gt(0)) return false // can only mint via slow path if fees are 0 (e.g. after 8 days TTL), otherwise slow path mint will fail
+    } catch (e) {
+      console.error(e)
+      return false
+    }
+
     if (['ARB-GOER-A', 'ARB-ONE-A'].includes(this.srcDomain)) {
       if (this.settings.useFakeArbitrumOutbox) return true
       return await isArbitrumMessageInOutbox(txHash, this.srcDomainProvider, this.dstDomainProvider)
