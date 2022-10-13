@@ -3,7 +3,7 @@ name: Teleport Monitor Test Deploy
 on:
   push:
     branches:
-      - fix-monitoring # TEMP
+      - master
     paths:
       - packages/teleport-monitoring/**
   pull_request:
@@ -54,7 +54,7 @@ jobs:
   deploy:
     name: Deploy
     needs: test
-    if: github.ref == 'refs/heads/master'
+    # if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     env:
       REGION: us-east-1
