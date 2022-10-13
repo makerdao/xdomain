@@ -61,6 +61,9 @@ export interface MintWithOraclesOpts {
     sender?: Signer;
     overrides?: Overrides;
 }
+export declare function getTeleportGuidFromTxHash(opts: {
+    txHash: string;
+} & DomainContext): ReturnType<TeleportBridge['getTeleportGuidFromTxHash']>;
 export declare function requestFaucetDai(opts: {
     sender: Signer;
     overrides?: Overrides;

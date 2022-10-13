@@ -66,6 +66,10 @@ class TeleportBridge {
         const relay = sdk.BasicRelay && _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
         return await (0, _1.getFeesAndMintableAmounts)(this.srcDomain, this.dstDomain, this.dstDomainProvider, teleportGUID, relay, isHighPriority, relayParams);
     }
+    async getTeleportGuidFromTxHash(txHash) {
+        const teleportGUID = await (0, _1.getTeleportGuid)(txHash, this.srcDomainProvider, (0, _1.getSdk)(this.srcDomain, this.srcDomainProvider).TeleportOutboundGateway.interface);
+        return teleportGUID;
+    }
     async requestFaucetDai(sender, overrides) {
         const sdk = (0, _1.getSdk)(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender));
         if (!sdk.Faucet)

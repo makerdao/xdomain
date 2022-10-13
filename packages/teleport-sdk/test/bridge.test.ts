@@ -25,6 +25,7 @@ import {
   getSrcBalance,
   getSrcGatewayAllowance,
   getTeleportBridge,
+  getTeleportGuidFromTxHash,
   initRelayedTeleport,
   initTeleport,
   mintWithOracles,
@@ -220,6 +221,7 @@ describe('TeleportBridge', () => {
 
     let signatures: string
     let guid: TeleportGUID | undefined
+    let txGuid: TeleportGUID | undefined
 
     const onNewSignatureReceived = (numSigs: number, threshold: number) =>
       console.log(`Signatures received: ${numSigs} (required: ${threshold}).`)
@@ -233,6 +235,10 @@ describe('TeleportBridge', () => {
         onNewSignatureReceived,
         teleportGUID,
       }))
+      txGuid = await getTeleportGuidFromTxHash({
+        txHash,
+        srcDomain,
+      })
     } else {
       ;({ signatures, teleportGUID: guid } = await bridge!.getAttestations(
         txHash,
@@ -241,8 +247,10 @@ describe('TeleportBridge', () => {
         undefined,
         teleportGUID,
       ))
+      txGuid = await bridge!.getTeleportGuidFromTxHash(txHash)
     }
     expect(guid).to.not.be.undefined
+    expect(guid).to.be.deep.eq(txGuid)
     expect(signatures).to.have.length.gt(2)
 
     return { bridge, teleportGUID: guid, signatures }

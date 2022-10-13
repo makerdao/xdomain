@@ -128,6 +128,12 @@ export interface MintWithOraclesOpts {
   overrides?: Overrides
 }
 
+export function getTeleportGuidFromTxHash(
+  opts: { txHash: string } & DomainContext,
+): ReturnType<TeleportBridge['getTeleportGuidFromTxHash']> {
+  return getTeleportBridge(opts).getTeleportGuidFromTxHash(opts.txHash)
+}
+
 export function requestFaucetDai(
   opts: { sender: Signer; overrides?: Overrides } & DomainContext,
 ): ReturnType<TeleportBridge['requestFaucetDai']> {

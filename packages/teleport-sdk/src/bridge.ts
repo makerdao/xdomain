@@ -213,6 +213,15 @@ export class TeleportBridge {
     )
   }
 
+  public async getTeleportGuidFromTxHash(txHash: string): Promise<TeleportGUID> {
+    const teleportGUID = await getTeleportGuid(
+      txHash,
+      this.srcDomainProvider,
+      getSdk(this.srcDomain, this.srcDomainProvider).TeleportOutboundGateway!.interface,
+    )
+    return teleportGUID
+  }
+
   public async requestFaucetDai(sender: Signer, overrides?: Overrides): Promise<ContractTransaction> {
     const sdk = getSdk(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender))
     if (!sdk.Faucet) throw new Error(`No faucet setup for source domain ${this.srcDomain}!`)

@@ -45,6 +45,7 @@ export declare class TeleportBridge {
         bridgeFee: BigNumber;
         relayFee?: BigNumber;
     }>;
+    getTeleportGuidFromTxHash(txHash: string): Promise<TeleportGUID>;
     requestFaucetDai(sender: Signer, overrides?: Overrides): Promise<ContractTransaction>;
     mintWithOracles(teleportGUID: TeleportGUID, signatures: string, maxFeePercentage?: BigNumberish, operatorFee?: BigNumberish, sender?: Signer, overrides?: Overrides): Promise<Call>;
     waitForMint(teleportGUIDorGUIDHash: TeleportGUID | string, pollingIntervalMs?: number, timeoutMs?: number): Promise<string>;
