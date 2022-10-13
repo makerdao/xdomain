@@ -60,7 +60,7 @@ jobs:
       REGION: us-east-1
       SERVICE_NAME_GOERLI: optimism-teleport-monitor-goerli-prod
       CLUSTER_NAME: teleport-monitor-prod
-      ECR_REPO_NAME: optimism-teleport-monitor-goerli-prod
+      ECR_REPO_NAME: optimism-teleport-monitor-prod
 
     steps:
       - name: Checkout
