@@ -25,68 +25,68 @@ import "../l2/L2GovernanceRelay.sol";
 // Excessive ether can be reclaimed by governance by calling reclaim function.
 
 contract L1GovernanceRelay is L1CrossDomainEnabled {
-  // --- Auth ---
-  mapping(address => uint256) public wards;
+    // --- Auth ---
+    mapping(address => uint256) public wards;
 
-  function rely(address usr) external auth {
-    wards[usr] = 1;
-    emit Rely(usr);
-  }
+    function rely(address usr) external auth {
+        wards[usr] = 1;
+        emit Rely(usr);
+    }
 
-  function deny(address usr) external auth {
-    wards[usr] = 0;
-    emit Deny(usr);
-  }
+    function deny(address usr) external auth {
+        wards[usr] = 0;
+        emit Deny(usr);
+    }
 
-  modifier auth() {
-    require(wards[msg.sender] == 1, "L1GovernanceRelay/not-authorized");
-    _;
-  }
+    modifier auth() {
+        require(wards[msg.sender] == 1, "L1GovernanceRelay/not-authorized");
+        _;
+    }
 
-  address public immutable l2GovernanceRelay;
+    address public immutable l2GovernanceRelay;
 
-  event Rely(address indexed usr);
-  event Deny(address indexed usr);
+    event Rely(address indexed usr);
+    event Deny(address indexed usr);
 
-  constructor(address _inbox, address _l2GovernanceRelay) public L1CrossDomainEnabled(_inbox) {
-    wards[msg.sender] = 1;
-    emit Rely(msg.sender);
+    constructor(address _inbox, address _l2GovernanceRelay) public L1CrossDomainEnabled(_inbox) {
+        wards[msg.sender] = 1;
+        emit Rely(msg.sender);
 
-    l2GovernanceRelay = _l2GovernanceRelay;
-  }
+        l2GovernanceRelay = _l2GovernanceRelay;
+    }
 
-  // Allow contract to receive ether
-  receive() external payable {}
+    // Allow contract to receive ether
+    receive() external payable {}
 
-  // Allow governance to reclaim stored ether
-  function reclaim(address receiver, uint256 amount) external auth {
-    (bool sent, ) = receiver.call{value: amount}("");
-    require(sent, "L1GovernanceRelay/failed-to-send-ether");
-  }
+    // Allow governance to reclaim stored ether
+    function reclaim(address receiver, uint256 amount) external auth {
+        (bool sent, ) = receiver.call{value: amount}("");
+        require(sent, "L1GovernanceRelay/failed-to-send-ether");
+    }
 
-  // Forward a call to be repeated on L2
-  function relay(
-    address target,
-    bytes calldata targetData,
-    uint256 l1CallValue,
-    uint256 maxGas,
-    uint256 gasPriceBid,
-    uint256 maxSubmissionCost
-  ) external payable auth {
-    bytes memory data = abi.encodeWithSelector(
-      L2GovernanceRelay.relay.selector,
-      target,
-      targetData
-    );
+    // Forward a call to be repeated on L2
+    function relay(
+        address target,
+        bytes calldata targetData,
+        uint256 l1CallValue,
+        uint256 maxGas,
+        uint256 gasPriceBid,
+        uint256 maxSubmissionCost
+    ) external payable auth {
+        bytes memory data = abi.encodeWithSelector(
+            L2GovernanceRelay.relay.selector,
+            target,
+            targetData
+        );
 
-    sendTxToL2NoAliasing(
-      l2GovernanceRelay,
-      l2GovernanceRelay, // send any excess ether to the L2 counterpart
-      l1CallValue,
-      maxSubmissionCost,
-      maxGas,
-      gasPriceBid,
-      data
-    );
-  }
+        sendTxToL2NoAliasing(
+            l2GovernanceRelay,
+            l2GovernanceRelay, // send any excess ether to the L2 counterpart
+            l1CallValue,
+            maxSubmissionCost,
+            maxGas,
+            gasPriceBid,
+            data
+        );
+    }
 }

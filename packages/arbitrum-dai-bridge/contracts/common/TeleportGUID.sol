@@ -18,17 +18,17 @@ pragma solidity ^0.6.11;
 
 // Standard Maker Teleport GUID
 struct TeleportGUID {
-  bytes32 sourceDomain;
-  bytes32 targetDomain;
-  bytes32 receiver;
-  bytes32 operator;
-  uint128 amount;
-  uint80 nonce;
-  uint48 timestamp;
+    bytes32 sourceDomain;
+    bytes32 targetDomain;
+    bytes32 receiver;
+    bytes32 operator;
+    uint128 amount;
+    uint80 nonce;
+    uint48 timestamp;
 }
 
 library TeleportGUIDHelper {
-  function addressToBytes32(address addr) internal pure returns (bytes32) {
-    return bytes32(uint256(uint160(addr)));
-  }
+    function addressToBytes32(address addr) internal pure returns (bytes32) {
+        return bytes32(uint256(uint160(addr)));
+    }
 }

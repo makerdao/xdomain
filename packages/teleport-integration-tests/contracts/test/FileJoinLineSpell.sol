@@ -17,29 +17,29 @@
 pragma solidity 0.8.15;
 
 interface TeleportJoinLike {
-  function file(
-    bytes32 what,
-    bytes32 domain,
-    uint256 data
-  ) external;
+    function file(
+        bytes32 what,
+        bytes32 domain,
+        uint256 data
+    ) external;
 }
 
 contract FileJoinLineSpell {
-  TeleportJoinLike public immutable teleportJoin;
-  bytes32 public immutable domain;
-  uint256 public immutable line;
+    TeleportJoinLike public immutable teleportJoin;
+    bytes32 public immutable domain;
+    uint256 public immutable line;
 
-  constructor(
-    address _teleportJoin,
-    bytes32 _domain,
-    uint256 _line
-  ) {
-    teleportJoin = TeleportJoinLike(_teleportJoin);
-    domain = _domain;
-    line = _line;
-  }
+    constructor(
+        address _teleportJoin,
+        bytes32 _domain,
+        uint256 _line
+    ) {
+        teleportJoin = TeleportJoinLike(_teleportJoin);
+        domain = _domain;
+        line = _line;
+    }
 
-  function execute() external {
-    teleportJoin.file("line", domain, line);
-  }
+    function execute() external {
+        teleportJoin.file("line", domain, line);
+    }
 }
