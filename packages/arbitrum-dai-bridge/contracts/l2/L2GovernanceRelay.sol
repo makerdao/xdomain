@@ -20,21 +20,21 @@ import "./L2CrossDomainEnabled.sol";
 // Receive xchain message from L1 counterpart and execute given spell
 
 contract L2GovernanceRelay is L2CrossDomainEnabled {
-  address public immutable l1GovernanceRelay;
+    address public immutable l1GovernanceRelay;
 
-  constructor(address _l1GovernanceRelay) public {
-    l1GovernanceRelay = _l1GovernanceRelay;
-  }
+    constructor(address _l1GovernanceRelay) public {
+        l1GovernanceRelay = _l1GovernanceRelay;
+    }
 
-  // Allow contract to receive ether
-  receive() external payable {}
+    // Allow contract to receive ether
+    receive() external payable {}
 
-  function relay(address target, bytes calldata targetData)
-    external
-    onlyL1Counterpart(l1GovernanceRelay)
-  {
-    (bool ok, ) = target.delegatecall(targetData);
-    // note: even if a retryable call fails, it can be retried
-    require(ok, "L2GovernanceRelay/delegatecall-error");
-  }
+    function relay(address target, bytes calldata targetData)
+        external
+        onlyL1Counterpart(l1GovernanceRelay)
+    {
+        (bool ok, ) = target.delegatecall(targetData);
+        // note: even if a retryable call fails, it can be retried
+        require(ok, "L2GovernanceRelay/delegatecall-error");
+    }
 }

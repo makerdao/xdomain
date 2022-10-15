@@ -17,36 +17,36 @@
 pragma solidity 0.8.15;
 
 interface DaiLike {
-  function rely(address usr) external;
+    function rely(address usr) external;
 }
 
 interface TeleportBridgeLike {
-  function file(
-    bytes32 what,
-    bytes32 domain,
-    uint256 data
-  ) external;
+    function file(
+        bytes32 what,
+        bytes32 domain,
+        uint256 data
+    ) external;
 }
 
 contract L2AddTeleportDomainSpell {
-  DaiLike public immutable dai;
-  TeleportBridgeLike public immutable teleportBridge;
-  bytes32 public immutable masterDomain;
+    DaiLike public immutable dai;
+    TeleportBridgeLike public immutable teleportBridge;
+    bytes32 public immutable masterDomain;
 
-  constructor(
-    DaiLike _dai,
-    TeleportBridgeLike _teleportBridge,
-    bytes32 _masterDomain
-  ) {
-    dai = _dai;
-    teleportBridge = _teleportBridge;
-    masterDomain = _masterDomain;
-  }
+    constructor(
+        DaiLike _dai,
+        TeleportBridgeLike _teleportBridge,
+        bytes32 _masterDomain
+    ) {
+        dai = _dai;
+        teleportBridge = _teleportBridge;
+        masterDomain = _masterDomain;
+    }
 
-  function execute() external {
-    // teleport bridge has to burn without approval
-    dai.rely(address(teleportBridge));
+    function execute() external {
+        // teleport bridge has to burn without approval
+        dai.rely(address(teleportBridge));
 
-    teleportBridge.file(bytes32("validDomains"), masterDomain, 1);
-  }
+        teleportBridge.file(bytes32("validDomains"), masterDomain, 1);
+    }
 }
