@@ -154,9 +154,16 @@ describe('bridge', function () {
     const msgProof = await l2Signer.provider.getMessageProof(receipt.blockNumber, l2DAITokenBridge.address, hash)
     expect(msgProof).to.include.all.keys('id', 'proof')
     const { id, proof } = msgProof!
-    const l1Tx = await l1DAITokenBridge.finalizeWithdrawal(receipt.blockNumber, id, message, proof, {
-      gasLimit: 500000,
-    })
+    const l1Tx = await l1DAITokenBridge.finalizeWithdrawal(
+      receipt.blockNumber,
+      id,
+      receipt.transactionIndex,
+      message,
+      proof,
+      {
+        gasLimit: 500000,
+      },
+    )
     const txReceipt = await l1Tx.wait()
 
     const l2DaiAfter = await l2Dai.balanceOf(l2Signer.address)
