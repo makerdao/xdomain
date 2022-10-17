@@ -21,12 +21,6 @@ interface L2GovernanceRelayLike {
     function relay(address target, bytes calldata targetData) external;
 }
 
-enum QueueType {
-    Deque,
-    HeapBuffer,
-    Heap
-}
-
 uint256 constant RELAY_ERGS_LIMIT = 2097152;
 
 interface IMailboxLike {

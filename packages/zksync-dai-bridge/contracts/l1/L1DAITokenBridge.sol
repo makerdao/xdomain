@@ -17,6 +17,7 @@ pragma solidity ^0.8.15;
 
 import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IMailbox.sol";
 import "@matterlabs/zksync-contracts/l1/contracts/bridge/interfaces/IL1Bridge.sol";
+import "@matterlabs/zksync-contracts/l2/contracts/bridge/interfaces/IL2Bridge.sol";
 
 interface TokenLike {
     function transferFrom(
@@ -24,16 +25,6 @@ interface TokenLike {
         address _to,
         uint256 _value
     ) external returns (bool success);
-}
-
-interface L2DAITokenBridgeLike {
-    function finalizeDeposit(
-        address _from,
-        address _to,
-        address _l1Token,
-        uint256 _amount,
-        bytes calldata _data
-    ) external;
 }
 
 // Managed locked funds in L1Escrow and send / receive messages to L2DAITokenBridge counterpart
@@ -114,7 +105,7 @@ contract L1DAITokenBridge is IL1Bridge {
         TokenLike(l1Token).transferFrom(msg.sender, escrow, _amount);
 
         bytes memory l2TxCalldata = abi.encodeWithSelector(
-            L2DAITokenBridgeLike.finalizeDeposit.selector,
+            IL2Bridge.finalizeDeposit.selector,
             msg.sender,
             _l2Receiver,
             _l1Token,
