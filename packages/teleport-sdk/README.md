@@ -33,3 +33,8 @@ For example, to run the demo script on `arbitrum-goerli-testnet`, use:
 ```sh
 yarn demo:arbitrum:goerli
 ```
+
+## Building the SDK documentation
+```sh
+yarn docs
+```
