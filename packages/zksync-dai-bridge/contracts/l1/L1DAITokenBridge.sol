@@ -130,9 +130,9 @@ contract L1DAITokenBridge is IL1Bridge {
         address _depositSender,
         address _l1Token,
         bytes32 _l2TxHash,
-        uint256 _l2BlockNumber,
+        uint256 _l1BatchNumber,
         uint256 _l2MessageIndex,
-        uint16 _l2TxNumberInBlock,
+        uint16 _l1BatchTxIndex,
         bytes32[] calldata _merkleProof
     ) external {
         require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
@@ -140,13 +140,13 @@ contract L1DAITokenBridge is IL1Bridge {
         L2Log memory l2Log = L2Log({
             l2ShardId: 0,
             isService: true,
-            txNumberInBlock: _l2TxNumberInBlock,
+            txNumberInBlock: _l1BatchTxIndex,
             sender: BOOTLOADER_ADDRESS,
             key: _l2TxHash,
             value: bytes32(0)
         });
         bool success = zkSyncMailbox.proveL2LogInclusion(
-            _l2BlockNumber,
+            _l1BatchNumber,
             _l2MessageIndex,
             l2Log,
             _merkleProof
@@ -163,32 +163,32 @@ contract L1DAITokenBridge is IL1Bridge {
     }
 
     function finalizeWithdrawal(
-        uint256 _l2BlockNumber,
+        uint256 _l1BatchNumber,
         uint256 _l2MessageIndex,
-        uint16 _l2TxNumberInBlock,
+        uint16 _l1BatchTxIndex,
         bytes calldata _message,
         bytes32[] calldata _merkleProof
     ) external {
         require(
-            !isWithdrawalFinalized[_l2BlockNumber][_l2MessageIndex],
+            !isWithdrawalFinalized[_l1BatchNumber][_l2MessageIndex],
             "L1DAITokenBridge/was-withdrawn"
         );
         L2Message memory l2ToL1Message = L2Message({
-            txNumberInBlock: _l2TxNumberInBlock,
+            txNumberInBlock: _l1BatchTxIndex,
             sender: l2Bridge,
             data: _message
         });
 
         (address l1Receiver, uint256 amount) = _parseL2WithdrawalMessage(l2ToL1Message.data);
         bool success = zkSyncMailbox.proveL2MessageInclusion(
-            _l2BlockNumber,
+            _l1BatchNumber,
             _l2MessageIndex,
             l2ToL1Message,
             _merkleProof
         );
         require(success, "L1DAITokenBridge/invalid-proof");
 
-        isWithdrawalFinalized[_l2BlockNumber][_l2MessageIndex] = true;
+        isWithdrawalFinalized[_l1BatchNumber][_l2MessageIndex] = true;
 
         TokenLike(l1Token).transferFrom(escrow, l1Receiver, amount);
 
