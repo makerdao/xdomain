@@ -1,7 +1,7 @@
 import { getActiveWards, getAddressOfNextDeployedContract, waitForTx } from '@makerdao/hardhat-utils'
 import { expect, use } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { ContractReceipt, providers, Wallet } from 'ethers'
+import { providers, Wallet } from 'ethers'
 import { Interface, parseEther } from 'ethers/lib/utils'
 import { ethers } from 'hardhat'
 import * as hre from 'hardhat'
