@@ -26,7 +26,12 @@ export async function waitToRelayTxToL2(
     gasPrice,
     ...l1Overrides,
   })
+  console.log(`L1>L2 message submitted in L1. L1 tx = ${tx.hash}. Waiting for L1 confirmation...`)
   await tx.wait()
+  console.log(`L1>L2 message confirmed in L1. L1 tx = ${tx.hash}. Waiting for L2 relay...`)
   const l2Response = await l2Provider.getL2TransactionFromPriorityOp(tx)
-  return await l2Response.wait()
+  console.log(`L1>L2 message submitted in L2. L2 tx = ${l2Response.hash}. Waiting for L2 confirmation...`)
+  const l2TxReceipt = await l2Response.wait()
+  console.log(`L1>L2 message confirmed in L2. L2 tx = ${l2Response.hash}.`)
+  return l2TxReceipt
 }
