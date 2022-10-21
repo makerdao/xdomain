@@ -208,7 +208,7 @@ describe('bridge', function () {
     console.log('Executing spell to close L2 Bridge V1 and grant minting permissions to L2 Bridge V2...')
     await waitToRelayTxToL2(
       l1GovernanceRelay,
-      l1GovernanceRelay.interface.encodeFunctionData('relay', [l2UpgradeSpell.address, l2Calldata]),
+      l1GovernanceRelay.interface.encodeFunctionData('relay', [l2UpgradeSpell.address, l2Calldata, 2000000, []]),
       l2Signer.provider,
       l2Calldata,
       { gasLimit: 300000 },
