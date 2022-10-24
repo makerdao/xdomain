@@ -20,7 +20,6 @@
 pragma solidity ^0.8.14;
 
 import {DomainGuest,TeleportGUID} from "../../DomainGuest.sol";
-import {DomainHost} from "../../DomainHost.sol";
 
 interface ArbSysLike {
     function sendTxToL1(address target, bytes calldata message) external;

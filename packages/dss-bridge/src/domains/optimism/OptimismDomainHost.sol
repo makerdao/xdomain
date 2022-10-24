@@ -20,7 +20,6 @@
 pragma solidity ^0.8.14;
 
 import {DomainHost,TeleportGUID} from "../../DomainHost.sol";
-import {DomainGuest} from "../../DomainGuest.sol";
 
 interface L1MessengerLike {
     function sendMessage(address target, bytes calldata message, uint32 gasLimit) external;

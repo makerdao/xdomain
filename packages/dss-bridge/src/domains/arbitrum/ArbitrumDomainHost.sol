@@ -20,7 +20,6 @@
 pragma solidity ^0.8.14;
 
 import {DomainHost,TeleportGUID} from "../../DomainHost.sol";
-import {DomainGuest} from "../../DomainGuest.sol";
 
 interface InboxLike {
     function createRetryableTicket(
@@ -81,7 +80,7 @@ contract ArbitrumDomainHost is DomainHost {
         else if (what == "glDeposit") glDeposit = data;
         else if (what == "glInitializeRegisterMint") glInitializeRegisterMint = data;
         else if (what == "glInitializeSettle") glInitializeSettle = data;
-        else revert("OptimismDomainHost/file-unrecognized-param");
+        else revert("ArbitrumDomainHost/file-unrecognized-param");
         emit File(what, data);
     }
 

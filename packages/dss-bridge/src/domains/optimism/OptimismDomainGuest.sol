@@ -20,7 +20,6 @@
 pragma solidity ^0.8.14;
 
 import {DomainGuest,TeleportGUID} from "../../DomainGuest.sol";
-import {DomainHost} from "../../DomainHost.sol";
 
 interface L2MessengerLike {
     function sendMessage(address target, bytes calldata message, uint32 gasLimit) external;
@@ -64,7 +63,7 @@ contract OptimismDomainGuest is DomainGuest {
         else if (what == "glFlush") glFlush = data;
         else if (what == "glInitializeRegisterMint") glInitializeRegisterMint = data;
         else if (what == "glInitializeSettle") glInitializeSettle = data;
-        else revert("OptimismDomainHost/file-unrecognized-param");
+        else revert("OptimismDomainGuest/file-unrecognized-param");
         emit FileGL(what, data);
     }
 
