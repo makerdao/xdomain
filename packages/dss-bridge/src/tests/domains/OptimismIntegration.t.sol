@@ -41,12 +41,12 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
         // Primary domain
         escrow = EscrowLike(mcd.chainlog().getAddress("OPTIMISM_ESCROW"));
         // Pre-calc the guest nonce
-        address guestAddr = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), address(this), bytes1(0x0e))))));
+        address guestAddr = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), address(this), bytes1(0x10))))));
         OptimismDomainHost _host = new OptimismDomainHost(
             HOST_DOMAIN_ILK,
             address(mcd.daiJoin()),
             address(escrow),
-            mcd.chainlog().getAddress("MCD_ROUTER_TELEPORT_FW_A"),
+            address(hostRouter),
             address(OptimismDomain(address(guestDomain)).l1Messenger()),
             guestAddr
         );
@@ -65,7 +65,7 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
             HOST_DOMAIN_ILK,
             address(rmcd.daiJoin()),
             address(claimToken),
-            address(0),
+            address(guestRouter),
             address(OptimismDomain(address(guestDomain)).l2Messenger()),
             address(host)
         );
@@ -103,6 +103,14 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
         OptimismDomainHost(address(host)).deposit(to, amount);
     }
 
+    function hostInitializeRegisterMint(TeleportGUID memory teleport) internal virtual override {
+        OptimismDomainHost(address(host)).initializeRegisterMint(teleport);
+    }
+
+    function hostInitializeSettle(uint256 index) internal virtual override {
+        OptimismDomainGuest(address(host)).initializeSettle(index);
+    }
+
     function guestRelease() internal virtual override {
         OptimismDomainGuest(address(guest)).release();
     }
@@ -117,6 +125,14 @@ contract OptimismIntegrationTest is IntegrationBaseTest {
 
     function guestWithdraw(address to, uint256 amount) internal virtual override {
         OptimismDomainGuest(address(guest)).withdraw(to, amount);
+    }
+
+    function guestInitializeRegisterMint(TeleportGUID memory teleport) internal virtual override {
+        OptimismDomainGuest(address(guest)).initializeRegisterMint(teleport);
+    }
+
+    function guestInitializeSettle(uint256 index) internal virtual override {
+        OptimismDomainGuest(address(guest)).initializeSettle(index);
     }
 
 }

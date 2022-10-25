@@ -38,6 +38,7 @@ import { ClaimToken } from "../../ClaimToken.sol";
 import { DomainHost, TeleportGUID } from "../../DomainHost.sol";
 import { DomainGuest } from "../../DomainGuest.sol";
 import { BridgeOracle } from "../../BridgeOracle.sol";
+import { RouterMock } from "../mocks/RouterMock.sol";
 
 interface EscrowLike {
     function approve(address token, address spender, uint256 value) external;
@@ -66,14 +67,18 @@ abstract contract IntegrationBaseTest is DSSTest {
     EscrowLike escrow;
     BridgeOracle pip;
     DomainHost host;
+    RouterMock hostRouter;
 
     // Guest-side contracts
     MCD rmcd;
     ClaimToken claimToken;
     DomainGuest guest;
+    RouterMock guestRouter;
 
     bytes32 constant HOST_DOMAIN_ILK = "SOME-DOMAIN-A";
     bytes32 constant GUEST_COLL_ILK = "XCHAIN-COLLATERAL-A";
+
+    event FinalizeRegisterMint(TeleportGUID teleport);
 
     function setupEnv() internal virtual override {
         config = readInput("integration");
@@ -104,6 +109,7 @@ abstract contract IntegrationBaseTest is DSSTest {
             Jug jug = new Jug(address(vat));
             Cure cure = new Cure();
             End end = new End();
+            guestRouter = new RouterMock(address(dai));
 
             rmcd = new MCD();
             rmcd.loadCore({
@@ -121,6 +127,7 @@ abstract contract IntegrationBaseTest is DSSTest {
             rmcd.init();
         }
         rootDomain.selectFork();
+        hostRouter = new RouterMock(address(mcd.dai()));
 
         setupDomains();
 
@@ -163,10 +170,14 @@ abstract contract IntegrationBaseTest is DSSTest {
     function hostCage() internal virtual;
     function hostExit(address usr, uint256 wad) internal virtual;
     function hostDeposit(address to, uint256 amount) internal virtual;
+    function hostInitializeRegisterMint(TeleportGUID memory teleport) internal virtual;
+    function hostInitializeSettle(uint256 index) internal virtual;
     function guestRelease() internal virtual;
     function guestPush() internal virtual;
     function guestTell() internal virtual;
     function guestWithdraw(address to, uint256 amount) internal virtual;
+    function guestInitializeRegisterMint(TeleportGUID memory teleport) internal virtual;
+    function guestInitializeSettle(uint256 index) internal virtual;
 
     function testRaiseDebtCeiling() public {
         uint256 escrowDai = mcd.dai().balanceOf(address(escrow));
@@ -499,6 +510,48 @@ abstract contract IntegrationBaseTest is DSSTest {
         guestDomain.relayToHost(true);
         assertEq(mcd.dai().balanceOf(address(escrow)), escrowDai);
         assertEq(mcd.dai().balanceOf(address(123)), 100 ether);
+    }
+
+    function testRegisterMint() public {
+        TeleportGUID memory teleport = TeleportGUID({
+            sourceDomain: "host-domain",
+            targetDomain: "guest-domain",
+            receiver: bytes32(0),
+            operator: bytes32(0),
+            amount: 100 ether,
+            nonce: 0,
+            timestamp: uint48(block.timestamp)
+        });
+
+        // Host -> Guest
+        host.registerMint(teleport);
+        hostInitializeRegisterMint(teleport);
+        vm.expectEmit(true, true, true, true);
+        emit FinalizeRegisterMint(teleport);
+        guestDomain.relayFromHost(true);
+
+        // Guest -> Host
+        guest.registerMint(teleport);
+        guestInitializeRegisterMint(teleport);
+        vm.expectEmit(true, true, true, true);
+        emit FinalizeRegisterMint(teleport);
+        guestDomain.relayToHost(true);
+    }
+
+    function testSettle() public {
+        // Host -> Guest
+        mcd.dai().mint(address(host), 100 ether);
+        host.settle("host-domain", "guest-domain", 100 ether);
+        hostInitializeSettle(0);
+        guestDomain.relayFromHost(true);
+        assertEq(rmcd.dai().balanceOf(address(guestRouter)), 100 ether);
+
+        // Guest -> Host
+        rmcd.dai().setBalance(address(guest), 50 ether);
+        guest.settle("guest-domain", "host-domain", 50 ether);
+        guestInitializeSettle(0);
+        guestDomain.relayToHost(true);
+        assertEq(mcd.dai().balanceOf(address(hostRouter)), 50 ether);
     }
 
 }

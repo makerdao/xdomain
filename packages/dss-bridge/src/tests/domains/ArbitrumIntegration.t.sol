@@ -41,12 +41,12 @@ contract ArbitrumIntegrationTest is IntegrationBaseTest {
         // Primary domain
         escrow = EscrowLike(mcd.chainlog().getAddress("ARBITRUM_ESCROW"));
         // Pre-calc the guest nonce
-        address guestAddr = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), address(this), bytes1(0x0e))))));
+        address guestAddr = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xd6), bytes1(0x94), address(this), bytes1(0x10))))));
         ArbitrumDomainHost _host = new ArbitrumDomainHost(
             HOST_DOMAIN_ILK,
             address(mcd.daiJoin()),
             address(escrow),
-            mcd.chainlog().getAddress("MCD_ROUTER_TELEPORT_FW_A"),
+            address(hostRouter),
             address(ArbitrumDomain(address(guestDomain)).inbox()),
             guestAddr
         );
@@ -65,7 +65,7 @@ contract ArbitrumIntegrationTest is IntegrationBaseTest {
             HOST_DOMAIN_ILK,
             address(rmcd.daiJoin()),
             address(claimToken),
-            address(0),
+            address(guestRouter),
             address(ArbitrumDomain(address(guestDomain)).arbSys()),
             address(host)
         );
@@ -96,6 +96,14 @@ contract ArbitrumIntegrationTest is IntegrationBaseTest {
         ArbitrumDomainHost(address(host)).deposit{value:1 ether}(to, amount, 1 ether, 0);
     }
 
+    function hostInitializeRegisterMint(TeleportGUID memory teleport) internal virtual override {
+        ArbitrumDomainHost(address(host)).initializeRegisterMint{value:1 ether}(teleport, 1 ether, 0);
+    }
+
+    function hostInitializeSettle(uint256 index) internal virtual override {
+        ArbitrumDomainHost(address(host)).initializeSettle{value:1 ether}(index, 1 ether, 0);
+    }
+
     function guestRelease() internal virtual override {
         ArbitrumDomainGuest(address(guest)).release();
     }
@@ -110,6 +118,14 @@ contract ArbitrumIntegrationTest is IntegrationBaseTest {
 
     function guestWithdraw(address to, uint256 amount) internal virtual override {
         ArbitrumDomainGuest(address(guest)).withdraw(to, amount);
+    }
+
+    function guestInitializeRegisterMint(TeleportGUID memory teleport) internal virtual override {
+        ArbitrumDomainGuest(address(guest)).initializeRegisterMint(teleport);
+    }
+
+    function guestInitializeSettle(uint256 index) internal virtual override {
+        ArbitrumDomainGuest(address(guest)).initializeSettle(index);
     }
 
 }
