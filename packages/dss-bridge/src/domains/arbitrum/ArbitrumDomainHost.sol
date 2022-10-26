@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-/// OptimismDomainHost.sol -- DomainHost for Optimism
+/// ArbitrumDomainHost.sol -- DomainHost for Arbitrum
 
 // Copyright (C) 2022 Dai Foundation
 //
