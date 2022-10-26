@@ -1,22 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-/// DomainJoin.sol -- xdomain join adapter
-
-// Copyright (C) 2022 Dai Foundation
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-//
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 pragma solidity ^0.8.14;
 
 import "dss-test/DSSTest.sol";
@@ -163,7 +146,7 @@ contract DogMock {
     }
 }
 
-contract IntegrationTest is DSSTest {
+contract GenericIntegrationTest is DSSTest {
 
     using GodMode for *;
 
@@ -212,19 +195,18 @@ contract IntegrationTest is DSSTest {
             End end = new End();
 
             rmcd = new MCD();
-            // FIXME this is prone to supplying args in the wrong order - want to improve
-            rmcd.loadCore(
-                address(vat),
-                address(daiJoin),
-                address(dai),
-                address(guest),
-                address(dog),
-                address(pot),
-                address(jug),
-                address(spotter),
-                address(end),
-                address(cure)
-            );
+            rmcd.loadCore({
+                _vat: address(vat),
+                _dai: address(dai),
+                _daiJoin: address(daiJoin),
+                _vow: address(guest),
+                _dog: address(dog),
+                _pot: address(pot),
+                _jug: address(jug),
+                _spotter: address(spotter),
+                _end: address(end),
+                _cure: address(cure)
+            });
             rmcd.init();
         }
         rmcd.end().file("claim", address(claimToken));

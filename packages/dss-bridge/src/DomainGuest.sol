@@ -204,7 +204,6 @@ abstract contract DomainGuest {
 
     /// @notice Will release remote DAI from the escrow when it is safe to do so
     /// @dev    Should be run by keeper on a regular schedule.
-    ///         This will also push the vat debt for informational purposes.
     function _release() internal isLive returns (bytes memory payload) {
         uint256 limit = _max(vat.Line() / RAY, _divup(vat.debt(), RAY));
         require(grain > limit, "DomainGuest/limit-too-high");
