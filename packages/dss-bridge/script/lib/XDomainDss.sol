@@ -36,7 +36,7 @@ library XDomainDss {
         AuthLike(base).deny(address(this));
     }
 
-    function deploy(address pauseProxy) internal returns (DssInstance memory dss) {
+    function deploy(address owner) internal returns (DssInstance memory dss) {
         // Deploy contracts
         dss.vat = new Vat();
         dss.dai = new Dai();
@@ -48,13 +48,13 @@ library XDomainDss {
         dss.cure = new Cure();
         dss.end = new End();
 
-        switchOwner(address(dss.vat), pauseProxy);
-        switchOwner(address(dss.dai), pauseProxy);
-        switchOwner(address(dss.spotter), pauseProxy);
-        switchOwner(address(dss.pot), pauseProxy);
-        switchOwner(address(dss.jug), pauseProxy);
-        switchOwner(address(dss.cure), pauseProxy);
-        switchOwner(address(dss.end), pauseProxy);
+        switchOwner(address(dss.vat), owner);
+        switchOwner(address(dss.dai), owner);
+        switchOwner(address(dss.spotter), owner);
+        switchOwner(address(dss.pot), owner);
+        switchOwner(address(dss.jug), owner);
+        switchOwner(address(dss.cure), owner);
+        switchOwner(address(dss.end), owner);
     }
 
     function init(DssInstance memory dss) internal {

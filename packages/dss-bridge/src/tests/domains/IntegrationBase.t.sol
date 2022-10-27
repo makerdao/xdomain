@@ -64,7 +64,7 @@ abstract contract IntegrationBaseTest is DSSTest {
     event FinalizeRegisterMint(TeleportGUID teleport);
 
     function setupEnv() internal virtual override {
-        config = readInput("integration");
+        config = readInput("config");
 
         rootDomain = new RootDomain(config, "root");
         rootDomain.selectFork();
