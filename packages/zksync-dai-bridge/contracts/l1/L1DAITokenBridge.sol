@@ -49,7 +49,6 @@ contract L1DAITokenBridge is IL1Bridge {
         _;
     }
 
-    uint256 constant DEPOSIT_ERGS_LIMIT = 2097152;
     address constant BOOTLOADER_ADDRESS = 0x0000000000000000000000000000000000008001; // address(SYSTEM_CONTRACTS_OFFSET + 0x01);
     address public immutable l1Token;
     address public immutable l2Bridge;
@@ -57,12 +56,14 @@ contract L1DAITokenBridge is IL1Bridge {
     address public immutable escrow;
     IMailbox public immutable zkSyncMailbox;
     uint256 public isOpen = 1;
+    uint256 public ergsLimit = 2097152; // ergs limit used for deposit messages. Set to its max possible value by default.
 
     mapping(uint256 => mapping(uint256 => bool)) public isWithdrawalFinalized;
     mapping(address => mapping(bytes32 => uint256)) depositAmount;
 
     event Rely(address indexed usr);
     event Deny(address indexed usr);
+    event File(bytes32 indexed what, uint256 data);
     event Closed();
 
     constructor(
@@ -85,6 +86,18 @@ contract L1DAITokenBridge is IL1Bridge {
     function l2TokenAddress(address _l1Token) external view returns (address) {
         require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
         return l2Token;
+    }
+
+    function file(
+        bytes32 what,
+        uint256 data
+    ) external auth {
+        if (what == "ergsLimit") {
+            ergsLimit = data;
+        } else {
+            revert("L1DAITokenBridge/file-unrecognized-param");
+        }
+        emit File(what, data);
     }
 
     function close() external auth {
@@ -117,7 +130,7 @@ contract L1DAITokenBridge is IL1Bridge {
             l2Bridge,
             0, // l2Value is always 0
             l2TxCalldata,
-            DEPOSIT_ERGS_LIMIT,
+            ergsLimit,
             new bytes[](0)
         );
 

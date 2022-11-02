@@ -10,6 +10,7 @@ const initialTotalL1Supply = 3000
 const depositAmount = 100
 const defaultErgLimit = 2097152
 const defaultData = '0x'
+const FILE_ERGS_LIMIT = ethers.utils.formatBytes32String('ergsLimit')
 
 const errorMessages = {
   invalidMessenger: 'OVM_XCHAIN: messenger contract unauthenticated',
@@ -21,6 +22,7 @@ const errorMessages = {
   daiInsufficientAllowance: 'Dai/insufficient-allowance',
   daiInsufficientBalance: 'Dai/insufficient-balance',
   tokenNotDai: 'L1DAITokenBridge/token-not-dai',
+  unrecognizedParam: 'L1DAITokenBridge/file-unrecognized-param',
 }
 
 describe('L1DAITokenBridge', () => {
@@ -549,7 +551,35 @@ describe('L1DAITokenBridge', () => {
 
       return [l1Dai, l2DAITokenBridge, l2Dai, l1CrossDomainMessengerMock, l1Escrow]
     },
-    authedMethods: [(c) => c.close()],
+    authedMethods: [(c) => c.close(), (c) => c.file(FILE_ERGS_LIMIT, defaultErgLimit)],
+  })
+
+  describe('file', () => {
+    it('allows governance to change the ergsLimit', async () => {
+      const [zkSyncImpersonator, user1] = await ethers.getSigners()
+      const { l1DAITokenBridge } = await setupTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      expect(await l1DAITokenBridge.ergsLimit()).to.be.eq(defaultErgLimit)
+
+      const newErgsLimit = '2000000'
+      await l1DAITokenBridge.file(FILE_ERGS_LIMIT, newErgsLimit)
+
+      expect(await l1DAITokenBridge.ergsLimit()).to.be.eq(newErgsLimit)
+    })
+    it('disallows invalid "what"', async () => {
+      const [zkSyncImpersonator, user1] = await ethers.getSigners()
+      const { l1DAITokenBridge } = await setupTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      await expect(l1DAITokenBridge.file(ethers.utils.formatBytes32String('invalid'), 123456)).to.be.revertedWith(
+        errorMessages.unrecognizedParam,
+      )
+    })
   })
 
   describe('view functions', () => {
