@@ -88,10 +88,7 @@ contract L1DAITokenBridge is IL1Bridge {
         return l2Token;
     }
 
-    function file(
-        bytes32 what,
-        uint256 data
-    ) external auth {
+    function file(bytes32 what, uint256 data) external auth {
         if (what == "ergsLimit") {
             ergsLimit = data;
         } else {
