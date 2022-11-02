@@ -18,7 +18,7 @@ describe('L1GovernanceRelay', () => {
         zkSyncImpersonator,
       })
 
-      await l1GovernanceRelay.connect(deployer).relay(l2spell.address, [])
+      await l1GovernanceRelay.connect(deployer).relay(l2spell.address, [], 2000000, [])
       const zkMailboxCall = zkSyncMock.smocked.requestL2Transaction.calls[0]
 
       expect(zkMailboxCall._contractAddressL2).to.equal(l2GovernanceRelay.address)
@@ -33,7 +33,7 @@ describe('L1GovernanceRelay', () => {
         zkSyncImpersonator,
       })
 
-      await expect(l1GovernanceRelay.connect(user1).relay(l2spell.address, [])).to.be.revertedWith(
+      await expect(l1GovernanceRelay.connect(user1).relay(l2spell.address, [], 2000000, [])).to.be.revertedWith(
         errorMessages.notAuthed,
       )
     })
@@ -54,7 +54,11 @@ describe('L1GovernanceRelay', () => {
   })
 
   it('has correct public interface', async () => {
-    await assertPublicMutableMethods('L1GovernanceRelay', ['rely(address)', 'deny(address)', 'relay(address,bytes)'])
+    await assertPublicMutableMethods('L1GovernanceRelay', [
+      'rely(address)',
+      'deny(address)',
+      'relay(address,bytes,uint256,bytes[])',
+    ])
   })
 
   testAuth({
@@ -67,7 +71,7 @@ describe('L1GovernanceRelay', () => {
     authedMethods: [
       async (c) => {
         const [a] = await getRandomAddresses()
-        return c.relay(a, '0x')
+        return c.relay(a, '0x', 2000000, [])
       },
     ],
   })

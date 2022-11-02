@@ -10,6 +10,7 @@ const initialTotalL1Supply = 3000
 const depositAmount = 100
 const defaultErgLimit = 2097152
 const defaultData = '0x'
+const FILE_ERGS_LIMIT = ethers.utils.formatBytes32String('ergsLimit')
 
 const errorMessages = {
   invalidMessenger: 'OVM_XCHAIN: messenger contract unauthenticated',
@@ -21,6 +22,7 @@ const errorMessages = {
   daiInsufficientAllowance: 'Dai/insufficient-allowance',
   daiInsufficientBalance: 'Dai/insufficient-balance',
   tokenNotDai: 'L1DAITokenBridge/token-not-dai',
+  unrecognizedParam: 'L1DAITokenBridge/file-unrecognized-param',
 }
 
 describe('L1DAITokenBridge', () => {
@@ -134,6 +136,7 @@ describe('L1DAITokenBridge', () => {
 
       const blockNumber = 200
       const messageIndex = 100
+      const l2TxNumberInBlock = 0
       const selector = l1DAITokenBridge.interface.getSighash('finalizeWithdrawal')
       const L2toL1message = ethers.utils.solidityPack(
         ['bytes', 'address', 'uint256'],
@@ -144,8 +147,9 @@ describe('L1DAITokenBridge', () => {
       zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof always OK
 
       const finalizeWithdrawalTx = await l1DAITokenBridge.connect(user1).finalizeWithdrawal(
-        blockNumber, // blockNumber
-        messageIndex, // messageIndex
+        blockNumber,
+        messageIndex,
+        l2TxNumberInBlock,
         L2toL1message, // message that I want to proof
         proof, // merkle Proof
       )
@@ -168,6 +172,7 @@ describe('L1DAITokenBridge', () => {
 
       const blockNumber = 200
       const messageIndex = 100
+      const l2TxNumberInBlock = 0
       const selector = l1DAITokenBridge.interface.getSighash('finalizeWithdrawal')
       const L2toL1message = ethers.utils.solidityPack(
         ['bytes', 'address', 'uint256'],
@@ -178,8 +183,9 @@ describe('L1DAITokenBridge', () => {
       zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof always OK
 
       await l1DAITokenBridge.connect(user1).finalizeWithdrawal(
-        blockNumber, // blockNumber
-        messageIndex, // messageIndex
+        blockNumber,
+        messageIndex,
+        l2TxNumberInBlock,
         L2toL1message, // message that I want to proof
         proof, // merkle Proof
       )
@@ -189,8 +195,9 @@ describe('L1DAITokenBridge', () => {
 
       await expect(
         l1DAITokenBridge.connect(user1).finalizeWithdrawal(
-          blockNumber, // blockNumber
-          messageIndex, // messageIndex
+          blockNumber,
+          messageIndex,
+          l2TxNumberInBlock,
           L2toL1message, // message that I want to proof
           proof, // merkle Proof
         ),
@@ -207,6 +214,7 @@ describe('L1DAITokenBridge', () => {
 
       const blockNumber = 200
       const messageIndex = 100
+      const l2TxNumberInBlock = 0
       const selector = l1DAITokenBridge.interface.getSighash('finalizeWithdrawal')
       const L2toL1message = ethers.utils.solidityPack(
         ['bytes', 'address', 'uint256'],
@@ -219,8 +227,9 @@ describe('L1DAITokenBridge', () => {
       await l1DAITokenBridge.close()
 
       await l1DAITokenBridge.connect(user1).finalizeWithdrawal(
-        blockNumber, // blockNumber
-        messageIndex, // messageIndex
+        blockNumber,
+        messageIndex,
+        l2TxNumberInBlock,
         L2toL1message, // message that I want to proof
         proof, // merkle Proof
       )
@@ -239,6 +248,7 @@ describe('L1DAITokenBridge', () => {
 
       const blockNumber = 200
       const messageIndex = 100
+      const l2TxNumberInBlock = 0
       const selector = l1DAITokenBridge.interface.getSighash('deposit') // wrong message
       const L2toL1message = ethers.utils.solidityPack(
         ['bytes', 'address', 'uint256'],
@@ -248,8 +258,9 @@ describe('L1DAITokenBridge', () => {
 
       await expect(
         l1DAITokenBridge.connect(user1).finalizeWithdrawal(
-          blockNumber, // blockNumber
-          messageIndex, // messageIndex
+          blockNumber,
+          messageIndex,
+          l2TxNumberInBlock,
           L2toL1message, // message that I want to proof
           proof, // merkle Proof
         ),
@@ -257,8 +268,9 @@ describe('L1DAITokenBridge', () => {
 
       await expect(
         l1DAITokenBridge.connect(user1).finalizeWithdrawal(
-          blockNumber, // blockNumber
-          messageIndex, // messageIndex
+          blockNumber,
+          messageIndex,
+          l2TxNumberInBlock,
           '0x', // message that I want to proof
           proof, // merkle Proof
         ),
@@ -276,6 +288,7 @@ describe('L1DAITokenBridge', () => {
 
       const blockNumber = 200
       const messageIndex = 100
+      const l2TxNumberInBlock = 0
       const selector = l1DAITokenBridge.interface.getSighash('finalizeWithdrawal')
       const L2toL1message = ethers.utils.solidityPack(
         ['bytes', 'address', 'uint256'],
@@ -287,8 +300,9 @@ describe('L1DAITokenBridge', () => {
 
       await expect(
         l1DAITokenBridge.connect(user1).finalizeWithdrawal(
-          blockNumber, // blockNumber
-          messageIndex, // messageIndex
+          blockNumber,
+          messageIndex,
+          l2TxNumberInBlock,
           L2toL1message, // message that I want to proof
           proof, // merkle Proof
         ),
@@ -306,6 +320,7 @@ describe('L1DAITokenBridge', () => {
 
       const blockNumber = 200
       const messageIndex = 100
+      const l2TxNumberInBlock = 0
       const selector = l1DAITokenBridge.interface.getSighash('finalizeWithdrawal')
       const L2toL1message = ethers.utils.solidityPack(
         ['bytes', 'address', 'uint256'],
@@ -318,8 +333,9 @@ describe('L1DAITokenBridge', () => {
 
       await expect(
         l1DAITokenBridge.connect(user1).finalizeWithdrawal(
-          blockNumber, // blockNumber
-          messageIndex, // messageIndex
+          blockNumber,
+          messageIndex,
+          l2TxNumberInBlock,
           L2toL1message, // message that I want to proof
           proof, // merkle Proof
         ),
@@ -351,6 +367,7 @@ describe('L1DAITokenBridge', () => {
 
       const blockNumber = 200
       const messageIndex = 100
+      const l2TxNumberInBlock = 0
       const proof: any[] = []
 
       zkSyncMock.smocked.proveL2LogInclusion.will.return.with(true) //inclusion proof always OK
@@ -360,7 +377,8 @@ describe('L1DAITokenBridge', () => {
         l1Dai.address,
         txHash,
         blockNumber,
-        messageIndex, // messageIndex
+        messageIndex,
+        l2TxNumberInBlock,
         proof, // merkle Proof
       )
       await expect(claimFailedDepositTx)
@@ -384,6 +402,7 @@ describe('L1DAITokenBridge', () => {
 
       const blockNumber = 200
       const messageIndex = 100
+      const l2TxNumberInBlock = 0
       const proof: any[] = []
 
       zkSyncMock.smocked.proveL2LogInclusion.will.return.with(false) //wrong proof
@@ -394,7 +413,8 @@ describe('L1DAITokenBridge', () => {
           l1Dai.address,
           txHash,
           blockNumber,
-          messageIndex, // messageIndex
+          messageIndex,
+          l2TxNumberInBlock,
           proof, // merkle Proof
         ),
       ).to.be.revertedWith(errorMessages.wrongProof)
@@ -415,6 +435,7 @@ describe('L1DAITokenBridge', () => {
 
       const blockNumber = 200
       const messageIndex = 100
+      const l2TxNumberInBlock = 100
       const proof: any[] = []
 
       zkSyncMock.smocked.proveL2LogInclusion.will.return.with(true) //inclusion proof always OK
@@ -425,7 +446,8 @@ describe('L1DAITokenBridge', () => {
           dummyL1Erc20.address,
           txHash,
           blockNumber,
-          messageIndex, // messageIndex
+          messageIndex,
+          l2TxNumberInBlock,
           proof, // merkle Proof
         ),
       ).to.be.revertedWith(errorMessages.tokenMismatch)
@@ -441,6 +463,7 @@ describe('L1DAITokenBridge', () => {
 
       const blockNumber = 200
       const messageIndex = 100
+      const l2TxNumberInBlock = 0
       const proof: any[] = []
 
       zkSyncMock.smocked.proveL2LogInclusion.will.return.with(true) //inclusion proof always OK
@@ -451,7 +474,8 @@ describe('L1DAITokenBridge', () => {
           l1Dai.address,
           txHash,
           blockNumber,
-          messageIndex, // messageIndex
+          messageIndex,
+          l2TxNumberInBlock,
           proof, // merkle Proof
         ),
       ).to.be.revertedWith(errorMessages.nonDepositedDAI)
@@ -527,7 +551,35 @@ describe('L1DAITokenBridge', () => {
 
       return [l1Dai, l2DAITokenBridge, l2Dai, l1CrossDomainMessengerMock, l1Escrow]
     },
-    authedMethods: [(c) => c.close()],
+    authedMethods: [(c) => c.close(), (c) => c.file(FILE_ERGS_LIMIT, defaultErgLimit)],
+  })
+
+  describe('file', () => {
+    it('allows governance to change the ergsLimit', async () => {
+      const [zkSyncImpersonator, user1] = await ethers.getSigners()
+      const { l1DAITokenBridge } = await setupTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      expect(await l1DAITokenBridge.ergsLimit()).to.be.eq(defaultErgLimit)
+
+      const newErgsLimit = '2000000'
+      await l1DAITokenBridge.file(FILE_ERGS_LIMIT, newErgsLimit)
+
+      expect(await l1DAITokenBridge.ergsLimit()).to.be.eq(newErgsLimit)
+    })
+    it('disallows invalid "what"', async () => {
+      const [zkSyncImpersonator, user1] = await ethers.getSigners()
+      const { l1DAITokenBridge } = await setupTest({
+        zkSyncImpersonator,
+        user1,
+      })
+
+      await expect(l1DAITokenBridge.file(ethers.utils.formatBytes32String('invalid'), 123456)).to.be.revertedWith(
+        errorMessages.unrecognizedParam,
+      )
+    })
   })
 
   describe('view functions', () => {

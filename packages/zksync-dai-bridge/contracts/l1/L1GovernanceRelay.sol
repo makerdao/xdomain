@@ -21,14 +21,6 @@ interface L2GovernanceRelayLike {
     function relay(address target, bytes calldata targetData) external;
 }
 
-enum QueueType {
-    Deque,
-    HeapBuffer,
-    Heap
-}
-
-uint256 constant RELAY_ERGS_LIMIT = 2097152;
-
 interface IMailboxLike {
     function requestL2Transaction(
         address _contractAddressL2,
@@ -73,12 +65,12 @@ contract L1GovernanceRelay {
     }
 
     // Forward a call to be repeated on L2
-    function relay(address target, bytes calldata targetData)
-        external
-        payable
-        auth
-        returns (bytes32 txHash)
-    {
+    function relay(
+        address target,
+        bytes calldata targetData,
+        uint256 ergsLimit,
+        bytes[] calldata factoryDeps // empty for transactions not deploying contracts
+    ) external payable auth returns (bytes32 txHash) {
         bytes memory l2TxCalldata = abi.encodeWithSelector(
             L2GovernanceRelayLike.relay.selector,
             target,
@@ -89,8 +81,8 @@ contract L1GovernanceRelay {
             l2GovernanceRelay,
             0, // l2Value is assumed to always be 0
             l2TxCalldata,
-            RELAY_ERGS_LIMIT,
-            new bytes[](0) // empty for transactions not deploying contracts
+            ergsLimit,
+            factoryDeps
         );
     }
 }

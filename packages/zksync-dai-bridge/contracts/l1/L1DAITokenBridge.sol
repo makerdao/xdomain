@@ -17,6 +17,7 @@ pragma solidity ^0.8.15;
 
 import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IMailbox.sol";
 import "@matterlabs/zksync-contracts/l1/contracts/bridge/interfaces/IL1Bridge.sol";
+import "@matterlabs/zksync-contracts/l2/contracts/bridge/interfaces/IL2Bridge.sol";
 
 interface TokenLike {
     function transferFrom(
@@ -24,16 +25,6 @@ interface TokenLike {
         address _to,
         uint256 _value
     ) external returns (bool success);
-}
-
-interface L2DAITokenBridgeLike {
-    function finalizeDeposit(
-        address _from,
-        address _to,
-        address _l1Token,
-        uint256 _amount,
-        bytes calldata _data
-    ) external;
 }
 
 // Managed locked funds in L1Escrow and send / receive messages to L2DAITokenBridge counterpart
@@ -58,7 +49,6 @@ contract L1DAITokenBridge is IL1Bridge {
         _;
     }
 
-    uint256 constant DEPOSIT_ERGS_LIMIT = 2097152;
     address constant BOOTLOADER_ADDRESS = 0x0000000000000000000000000000000000008001; // address(SYSTEM_CONTRACTS_OFFSET + 0x01);
     address public immutable l1Token;
     address public immutable l2Bridge;
@@ -66,12 +56,14 @@ contract L1DAITokenBridge is IL1Bridge {
     address public immutable escrow;
     IMailbox public immutable zkSyncMailbox;
     uint256 public isOpen = 1;
+    uint256 public ergsLimit = 2097152; // ergs limit used for deposit messages. Set to its max possible value by default.
 
     mapping(uint256 => mapping(uint256 => bool)) public isWithdrawalFinalized;
     mapping(address => mapping(bytes32 => uint256)) depositAmount;
 
     event Rely(address indexed usr);
     event Deny(address indexed usr);
+    event File(bytes32 indexed what, uint256 data);
     event Closed();
 
     constructor(
@@ -96,6 +88,15 @@ contract L1DAITokenBridge is IL1Bridge {
         return l2Token;
     }
 
+    function file(bytes32 what, uint256 data) external auth {
+        if (what == "ergsLimit") {
+            ergsLimit = data;
+        } else {
+            revert("L1DAITokenBridge/file-unrecognized-param");
+        }
+        emit File(what, data);
+    }
+
     function close() external auth {
         isOpen = 0;
 
@@ -114,7 +115,7 @@ contract L1DAITokenBridge is IL1Bridge {
         TokenLike(l1Token).transferFrom(msg.sender, escrow, _amount);
 
         bytes memory l2TxCalldata = abi.encodeWithSelector(
-            L2DAITokenBridgeLike.finalizeDeposit.selector,
+            IL2Bridge.finalizeDeposit.selector,
             msg.sender,
             _l2Receiver,
             _l1Token,
@@ -126,7 +127,7 @@ contract L1DAITokenBridge is IL1Bridge {
             l2Bridge,
             0, // l2Value is always 0
             l2TxCalldata,
-            DEPOSIT_ERGS_LIMIT,
+            ergsLimit,
             new bytes[](0)
         );
 
@@ -139,15 +140,23 @@ contract L1DAITokenBridge is IL1Bridge {
         address _depositSender,
         address _l1Token,
         bytes32 _l2TxHash,
-        uint256 _l2BlockNumber,
+        uint256 _l1BatchNumber,
         uint256 _l2MessageIndex,
+        uint16 _l1BatchTxIndex,
         bytes32[] calldata _merkleProof
     ) external {
         require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
 
-        L2Log memory l2Log = L2Log({sender: BOOTLOADER_ADDRESS, key: _l2TxHash, value: bytes32(0)});
+        L2Log memory l2Log = L2Log({
+            l2ShardId: 0,
+            isService: true,
+            txNumberInBlock: _l1BatchTxIndex,
+            sender: BOOTLOADER_ADDRESS,
+            key: _l2TxHash,
+            value: bytes32(0)
+        });
         bool success = zkSyncMailbox.proveL2LogInclusion(
-            _l2BlockNumber,
+            _l1BatchNumber,
             _l2MessageIndex,
             l2Log,
             _merkleProof
@@ -163,31 +172,33 @@ contract L1DAITokenBridge is IL1Bridge {
         emit ClaimedFailedDeposit(_depositSender, _l1Token, amount);
     }
 
-    // To withdraw, merkleproof must be presented by the user. This might be split
-    // into two separate contracts - WithdrawRelayer and the Bridge
-
     function finalizeWithdrawal(
-        uint256 _l2BlockNumber,
+        uint256 _l1BatchNumber,
         uint256 _l2MessageIndex,
+        uint16 _l1BatchTxIndex,
         bytes calldata _message,
         bytes32[] calldata _merkleProof
     ) external {
         require(
-            !isWithdrawalFinalized[_l2BlockNumber][_l2MessageIndex],
+            !isWithdrawalFinalized[_l1BatchNumber][_l2MessageIndex],
             "L1DAITokenBridge/was-withdrawn"
         );
-        L2Message memory l2ToL1Message = L2Message({sender: l2Bridge, data: _message});
+        L2Message memory l2ToL1Message = L2Message({
+            txNumberInBlock: _l1BatchTxIndex,
+            sender: l2Bridge,
+            data: _message
+        });
 
         (address l1Receiver, uint256 amount) = _parseL2WithdrawalMessage(l2ToL1Message.data);
         bool success = zkSyncMailbox.proveL2MessageInclusion(
-            _l2BlockNumber,
+            _l1BatchNumber,
             _l2MessageIndex,
             l2ToL1Message,
             _merkleProof
         );
         require(success, "L1DAITokenBridge/invalid-proof");
 
-        isWithdrawalFinalized[_l2BlockNumber][_l2MessageIndex] = true;
+        isWithdrawalFinalized[_l1BatchNumber][_l2MessageIndex] = true;
 
         TokenLike(l1Token).transferFrom(escrow, l1Receiver, amount);
 
