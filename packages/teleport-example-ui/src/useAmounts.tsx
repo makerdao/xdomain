@@ -1,10 +1,17 @@
 import { formatEther, parseEther } from 'ethers/lib/utils'
 import { useEffect, useState } from 'react'
-import { getAmounts, getDstBalance, getSrcBalance, getSrcGatewayAllowance } from 'teleport-sdk'
+import {
+  getAmounts,
+  getAmountsForTeleportGUID,
+  getDstBalance,
+  getSrcBalance,
+  getSrcGatewayAllowance,
+  TeleportGUID,
+} from 'teleport-sdk'
 
 import { DomainChainId, getSdkDomainId } from './domains'
 
-export function useAmounts(srcChainId: DomainChainId, account?: string) {
+export function useAmounts(srcChainId: DomainChainId, account?: string, guid?: TeleportGUID) {
   const [amount, setAmount] = useState<string | undefined>('0')
   const [maxAmount, setMaxAmount] = useState<string | undefined>('0')
   const [dstBalance, setDstBalance] = useState<string | undefined>('0')
@@ -77,10 +84,19 @@ export function useAmounts(srcChainId: DomainChainId, account?: string) {
       setBridgeFee(undefined)
       setRelayFee(undefined)
       setFee(undefined)
-      const { bridgeFee: bridgeFeeBN, relayFee: relayFeeBN } = await getAmounts({
-        srcDomain,
-        withdrawn: parseEther(amount || '0'),
-      })
+
+      const getAm = guid
+        ? () =>
+            getAmountsForTeleportGUID({
+              srcDomain,
+              teleportGUID: guid,
+            })
+        : () =>
+            getAmounts({
+              srcDomain,
+              withdrawn: parseEther(amount || '0'),
+            })
+      const { bridgeFee: bridgeFeeBN, relayFee: relayFeeBN } = await getAm()
 
       setBridgeFee(formatEther(bridgeFeeBN))
 

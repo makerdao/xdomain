@@ -3,7 +3,7 @@ import './App.scss'
 import { Alert, Button, Col, Descriptions, Row, Switch } from 'antd'
 import { ethers } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import useLocalStorage from 'use-local-storage'
 
@@ -30,10 +30,12 @@ function App() {
   const [relayerSelected, setRelayerSelected] = useLocalStorage('relayerSelected', true)
   const { connectWallet, disconnectWallet, account, chainId: walletChainId, provider } = useConnectedWallet()
 
-  const [srcChainId, setSrcChainId] = useLocalStorage<SrcDomainChainId>('_srcChainId', 42161)
   const [searchParams] = useSearchParams({})
   const urlChainIdString = searchParams.get('chainId')
   const urlChainId = urlChainIdString ? Number(urlChainIdString) : undefined
+  const defaultSrcChainId =
+    urlChainId !== undefined && SRC_CHAIN_IDS.includes(urlChainId) ? (urlChainId as SrcDomainChainId) : 42161
+  const [srcChainId, setSrcChainId] = useState<SrcDomainChainId>(defaultSrcChainId)
 
   const dstChainId = SRC_CHAINID_TO_DST_CHAINID[srcChainId as SrcDomainChainId]
 

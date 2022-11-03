@@ -5,17 +5,20 @@ import { ReactElement, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   approveSrcGateway,
+  canMintWithoutOracle,
   DEFAULT_RPC_URLS,
   getAmountsForTeleportGUID,
   getAttestations,
   getDefaultDstDomain,
+  getTeleportGuidFromTxHash,
   initRelayedTeleport,
   mintWithOracles,
+  mintWithoutOracles,
   requestFaucetDai,
   requestRelay,
-  sleep,
   TeleportGUID,
   waitForRelayTask,
+  waitForTxReceipt,
 } from 'teleport-sdk'
 
 import {
@@ -31,6 +34,8 @@ import { switchChain, truncateAddress } from './utils'
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 
+const FORCE_SLOW_PATH = false // set this to true to test slow path minting on testnet without having to wait 8 days
+
 export function useTeleportFlow(
   connectWallet: () => Promise<void>,
   srcChainId: DomainChainId,
@@ -44,7 +49,7 @@ export function useTeleportFlow(
   const [burnTx, setBurnTx] = useState<ContractTransaction | undefined>()
   const [checkingBurnConfirmed, setCheckingBurnConfirmed] = useState<boolean>(false)
   const [burnConfirmed, setBurnConfirmed] = useState<boolean>(false)
-  const [attestationsRequested, setAttestationsRequested] = useState<boolean>(false)
+  const [canSlowPath, setCanSlowPath] = useState<boolean>(false)
   const [numSigs, setNumSigs] = useState<number | undefined>()
   const [threshold, setThreshold] = useState<number | undefined>()
   const [signatures, setSignatures] = useState<string | undefined>()
@@ -60,6 +65,7 @@ export function useTeleportFlow(
     onClick?: () => Promise<void>
   }>({})
 
+  const [preparingDirectMint, setPreparingDirectMint] = useState<boolean>(false)
   const [directMintTx, setDirectMintTx] = useState<ContractTransaction | undefined>()
   const [checkingMintConfirmed, setCheckingMintConfirmed] = useState<boolean>(false)
   const [secondaryButton, setSecondaryButton] = useState<{
@@ -76,6 +82,7 @@ export function useTeleportFlow(
 
   const ethersProvider = walletProvider && new ethers.providers.Web3Provider(walletProvider, 'any')
   const sender = ethersProvider?.getSigner()
+
   const srcDomain = getSdkDomainId(srcChainId)
 
   const {
@@ -90,7 +97,7 @@ export function useTeleportFlow(
     updateMaxAmount,
     updateDstBalance,
     updateAllowance,
-  } = useAmounts(srcChainId, account)
+  } = useAmounts(srcChainId, account, guid)
   const amount = guid ? formatEther(BigNumber.from(guid.amount)) : amount_ // make sure to always use guid.amount if any
 
   function resetState() {
@@ -100,7 +107,6 @@ export function useTeleportFlow(
     setBurnTx(undefined)
     setCheckingBurnConfirmed(false)
     setBurnConfirmed(false)
-    setAttestationsRequested(false)
     setNumSigs(undefined)
     setThreshold(undefined)
     setSignatures(undefined)
@@ -108,7 +114,9 @@ export function useTeleportFlow(
     setPendingAmount(undefined)
     setPayloadSigned(false)
     setRelayTxHash(undefined)
+    setPreparingDirectMint(false)
     setMintConfirmed(false)
+    setCanSlowPath(false)
     setSecondaryButton(undefined)
   }
 
@@ -185,22 +193,7 @@ export function useTeleportFlow(
         }
         _waitForTx = waitForTxObject
       } else {
-        const waitForTxReceipt = async () => {
-          let receipt = null
-          let attempt = 1
-          while (!receipt && attempt <= 10) {
-            receipt = await provider.getTransactionReceipt(txHash)
-            if (receipt) {
-              handleReceipt(receipt)
-              return
-            } else {
-              await sleep(1000 * attempt)
-              attempt++
-            }
-          }
-          console.error(`getTransactionReceipt(${txDescription ?? 'tx'} hash=${txHash}): no receipt after 10 attempts.`)
-        }
-        _waitForTx = waitForTxReceipt
+        _waitForTx = () => waitForTxReceipt(provider, txHash, txDescription).then((rcpt) => handleReceipt(rcpt))
       }
       _waitForTx()
         .catch(console.error)
@@ -286,7 +279,85 @@ export function useTeleportFlow(
         'Teleport Initiated',
         'Teleport Initiation Failed',
       )
-    } else if (!guid || !signatures) {
+    }
+  }
+
+  function doMint() {
+    if (!burnTxHash || !guid) return
+
+    const receiverAddress = getAddress(hexZeroPad(hexStripZeros(guid.receiver), 20))
+
+    if (!mintTxHash && !relayTaskId && !payloadSigned && (!account || getAddress(account) !== receiverAddress)) {
+      setMainButton({
+        label: <>Please Connect Account {truncateAddress(receiverAddress)}</>,
+        loading: false,
+        disabled: true,
+      })
+      return
+    }
+
+    if (!mintTxHash && !relayTaskId && !payloadSigned && (signatures || canSlowPath)) {
+      if (preparingDirectMint) {
+        setSecondaryButton({
+          label: <>Minting DAI...</>,
+          loading: true,
+        })
+      } else {
+        setSecondaryButton({
+          label: (
+            <>
+              Mint DAI on &nbsp;
+              <DomainName chainId={dstChainId} />
+            </>
+          ),
+          onClick: async () => {
+            if (!walletProvider) return
+            await switchChain(dstChainId, walletProvider)
+            const currChainId = parseInt(await walletProvider.request?.({ method: 'eth_chainId' }), 16)
+            if (currChainId !== dstChainId) return
+
+            let directMintTx: ContractTransaction | undefined
+            let mintDirectly: (() => Promise<ContractTransaction | undefined>) | undefined
+            void mintWithOracles
+            if (signatures && !FORCE_SLOW_PATH) {
+              // prefer minting using oracle attestations if possible
+              mintDirectly = async () => {
+                const { tx } = await mintWithOracles({
+                  srcDomain,
+                  teleportGUID: guid,
+                  signatures,
+                  maxFeePercentage,
+                  sender,
+                })
+                return tx
+              }
+            } else if (canSlowPath) {
+              // mint via the slow path if oracle attestations are not available
+              mintDirectly = () => mintWithoutOracles({ srcDomain, txHash: burnTxHash, sender: sender! })
+            }
+
+            if (mintDirectly) {
+              setPreparingDirectMint(true)
+              try {
+                directMintTx = await mintDirectly()
+              } finally {
+                setPreparingDirectMint(false)
+              }
+
+              console.log(`DAI mint tx submitted on ${getDefaultDstDomain(srcDomain)}: ${directMintTx!.hash}`)
+              setSearchParams({
+                txHash: burnTxHash!,
+                chainId: srcChainId.toString(),
+                directMintTxHash: directMintTx!.hash,
+              })
+              setDirectMintTx(directMintTx)
+            }
+          },
+        })
+      }
+    }
+
+    if (!signatures) {
       setMainButton({
         label: (
           <>
@@ -301,102 +372,33 @@ export function useTeleportFlow(
         ),
         loading: true,
       })
-      const waitForAttestations = async () => {
-        if (attestationsRequested) return
-        setAttestationsRequested(true)
-        const { signatures, teleportGUID } = await getAttestations({
-          srcDomain: getSdkDomainId(srcChainId),
-          txHash: burnTxHash,
-          onNewSignatureReceived: (numSig, threshold, teleportGuid_) => {
-            console.log(`Oracle attestations received: ${numSig}/${threshold}`)
-            setNumSigs(numSig)
-            setThreshold(threshold)
-            if (teleportGuid_) setGuid(teleportGuid_)
+    } else if (!payloadSigned && !relayTaskId && !mintTxHash) {
+      if (signatures) {
+        setMainButton({
+          label: <>Sign DAI Mint Request</>,
+          loading: false,
+          onClick: async () => {
+            const taskId = await requestRelay({
+              srcDomain,
+              receiver: sender!,
+              teleportGUID: guid,
+              signatures,
+              maxFeePercentage,
+              relayFee: parseEther(relayFee || '0'),
+              onPayloadSigned: (payload, r, s, v) => {
+                console.log(`Payload ${payload} signed: r=${r} s=${s} v=${v}`)
+                setPayloadSigned(true)
+              },
+            })
+            setSearchParams({ txHash: burnTxHash!, chainId: srcChainId.toString(), taskId })
           },
         })
-        console.log(`TeleportGUID=${JSON.stringify(teleportGUID)} signatures=${signatures}`)
-        notification.info({
-          message: 'Oracle Attestations Received',
-        })
-        setSignatures(signatures)
-        setAttestationsRequested(false)
       }
-      waitForAttestations().catch(console.error)
-    } else {
-      const updatePendingAmount = async () => {
-        const { pending } = await getAmountsForTeleportGUID({
-          teleportGUID: guid,
-          srcDomain: getSdkDomainId(srcChainId),
-        })
-        console.log(`${formatEther(pending)} DAI pending to be minted on L1`)
-        setPendingAmount(formatEther(pending))
-      }
-      updatePendingAmount().catch(console.error)
-    }
-  }
-
-  function doMint() {
-    if (!guid || !signatures) return
-
-    const receiverAddress = getAddress(hexZeroPad(hexStripZeros(guid.receiver), 20))
-
-    if (!relayTaskId && !payloadSigned && (!account || getAddress(account) !== receiverAddress)) {
-      setMainButton({
-        label: <>Please Connect Account {truncateAddress(receiverAddress)}</>,
-        loading: false,
-        disabled: true,
-      })
-    } else if (!payloadSigned && !relayTaskId && !mintTxHash) {
-      setMainButton({
-        label: <>Sign DAI Mint Request</>,
-        loading: false,
-        onClick: async () => {
-          const taskId = await requestRelay({
-            srcDomain,
-            receiver: sender!,
-            teleportGUID: guid,
-            signatures,
-            maxFeePercentage,
-            relayFee: parseEther(relayFee || '0'),
-            onPayloadSigned: (payload, r, s, v) => {
-              console.log(`Payload ${payload} signed: r=${r} s=${s} v=${v}`)
-              setPayloadSigned(true)
-            },
-          })
-          setSearchParams({ txHash: burnTxHash!, chainId: srcChainId.toString(), taskId })
-        },
-      })
-      setSecondaryButton({
-        label: (
-          <>
-            Mint DAI on &nbsp;
-            <DomainName chainId={dstChainId} />
-          </>
-        ),
-        onClick: async () => {
-          if (!walletProvider) return
-          await switchChain(dstChainId, walletProvider)
-          const currChainId = parseInt(await walletProvider.request?.({ method: 'eth_chainId' }), 16)
-          if (currChainId !== dstChainId) return
-
-          const { tx } = await mintWithOracles({
-            srcDomain,
-            teleportGUID: guid,
-            signatures,
-            maxFeePercentage,
-            sender,
-          })
-          console.log(`DAI mint tx submitted on ${getDefaultDstDomain(srcDomain)}: ${tx!.hash}`)
-          setSearchParams({ txHash: burnTxHash!, chainId: srcChainId.toString(), directMintTxHash: tx!.hash })
-          setDirectMintTx(tx)
-        },
-      })
     } else if (payloadSigned && !relayTaskId) {
       setMainButton({
         label: <>Creating Relay Task...</>,
         loading: true,
       })
-      setSecondaryButton(undefined)
     } else if (payloadSigned && relayTaskId && !mintTxHash) {
       console.log(`Waiting for taskId: ${relayTaskId} ...`)
       void waitForRelayTask({ taskId: relayTaskId, srcDomain })
@@ -431,8 +433,8 @@ export function useTeleportFlow(
         label: <>Waiting for relayer...</>,
         loading: true,
       })
-      setSecondaryButton(undefined)
     } else if (mintTxHash && !mintConfirmed) {
+      setSecondaryButton(undefined)
       setMainButton({
         label: <>Finalizing teleport... </>,
         loading: true,
@@ -457,7 +459,6 @@ export function useTeleportFlow(
         'Teleport Finalization Failed',
         null, //success notification duration: infinite
       )
-      setSecondaryButton(undefined)
     } else {
       resetState()
     }
@@ -477,6 +478,22 @@ export function useTeleportFlow(
   }, [guid, mintConfirmed])
 
   useEffect(() => {
+    const updatePendingAmount = async () => {
+      if (guid) {
+        const { pending } = await getAmountsForTeleportGUID({
+          teleportGUID: guid,
+          srcDomain: getSdkDomainId(srcChainId),
+        })
+        console.log(`${formatEther(pending)} DAI pending to be minted on L1`)
+        setPendingAmount(formatEther(pending))
+      } else {
+        setPendingAmount(undefined)
+      }
+    }
+    updatePendingAmount().catch(console.error)
+  }, [guid, srcChainId])
+
+  useEffect(() => {
     updateMaxAmount().catch(console.error)
   }, [gulpConfirmed, burnConfirmed])
 
@@ -484,6 +501,46 @@ export function useTeleportFlow(
     if (mintConfirmed) setAmount('0')
     updateDstBalance().catch(console.error)
   }, [mintConfirmed])
+
+  useEffect(() => {
+    const updateCanSlowPath = async () => {
+      const slowPathReady =
+        (burnTxHash && ((await canMintWithoutOracle({ srcDomain, txHash: burnTxHash })) || FORCE_SLOW_PATH)) || false
+      setCanSlowPath(slowPathReady)
+    }
+    updateCanSlowPath().catch(console.error)
+  }, [burnTxHash])
+
+  useEffect(() => {
+    const waitForAttestations = async () => {
+      if (!burnTxHash) return
+
+      const { signatures: sigs, teleportGUID } = await getAttestations({
+        srcDomain: getSdkDomainId(srcChainId),
+        txHash: burnTxHash,
+        onNewSignatureReceived: (numSig, threshold, teleportGuid_) => {
+          console.log(`Oracle attestations received: ${numSig}/${threshold}`)
+          setNumSigs(numSig)
+          setThreshold(threshold)
+          if (teleportGuid_) setGuid(teleportGuid_)
+        },
+      })
+      console.log(`TeleportGUID=${JSON.stringify(teleportGUID)} signatures=${signatures}`)
+      notification.info({
+        message: 'Oracle Attestations Received',
+      })
+      setSignatures(sigs)
+    }
+    waitForAttestations().catch(console.error)
+  }, [burnTxHash, srcChainId])
+
+  useEffect(() => {
+    if (ethersProvider && burnTxHash && !guid) {
+      getTeleportGuidFromTxHash({ txHash: burnTxHash, srcDomain })
+        .then((txGuid) => setGuid(txGuid))
+        .catch(console.error)
+    }
+  }, [burnTxHash, walletProvider])
 
   useEffect(() => {
     // console.log({
@@ -507,7 +564,7 @@ export function useTeleportFlow(
     //   mintConfirmed,
     // })
 
-    if (!signatures || pendingAmount === undefined) {
+    if (!guid || pendingAmount === undefined) {
       doBurn()
     } else if (parseEther(pendingAmount).gt(0)) {
       doMint()
@@ -534,6 +591,7 @@ export function useTeleportFlow(
     burnTxHash,
     burnTx,
     burnConfirmed,
+    canSlowPath,
     numSigs,
     signatures,
     guid,
@@ -542,6 +600,7 @@ export function useTeleportFlow(
     relayTaskId,
     relayTxHash,
     mintTxHash,
+    preparingDirectMint,
     directMintTx,
     mintConfirmed,
   ])
