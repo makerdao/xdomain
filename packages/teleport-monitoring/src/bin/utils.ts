@@ -17,9 +17,19 @@ type InitFunction = (args: {
   settleRepository: SettleRepository
 }) => Promise<void>
 
+interface Slave {
+  name: string
+  l2Rpc: string
+  sdkName: string
+  bridgeDeploymentBlock: number
+  syncBatchSize: number
+}
+
 export async function run(fn: InitFunction): Promise<void> {
   try {
     const l1Rpc = process.argv[2] || process.env['L1_RPC']
+    const cfgString = process.argv[3] || process.env['CONFIG']
+    const cfg = (cfgString && JSON.parse(cfgString)) || {}
 
     if (!l1Rpc) {
       throw new Error('L1 RPC not found. Pass it as first argument or as L1_RPC env variable.')
@@ -29,11 +39,17 @@ export async function run(fn: InitFunction): Promise<void> {
 
     const chainId = (await l1Provider.getNetwork()).chainId
     const networkName = idsToChains[chainId]
-    const network = networks[chainId]
+    const defaultNetwork = networks[chainId]
 
-    if (!networkName || !network) {
+    if (!networkName || !defaultNetwork) {
       throw new Error(`Can't find config for network with id: ${chainId}`)
     }
+
+    const network = { ...defaultNetwork, ...cfg }
+    network.slaves = defaultNetwork.slaves.map((slave) => ({
+      ...slave,
+      ...cfg.slaves?.find((s: Slave) => s.name === slave.name),
+    }))
 
     const prisma = new PrismaClient()
     await prisma.$connect()
