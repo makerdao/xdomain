@@ -103,7 +103,6 @@ contract L1DAITokenBridge is IL1Bridge {
         emit Closed();
     }
 
-    //TODO: Check if reentrancy guard is needed for all these methods
     function deposit(
         address _l2Receiver,
         address _l1Token,
