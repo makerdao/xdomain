@@ -50,16 +50,16 @@ contract L1DAITokenBridge is IL1Bridge {
     }
 
     address constant BOOTLOADER_ADDRESS = 0x0000000000000000000000000000000000008001; // address(SYSTEM_CONTRACTS_OFFSET + 0x01);
-    address public immutable l1Token;
-    address public immutable l2Bridge;
-    address public immutable l2Token;
-    address public immutable escrow;
-    IMailbox public immutable zkSyncMailbox;
-    uint256 public isOpen = 1;
-    uint256 public ergsLimit = 2097152; // ergs limit used for deposit messages. Set to its max possible value by default.
+    address public immutable l1Token;        // the address of L1 Dai
+    address public immutable l2Bridge;       // the counterpart bridge contract on L2
+    address public immutable l2Token;        // the address of L2 Dai
+    address public immutable escrow;         // contract holding all deposited L1 Dai
+    IMailbox public immutable zkSyncMailbox; // zkSync main contract on L1
+    uint256 public isOpen = 1;               // flag indicating if the bridge is open to deposits
+    uint256 public ergsLimit = 2097152;      // ergs limit used for deposit messages. Set to its max possible value by default.
 
-    mapping(uint256 => mapping(uint256 => bool)) public isWithdrawalFinalized;
-    mapping(address => mapping(bytes32 => uint256)) depositAmount;
+    mapping(uint256 => mapping(uint256 => bool)) public isWithdrawalFinalized; // flag used to mark a pending withdrawal as finalized and prevent it from being double-spent
+    mapping(address => mapping(bytes32 => uint256)) public depositAmount;      // the amount of Dai deposited for a given depositer and L2 transaction hash (used for deposit cancellation).
 
     event Rely(address indexed usr);
     event Deny(address indexed usr);
@@ -83,11 +83,21 @@ contract L1DAITokenBridge is IL1Bridge {
         zkSyncMailbox = _mailbox;
     }
 
+    /**
+     * @notice Returns the L2 Dai token address. This is not used by this contract but is included here so that 
+     * this contract fully implements the IL1Bridge interface used by zkSync standard token bridge (L1ERC20Bridge).
+     */
     function l2TokenAddress(address _l1Token) external view returns (address) {
         require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
         return l2Token;
     }
 
+    /**
+     * @notice Allows auth to configure the bridge parameters. The only supported operation is "ergsLimit",
+     * which allows specifying the default ergs limit used for deposit messages.
+     * @param what The name of the operation. Only "ergsLimit" is supported.
+     * @param data The value of the default ergsLimit
+     */
     function file(bytes32 what, uint256 data) external auth {
         if (what == "ergsLimit") {
             ergsLimit = data;
@@ -97,12 +107,21 @@ contract L1DAITokenBridge is IL1Bridge {
         emit File(what, data);
     }
 
+    /**
+     * @notice Close the L1 side of the bridge, preventing future deposits
+     */
     function close() external auth {
         isOpen = 0;
 
         emit Closed();
     }
 
+    /**
+     * @notice Deposit Dai from Ethereum L1 to zkSync L2
+     * @param _l2Receiver The recipient address on L2
+     * @param _l1Token The address of the Dai token on L1
+     * @param _amount The amount of Dai to deposit (in WAD)
+     */
     function deposit(
         address _l2Receiver,
         address _l1Token,
@@ -124,10 +143,10 @@ contract L1DAITokenBridge is IL1Bridge {
 
         txHash = zkSyncMailbox.requestL2Transaction{value: msg.value}(
             l2Bridge,
-            0, // l2Value is always 0
+            0, // l2Value is the amount of ETH sent to the L2 method. As the L2 method is non-payable, this is always 0
             l2TxCalldata,
             ergsLimit,
-            new bytes[](0)
+            new bytes[](0) // array of L2 bytecodes that will be marked as known on L2. This is only required when deploying an L2 contract, so is left empty here
         );
 
         depositAmount[msg.sender][txHash] = _amount;
@@ -135,6 +154,18 @@ contract L1DAITokenBridge is IL1Bridge {
         emit DepositInitiated(msg.sender, _l2Receiver, _l1Token, _amount);
     }
 
+    /**
+     * @notice Recover the L1 Dai sent to the escrow when the L1 > L2 deposit message failed to
+     * be executed on L2 (for example because of the amount of ETH sent with the deposit transaction was not 
+     * large enough to cover the cost of the L2 transaction).
+     * @param _depositSender The address of the account that sent the L1 Dai
+     * @param _l1Token The address of the Dai token on L1
+     * @param _l2TxHash The transaction hash of the failed L2 transaction
+     * @param _l1BatchNumber The number of the L1 batch that includes the failed L2 transaction
+     * @param _l2MessageIndex The position of the L2 log (corresponding to the failed L2 transaction) in the L2 logs Merkle tree
+     * @param _l1BatchTxIndex The position of the failed L2 transaction in the L1 batch
+     * @param _merkleProof Merkle proof of inclusion of the L2 log (corresponding to the failed L2 transaction)
+     */
     function claimFailedDeposit(
         address _depositSender,
         address _l1Token,
@@ -147,12 +178,12 @@ contract L1DAITokenBridge is IL1Bridge {
         require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
 
         L2Log memory l2Log = L2Log({
-            l2ShardId: 0,
-            isService: true,
+            l2ShardId: 0, // the shard identifier, 0 - rollup, 1 - porter. 
+            isService: true, // boolean flag that is part of the log along with `key`, `value`, and `sender` address. This field is required formally but does not have any special meaning.
             txNumberInBlock: _l1BatchTxIndex,
-            sender: BOOTLOADER_ADDRESS,
+            sender: BOOTLOADER_ADDRESS, // the L2 address which sent the log
             key: _l2TxHash,
-            value: bytes32(0)
+            value: bytes32(0) // a zero value indicates a failed L2 transaction
         });
         bool success = zkSyncMailbox.proveL2LogInclusion(
             _l1BatchNumber,
@@ -171,6 +202,14 @@ contract L1DAITokenBridge is IL1Bridge {
         emit ClaimedFailedDeposit(_depositSender, _l1Token, amount);
     }
 
+    /**
+     * @notice Finalize an L2 > L1 Dai withdrawal
+     * @param _l1BatchNumber The number of the L1 batch that includes the withdrawal transaction on L2
+     * @param _l2MessageIndex The position of the L2 log (corresponding to the withdrawal transaction on L2) in the L2 logs Merkle tree
+     * @param _l1BatchTxIndex The position of the withdrawal L2 transaction in the L1 batch
+     * @param _message The withdrawal message encoded as `abi.encodePacked(IL1Bridge.finalizeWithdrawal.selector, _to, _amount)`
+     * @param _merkleProof Merkle proof of inclusion of the L2 log (corresponding to the withdrawal transaction on L2)
+     */
     function finalizeWithdrawal(
         uint256 _l1BatchNumber,
         uint256 _l2MessageIndex,

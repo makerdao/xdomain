@@ -15,18 +15,20 @@
 
 pragma solidity ^0.8.15;
 
-// Receive xchain message from L1 counterpart and execute given spell
 
 contract L2GovernanceRelay {
-    address public immutable l1GovernanceRelay;
+    address public immutable l1GovernanceRelay; // the counterpart relay contract on L1
 
     constructor(address _l1GovernanceRelay) {
         l1GovernanceRelay = _l1GovernanceRelay;
     }
 
-    /**
-     * @dev Execute the call from L1.
-     */
+    /** 
+    * @notice Execute the L2 call from L1. This is called via a xchain message from the 
+    * L1 counterpart. This method is used to execute a previously deployed L2 spell.
+    * @param target The contract to call
+    * @param targetData The calldata of the call
+    */
     function relay(address target, bytes calldata targetData) external {
         // Ensure no storage changes in the delegate call
         // Target address is trusted so this is mostly to avoid a human error

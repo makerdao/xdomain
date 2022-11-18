@@ -48,10 +48,10 @@ contract L2DAITokenBridge is IL2Bridge {
         _;
     }
 
-    address public immutable l2Token;
-    address public immutable l1Token;
-    address public immutable l1Bridge;
-    uint256 public isOpen = 1;
+    address public immutable l2Token;  // the address of L2 Dai
+    address public immutable l1Token;  // the address of L1 Dai
+    address public immutable l1Bridge; // the counterpart bridge contract on L1
+    uint256 public isOpen = 1;         // flag indicating if the bridge is open to withdrawals
 
     event Rely(address indexed usr);
     event Deny(address indexed usr);
@@ -70,22 +70,39 @@ contract L2DAITokenBridge is IL2Bridge {
         l1Bridge = _l1Bridge;
     }
 
+    /**
+     * @notice Returns the L2 Dai token address. This is not used by this contract but is included here so that 
+     * this contract fully implements the IL2Bridge interface used by zkSync standard token bridge (L2ERC20Bridge).
+     */
     function l2TokenAddress(address _l1Token) external view returns (address) {
         require(_l1Token == l1Token, "L2DAITokenBridge/token-not-dai");
         return l2Token;
     }
 
+    /**
+     * @notice Returns the L1 Dai token address. This is not used by this contract but is included here so that 
+     * this contract fully implements the IL2Bridge interface used by zkSync standard token bridge (L2ERC20Bridge).
+     */
     function l1TokenAddress(address _l2Token) external view returns (address) {
         require(_l2Token == l2Token, "L2DAITokenBridge/token-not-dai");
         return l1Token;
     }
 
+    /**
+     * @notice Close the L2 side of the bridge, preventing future withdrawals
+     */
     function close() external auth {
         isOpen = 0;
 
         emit Closed();
     }
 
+    /**
+     * @notice Withdraw Dai from zkSync L2 to Ethereum L1
+     * @param _l1Receiver The recipient address on L1
+     * @param _l2Token The address of the Dai token on L2
+     * @param _amount The amount of Dai to withdraw (in WAD)
+     */
     function withdraw(
         address _l1Receiver,
         address _l2Token,
@@ -114,10 +131,17 @@ contract L2DAITokenBridge is IL2Bridge {
         L1_MESSENGER_CONTRACT.sendToL1(message);
     }
 
-    // When a deposit is finalized, we credit the account on L2 with the same amount of tokens.
-    function finalizeDeposit(
-        address _from,
-        address _to,
+
+    /**
+     * @notice Finalize an L1 > L2 Dai deposit. This credits the L2 account with the same amount of tokens as deposited on L1.
+     * @param _l1Sender The L1 account that deposited the L1 Dai
+     * @param _l2Receiver The L2 account that receives the L2 Dai
+     * @param _l1Token The address of the Dai token on L1
+     * @param _amount The amount of Dai to credit (in WAD)
+     */
+     function finalizeDeposit(
+        address _l1Sender,
+        address _l2Receiver,
         address _l1Token,
         uint256 _amount,
         bytes calldata /* _data */
@@ -126,8 +150,8 @@ contract L2DAITokenBridge is IL2Bridge {
 
         require(_l1Token == l1Token, "L2DAITokenBridge/token-not-dai");
 
-        Mintable(l2Token).mint(_to, _amount);
+        Mintable(l2Token).mint(_l2Receiver, _amount);
 
-        emit FinalizeDeposit(_from, _to, l2Token, _amount);
+        emit FinalizeDeposit(_l1Sender, _l2Receiver, l2Token, _amount);
     }
 }

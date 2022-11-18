@@ -15,8 +15,6 @@
 
 pragma solidity ^0.8.15;
 
-// Relay a message from L1 to L2GovernanceRelay
-
 interface L2GovernanceRelayLike {
     function relay(address target, bytes calldata targetData) external;
 }
@@ -50,8 +48,8 @@ contract L1GovernanceRelay {
         _;
     }
 
-    address public immutable l2GovernanceRelay;
-    IMailboxLike public immutable zkSyncMailbox;
+    address public immutable l2GovernanceRelay;  // the counterpart relay contract on L2
+    IMailboxLike public immutable zkSyncMailbox; // zkSync main contract on L1
 
     event Rely(address indexed usr);
     event Deny(address indexed usr);
@@ -64,12 +62,19 @@ contract L1GovernanceRelay {
         zkSyncMailbox = _mailbox;
     }
 
-    // Forward a call to be repeated on L2
+    /** 
+    * @notice Forward a call to be repeated on L2. This is called by MakerDAO governance
+    * to execute a previously deployed L2 spell via an L1 > L2 xdomain message.
+    * @param target The L2 contract to call
+    * @param targetData The calldata of the L2 call
+    * @param ergsLimit Maximum amount of ergs that the transaction can consume during its execution on L2
+    * @param factoryDeps array of L2 bytecodes that will be marked as known on L2. Empty for transactions not deploying contracts
+    */
     function relay(
         address target,
         bytes calldata targetData,
         uint256 ergsLimit,
-        bytes[] calldata factoryDeps // empty for transactions not deploying contracts
+        bytes[] calldata factoryDeps
     ) external payable auth returns (bytes32 txHash) {
         bytes memory l2TxCalldata = abi.encodeWithSelector(
             L2GovernanceRelayLike.relay.selector,
@@ -79,7 +84,7 @@ contract L1GovernanceRelay {
 
         txHash = zkSyncMailbox.requestL2Transaction{value: msg.value}(
             l2GovernanceRelay,
-            0, // l2Value is assumed to always be 0
+            0, // l2Value is the amount of ETH sent to the L2 method. As the L2 method is non-payable, this is always 0
             l2TxCalldata,
             ergsLimit,
             factoryDeps
