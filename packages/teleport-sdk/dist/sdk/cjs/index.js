@@ -5,51 +5,51 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getArbitrumGoerliTestnetSdk = exports.getOptimismGoerliTestnetSdk = exports.getGoerliSdk = exports.getArbitrumOneSdk = exports.getOptimismSdk = exports.getMainnetSdk = exports.getArbitrumTestnetSdk = exports.getRinkebySdk = exports.getOptimismKovanSdk = exports.getKovanSdk = exports.getContract = void 0;
 const ethers_1 = require("ethers");
-const TeleportOracleAuth_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/TeleportOracleAuth.json"));
-const TeleportJoin_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/TeleportJoin.json"));
-const Vat_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/Vat.json"));
-const Multicall_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/Multicall.json"));
-const BasicRelay_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/BasicRelay.json"));
-const TrustedRelay_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/TrustedRelay.json"));
-const Dai_json_1 = __importDefault(require("../../../eth-sdk/abis/kovan/KOVAN-MASTER-1/Dai.json"));
-const TeleportOutboundGateway_json_1 = __importDefault(require("../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/TeleportOutboundGateway.json"));
-const Faucet_json_1 = __importDefault(require("../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/Faucet.json"));
-const Dai_json_2 = __importDefault(require("../../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/Dai.json"));
-const TeleportOracleAuth_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TeleportOracleAuth.json"));
-const TeleportJoin_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TeleportJoin.json"));
-const Vat_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Vat.json"));
-const Multicall_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Multicall.json"));
-const FakeOutbox_json_1 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/FakeOutbox.json"));
-const BasicRelay_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/BasicRelay.json"));
-const TrustedRelay_json_2 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TrustedRelay.json"));
-const Dai_json_3 = __importDefault(require("../../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Dai.json"));
-const TeleportOutboundGateway_json_2 = __importDefault(require("../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/TeleportOutboundGateway.json"));
-const Faucet_json_2 = __importDefault(require("../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Faucet.json"));
-const Dai_json_4 = __importDefault(require("../../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Dai.json"));
-const TeleportOracleAuth_json_3 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/TeleportOracleAuth.json"));
-const TeleportJoin_json_3 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/TeleportJoin.json"));
-const Vat_json_3 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/Vat.json"));
-const Multicall_json_3 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/Multicall.json"));
-const BasicRelay_json_3 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/BasicRelay.json"));
-const TrustedRelay_json_3 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/TrustedRelay.json"));
-const Dai_json_5 = __importDefault(require("../../../eth-sdk/abis/mainnet/ETH-MAIN-A/Dai.json"));
-const TeleportOutboundGateway_json_3 = __importDefault(require("../../../eth-sdk/abis/optimism/OPT-MAIN-A/TeleportOutboundGateway.json"));
-const Dai_json_6 = __importDefault(require("../../../eth-sdk/abis/optimism/OPT-MAIN-A/Dai.json"));
-const TeleportOutboundGateway_json_4 = __importDefault(require("../../../eth-sdk/abis/arbitrumOne/ARB-ONE-A/TeleportOutboundGateway.json"));
-const Dai_json_7 = __importDefault(require("../../../eth-sdk/abis/arbitrumOne/ARB-ONE-A/Dai.json"));
-const TeleportOracleAuth_json_4 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/TeleportOracleAuth.json"));
-const TeleportJoin_json_4 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/TeleportJoin.json"));
-const Vat_json_4 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/Vat.json"));
-const Multicall_json_4 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/Multicall.json"));
-const BasicRelay_json_4 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/BasicRelay.json"));
-const TrustedRelay_json_4 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/TrustedRelay.json"));
-const Dai_json_8 = __importDefault(require("../../../eth-sdk/abis/goerli/ETH-GOER-A/Dai.json"));
-const TeleportOutboundGateway_json_5 = __importDefault(require("../../../eth-sdk/abis/optimismGoerliTestnet/OPT-GOER-A/TeleportOutboundGateway.json"));
-const Faucet_json_3 = __importDefault(require("../../../eth-sdk/abis/optimismGoerliTestnet/OPT-GOER-A/Faucet.json"));
-const Dai_json_9 = __importDefault(require("../../../eth-sdk/abis/optimismGoerliTestnet/OPT-GOER-A/Dai.json"));
-const TeleportOutboundGateway_json_6 = __importDefault(require("../../../eth-sdk/abis/arbitrumGoerliTestnet/ARB-GOER-A/TeleportOutboundGateway.json"));
-const Faucet_json_4 = __importDefault(require("../../../eth-sdk/abis/arbitrumGoerliTestnet/ARB-GOER-A/Faucet.json"));
-const Dai_json_10 = __importDefault(require("../../../eth-sdk/abis/arbitrumGoerliTestnet/ARB-GOER-A/Dai.json"));
+const TeleportOracleAuth_json_1 = __importDefault(require("../../eth-sdk/abis/kovan/KOVAN-MASTER-1/TeleportOracleAuth.json"));
+const TeleportJoin_json_1 = __importDefault(require("../../eth-sdk/abis/kovan/KOVAN-MASTER-1/TeleportJoin.json"));
+const Vat_json_1 = __importDefault(require("../../eth-sdk/abis/kovan/KOVAN-MASTER-1/Vat.json"));
+const Multicall_json_1 = __importDefault(require("../../eth-sdk/abis/kovan/KOVAN-MASTER-1/Multicall.json"));
+const BasicRelay_json_1 = __importDefault(require("../../eth-sdk/abis/kovan/KOVAN-MASTER-1/BasicRelay.json"));
+const TrustedRelay_json_1 = __importDefault(require("../../eth-sdk/abis/kovan/KOVAN-MASTER-1/TrustedRelay.json"));
+const Dai_json_1 = __importDefault(require("../../eth-sdk/abis/kovan/KOVAN-MASTER-1/Dai.json"));
+const TeleportOutboundGateway_json_1 = __importDefault(require("../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/TeleportOutboundGateway.json"));
+const Faucet_json_1 = __importDefault(require("../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/Faucet.json"));
+const Dai_json_2 = __importDefault(require("../../eth-sdk/abis/optimismKovan/KOVAN-SLAVE-OPTIMISM-1/Dai.json"));
+const TeleportOracleAuth_json_2 = __importDefault(require("../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TeleportOracleAuth.json"));
+const TeleportJoin_json_2 = __importDefault(require("../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TeleportJoin.json"));
+const Vat_json_2 = __importDefault(require("../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Vat.json"));
+const Multicall_json_2 = __importDefault(require("../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Multicall.json"));
+const FakeOutbox_json_1 = __importDefault(require("../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/FakeOutbox.json"));
+const BasicRelay_json_2 = __importDefault(require("../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/BasicRelay.json"));
+const TrustedRelay_json_2 = __importDefault(require("../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/TrustedRelay.json"));
+const Dai_json_3 = __importDefault(require("../../eth-sdk/abis/rinkeby/RINKEBY-MASTER-1/Dai.json"));
+const TeleportOutboundGateway_json_2 = __importDefault(require("../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/TeleportOutboundGateway.json"));
+const Faucet_json_2 = __importDefault(require("../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Faucet.json"));
+const Dai_json_4 = __importDefault(require("../../eth-sdk/abis/arbitrumTestnet/RINKEBY-SLAVE-ARBITRUM-1/Dai.json"));
+const TeleportOracleAuth_json_3 = __importDefault(require("../../eth-sdk/abis/mainnet/ETH-MAIN-A/TeleportOracleAuth.json"));
+const TeleportJoin_json_3 = __importDefault(require("../../eth-sdk/abis/mainnet/ETH-MAIN-A/TeleportJoin.json"));
+const Vat_json_3 = __importDefault(require("../../eth-sdk/abis/mainnet/ETH-MAIN-A/Vat.json"));
+const Multicall_json_3 = __importDefault(require("../../eth-sdk/abis/mainnet/ETH-MAIN-A/Multicall.json"));
+const BasicRelay_json_3 = __importDefault(require("../../eth-sdk/abis/mainnet/ETH-MAIN-A/BasicRelay.json"));
+const TrustedRelay_json_3 = __importDefault(require("../../eth-sdk/abis/mainnet/ETH-MAIN-A/TrustedRelay.json"));
+const Dai_json_5 = __importDefault(require("../../eth-sdk/abis/mainnet/ETH-MAIN-A/Dai.json"));
+const TeleportOutboundGateway_json_3 = __importDefault(require("../../eth-sdk/abis/optimism/OPT-MAIN-A/TeleportOutboundGateway.json"));
+const Dai_json_6 = __importDefault(require("../../eth-sdk/abis/optimism/OPT-MAIN-A/Dai.json"));
+const TeleportOutboundGateway_json_4 = __importDefault(require("../../eth-sdk/abis/arbitrumOne/ARB-ONE-A/TeleportOutboundGateway.json"));
+const Dai_json_7 = __importDefault(require("../../eth-sdk/abis/arbitrumOne/ARB-ONE-A/Dai.json"));
+const TeleportOracleAuth_json_4 = __importDefault(require("../../eth-sdk/abis/goerli/ETH-GOER-A/TeleportOracleAuth.json"));
+const TeleportJoin_json_4 = __importDefault(require("../../eth-sdk/abis/goerli/ETH-GOER-A/TeleportJoin.json"));
+const Vat_json_4 = __importDefault(require("../../eth-sdk/abis/goerli/ETH-GOER-A/Vat.json"));
+const Multicall_json_4 = __importDefault(require("../../eth-sdk/abis/goerli/ETH-GOER-A/Multicall.json"));
+const BasicRelay_json_4 = __importDefault(require("../../eth-sdk/abis/goerli/ETH-GOER-A/BasicRelay.json"));
+const TrustedRelay_json_4 = __importDefault(require("../../eth-sdk/abis/goerli/ETH-GOER-A/TrustedRelay.json"));
+const Dai_json_8 = __importDefault(require("../../eth-sdk/abis/goerli/ETH-GOER-A/Dai.json"));
+const TeleportOutboundGateway_json_5 = __importDefault(require("../../eth-sdk/abis/optimismGoerliTestnet/OPT-GOER-A/TeleportOutboundGateway.json"));
+const Faucet_json_3 = __importDefault(require("../../eth-sdk/abis/optimismGoerliTestnet/OPT-GOER-A/Faucet.json"));
+const Dai_json_9 = __importDefault(require("../../eth-sdk/abis/optimismGoerliTestnet/OPT-GOER-A/Dai.json"));
+const TeleportOutboundGateway_json_6 = __importDefault(require("../../eth-sdk/abis/arbitrumGoerliTestnet/ARB-GOER-A/TeleportOutboundGateway.json"));
+const Faucet_json_4 = __importDefault(require("../../eth-sdk/abis/arbitrumGoerliTestnet/ARB-GOER-A/Faucet.json"));
+const Dai_json_10 = __importDefault(require("../../eth-sdk/abis/arbitrumGoerliTestnet/ARB-GOER-A/Dai.json"));
 function getContract(address, abi, defaultSigner) {
     return new ethers_1.Contract(address, abi, defaultSigner);
 }
@@ -110,8 +110,8 @@ function getMainnetSdk(defaultSigner) {
             "TeleportJoin": getContract('0x41Ca7a7Aa2Be78Cf7CB80C0F4a9bdfBC96e81815', TeleportJoin_json_3.default, defaultSigner),
             "Vat": getContract('0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B', Vat_json_3.default, defaultSigner),
             "Multicall": getContract('0x5e227AD1969Ea493B43F840cfF78d08a6fc17796', Multicall_json_3.default, defaultSigner),
-            "BasicRelay": getContract('0x0b627300c5f06C5510243081fc66868A0F440d62', BasicRelay_json_3.default, defaultSigner),
-            "TrustedRelay": getContract('0xFabFEd371884ddBd4704867484EB0B419C7fC967', TrustedRelay_json_3.default, defaultSigner),
+            "BasicRelay": getContract('0x5A82cf8dF18F484Ff13a5e7a6fe3BA7AfFb95a77', BasicRelay_json_3.default, defaultSigner),
+            "TrustedRelay": getContract('0x80c5A632047012e27016EFB5949239d6a28cfEF0', TrustedRelay_json_3.default, defaultSigner),
             "Dai": getContract('0x6B175474E89094C44Da98b954EedeAC495271d0F', Dai_json_5.default, defaultSigner),
         },
     };
@@ -142,8 +142,8 @@ function getGoerliSdk(defaultSigner) {
             "TeleportJoin": getContract('0xE2fddf4e0f5A4B6d0Cc1D162FBFbEF7B6c5D6f69', TeleportJoin_json_4.default, defaultSigner),
             "Vat": getContract('0xB966002DDAa2Baf48369f5015329750019736031', Vat_json_4.default, defaultSigner),
             "Multicall": getContract('0xb8c864B60e9467398800Df34da39BF4f0c459461', Multicall_json_4.default, defaultSigner),
-            "BasicRelay": getContract('0x238a2523B3F211c4099517579B951347c5E5BF55', BasicRelay_json_4.default, defaultSigner),
-            "TrustedRelay": getContract('0x54Aa25B69a3D73A15D21A01a9943E63BAa4c1c58', TrustedRelay_json_4.default, defaultSigner),
+            "BasicRelay": getContract('0x872a4f4514040aEa52Aa0557acF0ed422D8E77b4', BasicRelay_json_4.default, defaultSigner),
+            "TrustedRelay": getContract('0xcD0219D34A29A5F73A0eD81932bfE4509EF986d1', TrustedRelay_json_4.default, defaultSigner),
             "Dai": getContract('0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844', Dai_json_8.default, defaultSigner),
         },
     };
