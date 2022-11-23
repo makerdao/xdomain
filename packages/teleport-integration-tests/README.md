@@ -54,8 +54,8 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
       "oracleAuth": "0x324a895625E7AE38Fc7A6ae91a71e7E937Caa7e6",
       "router": "0xeEf8B35eD538b6Ef7DbA82236377aDE4204e5115",
       "feeContract": "0xA7C088AAD64512Eff242901E33a516f2381b8823",
-      "basicRelay": "0x0b627300c5f06C5510243081fc66868A0F440d62",
-      "trustedRelay": "0xFabFEd371884ddBd4704867484EB0B419C7fC967"
+      "basicRelay": "0x5A82cf8dF18F484Ff13a5e7a6fe3BA7AfFb95a77",
+      "trustedRelay": "0x80c5A632047012e27016EFB5949239d6a28cfEF0"
    }
 
   "Optimism Mainnet teleport gateways":  {
@@ -207,8 +207,8 @@ used for makerdao/spells-goerli).
       "oracleAuth": "0x29d292E0773E484dbcA8626F432985630175763b",
       "router": "0x5A16311D32662E71f1E0beAD41372f60cEb61b26",
       "linearFee": "0x89bcDc64090ddAbB9AFBeeFB7999d564e2875907",
-      "basicRelay": "0x238a2523B3F211c4099517579B951347c5E5BF55",
-      "trustedRelay": "0x54Aa25B69a3D73A15D21A01a9943E63BAa4c1c58"
+      "basicRelay": "0x872a4f4514040aEa52Aa0557acF0ed422D8E77b4",
+      "trustedRelay": "0xcD0219D34A29A5F73A0eD81932bfE4509EF986d1"
    }
 
   "Optimism Goerli teleport gateways":  {
