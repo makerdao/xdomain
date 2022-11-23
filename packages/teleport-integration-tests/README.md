@@ -84,8 +84,8 @@ If you wish to quickly test some changes in smart contract code, just tweak sour
       "l2DaiGateway": "0x467194771dAe2967Aef3ECbEDD3Bf9a310C76C65",
       "l1GovernanceRelay": "0x9ba25c289e351779E0D481Ba37489317c34A899d",
       "l2GovernanceRelay": "0x10E6593CDda8c58a1d0f14C5164B376352a55f2F",
-      "l1GatewayRouter": "0x4c7708168395aEa569453Fc36862D2ffcDaC588c",
-      "l2GatewayRouter": "0xE5B9d8d42d656d1DcB8065A6c012FE3780246041",
+      "l1GatewayRouter": "0x72Ce9c846789fdB6fC1f34aC4AD25Dd9ef7031ef",
+      "l2GatewayRouter": "0x5288c571Fd7aD117beA99bF60FE0846C4E84F933",
    }
 }
 ```
