@@ -45,7 +45,15 @@ export async function calcBadDebt({
 
   let cumulativeBadDebt = BigNumber.from(0)
   await inChunks(network.joinDeploymentBlock, l1LatestBlock, 100_000, async (from: number, to: number) => {
-    cumulativeBadDebt = cumulativeBadDebt.add(await monitorTeleportMints(l1Sdk, teleportRepository, from, to))
+    cumulativeBadDebt = cumulativeBadDebt.add(
+      await monitorTeleportMints(
+        l1Sdk,
+        teleportRepository,
+        network.slaves.map((s) => s.name),
+        from,
+        to,
+      ),
+    )
   })
 
   console.log(`Cumulative bad debt for ${network.name}: ${cumulativeBadDebt}`)

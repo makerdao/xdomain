@@ -86,7 +86,12 @@ export async function monitor({
 
     const labels = { domain: networkConfig.name, network: networkConfig.networkName }
     if (allSynced) {
-      const newBadDebt = await monitorTeleportMints(l1Sdk, teleportRepository, blockNumber)
+      const newBadDebt = await monitorTeleportMints(
+        l1Sdk,
+        teleportRepository,
+        networkConfig.slaves.map((s) => s.name),
+        blockNumber,
+      )
       const previousBadDebt = BigNumber.from(metrics[makeMetricName('teleport_bad_debt', labels)] || 0)
 
       metrics[makeMetricName('teleport_bad_debt', labels)] = previousBadDebt.add(newBadDebt).toString()
