@@ -91,7 +91,7 @@ export abstract class GenericSynchronizer {
       fromBlockNumber = toBlockNumber
       const onTip = toBlockNumber === currentBlock + 1
       if (onTip) {
-        console.log('Syncing tip. Stalling....')
+        console.log(`[${this.syncName}] Syncing tip. Stalling....`)
         this.setSynced()
         await delay(this.options.tipSyncDelay)
       }
