@@ -1,4 +1,5 @@
 import { BigNumber } from 'ethers'
+import { parseBytes32String } from 'ethers/lib/utils'
 
 import { TeleportRepository } from '../peripherals/db/TeleportRepository'
 import { L1Sdk } from '../sdks'
@@ -14,7 +15,9 @@ export async function monitorTeleportMints(
   const mints = await l1Sdk.join.queryFilter(filter, startBlockNumber, lastBlockNumber ?? startBlockNumber)
   // ignore mints not originating from the oracleAuth or mints originating from source domains that are not monitored (e.g. Starknet)
   const oracleMints = mints.filter(
-    (m) => m.args.originator === l1Sdk.oracleAuth.address && sourceDomains.includes(m.args.teleportGUID.sourceDomain),
+    (m) =>
+      m.args.originator === l1Sdk.oracleAuth.address &&
+      sourceDomains.includes(parseBytes32String(m.args.teleportGUID.sourceDomain)),
   )
 
   let badDebt: BigNumber = BigNumber.from(0)

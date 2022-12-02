@@ -131,6 +131,7 @@ export async function monitor({
 
   return {
     metrics,
+    isAllSync: () => synchronizers.every((sc) => sc.state === 'synced'),
     cancel: () => {
       cancelBlockWatcher()
       synchronizers.forEach((sc) => sc.stop())

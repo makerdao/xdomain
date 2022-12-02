@@ -12,6 +12,7 @@ import { SettleRepository } from '../peripherals/db/SettleRepository'
 import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
 import { TeleportRepository } from '../peripherals/db/TeleportRepository'
 import { getGoerliSdk } from '../sdk'
+import { delay } from '../utils'
 import { monitor } from './monitor'
 
 describe('Monitoring', () => {
@@ -50,7 +51,11 @@ describe('Monitoring', () => {
       name: 'SettleEventsSynchronizer',
     })
 
-    const { metrics, cancel: _cancel } = await monitor({
+    const {
+      metrics,
+      isAllSync,
+      cancel: _cancel,
+    } = await monitor({
       networkConfig: network,
       l1Provider: hhProvider,
       teleportRepository,
@@ -59,6 +64,11 @@ describe('Monitoring', () => {
       settleRepository,
     })
     cancel = _cancel
+
+    while (!isAllSync()) {
+      await delay(3000)
+    }
+    console.log('Synchronizers are all synced.')
 
     // print unbacked DAI
     const sdk = getGoerliSdk(hhProvider as any)
@@ -75,14 +85,14 @@ describe('Monitoring', () => {
       timestamp: '0',
     }
     const { signatures } = await getAttestations(signers, teleport)
-    await sdk.oracleAuth.connect(receiver).requestMint(teleport, signatures, 0, 0)
-    console.log(`Printing unbacked DAI done at block ${await hhProvider.getBlockNumber()}`)
+    const tx = await sdk.oracleAuth.connect(receiver).requestMint(teleport, signatures, 0, 0)
+    const txReceipt = await tx.wait()
+    console.log(`Printing unbacked DAI done at block ${txReceipt.blockNumber}`)
     await mineABunchOfBlocks(hhProvider)
 
-    // assert
     await waitForExpect(() => {
       expect(metrics['teleport_bad_debt{domain="ETH-GOER-A",network="goerli"}']).toEqual(daiToMint.toString())
-    }, 60_000)
+    }, 120_000)
   })
 
   afterEach(async () => {
