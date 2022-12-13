@@ -10,7 +10,6 @@ const utils_1 = require("ethers/lib/utils");
 const _1 = require(".");
 const DEFAULT_POLLING_INTERVAL_MS = 2000;
 const GELATO_API_URL = 'https://relay.gelato.digital';
-const ETHEREUM_DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f';
 const GELATO_ADDRESSES = {
     1: {
         service: '0x5ca448e53e77499222741DcB6B3c959Fa829dAf2',
@@ -258,8 +257,9 @@ async function getRelayGasFee(relay, isHighPriority, relayParams) {
     if ([3, 4, 42].includes(chainId)) {
         return '1'; // use 1 wei for the relay fee on testnets other than goerli
     }
+    const paymentToken = await relay.dai();
     const { estimatedFee } = await queryGelatoApi(`oracles/${oracleChainId}/estimate`, 'get', {
-        params: { paymentToken: ETHEREUM_DAI_ADDRESS, gasLimit, isHighPriority },
+        params: { paymentToken, gasLimit, isHighPriority },
     });
     return estimatedFee;
 }
