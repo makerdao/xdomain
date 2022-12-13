@@ -20,6 +20,12 @@ exports.ORACLE_API_URLS = {
     'OPT-MAIN-A': '',
     'ARB-ONE-A': '',
 };
+/**
+ * Fetch attestations from the Oracle network.
+ * @internal
+ * @param txHash - transaction hash to be attested
+ * @returns Promise containing oracle attestations
+ */
 async function fetchAttestations(txHash, dstDomain) {
     const response = await axios_1.default.get(exports.ORACLE_API_URLS[dstDomain], {
         params: {
@@ -43,6 +49,18 @@ async function fetchAttestations(txHash, dstDomain) {
     }
     return Array.from(teleports.values());
 }
+/**
+ * Collect attestations for a transaction from the Oracle network
+ * @public
+ * @param txHash - hash of the transaction to attest
+ * @param threshold - number of signatures to collect
+ * @param isValidAttestation - callback to check if an oracle signature is valid
+ * @param pollingIntervalMs
+ * @param teleportGUID - {@link TeleportGUID} created by the `txHash` transaction
+ * @param timeoutMs
+ * @param onNewSignatureReceived - callback
+ * @returns Promise containing oracle attestations, and the attested {@link TeleportGUID}
+ */
 async function waitForAttestations(dstDomain, txHash, threshold, isValidAttestation, pollingIntervalMs, teleportGUID, timeoutMs, onNewSignatureReceived) {
     const startTime = Date.now();
     let signatures;

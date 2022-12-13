@@ -3,6 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSdk = exports.getDefaultDstDomain = exports.getLikelyDomainId = exports.DEFAULT_RPC_URLS = exports.DOMAIN_CHAIN_IDS = exports.DOMAINS = void 0;
 const ethers_1 = require("ethers");
 const sdk_1 = require("./sdk");
+/**
+ * Teleport's supported domains
+ */
 exports.DOMAINS = [
     'RINKEBY-SLAVE-ARBITRUM-1',
     'RINKEBY-MASTER-1',
@@ -39,6 +42,9 @@ exports.DEFAULT_RPC_URLS = {
     'ARB-ONE-A': 'https://arb1.arbitrum.io/rpc',
     'ETH-MAIN-A': 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
 };
+/**
+ * Conversion table for domain aliases
+ */
 const descriptionsToDomainIds = {
     'optimism-testnet': 'KOVAN-SLAVE-OPTIMISM-1',
     'arbitrum-testnet': 'RINKEBY-SLAVE-ARBITRUM-1',
@@ -48,10 +54,24 @@ const descriptionsToDomainIds = {
     arbitrum: 'ARB-ONE-A',
     ...Object.assign({}, ...exports.DOMAINS.map((d) => ({ [d]: d }))),
 };
+/**
+ * Convert a domain alias into its {@link DomainId}
+ * @public
+ * @param srcDomain - domain alias from {@link DomainDescription}
+ * @returns the un-aliased {@link DomainId}
+ */
 function getLikelyDomainId(srcDomain) {
     return descriptionsToDomainIds[srcDomain];
 }
 exports.getLikelyDomainId = getLikelyDomainId;
+/**
+ * Get the default target domain for a given source domain
+ * @remarks
+ * This usually means L2 -> L1 for rollup chains on Ethereum
+ * @public
+ * @param srcDomain - source domain's {@link DomainId}
+ * @returns target domain's {@link DomainId}
+ */
 function getDefaultDstDomain(srcDomain) {
     const domainId = getLikelyDomainId(srcDomain);
     if (domainId.includes('KOVAN')) {
@@ -69,6 +89,12 @@ function getDefaultDstDomain(srcDomain) {
     throw new Error(`No default destination domain for source domain "${srcDomain}"`);
 }
 exports.getDefaultDstDomain = getDefaultDstDomain;
+/**
+ * Get an ethers.js bundle containing contracts and a provider connected to a given domain
+ * @param domain - domain to connect to
+ * @param signerOrProvider - ethers.js signer or provider for the given domain
+ * @returns
+ */
 function getSdk(domain, signerOrProvider) {
     const sdkProviders = {
         'RINKEBY-MASTER-1': sdk_1.getRinkebySdk,

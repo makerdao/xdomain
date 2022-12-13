@@ -13,7 +13,7 @@ const GET_FEE_METHOD_FRAGMENT =
  * @internal
  * @see {@link TeleportGUID}
  * @see {@link Relay}
- * 
+ *
  * @param srcDomain - domain identifier for the source domain
  * @param dstDomain - domain identifier for the destination domain
  * @param dstDomainProvider - ethers rpc provider for destination domain

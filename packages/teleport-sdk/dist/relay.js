@@ -29,12 +29,24 @@ function getDefaultExpiry() {
     return Math.floor(Date.now() / 1000 + 24 * 3600);
 }
 const DEFAULT_MAX_FEE_PERCENTAGE = (0, utils_1.parseEther)('0.1'); // 10%
+/**
+ * Return an estimation of the base gas usage for relayer transactions
+ * @param relay - {@link Relay} to use
+ * @returns gas limit estimation
+ */
 function getEstimatedRelayGasLimit(relay) {
     if (relay.hasOwnProperty('signers')) {
         return '490000'; // = 385462 + a small margin (estimate for TrustedRelay)
     }
     return '470000'; // = 371516 + a small margin (estimate for BasicRelay)
 }
+/**
+ * @internal
+ * @param url
+ * @param method
+ * @param params
+ * @returns
+ */
 async function queryGelatoApi(url, method, params) {
     var _a;
     let attempt = 1;
@@ -62,6 +74,21 @@ async function queryGelatoApi(url, method, params) {
         }
     }
 }
+/**
+ * Generate calldata for the relayer to post on the target domain.
+ * @internal
+ * @remarks
+ * This calldata can include a bundled action to execute after minting the tokens
+ * on the destination domain. The functionality is restricted to `TrustedRelay`s,
+ * which are still under development
+ * @see {@link TrustedRelay}
+ *
+ * @param teleportGUID - TeleportGUID identifying this teleport action
+ * @param gasFee - gas fee to pay
+ * @param maxFeePercentage - maximum fee approved by the user
+ * @param expiry - expiration date of this teleport action
+ * @returns Promise containing calldata to send over to the relayer
+ */
 function getRelayPayload(teleportGUID, gasFee, maxFeePercentage, expiry) {
     const guidHash = (0, _1.getGuidHash)(teleportGUID);
     const payload = (0, utils_1.keccak256)((0, utils_1.hexConcat)([
@@ -98,6 +125,15 @@ async function getRelayCalldata(relayInterface, teleportGUID, signatures, gasFee
     ]);
     return calldata;
 }
+/**
+ * Register a relay task with the relayer
+ * @internal
+ * @see {@link getRelayCalldata}
+ *
+ * @param relay - the Relay to use for this transaction
+ * @param calldata - calldata to include with the relayer's transaction
+ * @returns Promise containing the task's identifier
+ */
 async function createRelayTask(relay, calldata) {
     const { chainId } = await relay.provider.getNetwork();
     const token = await relay.dai();
@@ -110,6 +146,16 @@ async function createRelayTask(relay, calldata) {
     return taskId;
 }
 let lastTaskLog;
+/**
+ * Spins while waiting for the relayer to confirm its transaction
+ * @internal
+ * @param taskId - task identifier from {@link createRelayTask}
+ * @param pollingIntervalMs
+ * @param timeoutMs
+ * @throws {@link Error}
+ * On error, throws an Error containing the failure reason
+ * @returns Promise containing the relayed transaction's hash
+ */
 async function waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs) {
     var _a, _b, _c, _d, _e, _f, _g;
     pollingIntervalMs || (pollingIntervalMs = DEFAULT_POLLING_INTERVAL_MS);
@@ -144,6 +190,14 @@ async function waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs
     }
 }
 exports.waitForRelayTaskConfirmation = waitForRelayTaskConfirmation;
+/**
+ * Estimate the required gas limit for a relay operation
+ * @internal
+ * @param relay - {@link Relay} to use
+ * @param relayParams - parameters for the relayer's transaction
+ * @param onPayloadSigned - callback
+ * @returns Promise containing gas estimation for the transaction
+ */
 async function getRelayGasLimit(relay, relayParams) {
     if (!relayParams)
         return getEstimatedRelayGasLimit(relay);
@@ -187,14 +241,22 @@ async function getRelayGasLimit(relay, relayParams) {
     })).toString();
     return gasUsed;
 }
+/**
+ * Get the network gas fee to be paid for the transaction
+ * @internal
+ * @param relay - {@link Relay} to use
+ * @param isHighPriority - whether this transaction is to be expedited
+ * @param relayParams - parameters for the relayer's transaction
+ * @returns Promise containing estimated gas fee to be paid
+ */
 async function getRelayGasFee(relay, isHighPriority, relayParams) {
     isHighPriority || (isHighPriority = false);
     const gasLimit = await getRelayGasLimit(relay, relayParams);
     const { oracles } = await queryGelatoApi(`oracles`, 'get');
     const { chainId } = await relay.provider.getNetwork();
     const oracleChainId = oracles.includes(chainId.toString()) ? chainId : 1;
-    if ([3, 4, 5, 42].includes(chainId)) {
-        return '1'; // use 1 wei for the relay fee on testnets
+    if ([3, 4, 42].includes(chainId)) {
+        return '1'; // use 1 wei for the relay fee on testnets other than goerli
     }
     const { estimatedFee } = await queryGelatoApi(`oracles/${oracleChainId}/estimate`, 'get', {
         params: { paymentToken: ETHEREUM_DAI_ADDRESS, gasLimit, isHighPriority },
@@ -202,6 +264,23 @@ async function getRelayGasFee(relay, isHighPriority, relayParams) {
     return estimatedFee;
 }
 exports.getRelayGasFee = getRelayGasFee;
+/**
+ * Relay a Teleport transaction and wait for the relayer to confirm its execution
+ * @public
+ * @param relay - {@link Relay} to use
+ * @param receiver - address that will receive tokens on the target domain
+ * @param teleportGUID - identifier for the teleport action. @see {@link TeleportGUID}
+ * @param signatures - deposit attestations obtained from the oracle network
+ * @param relayFee - fee to be paid to the relayer
+ * @param maxFeePercentage - maximum fee approved by the user
+ * @param expiry - expiration date of the operation
+ * @param to - address to call after tokens are minted
+ * @param data - data to call `to` with
+ * @param pollingIntervalMs -
+ * @param timeoutMs -
+ * @param onPayloadSigned - callback
+ * @returns Promise containing the relayed transaction's hash
+ */
 async function signAndCreateRelayTask(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, onPayloadSigned) {
     maxFeePercentage || (maxFeePercentage = DEFAULT_MAX_FEE_PERCENTAGE);
     expiry || (expiry = getDefaultExpiry());

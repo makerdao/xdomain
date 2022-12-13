@@ -7,10 +7,10 @@ import { waitForTxReceipt } from './utils'
 /**
  * Represents a single Teleport Action
  * @public
- * @remarks 
+ * @remarks
  * This is used throughout the SDK, Oracle system and smart contracts to
  * both track and verify token transfers
- * 
+ *
  * @see {@link DomainId}
  * @param sourceDomain - identifier for the source domain
  * @param targetDomain - identifier for the target domain
@@ -32,7 +32,7 @@ export interface TeleportGUID {
 
 /**
  * Parse an abi-encoded hex string and return a TeleportGUID object
- * 
+ *
  * @internal
  * @see {@link TeleportGUID}
  * @param teleportData - hexlified abi-encoded TeleportGUID object
@@ -58,11 +58,11 @@ export function decodeTeleportData(teleportData: string): TeleportGUID {
 
 /**
  * Calculate the keccak256 hash of a TeleportGUID object
- * 
+ *
  * @remarks
  * This abi-encodes the TeleportGUID before hashing it, doing the same process as the
  * smart contracts.
- * 
+ *
  * @internal
  * @param teleportGUID - {@link TeleportGUID}
  * @returns keccak256 hash of the TeleportGUID object

@@ -117,3 +117,4 @@ export interface MintWithoutOracleOpts {
     overrides?: Overrides;
 }
 export declare function mintWithoutOracles(opts: MintWithoutOracleOpts & DomainContext): ReturnType<TeleportBridge['mintWithoutOracles']>;
+//# sourceMappingURL=wrappers.d.ts.map

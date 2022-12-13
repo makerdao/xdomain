@@ -85,9 +85,9 @@ async function fetchAttestations(txHash: string, dstDomain: DomainId): Promise<A
  * @param txHash - hash of the transaction to attest
  * @param threshold - number of signatures to collect
  * @param isValidAttestation - callback to check if an oracle signature is valid
- * @param pollingIntervalMs 
+ * @param pollingIntervalMs
  * @param teleportGUID - {@link TeleportGUID} created by the `txHash` transaction
- * @param timeoutMs 
+ * @param timeoutMs
  * @param onNewSignatureReceived - callback
  * @returns Promise containing oracle attestations, and the attested {@link TeleportGUID}
  */

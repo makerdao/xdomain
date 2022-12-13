@@ -72,10 +72,10 @@ function getEstimatedRelayGasLimit(relay: BasicRelay | TrustedRelay): string {
 }
 /**
  * @internal
- * @param url 
- * @param method 
- * @param params 
- * @returns 
+ * @param url
+ * @param method
+ * @param params
+ * @returns
  */
 async function queryGelatoApi(url: string, method: 'get' | 'post', params?: Object): Promise<any> {
   let attempt = 1
@@ -109,9 +109,9 @@ async function queryGelatoApi(url: string, method: 'get' | 'post', params?: Obje
  * on the destination domain. The functionality is restricted to `TrustedRelay`s,
  * which are still under development
  * @see {@link TrustedRelay}
- * 
+ *
  * @param teleportGUID - TeleportGUID identifying this teleport action
- * @param gasFee - gas fee to pay 
+ * @param gasFee - gas fee to pay
  * @param maxFeePercentage - maximum fee approved by the user
  * @param expiry - expiration date of this teleport action
  * @returns Promise containing calldata to send over to the relayer
@@ -187,7 +187,7 @@ async function getRelayCalldata(
  * Register a relay task with the relayer
  * @internal
  * @see {@link getRelayCalldata}
- * 
+ *
  * @param relay - the Relay to use for this transaction
  * @param calldata - calldata to include with the relayer's transaction
  * @returns Promise containing the task's identifier
@@ -209,8 +209,8 @@ let lastTaskLog: string | undefined
  * Spins while waiting for the relayer to confirm its transaction
  * @internal
  * @param taskId - task identifier from {@link createRelayTask}
- * @param pollingIntervalMs 
- * @param timeoutMs 
+ * @param pollingIntervalMs
+ * @param timeoutMs
  * @throws {@link Error}
  * On error, throws an Error containing the failure reason
  * @returns Promise containing the relayed transaction's hash
@@ -351,8 +351,8 @@ export async function getRelayGasFee(
   const { chainId } = await relay.provider.getNetwork()
   const oracleChainId = oracles.includes(chainId.toString()) ? chainId : 1
 
-  if ([3, 4, 5, 42].includes(chainId)) {
-    return '1' // use 1 wei for the relay fee on testnets
+  if ([3, 4, 42].includes(chainId)) {
+    return '1' // use 1 wei for the relay fee on testnets other than goerli
   }
   const { estimatedFee } = await queryGelatoApi(`oracles/${oracleChainId}/estimate`, 'get', {
     params: { paymentToken: ETHEREUM_DAI_ADDRESS, gasLimit, isHighPriority },

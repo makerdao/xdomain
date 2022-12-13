@@ -5,3 +5,4 @@ export declare function multicall(multicall: Contract, calls: {
     params?: any[];
     outputTypes?: string[];
 }[]): Promise<any[]>;
+//# sourceMappingURL=multicall.d.ts.map

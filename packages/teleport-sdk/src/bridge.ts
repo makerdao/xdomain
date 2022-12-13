@@ -60,7 +60,7 @@ export interface TeleportBridgeOpts {
  * Main Teleport Bridge implementation
  * @remarks
  * This is the enrypoint for all Teleport operations
- * 
+ *
  * @public
  */
 export class TeleportBridge {
@@ -103,7 +103,7 @@ export class TeleportBridge {
    * @remarks
    * This call assumes that the token `allowance` for the gateway has already been set
    * to the appropriate value before initiating a token teleportation.
-   * 
+   *
    * @param receiverAddress - address that will receive tokens on the target domain
    * @param amount - amount of tokens to teleport
    * @param operatorAddress - address that can relay the mint request on the target domain
@@ -157,7 +157,7 @@ export class TeleportBridge {
    * @param sender - address from which the tokens will be teleported
    * @param relayAddress - address of the relayer
    * @param overrides - ethers.js transaction overrides
-   * @returns 
+   * @returns
    */
   public async initRelayedTeleport(
     receiverAddress: string,
@@ -175,8 +175,8 @@ export class TeleportBridge {
    * @public
    * @param txHash - transaction hash to attest
    * @param onNewSignatureReceived - callback
-   * @param timeoutMs 
-   * @param pollingIntervalMs 
+   * @param timeoutMs
+   * @param pollingIntervalMs
    * @param teleportGUID - {@link TeleportGUID} linked to the passed `txHash`
    * @returns Promise containing all collected oracle attestations and the linked {@link TeleportGUID}
    */
@@ -242,7 +242,7 @@ export class TeleportBridge {
    * both to the bridge and the relayer
    * @public
    * @remarks
-   * The fees will change depending on the source/target domain combination and 
+   * The fees will change depending on the source/target domain combination and
    * whether expedited teleportation is indicated
    * @param withdrawn - amount of tokens to be taken from the user's address
    * @param isHighPriority - whether this teleportation is to be expedited
@@ -275,12 +275,12 @@ export class TeleportBridge {
   }
 
   /**
-   * 
-   * @param teleportGUID 
-   * @param isHighPriority 
-   * @param relayParams 
-   * @param relayAddress 
-   * @returns 
+   *
+   * @param teleportGUID
+   * @param isHighPriority
+   * @param relayParams
+   * @param relayAddress
+   * @returns
    */
   public async getAmountsForTeleportGUID(
     teleportGUID: TeleportGUID,
@@ -336,7 +336,7 @@ export class TeleportBridge {
    * Mint tokens using oracle attestations on the target domain
    * @remarks
    * This *requires* oracle attestations for the teleport action to be collected
-   * via the use of {@link getAttestations} 
+   * via the use of {@link getAttestations}
    * @public
    * @param teleportGUID - attested {@link TeleportGUID}
    * @param signatures - oracle signatures
@@ -411,7 +411,7 @@ export class TeleportBridge {
   /**
    * Request a transaction relay from a relayer
    * @param receiver receiver of the finds
-   * @param teleportGUID 
+   * @param teleportGUID
    * @param signatures set of oracle attestations
    * @param relayFee fee to be paid to the relayer
    * @param maxFeePercentage maximum fee specified by the user
@@ -453,8 +453,8 @@ export class TeleportBridge {
    * Wait for a relayed transaction to go through
    * @param taskId relayer task ID
    * @param pollingIntervalMs
-   * @param timeoutMs 
-   * @returns 
+   * @param timeoutMs
+   * @returns
    */
   public async waitForRelayTask(taskId: string, pollingIntervalMs?: number, timeoutMs?: number): Promise<string> {
     return await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)
@@ -476,8 +476,8 @@ export class TeleportBridge {
    * @param to - address to call after token minting (only available when using a {@link TrustedRelay}
    * @param data - data to call contract at `to` with
    * @param relayAddress - relayer's address
-   * @param pollingIntervalMs 
-   * @param timeoutMs 
+   * @param pollingIntervalMs
+   * @param timeoutMs
    * @param onPayloadSigned - callback
    * @returns Promise containing relayed transaction's hash
    */
@@ -626,8 +626,8 @@ async function _optionallySendTx(
  * Get the dai balance of an address in a domain
  * @internal
  * @param userAddress
- * @param domain 
- * @param domainProvider 
+ * @param domain
+ * @param domainProvider
  * @returns Promise containing dai balance
  */
 async function _getDaiBalance(userAddress: string, domain: DomainDescription, domainProvider: any): Promise<BigNumber> {

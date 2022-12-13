@@ -6,6 +6,21 @@ const utils_1 = require("ethers/lib/utils");
 const _1 = require(".");
 const bytes32 = ethers_1.ethers.utils.formatBytes32String;
 const GET_FEE_METHOD_FRAGMENT = 'function getFee((bytes32,bytes32,bytes32,bytes32,uint128,uint80,uint48),uint256,int256,uint256,uint256) view returns (uint256)';
+/**
+ * Check the Teleport system for fees and amounts mintable for a certain TeleportGUID
+ * @internal
+ * @see {@link TeleportGUID}
+ * @see {@link Relay}
+ *
+ * @param srcDomain - domain identifier for the source domain
+ * @param dstDomain - domain identifier for the destination domain
+ * @param dstDomainProvider - ethers rpc provider for destination domain
+ * @param teleportGUID - teleport action identifier
+ * @param relay - relay to use when transmitting transaction to the destination domain
+ * @param isHighPriority - whether this teleport action is to be expedited
+ * @param relayParams - parameters passed onto the relayer
+ * @returns promise to resolve with amounts corresponding to mintable tokens, bridge and relayer fees to be paid
+ */
 async function getFeesAndMintableAmounts(srcDomain, dstDomain, dstDomainProvider, teleportGUID, relay, isHighPriority, relayParams) {
     const sdk = (0, _1.getSdk)(dstDomain, dstDomainProvider);
     const join = sdk.TeleportJoin;
