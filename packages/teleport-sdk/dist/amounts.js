@@ -25,9 +25,6 @@ async function getFeesAndMintableAmounts(srcDomain, dstDomain, dstDomainProvider
     const sdk = (0, _1.getSdk)(dstDomain, dstDomainProvider);
     const join = sdk.TeleportJoin;
     const guidHash = (0, _1.getGuidHash)(teleportGUID);
-    const teleportsMethodName = ['KOVAN-SLAVE-OPTIMISM-1', 'RINKEBY-SLAVE-ARBITRUM-1'].includes(srcDomain)
-        ? 'wormholes'
-        : 'teleports';
     const [{ vatLive }, { blessed, pending: pendingInJoin }, { line }, { debt }, { feeAddress }] = await (0, _1.multicall)(sdk.Multicall, [
         {
             target: sdk.Vat,
@@ -36,7 +33,7 @@ async function getFeesAndMintableAmounts(srcDomain, dstDomain, dstDomainProvider
         },
         {
             target: join,
-            method: `${teleportsMethodName}`,
+            method: 'teleports',
             params: [guidHash],
             outputTypes: ['bool blessed', 'uint248 pending'],
         },

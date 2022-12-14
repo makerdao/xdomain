@@ -159,8 +159,8 @@ const _abi = [
                     },
                 ],
                 indexed: false,
-                internalType: "struct WormholeGUID",
-                name: "wormholeGUID",
+                internalType: "struct TeleportGUID",
+                name: "teleportGUID",
                 type: "tuple",
             },
             {
@@ -239,8 +239,8 @@ const _abi = [
                     },
                 ],
                 indexed: false,
-                internalType: "struct WormholeGUID",
-                name: "wormholeGUID",
+                internalType: "struct TeleportGUID",
+                name: "teleportGUID",
                 type: "tuple",
             },
         ],
@@ -531,8 +531,8 @@ const _abi = [
                         type: "uint48",
                     },
                 ],
-                internalType: "struct WormholeGUID",
-                name: "wormholeGUID",
+                internalType: "struct TeleportGUID",
+                name: "teleportGUID",
                 type: "tuple",
             },
             {
@@ -615,8 +615,8 @@ const _abi = [
                         type: "uint48",
                     },
                 ],
-                internalType: "struct WormholeGUID",
-                name: "wormholeGUID",
+                internalType: "struct TeleportGUID",
+                name: "teleportGUID",
                 type: "tuple",
             },
             {
@@ -665,6 +665,30 @@ const _abi = [
         type: "function",
     },
     {
+        inputs: [
+            {
+                internalType: "bytes32",
+                name: "",
+                type: "bytes32",
+            },
+        ],
+        name: "teleports",
+        outputs: [
+            {
+                internalType: "bool",
+                name: "blessed",
+                type: "bool",
+            },
+            {
+                internalType: "uint248",
+                name: "pending",
+                type: "uint248",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
         inputs: [],
         name: "vat",
         outputs: [
@@ -704,30 +728,6 @@ const _abi = [
                 internalType: "uint256",
                 name: "",
                 type: "uint256",
-            },
-        ],
-        stateMutability: "view",
-        type: "function",
-    },
-    {
-        inputs: [
-            {
-                internalType: "bytes32",
-                name: "",
-                type: "bytes32",
-            },
-        ],
-        name: "wormholes",
-        outputs: [
-            {
-                internalType: "bool",
-                name: "blessed",
-                type: "bool",
-            },
-            {
-                internalType: "uint248",
-                name: "pending",
-                type: "uint248",
             },
         ],
         stateMutability: "view",

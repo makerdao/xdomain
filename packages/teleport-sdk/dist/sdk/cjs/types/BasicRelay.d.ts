@@ -2,7 +2,7 @@ import { BaseContract, BigNumber, BigNumberish, BytesLike, CallOverrides, Contra
 import { FunctionFragment, Result } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
-export declare type WormholeGUIDStruct = {
+export declare type TeleportGUIDStruct = {
     sourceDomain: BytesLike;
     targetDomain: BytesLike;
     receiver: BytesLike;
@@ -11,7 +11,7 @@ export declare type WormholeGUIDStruct = {
     nonce: BigNumberish;
     timestamp: BigNumberish;
 };
-export declare type WormholeGUIDStructOutput = [
+export declare type TeleportGUIDStructOutput = [
     string,
     string,
     string,
@@ -35,13 +35,13 @@ export interface BasicRelayInterface extends utils.Interface {
         "daiJoin()": FunctionFragment;
         "oracleAuth()": FunctionFragment;
         "relay((bytes32,bytes32,bytes32,bytes32,uint128,uint80,uint48),bytes,uint256,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
-        "wormholeJoin()": FunctionFragment;
+        "teleportJoin()": FunctionFragment;
     };
     encodeFunctionData(functionFragment: "dai", values?: undefined): string;
     encodeFunctionData(functionFragment: "daiJoin", values?: undefined): string;
     encodeFunctionData(functionFragment: "oracleAuth", values?: undefined): string;
     encodeFunctionData(functionFragment: "relay", values: [
-        WormholeGUIDStruct,
+        TeleportGUIDStruct,
         BytesLike,
         BigNumberish,
         BigNumberish,
@@ -50,12 +50,12 @@ export interface BasicRelayInterface extends utils.Interface {
         BytesLike,
         BytesLike
     ]): string;
-    encodeFunctionData(functionFragment: "wormholeJoin", values?: undefined): string;
+    encodeFunctionData(functionFragment: "teleportJoin", values?: undefined): string;
     decodeFunctionResult(functionFragment: "dai", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "daiJoin", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "oracleAuth", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "relay", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "wormholeJoin", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "teleportJoin", data: BytesLike): Result;
     events: {};
 }
 export interface BasicRelay extends BaseContract {
@@ -77,42 +77,42 @@ export interface BasicRelay extends BaseContract {
         dai(overrides?: CallOverrides): Promise<[string]>;
         daiJoin(overrides?: CallOverrides): Promise<[string]>;
         oracleAuth(overrides?: CallOverrides): Promise<[string]>;
-        relay(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, overrides?: Overrides & {
+        relay(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
-        wormholeJoin(overrides?: CallOverrides): Promise<[string]>;
+        teleportJoin(overrides?: CallOverrides): Promise<[string]>;
     };
     dai(overrides?: CallOverrides): Promise<string>;
     daiJoin(overrides?: CallOverrides): Promise<string>;
     oracleAuth(overrides?: CallOverrides): Promise<string>;
-    relay(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, overrides?: Overrides & {
+    relay(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
-    wormholeJoin(overrides?: CallOverrides): Promise<string>;
+    teleportJoin(overrides?: CallOverrides): Promise<string>;
     callStatic: {
         dai(overrides?: CallOverrides): Promise<string>;
         daiJoin(overrides?: CallOverrides): Promise<string>;
         oracleAuth(overrides?: CallOverrides): Promise<string>;
-        relay(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, overrides?: CallOverrides): Promise<void>;
-        wormholeJoin(overrides?: CallOverrides): Promise<string>;
+        relay(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, overrides?: CallOverrides): Promise<void>;
+        teleportJoin(overrides?: CallOverrides): Promise<string>;
     };
     filters: {};
     estimateGas: {
         dai(overrides?: CallOverrides): Promise<BigNumber>;
         daiJoin(overrides?: CallOverrides): Promise<BigNumber>;
         oracleAuth(overrides?: CallOverrides): Promise<BigNumber>;
-        relay(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, overrides?: Overrides & {
+        relay(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
-        wormholeJoin(overrides?: CallOverrides): Promise<BigNumber>;
+        teleportJoin(overrides?: CallOverrides): Promise<BigNumber>;
     };
     populateTransaction: {
         dai(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         daiJoin(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         oracleAuth(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        relay(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, overrides?: Overrides & {
+        relay(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
-        wormholeJoin(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        teleportJoin(overrides?: CallOverrides): Promise<PopulatedTransaction>;
     };
 }

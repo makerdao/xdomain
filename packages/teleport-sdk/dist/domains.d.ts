@@ -16,7 +16,7 @@ export interface TeleportSdk {
 /**
  * Teleport's supported domains
  */
-export declare const DOMAINS: readonly ["RINKEBY-SLAVE-ARBITRUM-1", "RINKEBY-MASTER-1", "KOVAN-SLAVE-OPTIMISM-1", "KOVAN-MASTER-1", "OPT-GOER-A", "ARB-GOER-A", "ETH-GOER-A", "OPT-MAIN-A", "ARB-ONE-A", "ETH-MAIN-A"];
+export declare const DOMAINS: readonly ["OPT-GOER-A", "ARB-GOER-A", "ETH-GOER-A", "OPT-MAIN-A", "ARB-ONE-A", "ETH-MAIN-A"];
 export declare type DomainId = typeof DOMAINS[number];
 export declare const DOMAIN_CHAIN_IDS: {
     [domain in DomainId]: number;
@@ -25,7 +25,7 @@ export declare const DEFAULT_RPC_URLS: Dictionary<string, DomainId>;
 /**
  * Accepted aliases for domains
  */
-export declare type DomainDescription = DomainId | 'optimism-testnet' | 'arbitrum-testnet' | 'optimism-goerli-testnet' | 'arbitrum-goerli-testnet' | 'optimism' | 'arbitrum';
+export declare type DomainDescription = DomainId | 'optimism-goerli-testnet' | 'arbitrum-goerli-testnet' | 'optimism' | 'arbitrum';
 /**
  * Convert a domain alias into its {@link DomainId}
  * @public

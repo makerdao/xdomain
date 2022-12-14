@@ -5,14 +5,10 @@ import { Dictionary } from 'ts-essentials'
 import {
   getArbitrumGoerliTestnetSdk,
   getArbitrumOneSdk,
-  getArbitrumTestnetSdk,
   getGoerliSdk,
-  getKovanSdk,
   getMainnetSdk,
   getOptimismGoerliTestnetSdk,
-  getOptimismKovanSdk,
   getOptimismSdk,
-  getRinkebySdk,
 } from './sdk'
 import {
   BasicRelay,
@@ -41,26 +37,11 @@ export interface TeleportSdk {
 /**
  * Teleport's supported domains
  */
-export const DOMAINS = [
-  'RINKEBY-SLAVE-ARBITRUM-1',
-  'RINKEBY-MASTER-1',
-  'KOVAN-SLAVE-OPTIMISM-1',
-  'KOVAN-MASTER-1',
-  'OPT-GOER-A',
-  'ARB-GOER-A',
-  'ETH-GOER-A',
-  'OPT-MAIN-A',
-  'ARB-ONE-A',
-  'ETH-MAIN-A',
-] as const
+export const DOMAINS = ['OPT-GOER-A', 'ARB-GOER-A', 'ETH-GOER-A', 'OPT-MAIN-A', 'ARB-ONE-A', 'ETH-MAIN-A'] as const
 
 export type DomainId = typeof DOMAINS[number]
 
 export const DOMAIN_CHAIN_IDS: { [domain in DomainId]: number } = {
-  'RINKEBY-SLAVE-ARBITRUM-1': 421611,
-  'RINKEBY-MASTER-1': 4,
-  'KOVAN-SLAVE-OPTIMISM-1': 69,
-  'KOVAN-MASTER-1': 42,
   'OPT-GOER-A': 420,
   'ARB-GOER-A': 421613,
   'ETH-GOER-A': 5,
@@ -70,10 +51,6 @@ export const DOMAIN_CHAIN_IDS: { [domain in DomainId]: number } = {
 }
 
 export const DEFAULT_RPC_URLS: Dictionary<string, DomainId> = {
-  'RINKEBY-SLAVE-ARBITRUM-1': 'https://rinkeby.arbitrum.io/rpc',
-  'RINKEBY-MASTER-1': 'https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
-  'KOVAN-SLAVE-OPTIMISM-1': 'https://kovan.optimism.io/',
-  'KOVAN-MASTER-1': 'https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
   'OPT-GOER-A': 'https://goerli.optimism.io',
   'ARB-GOER-A': 'https://goerli-rollup.arbitrum.io/rpc',
   'ETH-GOER-A': 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
@@ -87,8 +64,6 @@ export const DEFAULT_RPC_URLS: Dictionary<string, DomainId> = {
  */
 export type DomainDescription =
   | DomainId
-  | 'optimism-testnet'
-  | 'arbitrum-testnet'
   | 'optimism-goerli-testnet'
   | 'arbitrum-goerli-testnet'
   | 'optimism'
@@ -98,8 +73,6 @@ export type DomainDescription =
  * Conversion table for domain aliases
  */
 const descriptionsToDomainIds: Dictionary<DomainId, DomainDescription> = {
-  'optimism-testnet': 'KOVAN-SLAVE-OPTIMISM-1',
-  'arbitrum-testnet': 'RINKEBY-SLAVE-ARBITRUM-1',
   'optimism-goerli-testnet': 'OPT-GOER-A',
   'arbitrum-goerli-testnet': 'ARB-GOER-A',
   optimism: 'OPT-MAIN-A',
@@ -128,12 +101,6 @@ export function getLikelyDomainId(srcDomain: DomainDescription): DomainId {
  */
 export function getDefaultDstDomain(srcDomain: DomainDescription): DomainId {
   const domainId = getLikelyDomainId(srcDomain)
-  if (domainId.includes('KOVAN')) {
-    return 'KOVAN-MASTER-1'
-  }
-  if (domainId.includes('RINKEBY')) {
-    return 'RINKEBY-MASTER-1'
-  }
   if (domainId.includes('GOER')) {
     return 'ETH-GOER-A'
   }
@@ -151,10 +118,6 @@ export function getDefaultDstDomain(srcDomain: DomainDescription): DomainId {
  */
 export function getSdk(domain: DomainDescription, signerOrProvider: Signer | Provider): TeleportSdk {
   const sdkProviders: Dictionary<Function, DomainId> = {
-    'RINKEBY-MASTER-1': getRinkebySdk,
-    'RINKEBY-SLAVE-ARBITRUM-1': getArbitrumTestnetSdk,
-    'KOVAN-MASTER-1': getKovanSdk,
-    'KOVAN-SLAVE-OPTIMISM-1': getOptimismKovanSdk,
     'OPT-GOER-A': getOptimismGoerliTestnetSdk,
     'ARB-GOER-A': getArbitrumGoerliTestnetSdk,
     'ETH-GOER-A': getGoerliSdk,

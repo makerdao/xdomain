@@ -50,13 +50,10 @@ class TeleportBridge {
         const sdk = (0, _1.getSdk)(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender));
         const l2Bridge = sdk.TeleportOutboundGateway;
         const dstDomainBytes32 = bytes32(this.dstDomain);
-        const methodName = ['KOVAN-SLAVE-OPTIMISM-1', 'RINKEBY-SLAVE-ARBITRUM-1'].includes(this.srcDomain)
-            ? 'initiateWormhole'
-            : 'initiateTeleport';
         if (operatorAddress) {
-            return await _optionallySendTx(shouldSendTx, l2Bridge, `${methodName}(bytes32,address,uint128,address)`, [dstDomainBytes32, receiverAddress, amount, operatorAddress], overrides);
+            return await _optionallySendTx(shouldSendTx, l2Bridge, 'initiateTeleport(bytes32,address,uint128,address)', [dstDomainBytes32, receiverAddress, amount, operatorAddress], overrides);
         }
-        return await _optionallySendTx(shouldSendTx, l2Bridge, `${methodName}(bytes32,address,uint128)`, [dstDomainBytes32, receiverAddress, amount], overrides);
+        return await _optionallySendTx(shouldSendTx, l2Bridge, 'initiateTeleport(bytes32,address,uint128)', [dstDomainBytes32, receiverAddress, amount], overrides);
     }
     /**
      * Helper for initiating a relayed teleportation.

@@ -2,7 +2,7 @@ import { BaseContract, BigNumber, BigNumberish, BytesLike, CallOverrides, Contra
 import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
-export declare type WormholeGUIDStruct = {
+export declare type TeleportGUIDStruct = {
     sourceDomain: BytesLike;
     targetDomain: BytesLike;
     receiver: BytesLike;
@@ -11,7 +11,7 @@ export declare type WormholeGUIDStruct = {
     nonce: BigNumberish;
     timestamp: BigNumberish;
 };
-export declare type WormholeGUIDStructOutput = [
+export declare type TeleportGUIDStructOutput = [
     string,
     string,
     string,
@@ -46,10 +46,10 @@ export interface TeleportJoinInterface extends utils.Interface {
         "rely(address)": FunctionFragment;
         "requestMint((bytes32,bytes32,bytes32,bytes32,uint128,uint80,uint48),uint256,uint256)": FunctionFragment;
         "settle(bytes32,uint256)": FunctionFragment;
+        "teleports(bytes32)": FunctionFragment;
         "vat()": FunctionFragment;
         "vow()": FunctionFragment;
         "wards(address)": FunctionFragment;
-        "wormholes(bytes32)": FunctionFragment;
     };
     encodeFunctionData(functionFragment: "RAY", values?: undefined): string;
     encodeFunctionData(functionFragment: "WAD", values?: undefined): string;
@@ -62,14 +62,14 @@ export interface TeleportJoinInterface extends utils.Interface {
     encodeFunctionData(functionFragment: "file", values: [BytesLike, BytesLike, BigNumberish]): string;
     encodeFunctionData(functionFragment: "ilk", values?: undefined): string;
     encodeFunctionData(functionFragment: "line", values: [BytesLike]): string;
-    encodeFunctionData(functionFragment: "mintPending", values: [WormholeGUIDStruct, BigNumberish, BigNumberish]): string;
+    encodeFunctionData(functionFragment: "mintPending", values: [TeleportGUIDStruct, BigNumberish, BigNumberish]): string;
     encodeFunctionData(functionFragment: "rely", values: [string]): string;
-    encodeFunctionData(functionFragment: "requestMint", values: [WormholeGUIDStruct, BigNumberish, BigNumberish]): string;
+    encodeFunctionData(functionFragment: "requestMint", values: [TeleportGUIDStruct, BigNumberish, BigNumberish]): string;
     encodeFunctionData(functionFragment: "settle", values: [BytesLike, BigNumberish]): string;
+    encodeFunctionData(functionFragment: "teleports", values: [BytesLike]): string;
     encodeFunctionData(functionFragment: "vat", values?: undefined): string;
     encodeFunctionData(functionFragment: "vow", values?: undefined): string;
     encodeFunctionData(functionFragment: "wards", values: [string]): string;
-    encodeFunctionData(functionFragment: "wormholes", values: [BytesLike]): string;
     decodeFunctionResult(functionFragment: "RAY", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "WAD", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "cure", data: BytesLike): Result;
@@ -85,10 +85,10 @@ export interface TeleportJoinInterface extends utils.Interface {
     decodeFunctionResult(functionFragment: "rely", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "requestMint", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "settle", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "teleports", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "vat", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "vow", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "wards", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "wormholes", data: BytesLike): Result;
     events: {
         "Deny(address)": EventFragment;
         "File(bytes32,address)": EventFragment;
@@ -138,14 +138,14 @@ export declare type File_bytes32_bytes32_uint256_Event = TypedEvent<[
 export declare type File_bytes32_bytes32_uint256_EventFilter = TypedEventFilter<File_bytes32_bytes32_uint256_Event>;
 export declare type MintEvent = TypedEvent<[
     string,
-    WormholeGUIDStructOutput,
+    TeleportGUIDStructOutput,
     BigNumber,
     BigNumber,
     BigNumber,
     string
 ], {
     hashGUID: string;
-    wormholeGUID: WormholeGUIDStructOutput;
+    teleportGUID: TeleportGUIDStructOutput;
     amount: BigNumber;
     maxFeePercentage: BigNumber;
     operatorFee: BigNumber;
@@ -154,10 +154,10 @@ export declare type MintEvent = TypedEvent<[
 export declare type MintEventFilter = TypedEventFilter<MintEvent>;
 export declare type RegisterEvent = TypedEvent<[
     string,
-    WormholeGUIDStructOutput
+    TeleportGUIDStructOutput
 ], {
     hashGUID: string;
-    wormholeGUID: WormholeGUIDStructOutput;
+    teleportGUID: TeleportGUIDStructOutput;
 }>;
 export declare type RegisterEventFilter = TypedEventFilter<RegisterEvent>;
 export declare type RelyEvent = TypedEvent<[string], {
@@ -211,25 +211,25 @@ export interface TeleportJoin extends BaseContract {
         }): Promise<ContractTransaction>;
         ilk(overrides?: CallOverrides): Promise<[string]>;
         line(arg0: BytesLike, overrides?: CallOverrides): Promise<[BigNumber]>;
-        mintPending(wormholeGUID: WormholeGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
+        mintPending(teleportGUID: TeleportGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         rely(usr: string, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
-        requestMint(wormholeGUID: WormholeGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
+        requestMint(teleportGUID: TeleportGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         settle(sourceDomain: BytesLike, batchedDaiToFlush: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
-        vat(overrides?: CallOverrides): Promise<[string]>;
-        vow(overrides?: CallOverrides): Promise<[string]>;
-        wards(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-        wormholes(arg0: BytesLike, overrides?: CallOverrides): Promise<[boolean, BigNumber] & {
+        teleports(arg0: BytesLike, overrides?: CallOverrides): Promise<[boolean, BigNumber] & {
             blessed: boolean;
             pending: BigNumber;
         }>;
+        vat(overrides?: CallOverrides): Promise<[string]>;
+        vow(overrides?: CallOverrides): Promise<[string]>;
+        wards(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
     };
     RAY(overrides?: CallOverrides): Promise<BigNumber>;
     WAD(overrides?: CallOverrides): Promise<BigNumber>;
@@ -252,25 +252,25 @@ export interface TeleportJoin extends BaseContract {
     }): Promise<ContractTransaction>;
     ilk(overrides?: CallOverrides): Promise<string>;
     line(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
-    mintPending(wormholeGUID: WormholeGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
+    mintPending(teleportGUID: TeleportGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     rely(usr: string, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
-    requestMint(wormholeGUID: WormholeGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
+    requestMint(teleportGUID: TeleportGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     settle(sourceDomain: BytesLike, batchedDaiToFlush: BigNumberish, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
-    vat(overrides?: CallOverrides): Promise<string>;
-    vow(overrides?: CallOverrides): Promise<string>;
-    wards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-    wormholes(arg0: BytesLike, overrides?: CallOverrides): Promise<[boolean, BigNumber] & {
+    teleports(arg0: BytesLike, overrides?: CallOverrides): Promise<[boolean, BigNumber] & {
         blessed: boolean;
         pending: BigNumber;
     }>;
+    vat(overrides?: CallOverrides): Promise<string>;
+    vow(overrides?: CallOverrides): Promise<string>;
+    wards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
     callStatic: {
         RAY(overrides?: CallOverrides): Promise<BigNumber>;
         WAD(overrides?: CallOverrides): Promise<BigNumber>;
@@ -285,7 +285,7 @@ export interface TeleportJoin extends BaseContract {
         "file(bytes32,bytes32,address)"(what: BytesLike, domain_: BytesLike, data: string, overrides?: CallOverrides): Promise<void>;
         ilk(overrides?: CallOverrides): Promise<string>;
         line(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
-        mintPending(wormholeGUID: WormholeGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: CallOverrides): Promise<[
+        mintPending(teleportGUID: TeleportGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: CallOverrides): Promise<[
             BigNumber,
             BigNumber
         ] & {
@@ -293,7 +293,7 @@ export interface TeleportJoin extends BaseContract {
             totalFee: BigNumber;
         }>;
         rely(usr: string, overrides?: CallOverrides): Promise<void>;
-        requestMint(wormholeGUID: WormholeGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: CallOverrides): Promise<[
+        requestMint(teleportGUID: TeleportGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: CallOverrides): Promise<[
             BigNumber,
             BigNumber
         ] & {
@@ -301,13 +301,13 @@ export interface TeleportJoin extends BaseContract {
             totalFee: BigNumber;
         }>;
         settle(sourceDomain: BytesLike, batchedDaiToFlush: BigNumberish, overrides?: CallOverrides): Promise<void>;
-        vat(overrides?: CallOverrides): Promise<string>;
-        vow(overrides?: CallOverrides): Promise<string>;
-        wards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-        wormholes(arg0: BytesLike, overrides?: CallOverrides): Promise<[boolean, BigNumber] & {
+        teleports(arg0: BytesLike, overrides?: CallOverrides): Promise<[boolean, BigNumber] & {
             blessed: boolean;
             pending: BigNumber;
         }>;
+        vat(overrides?: CallOverrides): Promise<string>;
+        vow(overrides?: CallOverrides): Promise<string>;
+        wards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
     };
     filters: {
         "Deny(address)"(usr?: string | null): DenyEventFilter;
@@ -315,10 +315,10 @@ export interface TeleportJoin extends BaseContract {
         "File(bytes32,address)"(what?: BytesLike | null, data?: null): File_bytes32_address_EventFilter;
         "File(bytes32,bytes32,address)"(what?: BytesLike | null, domain?: BytesLike | null, data?: null): File_bytes32_bytes32_address_EventFilter;
         "File(bytes32,bytes32,uint256)"(what?: BytesLike | null, domain?: BytesLike | null, data?: null): File_bytes32_bytes32_uint256_EventFilter;
-        "Mint(bytes32,tuple,uint256,uint256,uint256,address)"(hashGUID?: BytesLike | null, wormholeGUID?: null, amount?: null, maxFeePercentage?: null, operatorFee?: null, originator?: null): MintEventFilter;
-        Mint(hashGUID?: BytesLike | null, wormholeGUID?: null, amount?: null, maxFeePercentage?: null, operatorFee?: null, originator?: null): MintEventFilter;
-        "Register(bytes32,tuple)"(hashGUID?: BytesLike | null, wormholeGUID?: null): RegisterEventFilter;
-        Register(hashGUID?: BytesLike | null, wormholeGUID?: null): RegisterEventFilter;
+        "Mint(bytes32,tuple,uint256,uint256,uint256,address)"(hashGUID?: BytesLike | null, teleportGUID?: null, amount?: null, maxFeePercentage?: null, operatorFee?: null, originator?: null): MintEventFilter;
+        Mint(hashGUID?: BytesLike | null, teleportGUID?: null, amount?: null, maxFeePercentage?: null, operatorFee?: null, originator?: null): MintEventFilter;
+        "Register(bytes32,tuple)"(hashGUID?: BytesLike | null, teleportGUID?: null): RegisterEventFilter;
+        Register(hashGUID?: BytesLike | null, teleportGUID?: null): RegisterEventFilter;
         "Rely(address)"(usr?: string | null): RelyEventFilter;
         Rely(usr?: string | null): RelyEventFilter;
         "Settle(bytes32,uint256)"(sourceDomain?: BytesLike | null, batchedDaiToFlush?: null): SettleEventFilter;
@@ -346,22 +346,22 @@ export interface TeleportJoin extends BaseContract {
         }): Promise<BigNumber>;
         ilk(overrides?: CallOverrides): Promise<BigNumber>;
         line(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
-        mintPending(wormholeGUID: WormholeGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
+        mintPending(teleportGUID: TeleportGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         rely(usr: string, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
-        requestMint(wormholeGUID: WormholeGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
+        requestMint(teleportGUID: TeleportGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         settle(sourceDomain: BytesLike, batchedDaiToFlush: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
+        teleports(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
         vat(overrides?: CallOverrides): Promise<BigNumber>;
         vow(overrides?: CallOverrides): Promise<BigNumber>;
         wards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-        wormholes(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
     };
     populateTransaction: {
         RAY(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -385,21 +385,21 @@ export interface TeleportJoin extends BaseContract {
         }): Promise<PopulatedTransaction>;
         ilk(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         line(arg0: BytesLike, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        mintPending(wormholeGUID: WormholeGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
+        mintPending(teleportGUID: TeleportGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         rely(usr: string, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
-        requestMint(wormholeGUID: WormholeGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
+        requestMint(teleportGUID: TeleportGUIDStruct, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         settle(sourceDomain: BytesLike, batchedDaiToFlush: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
+        teleports(arg0: BytesLike, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         vat(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         vow(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         wards(arg0: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        wormholes(arg0: BytesLike, overrides?: CallOverrides): Promise<PopulatedTransaction>;
     };
 }

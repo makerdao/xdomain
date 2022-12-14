@@ -50,7 +50,7 @@ const _abi = [
         name: "oracleAuth",
         outputs: [
             {
-                internalType: "contract WormholeOracleAuthLike",
+                internalType: "contract TeleportOracleAuthLike",
                 name: "",
                 type: "address",
             },
@@ -98,8 +98,8 @@ const _abi = [
                         type: "uint48",
                     },
                 ],
-                internalType: "struct WormholeGUID",
-                name: "wormholeGUID",
+                internalType: "struct TeleportGUID",
+                name: "teleportGUID",
                 type: "tuple",
             },
             {
@@ -145,10 +145,10 @@ const _abi = [
     },
     {
         inputs: [],
-        name: "wormholeJoin",
+        name: "teleportJoin",
         outputs: [
             {
-                internalType: "contract WormholeJoinLike",
+                internalType: "contract TeleportJoinLike",
                 name: "",
                 type: "address",
             },

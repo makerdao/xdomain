@@ -8,10 +8,6 @@ import { TeleportOracleAuth } from './sdk/esm/types'
 export const ORACLE_API_URLS: { [domain in DomainId]: string } = {
   'ETH-GOER-A': 'https://current-stage-goerli-lair.chroniclelabs.org',
   'ETH-MAIN-A': 'https://lair.prod.makerops.services',
-  'RINKEBY-SLAVE-ARBITRUM-1': '',
-  'RINKEBY-MASTER-1': '',
-  'KOVAN-SLAVE-OPTIMISM-1': '',
-  'KOVAN-MASTER-1': '',
   'OPT-GOER-A': '',
   'ARB-GOER-A': '',
   'OPT-MAIN-A': '',

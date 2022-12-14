@@ -123,15 +123,11 @@ export class TeleportBridge {
     const l2Bridge = sdk.TeleportOutboundGateway!
     const dstDomainBytes32 = bytes32(this.dstDomain)
 
-    const methodName = ['KOVAN-SLAVE-OPTIMISM-1', 'RINKEBY-SLAVE-ARBITRUM-1'].includes(this.srcDomain)
-      ? 'initiateWormhole'
-      : 'initiateTeleport'
-
     if (operatorAddress) {
       return await _optionallySendTx(
         shouldSendTx,
         l2Bridge,
-        `${methodName}(bytes32,address,uint128,address)`,
+        'initiateTeleport(bytes32,address,uint128,address)',
         [dstDomainBytes32, receiverAddress, amount, operatorAddress],
         overrides,
       )
@@ -140,7 +136,7 @@ export class TeleportBridge {
     return await _optionallySendTx(
       shouldSendTx,
       l2Bridge,
-      `${methodName}(bytes32,address,uint128)`,
+      'initiateTeleport(bytes32,address,uint128)',
       [dstDomainBytes32, receiverAddress, amount],
       overrides,
     )

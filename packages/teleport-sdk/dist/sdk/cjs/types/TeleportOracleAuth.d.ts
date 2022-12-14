@@ -2,7 +2,7 @@ import { BaseContract, BigNumber, BigNumberish, BytesLike, CallOverrides, Contra
 import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
-export declare type WormholeGUIDStruct = {
+export declare type TeleportGUIDStruct = {
     sourceDomain: BytesLike;
     targetDomain: BytesLike;
     receiver: BytesLike;
@@ -11,7 +11,7 @@ export declare type WormholeGUIDStruct = {
     nonce: BigNumberish;
     timestamp: BigNumberish;
 };
-export declare type WormholeGUIDStructOutput = [
+export declare type TeleportGUIDStructOutput = [
     string,
     string,
     string,
@@ -40,22 +40,22 @@ export interface TeleportOracleAuthInterface extends utils.Interface {
         "removeSigners(address[])": FunctionFragment;
         "requestMint((bytes32,bytes32,bytes32,bytes32,uint128,uint80,uint48),bytes,uint256,uint256)": FunctionFragment;
         "signers(address)": FunctionFragment;
+        "teleportJoin()": FunctionFragment;
         "threshold()": FunctionFragment;
         "wards(address)": FunctionFragment;
-        "wormholeJoin()": FunctionFragment;
     };
     encodeFunctionData(functionFragment: "addSigners", values: [string[]]): string;
     encodeFunctionData(functionFragment: "deny", values: [string]): string;
     encodeFunctionData(functionFragment: "file", values: [BytesLike, BigNumberish]): string;
-    encodeFunctionData(functionFragment: "getSignHash", values: [WormholeGUIDStruct]): string;
+    encodeFunctionData(functionFragment: "getSignHash", values: [TeleportGUIDStruct]): string;
     encodeFunctionData(functionFragment: "isValid", values: [BytesLike, BytesLike, BigNumberish]): string;
     encodeFunctionData(functionFragment: "rely", values: [string]): string;
     encodeFunctionData(functionFragment: "removeSigners", values: [string[]]): string;
-    encodeFunctionData(functionFragment: "requestMint", values: [WormholeGUIDStruct, BytesLike, BigNumberish, BigNumberish]): string;
+    encodeFunctionData(functionFragment: "requestMint", values: [TeleportGUIDStruct, BytesLike, BigNumberish, BigNumberish]): string;
     encodeFunctionData(functionFragment: "signers", values: [string]): string;
+    encodeFunctionData(functionFragment: "teleportJoin", values?: undefined): string;
     encodeFunctionData(functionFragment: "threshold", values?: undefined): string;
     encodeFunctionData(functionFragment: "wards", values: [string]): string;
-    encodeFunctionData(functionFragment: "wormholeJoin", values?: undefined): string;
     decodeFunctionResult(functionFragment: "addSigners", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "deny", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "file", data: BytesLike): Result;
@@ -65,9 +65,9 @@ export interface TeleportOracleAuthInterface extends utils.Interface {
     decodeFunctionResult(functionFragment: "removeSigners", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "requestMint", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "signers", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "teleportJoin", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "threshold", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "wards", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "wormholeJoin", data: BytesLike): Result;
     events: {
         "Deny(address)": EventFragment;
         "File(bytes32,uint256)": EventFragment;
@@ -130,7 +130,7 @@ export interface TeleportOracleAuth extends BaseContract {
         file(what: BytesLike, data: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
-        getSignHash(wormholeGUID: WormholeGUIDStruct, overrides?: CallOverrides): Promise<[string] & {
+        getSignHash(teleportGUID: TeleportGUIDStruct, overrides?: CallOverrides): Promise<[string] & {
             signHash: string;
         }>;
         isValid(signHash: BytesLike, signatures: BytesLike, threshold_: BigNumberish, overrides?: CallOverrides): Promise<[boolean] & {
@@ -142,13 +142,13 @@ export interface TeleportOracleAuth extends BaseContract {
         removeSigners(signers_: string[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
-        requestMint(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
+        requestMint(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         signers(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
+        teleportJoin(overrides?: CallOverrides): Promise<[string]>;
         threshold(overrides?: CallOverrides): Promise<[BigNumber]>;
         wards(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-        wormholeJoin(overrides?: CallOverrides): Promise<[string]>;
     };
     addSigners(signers_: string[], overrides?: Overrides & {
         from?: string | Promise<string>;
@@ -159,7 +159,7 @@ export interface TeleportOracleAuth extends BaseContract {
     file(what: BytesLike, data: BigNumberish, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
-    getSignHash(wormholeGUID: WormholeGUIDStruct, overrides?: CallOverrides): Promise<string>;
+    getSignHash(teleportGUID: TeleportGUIDStruct, overrides?: CallOverrides): Promise<string>;
     isValid(signHash: BytesLike, signatures: BytesLike, threshold_: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
     rely(usr: string, overrides?: Overrides & {
         from?: string | Promise<string>;
@@ -167,22 +167,22 @@ export interface TeleportOracleAuth extends BaseContract {
     removeSigners(signers_: string[], overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
-    requestMint(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
+    requestMint(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     signers(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
+    teleportJoin(overrides?: CallOverrides): Promise<string>;
     threshold(overrides?: CallOverrides): Promise<BigNumber>;
     wards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-    wormholeJoin(overrides?: CallOverrides): Promise<string>;
     callStatic: {
         addSigners(signers_: string[], overrides?: CallOverrides): Promise<void>;
         deny(usr: string, overrides?: CallOverrides): Promise<void>;
         file(what: BytesLike, data: BigNumberish, overrides?: CallOverrides): Promise<void>;
-        getSignHash(wormholeGUID: WormholeGUIDStruct, overrides?: CallOverrides): Promise<string>;
+        getSignHash(teleportGUID: TeleportGUIDStruct, overrides?: CallOverrides): Promise<string>;
         isValid(signHash: BytesLike, signatures: BytesLike, threshold_: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
         rely(usr: string, overrides?: CallOverrides): Promise<void>;
         removeSigners(signers_: string[], overrides?: CallOverrides): Promise<void>;
-        requestMint(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: CallOverrides): Promise<[
+        requestMint(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: CallOverrides): Promise<[
             BigNumber,
             BigNumber
         ] & {
@@ -190,9 +190,9 @@ export interface TeleportOracleAuth extends BaseContract {
             totalFee: BigNumber;
         }>;
         signers(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
+        teleportJoin(overrides?: CallOverrides): Promise<string>;
         threshold(overrides?: CallOverrides): Promise<BigNumber>;
         wards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-        wormholeJoin(overrides?: CallOverrides): Promise<string>;
     };
     filters: {
         "Deny(address)"(usr?: string | null): DenyEventFilter;
@@ -216,7 +216,7 @@ export interface TeleportOracleAuth extends BaseContract {
         file(what: BytesLike, data: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
-        getSignHash(wormholeGUID: WormholeGUIDStruct, overrides?: CallOverrides): Promise<BigNumber>;
+        getSignHash(teleportGUID: TeleportGUIDStruct, overrides?: CallOverrides): Promise<BigNumber>;
         isValid(signHash: BytesLike, signatures: BytesLike, threshold_: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
         rely(usr: string, overrides?: Overrides & {
             from?: string | Promise<string>;
@@ -224,13 +224,13 @@ export interface TeleportOracleAuth extends BaseContract {
         removeSigners(signers_: string[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
-        requestMint(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
+        requestMint(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         signers(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
+        teleportJoin(overrides?: CallOverrides): Promise<BigNumber>;
         threshold(overrides?: CallOverrides): Promise<BigNumber>;
         wards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-        wormholeJoin(overrides?: CallOverrides): Promise<BigNumber>;
     };
     populateTransaction: {
         addSigners(signers_: string[], overrides?: Overrides & {
@@ -242,7 +242,7 @@ export interface TeleportOracleAuth extends BaseContract {
         file(what: BytesLike, data: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
-        getSignHash(wormholeGUID: WormholeGUIDStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getSignHash(teleportGUID: TeleportGUIDStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         isValid(signHash: BytesLike, signatures: BytesLike, threshold_: BigNumberish, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         rely(usr: string, overrides?: Overrides & {
             from?: string | Promise<string>;
@@ -250,12 +250,12 @@ export interface TeleportOracleAuth extends BaseContract {
         removeSigners(signers_: string[], overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
-        requestMint(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
+        requestMint(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, operatorFee: BigNumberish, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         signers(arg0: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        teleportJoin(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         threshold(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         wards(arg0: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        wormholeJoin(overrides?: CallOverrides): Promise<PopulatedTransaction>;
     };
 }

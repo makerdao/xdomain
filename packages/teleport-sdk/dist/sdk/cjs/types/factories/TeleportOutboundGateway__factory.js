@@ -10,17 +10,12 @@ const _abi = [
         inputs: [
             {
                 internalType: "address",
-                name: "_l2CrossDomainMessenger",
-                type: "address",
-            },
-            {
-                internalType: "address",
                 name: "_l2Token",
                 type: "address",
             },
             {
                 internalType: "address",
-                name: "_l1WormholeGateway",
+                name: "_l1TeleportGateway",
                 type: "address",
             },
             {
@@ -150,12 +145,43 @@ const _abi = [
                     },
                 ],
                 indexed: false,
-                internalType: "struct WormholeGUID",
-                name: "wormhole",
+                internalType: "struct TeleportGUID",
+                name: "teleport",
                 type: "tuple",
             },
         ],
-        name: "WormholeInitialized",
+        name: "TeleportInitialized",
+        type: "event",
+    },
+    {
+        anonymous: false,
+        inputs: [
+            {
+                indexed: true,
+                internalType: "address",
+                name: "from",
+                type: "address",
+            },
+            {
+                indexed: true,
+                internalType: "address",
+                name: "to",
+                type: "address",
+            },
+            {
+                indexed: true,
+                internalType: "uint256",
+                name: "id",
+                type: "uint256",
+            },
+            {
+                indexed: false,
+                internalType: "bytes",
+                name: "data",
+                type: "bytes",
+            },
+        ],
+        name: "TxToL1",
         type: "event",
     },
     {
@@ -254,6 +280,34 @@ const _abi = [
                 type: "bytes32",
             },
             {
+                internalType: "bytes32",
+                name: "receiver",
+                type: "bytes32",
+            },
+            {
+                internalType: "uint128",
+                name: "amount",
+                type: "uint128",
+            },
+            {
+                internalType: "bytes32",
+                name: "operator",
+                type: "bytes32",
+            },
+        ],
+        name: "initiateTeleport",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        inputs: [
+            {
+                internalType: "bytes32",
+                name: "targetDomain",
+                type: "bytes32",
+            },
+            {
                 internalType: "address",
                 name: "receiver",
                 type: "address",
@@ -264,7 +318,7 @@ const _abi = [
                 type: "uint128",
             },
         ],
-        name: "initiateWormhole",
+        name: "initiateTeleport",
         outputs: [],
         stateMutability: "nonpayable",
         type: "function",
@@ -292,35 +346,7 @@ const _abi = [
                 type: "address",
             },
         ],
-        name: "initiateWormhole",
-        outputs: [],
-        stateMutability: "nonpayable",
-        type: "function",
-    },
-    {
-        inputs: [
-            {
-                internalType: "bytes32",
-                name: "targetDomain",
-                type: "bytes32",
-            },
-            {
-                internalType: "bytes32",
-                name: "receiver",
-                type: "bytes32",
-            },
-            {
-                internalType: "uint128",
-                name: "amount",
-                type: "uint128",
-            },
-            {
-                internalType: "bytes32",
-                name: "operator",
-                type: "bytes32",
-            },
-        ],
-        name: "initiateWormhole",
+        name: "initiateTeleport",
         outputs: [],
         stateMutability: "nonpayable",
         type: "function",
@@ -340,7 +366,7 @@ const _abi = [
     },
     {
         inputs: [],
-        name: "l1WormholeGateway",
+        name: "l1TeleportGateway",
         outputs: [
             {
                 internalType: "address",
@@ -366,12 +392,12 @@ const _abi = [
     },
     {
         inputs: [],
-        name: "messenger",
+        name: "nonce",
         outputs: [
             {
-                internalType: "address",
+                internalType: "uint80",
                 name: "",
-                type: "address",
+                type: "uint80",
             },
         ],
         stateMutability: "view",

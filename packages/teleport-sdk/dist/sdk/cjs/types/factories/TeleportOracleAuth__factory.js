@@ -10,7 +10,7 @@ const _abi = [
         inputs: [
             {
                 internalType: "address",
-                name: "wormholeJoin_",
+                name: "teleportJoin_",
                 type: "address",
             },
         ],
@@ -172,8 +172,8 @@ const _abi = [
                         type: "uint48",
                     },
                 ],
-                internalType: "struct WormholeGUID",
-                name: "wormholeGUID",
+                internalType: "struct TeleportGUID",
+                name: "teleportGUID",
                 type: "tuple",
             },
         ],
@@ -283,8 +283,8 @@ const _abi = [
                         type: "uint48",
                     },
                 ],
-                internalType: "struct WormholeGUID",
-                name: "wormholeGUID",
+                internalType: "struct TeleportGUID",
+                name: "teleportGUID",
                 type: "tuple",
             },
             {
@@ -340,6 +340,19 @@ const _abi = [
     },
     {
         inputs: [],
+        name: "teleportJoin",
+        outputs: [
+            {
+                internalType: "contract TeleportJoinLike",
+                name: "",
+                type: "address",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [],
         name: "threshold",
         outputs: [
             {
@@ -365,19 +378,6 @@ const _abi = [
                 internalType: "uint256",
                 name: "",
                 type: "uint256",
-            },
-        ],
-        stateMutability: "view",
-        type: "function",
-    },
-    {
-        inputs: [],
-        name: "wormholeJoin",
-        outputs: [
-            {
-                internalType: "contract WormholeJoinLike",
-                name: "",
-                type: "address",
             },
         ],
         stateMutability: "view",

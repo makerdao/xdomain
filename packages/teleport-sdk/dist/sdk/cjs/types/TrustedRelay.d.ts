@@ -2,7 +2,7 @@ import { BaseContract, BigNumber, BigNumberish, BytesLike, CallOverrides, Contra
 import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
-export declare type WormholeGUIDStruct = {
+export declare type TeleportGUIDStruct = {
     sourceDomain: BytesLike;
     targetDomain: BytesLike;
     receiver: BytesLike;
@@ -11,7 +11,7 @@ export declare type WormholeGUIDStruct = {
     nonce: BigNumberish;
     timestamp: BigNumberish;
 };
-export declare type WormholeGUIDStructOutput = [
+export declare type TeleportGUIDStructOutput = [
     string,
     string,
     string,
@@ -47,8 +47,8 @@ export interface TrustedRelayInterface extends utils.Interface {
         "rely(address)": FunctionFragment;
         "removeSigners(address[])": FunctionFragment;
         "signers(address)": FunctionFragment;
+        "teleportJoin()": FunctionFragment;
         "wards(address)": FunctionFragment;
-        "wormholeJoin()": FunctionFragment;
     };
     encodeFunctionData(functionFragment: "WAD_BPS", values?: undefined): string;
     encodeFunctionData(functionFragment: "addSigners", values: [string[]]): string;
@@ -63,7 +63,7 @@ export interface TrustedRelayInterface extends utils.Interface {
     encodeFunctionData(functionFragment: "kiss", values: [string]): string;
     encodeFunctionData(functionFragment: "oracleAuth", values?: undefined): string;
     encodeFunctionData(functionFragment: "relay", values: [
-        WormholeGUIDStruct,
+        TeleportGUIDStruct,
         BytesLike,
         BigNumberish,
         BigNumberish,
@@ -77,8 +77,8 @@ export interface TrustedRelayInterface extends utils.Interface {
     encodeFunctionData(functionFragment: "rely", values: [string]): string;
     encodeFunctionData(functionFragment: "removeSigners", values: [string[]]): string;
     encodeFunctionData(functionFragment: "signers", values: [string]): string;
+    encodeFunctionData(functionFragment: "teleportJoin", values?: undefined): string;
     encodeFunctionData(functionFragment: "wards", values: [string]): string;
-    encodeFunctionData(functionFragment: "wormholeJoin", values?: undefined): string;
     decodeFunctionResult(functionFragment: "WAD_BPS", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "addSigners", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "buds", data: BytesLike): Result;
@@ -95,8 +95,8 @@ export interface TrustedRelayInterface extends utils.Interface {
     decodeFunctionResult(functionFragment: "rely", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "removeSigners", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "signers", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "teleportJoin", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "wards", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "wormholeJoin", data: BytesLike): Result;
     events: {
         "Deny(address)": EventFragment;
         "Dissed(address)": EventFragment;
@@ -184,7 +184,7 @@ export interface TrustedRelay extends BaseContract {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         oracleAuth(overrides?: CallOverrides): Promise<[string]>;
-        relay(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, to: string, data: BytesLike, overrides?: Overrides & {
+        relay(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, to: string, data: BytesLike, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         rely(usr: string, overrides?: Overrides & {
@@ -194,8 +194,8 @@ export interface TrustedRelay extends BaseContract {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
         signers(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
+        teleportJoin(overrides?: CallOverrides): Promise<[string]>;
         wards(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-        wormholeJoin(overrides?: CallOverrides): Promise<[string]>;
     };
     WAD_BPS(overrides?: CallOverrides): Promise<BigNumber>;
     addSigners(signers_: string[], overrides?: Overrides & {
@@ -219,7 +219,7 @@ export interface TrustedRelay extends BaseContract {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     oracleAuth(overrides?: CallOverrides): Promise<string>;
-    relay(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, to: string, data: BytesLike, overrides?: Overrides & {
+    relay(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, to: string, data: BytesLike, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     rely(usr: string, overrides?: Overrides & {
@@ -229,8 +229,8 @@ export interface TrustedRelay extends BaseContract {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
     signers(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
+    teleportJoin(overrides?: CallOverrides): Promise<string>;
     wards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-    wormholeJoin(overrides?: CallOverrides): Promise<string>;
     callStatic: {
         WAD_BPS(overrides?: CallOverrides): Promise<BigNumber>;
         addSigners(signers_: string[], overrides?: CallOverrides): Promise<void>;
@@ -244,12 +244,12 @@ export interface TrustedRelay extends BaseContract {
         gasMargin(overrides?: CallOverrides): Promise<BigNumber>;
         kiss(usr: string, overrides?: CallOverrides): Promise<void>;
         oracleAuth(overrides?: CallOverrides): Promise<string>;
-        relay(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, to: string, data: BytesLike, overrides?: CallOverrides): Promise<void>;
+        relay(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, to: string, data: BytesLike, overrides?: CallOverrides): Promise<void>;
         rely(usr: string, overrides?: CallOverrides): Promise<void>;
         removeSigners(signers_: string[], overrides?: CallOverrides): Promise<void>;
         signers(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
+        teleportJoin(overrides?: CallOverrides): Promise<string>;
         wards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-        wormholeJoin(overrides?: CallOverrides): Promise<string>;
     };
     filters: {
         "Deny(address)"(usr?: string | null): DenyEventFilter;
@@ -290,7 +290,7 @@ export interface TrustedRelay extends BaseContract {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         oracleAuth(overrides?: CallOverrides): Promise<BigNumber>;
-        relay(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, to: string, data: BytesLike, overrides?: Overrides & {
+        relay(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, to: string, data: BytesLike, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         rely(usr: string, overrides?: Overrides & {
@@ -300,8 +300,8 @@ export interface TrustedRelay extends BaseContract {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
         signers(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
+        teleportJoin(overrides?: CallOverrides): Promise<BigNumber>;
         wards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-        wormholeJoin(overrides?: CallOverrides): Promise<BigNumber>;
     };
     populateTransaction: {
         WAD_BPS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -326,7 +326,7 @@ export interface TrustedRelay extends BaseContract {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         oracleAuth(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        relay(wormholeGUID: WormholeGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, to: string, data: BytesLike, overrides?: Overrides & {
+        relay(teleportGUID: TeleportGUIDStruct, signatures: BytesLike, maxFeePercentage: BigNumberish, gasFee: BigNumberish, expiry: BigNumberish, v: BigNumberish, r: BytesLike, s: BytesLike, to: string, data: BytesLike, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         rely(usr: string, overrides?: Overrides & {
@@ -336,7 +336,7 @@ export interface TrustedRelay extends BaseContract {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
         signers(arg0: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        teleportJoin(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         wards(arg0: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        wormholeJoin(overrides?: CallOverrides): Promise<PopulatedTransaction>;
     };
 }

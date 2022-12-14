@@ -42,10 +42,6 @@ export async function getFeesAndMintableAmounts(
 
   const guidHash = getGuidHash(teleportGUID)
 
-  const teleportsMethodName = ['KOVAN-SLAVE-OPTIMISM-1', 'RINKEBY-SLAVE-ARBITRUM-1'].includes(srcDomain)
-    ? 'wormholes'
-    : 'teleports'
-
   const [{ vatLive }, { blessed, pending: pendingInJoin }, { line }, { debt }, { feeAddress }] = await multicall(
     sdk.Multicall!,
     [
@@ -56,7 +52,7 @@ export async function getFeesAndMintableAmounts(
       },
       {
         target: join,
-        method: `${teleportsMethodName}`,
+        method: 'teleports',
         params: [guidHash],
         outputTypes: ['bool blessed', 'uint248 pending'],
       },

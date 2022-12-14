@@ -1,13 +1,8 @@
 import { Provider } from '@ethersproject/abstract-provider'
 
 import { DomainId, getGuidHash, getSdk, sleep, TeleportGUID } from '.'
-import { TeleportJoin } from './sdk/esm/types'
 
 const DEFAULT_POLLING_INTERVAL_MS = 2000
-
-type JoinLike = TeleportJoin & {
-  teleports: TeleportJoin['wormholes']
-}
 
 export async function waitForMintConfirmation(
   srcDomain: DomainId,
@@ -20,7 +15,7 @@ export async function waitForMintConfirmation(
   const interval = pollingIntervalMs || DEFAULT_POLLING_INTERVAL_MS
 
   const sdk = getSdk(dstDomain, dstDomainProvider)
-  const join = sdk.TeleportJoin! as unknown as JoinLike
+  const join = sdk.TeleportJoin!
   const guidHash =
     typeof teleportGUIDorGUIDHash === 'string' ? teleportGUIDorGUIDHash : getGuidHash(teleportGUIDorGUIDHash)
 
@@ -29,10 +24,7 @@ export async function waitForMintConfirmation(
   const sleepOrTimeout = async () => {
     if (timeoutMs !== undefined && timeSlept >= timeoutMs) {
       const errorMsg = `Mint event could not be found within ${timeoutMs}ms for guidHash=${guidHash}.`
-      const teleportsMethodName = ['KOVAN-SLAVE-OPTIMISM-1', 'RINKEBY-SLAVE-ARBITRUM-1'].includes(srcDomain)
-        ? 'wormholes'
-        : 'teleports'
-      const [, pending] = await join[teleportsMethodName](guidHash)
+      const [, pending] = await join.teleports(guidHash)
       if (pending.eq(0)) {
         throw new Error(`Mint confirmed but ${errorMsg}`)
       }

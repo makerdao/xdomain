@@ -12,10 +12,7 @@ async function waitForMintConfirmation(srcDomain, dstDomain, dstDomainProvider, 
     const sleepOrTimeout = async () => {
         if (timeoutMs !== undefined && timeSlept >= timeoutMs) {
             const errorMsg = `Mint event could not be found within ${timeoutMs}ms for guidHash=${guidHash}.`;
-            const teleportsMethodName = ['KOVAN-SLAVE-OPTIMISM-1', 'RINKEBY-SLAVE-ARBITRUM-1'].includes(srcDomain)
-                ? 'wormholes'
-                : 'teleports';
-            const [, pending] = await join[teleportsMethodName](guidHash);
+            const [, pending] = await join.teleports(guidHash);
             if (pending.eq(0)) {
                 throw new Error(`Mint confirmed but ${errorMsg}`);
             }

@@ -11,10 +11,6 @@ const _1 = require(".");
 exports.ORACLE_API_URLS = {
     'ETH-GOER-A': 'https://current-stage-goerli-lair.chroniclelabs.org',
     'ETH-MAIN-A': 'https://lair.prod.makerops.services',
-    'RINKEBY-SLAVE-ARBITRUM-1': '',
-    'RINKEBY-MASTER-1': '',
-    'KOVAN-SLAVE-OPTIMISM-1': '',
-    'KOVAN-MASTER-1': '',
     'OPT-GOER-A': '',
     'ARB-GOER-A': '',
     'OPT-MAIN-A': '',
