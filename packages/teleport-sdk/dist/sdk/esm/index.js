@@ -99,8 +99,8 @@ export function getMainnetSdk(defaultSigner) {
             "TeleportJoin": getContract('0x41Ca7a7Aa2Be78Cf7CB80C0F4a9bdfBC96e81815', mainnetETHMAINATeleportJoinAbi, defaultSigner),
             "Vat": getContract('0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B', mainnetETHMAINAVatAbi, defaultSigner),
             "Multicall": getContract('0x5e227AD1969Ea493B43F840cfF78d08a6fc17796', mainnetETHMAINAMulticallAbi, defaultSigner),
-            "BasicRelay": getContract('0x5A82cf8dF18F484Ff13a5e7a6fe3BA7AfFb95a77', mainnetETHMAINABasicRelayAbi, defaultSigner),
-            "TrustedRelay": getContract('0x80c5A632047012e27016EFB5949239d6a28cfEF0', mainnetETHMAINATrustedRelayAbi, defaultSigner),
+            "BasicRelay": getContract('0x0b627300c5f06C5510243081fc66868A0F440d62', mainnetETHMAINABasicRelayAbi, defaultSigner),
+            "TrustedRelay": getContract('0xFabFEd371884ddBd4704867484EB0B419C7fC967', mainnetETHMAINATrustedRelayAbi, defaultSigner),
             "Dai": getContract('0x6B175474E89094C44Da98b954EedeAC495271d0F', mainnetETHMAINADaiAbi, defaultSigner),
         },
     };
@@ -128,8 +128,8 @@ export function getGoerliSdk(defaultSigner) {
             "TeleportJoin": getContract('0xE2fddf4e0f5A4B6d0Cc1D162FBFbEF7B6c5D6f69', goerliETHGOERATeleportJoinAbi, defaultSigner),
             "Vat": getContract('0xB966002DDAa2Baf48369f5015329750019736031', goerliETHGOERAVatAbi, defaultSigner),
             "Multicall": getContract('0xb8c864B60e9467398800Df34da39BF4f0c459461', goerliETHGOERAMulticallAbi, defaultSigner),
-            "BasicRelay": getContract('0x872a4f4514040aEa52Aa0557acF0ed422D8E77b4', goerliETHGOERABasicRelayAbi, defaultSigner),
-            "TrustedRelay": getContract('0xcD0219D34A29A5F73A0eD81932bfE4509EF986d1', goerliETHGOERATrustedRelayAbi, defaultSigner),
+            "BasicRelay": getContract('0x238a2523B3F211c4099517579B951347c5E5BF55', goerliETHGOERABasicRelayAbi, defaultSigner),
+            "TrustedRelay": getContract('0x54Aa25B69a3D73A15D21A01a9943E63BAa4c1c58', goerliETHGOERATrustedRelayAbi, defaultSigner),
             "Dai": getContract('0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844', goerliETHGOERADaiAbi, defaultSigner),
         },
     };

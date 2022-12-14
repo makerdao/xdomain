@@ -44,7 +44,9 @@ use(chaiAsPromised).use(waffleChai) // add support for expect() on ethers' BigNu
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 
 const WAD = parseEther('1.0')
-const amount = 3
+const DEFAULT_AMOUNT = 3
+const GELATO_AMOUNT = parseEther('10')
+const LIGHTWEIGHT_GELATO_TESTS = true // if true, reduce the number of Gelato tests to spare goerli Dai
 
 const privKeyEnvVars = {
   'KOVAN-MASTER-1': 'KOVAN_USER_PRIV_KEY',
@@ -59,7 +61,7 @@ const privKeyEnvVars = {
   'ARB-ONE-A': 'MAINNET_ARBITRUM_USER_PRIV_KEY',
 }
 
-async function getTestWallets(srcDomainDescr: DomainDescription) {
+async function getTestWallets(srcDomainDescr: DomainDescription, amount: ethers.BigNumberish) {
   const srcDomain = getLikelyDomainId(srcDomainDescr)
   const pkeyEnvVar = privKeyEnvVars[srcDomain]
   const pkey = process.env[pkeyEnvVar] || process.env.USER_PRIV_KEY
@@ -119,14 +121,16 @@ describe('TeleportBridge', () => {
     useWrapper,
     buildOnly,
     settings,
+    amount = DEFAULT_AMOUNT,
   }: {
     srcDomain: DomainDescription
     useRelay?: boolean | 'BasicRelay' | 'TrustedRelay'
     useWrapper?: boolean
     buildOnly?: boolean
     settings?: BridgeSettings
+    amount?: ethers.BigNumberish
   }) {
-    const { l1User, l2User, dstDomain } = await getTestWallets(srcDomain)
+    const { l1User, l2User, dstDomain } = await getTestWallets(srcDomain, amount)
     const sender = buildOnly ? undefined : l2User
 
     let tx: ContractTransaction | undefined
@@ -203,6 +207,7 @@ describe('TeleportBridge', () => {
     txHash,
     teleportGUID,
     timeoutMs = 900000,
+    amount = DEFAULT_AMOUNT,
   }: {
     srcDomain: DomainDescription
     useRelay?: boolean | 'BasicRelay' | 'TrustedRelay'
@@ -211,12 +216,13 @@ describe('TeleportBridge', () => {
     txHash?: string
     teleportGUID?: TeleportGUID
     timeoutMs?: number
+    amount?: ethers.BigNumberish
   }) {
     let bridge
     if (txHash) {
       bridge = getTeleportBridge({ srcDomain })
     } else {
-      ;({ bridge, txHash } = await testInitTeleport({ srcDomain, useRelay, useWrapper, buildOnly }))
+      ;({ bridge, txHash } = await testInitTeleport({ srcDomain, useRelay, useWrapper, buildOnly, amount }))
     }
 
     let signatures: string
@@ -339,10 +345,12 @@ describe('TeleportBridge', () => {
     async function testGetAmounts({
       srcDomain,
       useWrapper,
+      amount = DEFAULT_AMOUNT,
     }: {
       srcDomain: DomainDescription
       useRelay?: boolean | 'BasicRelay' | 'TrustedRelay'
       useWrapper?: boolean
+      amount?: ethers.BigNumberish
     }) {
       let res: Awaited<ReturnType<typeof getAmounts>>
       if (useWrapper) {
@@ -386,6 +394,7 @@ describe('TeleportBridge', () => {
     usePreciseRelayFeeEstimation,
     buildOnly,
     waitForRelayTaskConfirmation,
+    amount = DEFAULT_AMOUNT,
   }: {
     srcDomain: DomainDescription
     useRelay?: boolean | 'BasicRelay' | 'TrustedRelay'
@@ -393,8 +402,9 @@ describe('TeleportBridge', () => {
     usePreciseRelayFeeEstimation?: boolean
     buildOnly?: boolean
     waitForRelayTaskConfirmation?: boolean
+    amount?: ethers.BigNumberish
   }) {
-    const { l1User, dstDomain } = await getTestWallets(srcDomain)
+    const { l1User, dstDomain } = await getTestWallets(srcDomain, amount)
     const sender = buildOnly ? undefined : l1User
 
     const { bridge, teleportGUID, signatures } = await testGetAttestations({
@@ -402,6 +412,7 @@ describe('TeleportBridge', () => {
       useRelay,
       useWrapper,
       buildOnly,
+      amount,
     })
 
     const expiry = Math.floor(Date.now() / 1000 + 24 * 3600)
@@ -544,16 +555,20 @@ describe('TeleportBridge', () => {
 
   describe('Relayed mints', async () => {
     async function testRelayMint({ useRelay }: { useRelay: boolean | 'BasicRelay' | 'TrustedRelay' }) {
+      const amount = GELATO_AMOUNT
+      it('should relay a mint with oracles (goerli-optimism, non-precise relayFee)', async () => {
+        await testMintWithOracles({ srcDomain: 'optimism-goerli-testnet', useRelay, amount })
+      })
+
+      if (LIGHTWEIGHT_GELATO_TESTS) return
+
       it('should relay a mint with oracles (goerli-optimism, precise relayFee)', async () => {
         await testMintWithOracles({
           srcDomain: 'optimism-goerli-testnet',
           useRelay,
           usePreciseRelayFeeEstimation: true,
+          amount,
         })
-      })
-
-      it('should relay a mint with oracles (goerli-optimism, non-precise relayFee)', async () => {
-        await testMintWithOracles({ srcDomain: 'optimism-goerli-testnet', useRelay })
       })
 
       it('should relay a mint with oracles (goerli-arbitrum, precise relayFee)', async () => {
@@ -561,15 +576,16 @@ describe('TeleportBridge', () => {
           srcDomain: 'arbitrum-goerli-testnet',
           useRelay,
           usePreciseRelayFeeEstimation: true,
+          amount,
         })
       })
 
       it('should relay a mint with oracles (goerli-arbitrum, non-precise relayFee)', async () => {
-        await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet', useRelay })
+        await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet', useRelay, amount })
       })
 
       it('should relay a mint with oracles (goerli-arbitrum, wrapper, non-precise relayFee)', async () => {
-        await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet', useRelay, useWrapper: true })
+        await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet', useRelay, useWrapper: true, amount })
       })
 
       it('should relay a mint with oracles (goerli-arbitrum, non-precise relayFee, waitForRelayTask)', async () => {
@@ -577,6 +593,7 @@ describe('TeleportBridge', () => {
           srcDomain: 'arbitrum-goerli-testnet',
           useRelay,
           waitForRelayTaskConfirmation: true,
+          amount,
         })
       })
     }
@@ -585,15 +602,16 @@ describe('TeleportBridge', () => {
       await testRelayMint({ useRelay: true })
     })
 
-    describe('Using TrustedRelay', async () => {
-      await testRelayMint({ useRelay: 'TrustedRelay' })
-    })
+    // describe('Using TrustedRelay', async () => {
+    //   await testRelayMint({ useRelay: 'TrustedRelay' })
+    // })
   })
 
   describe('Using the slow path', () => {
     // IMPORTANT NOTE:
     // Slow path mints on testnet may only succeed when the amount is so small that the bridge fee based on that amount rounds down to 0.
     // This is because we are not waiting for the 8 days TTL normally required for the fee to become 0.
+    const amount = DEFAULT_AMOUNT
     expect(amount).to.be.lt(10) // should allow succesfull tests with linear fee as high as 10%
 
     async function testMintWithoutOracles({
@@ -609,7 +627,7 @@ describe('TeleportBridge', () => {
     }) {
       settings ||= {}
       waitTimeMs ||= 0
-      const { l1User } = await getTestWallets(srcDomain)
+      const { l1User } = await getTestWallets(srcDomain, amount)
       const { bridge, txHash } = await testInitTeleport({ srcDomain, settings, useWrapper })
 
       const startTime = Date.now()
