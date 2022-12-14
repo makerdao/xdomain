@@ -339,7 +339,7 @@ describe('TeleportBridge', () => {
       expect(pending).to.eq(mintable)
       expect(pending).to.eq(teleportGUID?.amount)
       expect(bridgeFee).to.eq(0)
-      expect(relayFee).to.be.eq(1)
+      expect(relayFee).to.be.gt(0)
     }
 
     async function testGetAmounts({
