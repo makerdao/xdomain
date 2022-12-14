@@ -363,7 +363,7 @@ describe('TeleportBridge', () => {
 
       expect(mintable).to.be.gt(0)
       expect(bridgeFee).to.eq(0)
-      expect(relayFee).to.eq(1)
+      expect(relayFee).to.gt(0)
     }
 
     it('should return fees and mintable amounts (goerli-optimism, with teleportGUID)', async () => {
