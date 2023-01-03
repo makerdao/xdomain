@@ -218,15 +218,13 @@ class TeleportBridge {
      * @param relayFee fee to be paid to the relayer
      * @param maxFeePercentage maximum fee specified by the user
      * @param expiry expiration date of the teleportation action
-     * @param to extra call receiver
-     * @param data extra call data
      * @param relayAddress address of the relayer
      * @param onPayloadSigned callback
      * @returns promise containing relay task ID
      */
-    async requestRelay(receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, relayAddress, onPayloadSigned) {
+    async requestRelay(receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, relayAddress, onPayloadSigned) {
         const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
-        return await (0, _1.signAndCreateRelayTask)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, onPayloadSigned);
+        return await (0, _1.signAndCreateRelayTask)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, onPayloadSigned);
     }
     /**
      * Wait for a relayed transaction to go through
@@ -251,17 +249,15 @@ class TeleportBridge {
      * @param relayFee - fee to be paid to the relayer from {@link getRelayFee}
      * @param maxFeePercentage - maximum fee specified by the user
      * @param expiry - expiration timestamp for this teleport action
-     * @param to - address to call after token minting (only available when using a {@link TrustedRelay}
-     * @param data - data to call contract at `to` with
      * @param relayAddress - relayer's address
      * @param pollingIntervalMs
      * @param timeoutMs
      * @param onPayloadSigned - callback
      * @returns Promise containing relayed transaction's hash
      */
-    async relayMintWithOracles(receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, relayAddress, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated) {
+    async relayMintWithOracles(receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, relayAddress, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated) {
         const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress);
-        return await (0, _1.requestAndWaitForRelay)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated);
+        return await (0, _1.requestAndWaitForRelay)(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated);
     }
     /**
      * Check if a teleport action can be completed without oracle attestations

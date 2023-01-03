@@ -28,10 +28,6 @@ In order to be able to run the tests, you first need to build the SDK (see instr
 
 Fund an account with:
 
-- Rinkeby ETH
-- Rinkeby Arbitrum ETH
-- Kovan ETH
-- Kovan Optimism ETH
 - Goerli ETH
 - Goerli Optimism ETH
 - Goerli Arbitrum ETH

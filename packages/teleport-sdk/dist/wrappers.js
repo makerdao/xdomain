@@ -67,11 +67,11 @@ function signRelay(opts) {
 }
 exports.signRelay = signRelay;
 function requestRelay(opts) {
-    return getTeleportBridge(opts).requestRelay(opts.receiver, opts.teleportGUID, opts.signatures, opts.relayFee, opts.maxFeePercentage, opts.expiry, opts.to, opts.data, opts.relayAddress, opts.onPayloadSigned);
+    return getTeleportBridge(opts).requestRelay(opts.receiver, opts.teleportGUID, opts.signatures, opts.relayFee, opts.maxFeePercentage, opts.expiry, opts.relayAddress, opts.onPayloadSigned);
 }
 exports.requestRelay = requestRelay;
 function relayMintWithOracles(opts) {
-    return getTeleportBridge(opts).relayMintWithOracles(opts.receiver, opts.teleportGUID, opts.signatures, opts.relayFee, opts.maxFeePercentage, opts.expiry, opts.to, opts.data, opts.relayAddress, opts.pollingIntervalMs, opts.timeoutMs, opts.onPayloadSigned, opts.onRelayTaskCreated);
+    return getTeleportBridge(opts).relayMintWithOracles(opts.receiver, opts.teleportGUID, opts.signatures, opts.relayFee, opts.maxFeePercentage, opts.expiry, opts.relayAddress, opts.pollingIntervalMs, opts.timeoutMs, opts.onPayloadSigned, opts.onRelayTaskCreated);
 }
 exports.relayMintWithOracles = relayMintWithOracles;
 function waitForRelayTask(opts) {

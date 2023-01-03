@@ -91,8 +91,6 @@ export interface SignRelayOpts {
 export declare function signRelay(opts: SignRelayOpts & DomainContext): ReturnType<TeleportBridge['signRelay']>;
 export declare type RequestRelayOpts = SignRelayOpts & {
     signatures: string;
-    to?: string;
-    data?: string;
     relayAddress?: string;
     onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void;
 };

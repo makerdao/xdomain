@@ -183,13 +183,11 @@ export declare class TeleportBridge {
      * @param relayFee fee to be paid to the relayer
      * @param maxFeePercentage maximum fee specified by the user
      * @param expiry expiration date of the teleportation action
-     * @param to extra call receiver
-     * @param data extra call data
      * @param relayAddress address of the relayer
      * @param onPayloadSigned callback
      * @returns promise containing relay task ID
      */
-    requestRelay(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, relayAddress?: string, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void): Promise<string>;
+    requestRelay(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, relayAddress?: string, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void): Promise<string>;
     /**
      * Wait for a relayed transaction to go through
      * @param taskId relayer task ID
@@ -210,15 +208,13 @@ export declare class TeleportBridge {
      * @param relayFee - fee to be paid to the relayer from {@link getRelayFee}
      * @param maxFeePercentage - maximum fee specified by the user
      * @param expiry - expiration timestamp for this teleport action
-     * @param to - address to call after token minting (only available when using a {@link TrustedRelay}
-     * @param data - data to call contract at `to` with
      * @param relayAddress - relayer's address
      * @param pollingIntervalMs
      * @param timeoutMs
      * @param onPayloadSigned - callback
      * @returns Promise containing relayed transaction's hash
      */
-    relayMintWithOracles(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, relayAddress?: string, pollingIntervalMs?: number, timeoutMs?: number, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void, onRelayTaskCreated?: (taskId: string) => void): Promise<string>;
+    relayMintWithOracles(receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, relayAddress?: string, pollingIntervalMs?: number, timeoutMs?: number, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void, onRelayTaskCreated?: (taskId: string) => void): Promise<string>;
     /**
      * Check if a teleport action can be completed without oracle attestations
      * @remarks

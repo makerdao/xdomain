@@ -2,8 +2,8 @@
 
 import { demo } from './demo'
 
-const SRC_DOMAIN_ETHERSCAN = 'https://blockscout.com/optimism/goerli/tx/'
-const DST_DOMAIN_ETHERSCAN = 'https://kovan.etherscan.io/tx/'
+const SRC_DOMAIN_ETHERSCAN = 'https://goerli-optimism.etherscan.io/tx/'
+const DST_DOMAIN_ETHERSCAN = 'https://goerli.etherscan.io/tx/'
 const RELAY_ADDRESS = undefined // BasicRelay
 const srcDomain = 'optimism-goerli-testnet'
 const amount = 1

@@ -50,13 +50,11 @@ export declare function getRelayGasFee(relay: Relay, isHighPriority?: boolean, r
  * @param relayFee - fee to be paid to the relayer
  * @param maxFeePercentage - maximum fee approved by the user
  * @param expiry - expiration date of the operation
- * @param to - address to call after tokens are minted
- * @param data - data to call `to` with
  * @param pollingIntervalMs -
  * @param timeoutMs -
  * @param onPayloadSigned - callback
  * @returns Promise containing the relayed transaction's hash
  */
-export declare function signAndCreateRelayTask(relay: Relay, receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void): Promise<string>;
-export declare function requestAndWaitForRelay(relay: Relay, receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, to?: string, data?: string, pollingIntervalMs?: number, timeoutMs?: number, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void, onRelayTaskCreated?: (taskId: string) => void): Promise<string>;
+export declare function signAndCreateRelayTask(relay: Relay, receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void): Promise<string>;
+export declare function requestAndWaitForRelay(relay: Relay, receiver: Signer, teleportGUID: TeleportGUID, signatures: string, relayFee: BigNumberish, maxFeePercentage?: BigNumberish, expiry?: BigNumberish, pollingIntervalMs?: number, timeoutMs?: number, onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void, onRelayTaskCreated?: (taskId: string) => void): Promise<string>;
 //# sourceMappingURL=relay.d.ts.map

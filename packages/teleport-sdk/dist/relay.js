@@ -108,9 +108,7 @@ async function signRelayPayload(receiver, teleportGUID, gasFee, maxFeePercentage
     return { payload, ...(0, utils_1.splitSignature)(await receiver.signMessage((0, utils_1.arrayify)(payload))) };
 }
 exports.signRelayPayload = signRelayPayload;
-async function getRelayCalldata(relayInterface, teleportGUID, signatures, gasFee, r, s, v, maxFeePercentage, expiry, to, data) {
-    const useTrustedRelay = relayInterface.functions.hasOwnProperty('signers(address)');
-    const extCall = useTrustedRelay ? [to || ethers_1.constants.AddressZero, data || '0x'] : [];
+async function getRelayCalldata(relayInterface, teleportGUID, signatures, gasFee, r, s, v, maxFeePercentage, expiry) {
     const calldata = relayInterface.encodeFunctionData('relay', [
         teleportGUID,
         signatures,
@@ -120,7 +118,6 @@ async function getRelayCalldata(relayInterface, teleportGUID, signatures, gasFee
         v,
         r,
         s,
-        ...extCall,
     ]);
     return calldata;
 }
@@ -200,8 +197,8 @@ exports.waitForRelayTaskConfirmation = waitForRelayTaskConfirmation;
 async function getRelayGasLimit(relay, relayParams) {
     if (!relayParams)
         return getEstimatedRelayGasLimit(relay);
-    const { teleportGUID, signatures, r, s, v, maxFeePercentage = DEFAULT_MAX_FEE_PERCENTAGE, expiry = getDefaultExpiry(), to, data, } = relayParams;
-    const relayData = await getRelayCalldata(relay.interface, teleportGUID, signatures, 1, r, s, v, maxFeePercentage, expiry, to, data);
+    const { teleportGUID, signatures, r, s, v, maxFeePercentage = DEFAULT_MAX_FEE_PERCENTAGE, expiry = getDefaultExpiry(), } = relayParams;
+    const relayData = await getRelayCalldata(relay.interface, teleportGUID, signatures, 1, r, s, v, maxFeePercentage, expiry);
     const { chainId } = await relay.provider.getNetwork();
     const addresses = GELATO_ADDRESSES[chainId];
     const serviceAddress = addresses.service;
@@ -274,25 +271,23 @@ exports.getRelayGasFee = getRelayGasFee;
  * @param relayFee - fee to be paid to the relayer
  * @param maxFeePercentage - maximum fee approved by the user
  * @param expiry - expiration date of the operation
- * @param to - address to call after tokens are minted
- * @param data - data to call `to` with
  * @param pollingIntervalMs -
  * @param timeoutMs -
  * @param onPayloadSigned - callback
  * @returns Promise containing the relayed transaction's hash
  */
-async function signAndCreateRelayTask(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, onPayloadSigned) {
+async function signAndCreateRelayTask(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, onPayloadSigned) {
     maxFeePercentage || (maxFeePercentage = DEFAULT_MAX_FEE_PERCENTAGE);
     expiry || (expiry = getDefaultExpiry());
     const { payload, r, s, v } = await signRelayPayload(receiver, teleportGUID, relayFee, maxFeePercentage, expiry);
     onPayloadSigned === null || onPayloadSigned === void 0 ? void 0 : onPayloadSigned(payload, r, s, v);
-    const relayData = await getRelayCalldata(relay.interface, teleportGUID, signatures, relayFee, r, s, v, maxFeePercentage, expiry, to, data);
+    const relayData = await getRelayCalldata(relay.interface, teleportGUID, signatures, relayFee, r, s, v, maxFeePercentage, expiry);
     const taskId = await createRelayTask(relay, relayData);
     return taskId;
 }
 exports.signAndCreateRelayTask = signAndCreateRelayTask;
-async function requestAndWaitForRelay(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated) {
-    const taskId = await signAndCreateRelayTask(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data, onPayloadSigned);
+async function requestAndWaitForRelay(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, pollingIntervalMs, timeoutMs, onPayloadSigned, onRelayTaskCreated) {
+    const taskId = await signAndCreateRelayTask(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, onPayloadSigned);
     onRelayTaskCreated === null || onRelayTaskCreated === void 0 ? void 0 : onRelayTaskCreated(taskId);
     const txHash = await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs);
     return txHash;

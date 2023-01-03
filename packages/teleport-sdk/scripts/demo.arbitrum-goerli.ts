@@ -2,7 +2,7 @@
 
 import { demo } from './demo'
 
-const SRC_DOMAIN_ETHERSCAN = 'https://goerli-rollup-explorer.arbitrum.io/tx/'
+const SRC_DOMAIN_ETHERSCAN = 'https://goerli.arbiscan.io/tx/'
 const DST_DOMAIN_ETHERSCAN = 'https://goerli.etherscan.io/tx/'
 const srcDomain = 'arbitrum-goerli-testnet'
 const RELAY_ADDRESS = undefined // BasicRelay
