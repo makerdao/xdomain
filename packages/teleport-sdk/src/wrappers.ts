@@ -193,8 +193,6 @@ export function signRelay(opts: SignRelayOpts & DomainContext): ReturnType<Telep
 
 export type RequestRelayOpts = SignRelayOpts & {
   signatures: string
-  to?: string
-  data?: string
   relayAddress?: string
   onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void
 }
@@ -207,8 +205,6 @@ export function requestRelay(opts: RequestRelayOpts & DomainContext): ReturnType
     opts.relayFee,
     opts.maxFeePercentage,
     opts.expiry,
-    opts.to,
-    opts.data,
     opts.relayAddress,
     opts.onPayloadSigned,
   )
@@ -230,8 +226,6 @@ export function relayMintWithOracles(
     opts.relayFee,
     opts.maxFeePercentage,
     opts.expiry,
-    opts.to,
-    opts.data,
     opts.relayAddress,
     opts.pollingIntervalMs,
     opts.timeoutMs,

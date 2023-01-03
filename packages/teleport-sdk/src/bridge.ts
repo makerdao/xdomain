@@ -412,8 +412,6 @@ export class TeleportBridge {
    * @param relayFee fee to be paid to the relayer
    * @param maxFeePercentage maximum fee specified by the user
    * @param expiry expiration date of the teleportation action
-   * @param to extra call receiver
-   * @param data extra call data
    * @param relayAddress address of the relayer
    * @param onPayloadSigned callback
    * @returns promise containing relay task ID
@@ -425,8 +423,6 @@ export class TeleportBridge {
     relayFee: BigNumberish,
     maxFeePercentage?: BigNumberish,
     expiry?: BigNumberish,
-    to?: string,
-    data?: string,
     relayAddress?: string,
     onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
   ): Promise<string> {
@@ -439,8 +435,6 @@ export class TeleportBridge {
       relayFee,
       maxFeePercentage,
       expiry,
-      to,
-      data,
       onPayloadSigned,
     )
   }
@@ -469,8 +463,6 @@ export class TeleportBridge {
    * @param relayFee - fee to be paid to the relayer from {@link getRelayFee}
    * @param maxFeePercentage - maximum fee specified by the user
    * @param expiry - expiration timestamp for this teleport action
-   * @param to - address to call after token minting (only available when using a {@link TrustedRelay}
-   * @param data - data to call contract at `to` with
    * @param relayAddress - relayer's address
    * @param pollingIntervalMs
    * @param timeoutMs
@@ -484,8 +476,6 @@ export class TeleportBridge {
     relayFee: BigNumberish,
     maxFeePercentage?: BigNumberish,
     expiry?: BigNumberish,
-    to?: string,
-    data?: string,
     relayAddress?: string,
     pollingIntervalMs?: number,
     timeoutMs?: number,
@@ -501,8 +491,6 @@ export class TeleportBridge {
       relayFee,
       maxFeePercentage,
       expiry,
-      to,
-      data,
       pollingIntervalMs,
       timeoutMs,
       onPayloadSigned,

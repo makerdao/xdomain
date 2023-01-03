@@ -463,8 +463,6 @@ describe('TeleportBridge', () => {
           relayFee || 0,
           maxFeePercentage,
           undefined,
-          undefined,
-          undefined,
           relayAddress,
           (payload, r, s) => {
             expect(payload).to.satisfy((h: string) => h.startsWith('0x'))

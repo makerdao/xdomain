@@ -1,6 +1,6 @@
 {
   "name": "teleport-sdk",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Frontend SDK to @makerdao/dss-teleport",
   "files": [
     "/dist"

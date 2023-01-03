@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { BigNumber, BigNumberish, constants, Contract, ethers, Signature, Signer } from 'ethers'
+import { BigNumber, BigNumberish, Contract, ethers, Signature, Signer } from 'ethers'
 import {
   arrayify,
   formatEther,
@@ -163,11 +163,7 @@ async function getRelayCalldata(
   v: number,
   maxFeePercentage: BigNumberish,
   expiry: BigNumberish,
-  to?: string,
-  data?: string,
 ): Promise<string> {
-  const useTrustedRelay = relayInterface.functions.hasOwnProperty('signers(address)')
-  const extCall = useTrustedRelay ? [to || constants.AddressZero, data || '0x'] : []
   const calldata = (relayInterface as any).encodeFunctionData('relay', [
     teleportGUID,
     signatures,
@@ -177,7 +173,6 @@ async function getRelayCalldata(
     v,
     r,
     s,
-    ...extCall,
   ])
   return calldata
 }
@@ -269,8 +264,6 @@ async function getRelayGasLimit(relay: Relay, relayParams?: RelayParams): Promis
     v,
     maxFeePercentage = DEFAULT_MAX_FEE_PERCENTAGE,
     expiry = getDefaultExpiry(),
-    to,
-    data,
   } = relayParams
 
   const relayData = await getRelayCalldata(
@@ -283,8 +276,6 @@ async function getRelayGasLimit(relay: Relay, relayParams?: RelayParams): Promis
     v,
     maxFeePercentage,
     expiry,
-    to,
-    data,
   )
   const { chainId } = await relay.provider.getNetwork()
   const addresses = GELATO_ADDRESSES[chainId]
@@ -371,8 +362,6 @@ export async function getRelayGasFee(
  * @param relayFee - fee to be paid to the relayer
  * @param maxFeePercentage - maximum fee approved by the user
  * @param expiry - expiration date of the operation
- * @param to - address to call after tokens are minted
- * @param data - data to call `to` with
  * @param pollingIntervalMs -
  * @param timeoutMs -
  * @param onPayloadSigned - callback
@@ -386,8 +375,6 @@ export async function signAndCreateRelayTask(
   relayFee: BigNumberish,
   maxFeePercentage?: BigNumberish,
   expiry?: BigNumberish,
-  to?: string,
-  data?: string,
   onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
 ): Promise<string> {
   maxFeePercentage ||= DEFAULT_MAX_FEE_PERCENTAGE
@@ -406,8 +393,6 @@ export async function signAndCreateRelayTask(
     v,
     maxFeePercentage,
     expiry,
-    to,
-    data,
   )
   const taskId = await createRelayTask(relay, relayData)
   return taskId
@@ -421,8 +406,6 @@ export async function requestAndWaitForRelay(
   relayFee: BigNumberish,
   maxFeePercentage?: BigNumberish,
   expiry?: BigNumberish,
-  to?: string,
-  data?: string,
   pollingIntervalMs?: number,
   timeoutMs?: number,
   onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
@@ -436,8 +419,6 @@ export async function requestAndWaitForRelay(
     relayFee,
     maxFeePercentage,
     expiry,
-    to,
-    data,
     onPayloadSigned,
   )
   onRelayTaskCreated?.(taskId)
