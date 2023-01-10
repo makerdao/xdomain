@@ -29,7 +29,7 @@ async function setupSigners(): Promise<{
   l1Signer: Wallet
   l2Signer: zk.Wallet
 }> {
-  const { url, ethNetwork } = hre.config.networks.l2
+  const { url, ethNetwork } = hre.config.networks.l2 as any
   expect(url).to.not.be.undefined
   expect(ethNetwork).to.not.be.undefined
   const l1Provider = new ethers.providers.JsonRpcProvider(ethNetwork)
@@ -60,7 +60,7 @@ describe('bridge', function () {
   let l1Signer: Wallet
   let l2Signer: zk.Wallet
 
-  let l1Dai: Dai
+  let l1Dai: L1Dai
   let l1Escrow: L1Escrow
   let l1DAITokenBridge: L1DAITokenBridge
   let l1GovernanceRelay: L1GovernanceRelay
@@ -72,8 +72,11 @@ describe('bridge', function () {
     ;({ l1Signer, l2Signer } = await setupSigners())
     l2Dai = await deployL2Contract(l2Signer, 'Dai')
     l1Escrow = await deployL1Contract(l1Signer, 'L1Escrow')
-    l1Dai = await deployL1Contract(l1Signer, 'L1Dai', [], 'l1/test')
-    ;({ l1DAITokenBridge, l2DAITokenBridge } = await deployBridges(l1Signer, l2Signer, l1Dai, l2Dai, l1Escrow))
+    l1Dai = (await deployL1Contract(l1Signer, 'L1Dai', [], 'l1/test')) as L1Dai
+    ;({ l1DAITokenBridge, l2DAITokenBridge } = (await deployBridges(l1Signer, l2Signer, l1Dai, l2Dai, l1Escrow)) as {
+      l1DAITokenBridge: L1DAITokenBridge
+      l2DAITokenBridge: L2DAITokenBridge
+    })
     await approveBridges(l1Dai, l2Dai, l1DAITokenBridge, l2DAITokenBridge)
     // deploy gov relays
     const zkSyncAddress = await l2Signer.provider.getMainContractAddress()
@@ -192,13 +195,13 @@ describe('bridge', function () {
   })
 
   it('upgrades the bridge through governance relay', async () => {
-    const { l1DAITokenBridge: l1DAITokenBridgeV2, l2DAITokenBridge: l2DAITokenBridgeV2 } = await deployBridges(
+    const { l1DAITokenBridge: l1DAITokenBridgeV2, l2DAITokenBridge: l2DAITokenBridgeV2 } = (await deployBridges(
       l1Signer,
       l2Signer,
       l1Dai,
       l2Dai,
       l1Escrow,
-    )
+    )) as { l1DAITokenBridge: L1DAITokenBridge; l2DAITokenBridge: L2DAITokenBridge }
     // Close L1 bridge V1
     console.log('Closing L1 bridge V1...')
     await waitForTx(l1DAITokenBridge.close({ gasLimit: 200000 }))
@@ -224,8 +227,8 @@ describe('bridge', function () {
       l1Escrow.approve(l1Dai.address, l1DAITokenBridgeV2.address, ethers.constants.MaxUint256, { gasLimit: 200000 }),
     )
     await approveBridges(l1Dai, l2Dai, l1DAITokenBridgeV2, l2DAITokenBridgeV2)
-    l1DAITokenBridge = l1DAITokenBridgeV2
-    l2DAITokenBridge = l2DAITokenBridgeV2
+    l1DAITokenBridge = l1DAITokenBridgeV2 as L1DAITokenBridge
+    l2DAITokenBridge = l2DAITokenBridgeV2 as L2DAITokenBridge
     console.log('Testing V2 bridge deposit...')
     await testDepositToL2()
     console.log('Testing V2 bridge withdrawal...')

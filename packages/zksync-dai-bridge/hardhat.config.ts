@@ -1,5 +1,6 @@
 import '@matterlabs/hardhat-zksync-deploy'
 import '@matterlabs/hardhat-zksync-solc'
+import '@matterlabs/hardhat-zksync-verify'
 import '@nomiclabs/hardhat-etherscan'
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
@@ -57,6 +58,7 @@ const config: HardhatUserConfig = {
       zksync: true,
       url: zkSyncDeploy.zkSyncNetwork,
       ethNetwork: zkSyncDeploy.ethNetwork,
+      verifyURL: 'https://zksync2-testnet-explorer.zksync.dev/contract_verification',
     },
     l1: {
       url: zkSyncDeploy.ethNetwork,

@@ -1,10 +1,13 @@
+import { smock } from '@defi-wonderland/smock'
 import { getRandomAddresses, simpleDeploy, testAuth } from '@makerdao/hardhat-utils'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address'
-import { expect } from 'chai'
+import { expect, use } from 'chai'
 import { ethers } from 'hardhat'
 
 import { Dai__factory, L1DAITokenBridge__factory, L1Escrow__factory } from '../../typechain-types'
 import { deployContractMock, deployZkSyncContractMock } from '../../zksync-helpers'
+
+use(smock.matchers)
 
 const initialTotalL1Supply = 3000
 const depositAmount = 100
@@ -40,23 +43,21 @@ describe('L1DAITokenBridge', () => {
         .to.emit(l1DAITokenBridge, 'DepositInitiated')
         .withArgs(user1.address, user2.address, l1Dai.address, depositAmount)
 
-      const depositCallToMessengerCall = zkSyncMock.smocked.requestL2Transaction.calls[0]
+      const depositCallToMessengerCall = zkSyncMock.requestL2Transaction.atCall(0)
 
       expect(await l1Dai.balanceOf(user1.address)).to.be.eq(initialTotalL1Supply - depositAmount)
       expect(await l1Dai.balanceOf(l1DAITokenBridge.address)).to.be.eq(0)
       expect(await l1Dai.balanceOf(l1Escrow.address)).to.be.eq(depositAmount)
 
-      expect(depositCallToMessengerCall._contractL2).to.equal(l2DAITokenBridge.address)
-      expect(depositCallToMessengerCall._calldata).to.equal(
-        l2DAITokenBridge.interface.encodeFunctionData('finalizeDeposit', [
-          user1.address,
-          user2.address,
-          l1Dai.address,
-          depositAmount,
-          defaultData,
-        ]),
-      )
-      expect(depositCallToMessengerCall._ergsLimit).to.equal(defaultErgLimit)
+      const calldata = l2DAITokenBridge.interface.encodeFunctionData('finalizeDeposit', [
+        user1.address,
+        user2.address,
+        l1Dai.address,
+        depositAmount,
+        defaultData,
+      ])
+
+      expect(depositCallToMessengerCall).to.be.calledWith(l2DAITokenBridge.address, 0, calldata, defaultErgLimit, [])
     })
 
     it('reverts when called with a different token', async () => {
@@ -144,7 +145,7 @@ describe('L1DAITokenBridge', () => {
       )
       const proof: any[] = []
 
-      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof always OK
+      zkSyncMock.proveL2MessageInclusion.returns(true) //inclusion proof always OK
 
       const finalizeWithdrawalTx = await l1DAITokenBridge.connect(user1).finalizeWithdrawal(
         blockNumber,
@@ -180,7 +181,7 @@ describe('L1DAITokenBridge', () => {
       )
       const proof: any[] = []
 
-      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof always OK
+      zkSyncMock.proveL2MessageInclusion.returns(true) //inclusion proof always OK
 
       await l1DAITokenBridge.connect(user1).finalizeWithdrawal(
         blockNumber,
@@ -222,7 +223,7 @@ describe('L1DAITokenBridge', () => {
       )
       const proof: any[] = []
 
-      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) //inclusion proof always OK
+      zkSyncMock.proveL2MessageInclusion.returns(true) //inclusion proof always OK
 
       await l1DAITokenBridge.close()
 
@@ -296,7 +297,7 @@ describe('L1DAITokenBridge', () => {
       )
       const proof: any[] = []
 
-      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(false) //inclusion proof rejected
+      zkSyncMock.proveL2MessageInclusion.returns(false) //inclusion proof rejected
 
       await expect(
         l1DAITokenBridge.connect(user1).finalizeWithdrawal(
@@ -327,7 +328,7 @@ describe('L1DAITokenBridge', () => {
         [selector, user1.address, withdrawAmount],
       )
       const proof: any[] = []
-      zkSyncMock.smocked.proveL2MessageInclusion.will.return.with(true) // proof OK
+      zkSyncMock.proveL2MessageInclusion.returns(true) // proof OK
 
       await l1Escrow.approve(l1Dai.address, l1DAITokenBridge.address, 0)
 
@@ -360,17 +361,15 @@ describe('L1DAITokenBridge', () => {
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
       await l1Escrow.approve(l1Dai.address, l1DAITokenBridge.address, ethers.constants.MaxUint256)
       const txHash = '0xd85a3836a808c1a65f53182b133cf25b18e7014a834ee6b9d9e03d9a18c7bbe5'
-      zkSyncMock.smocked.requestL2Transaction.will.return.with(() => txHash)
+      zkSyncMock.requestL2Transaction.returns(txHash)
       await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
-
-      zkSyncMock.smocked.requestL2Transaction.calls[0]
 
       const blockNumber = 200
       const messageIndex = 100
       const l2TxNumberInBlock = 0
       const proof: any[] = []
 
-      zkSyncMock.smocked.proveL2LogInclusion.will.return.with(true) //inclusion proof always OK
+      zkSyncMock.proveL2LogInclusion.returns(true) //inclusion proof always OK
 
       const claimFailedDepositTx = await l1DAITokenBridge.connect(user1).claimFailedDeposit(
         user1.address,
@@ -397,7 +396,7 @@ describe('L1DAITokenBridge', () => {
 
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
       const txHash = '0xd85a3836a808c1a65f53182b133cf25b18e7014a834ee6b9d9e03d9a18c7bbe5'
-      zkSyncMock.smocked.requestL2Transaction.will.return.with(() => txHash)
+      zkSyncMock.requestL2Transaction.returns(txHash)
       await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
 
       const blockNumber = 200
@@ -405,7 +404,7 @@ describe('L1DAITokenBridge', () => {
       const l2TxNumberInBlock = 0
       const proof: any[] = []
 
-      zkSyncMock.smocked.proveL2LogInclusion.will.return.with(false) //wrong proof
+      zkSyncMock.proveL2LogInclusion.returns(false) //wrong proof
 
       await expect(
         l1DAITokenBridge.connect(user1).claimFailedDeposit(
@@ -428,17 +427,15 @@ describe('L1DAITokenBridge', () => {
 
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
       const txHash = '0xd85a3836a808c1a65f53182b133cf25b18e7014a834ee6b9d9e03d9a18c7bbe5'
-      zkSyncMock.smocked.requestL2Transaction.will.return.with(() => txHash)
+      zkSyncMock.requestL2Transaction.returns(txHash)
       await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
-
-      zkSyncMock.smocked.requestL2Transaction.calls[0]
 
       const blockNumber = 200
       const messageIndex = 100
       const l2TxNumberInBlock = 100
       const proof: any[] = []
 
-      zkSyncMock.smocked.proveL2LogInclusion.will.return.with(true) //inclusion proof always OK
+      zkSyncMock.proveL2MessageInclusion.returns(true) //inclusion proof always OK
 
       await expect(
         l1DAITokenBridge.connect(user1).claimFailedDeposit(
@@ -466,7 +463,7 @@ describe('L1DAITokenBridge', () => {
       const l2TxNumberInBlock = 0
       const proof: any[] = []
 
-      zkSyncMock.smocked.proveL2LogInclusion.will.return.with(true) //inclusion proof always OK
+      zkSyncMock.proveL2LogInclusion.returns(true) //inclusion proof always OK
 
       await expect(
         l1DAITokenBridge.connect(user1).claimFailedDeposit(

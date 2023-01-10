@@ -30,6 +30,7 @@ export async function deployL1Contract<T extends Contract>(
   const json = JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'))
   const factory = (await ethers.getContractFactory(json.abi, json.bytecode)) as ContractFactory
   const contractFactory = new ethers.ContractFactory(factory.interface, factory.bytecode, l1Signer)
+  console.log(`Deploying ${contractName} on L1...`)
   const contractDeployed = await contractFactory.deploy(...args)
   const contract = await contractDeployed.deployed()
   console.log(`${contractName} was deployed on L1 to ${contract.address}`)
