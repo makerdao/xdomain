@@ -46,7 +46,7 @@ describe('L1DAITokenBridge', () => {
       expect(await l1Dai.balanceOf(l1DAITokenBridge.address)).to.be.eq(0)
       expect(await l1Dai.balanceOf(l1Escrow.address)).to.be.eq(depositAmount)
 
-      expect(depositCallToMessengerCall._contractAddressL2).to.equal(l2DAITokenBridge.address)
+      expect(depositCallToMessengerCall._contractL2).to.equal(l2DAITokenBridge.address)
       expect(depositCallToMessengerCall._calldata).to.equal(
         l2DAITokenBridge.interface.encodeFunctionData('finalizeDeposit', [
           user1.address,

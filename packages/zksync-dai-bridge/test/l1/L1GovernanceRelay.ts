@@ -21,7 +21,7 @@ describe('L1GovernanceRelay', () => {
       await l1GovernanceRelay.connect(deployer).relay(l2spell.address, [], 2000000, [])
       const zkMailboxCall = zkSyncMock.smocked.requestL2Transaction.calls[0]
 
-      expect(zkMailboxCall._contractAddressL2).to.equal(l2GovernanceRelay.address)
+      expect(zkMailboxCall._contractL2).to.equal(l2GovernanceRelay.address)
       expect(zkMailboxCall._calldata).to.equal(
         l2GovernanceRelay.interface.encodeFunctionData('relay', [l2spell.address, []]),
       )

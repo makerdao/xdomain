@@ -29,15 +29,17 @@ async function setupSigners(): Promise<{
   l1Signer: Wallet
   l2Signer: zk.Wallet
 }> {
-  const l1Provider = new ethers.providers.JsonRpcProvider(hre.config.zkSyncDeploy.ethNetwork)
-  const l2Provider = new zk.Provider(hre.config.zkSyncDeploy.zkSyncNetwork)
+  const { url, ethNetwork } = hre.config.networks.l2
+  expect(url).to.not.be.undefined
+  expect(ethNetwork).to.not.be.undefined
+  const l1Provider = new ethers.providers.JsonRpcProvider(ethNetwork)
+  const l2Provider = new zk.Provider(url)
 
   const privKey = process.env.TEST_ENV === 'goerli' ? process.env.GOERLI_DEPLOYER_PRIV_KEY : RICH_WALLET_PK
   if (!privKey) throw new Error(`Missing GOERLI_DEPLOYER_PRIV_KEY env var`)
 
   const l1Signer = new Wallet(privKey, l1Provider)
   const l2Signer = new zk.Wallet(privKey, l2Provider, l1Provider)
-
   console.log(`Deployer address: ${l1Signer.address}`)
   return { l1Signer, l2Signer }
 }
@@ -69,8 +71,8 @@ describe('bridge', function () {
   beforeEach(async () => {
     ;({ l1Signer, l2Signer } = await setupSigners())
     l2Dai = await deployL2Contract(l2Signer, 'Dai')
-    l1Dai = await deployL1Contract(l1Signer, 'L1Dai', [], 'l1/test')
     l1Escrow = await deployL1Contract(l1Signer, 'L1Escrow')
+    l1Dai = await deployL1Contract(l1Signer, 'L1Dai', [], 'l1/test')
     ;({ l1DAITokenBridge, l2DAITokenBridge } = await deployBridges(l1Signer, l2Signer, l1Dai, l2Dai, l1Escrow))
     await approveBridges(l1Dai, l2Dai, l1DAITokenBridge, l2DAITokenBridge)
     // deploy gov relays
@@ -230,7 +232,7 @@ describe('bridge', function () {
     await testWithdrawFromL2()
   })
 
-  it.only('recovers failed l1-to-l2 deposit', async function () {
+  it('recovers failed l1-to-l2 deposit', async function () {
     // revoke L2 bridge mint right to induce a revert on L2 upon deposit
     await waitForTx(l2Dai.deny(l2DAITokenBridge.address))
 

@@ -23,16 +23,15 @@ const zkSyncDeploy =
 
 const config: HardhatUserConfig = {
   zksolc: {
-    version: '1.2.0',
+    version: '1.2.2',
     compilerSource: 'binary',
     settings: {
       experimental: {
         dockerImage: 'matterlabs/zksolc',
-        tag: 'v1.2.0',
+        tag: 'v1.2.2',
       },
     },
   },
-  zkSyncDeploy,
 
   mocha: {
     timeout: 50000,
@@ -50,25 +49,20 @@ const config: HardhatUserConfig = {
     ],
   },
   paths: {
-    sources: process.env.UNIT_TESTS
-      ? './contracts'
-      : process.env.NETWORK === 'zksync'
-      ? './contracts/l2'
-      : './contracts/l1',
+    sources: process.env.UNIT_TESTS ? './contracts' : `./contracts/${process.env.DOMAIN || 'l1'}`,
   },
   networks: {
-    hardhat: {
-      zksync: !process.env.UNIT_TESTS, // unit tests use EVM
-    },
-    zksync: {
+    hardhat: {},
+    l2: {
       zksync: true,
       url: zkSyncDeploy.zkSyncNetwork,
+      ethNetwork: zkSyncDeploy.ethNetwork,
     },
-    goerli: {
-      zksync: false,
+    l1: {
       url: zkSyncDeploy.ethNetwork,
     },
   },
+  defaultNetwork: 'l2',
   etherscan: {
     apiKey: process.env.ETHERSCAN_KEY ?? '',
   },
