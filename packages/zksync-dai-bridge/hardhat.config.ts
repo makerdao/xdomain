@@ -9,7 +9,10 @@ import '@typechain/hardhat'
 import 'hardhat-gas-reporter'
 import 'solidity-coverage'
 
+import * as dotenv from 'dotenv'
 import { HardhatUserConfig } from 'hardhat/config'
+
+dotenv.config()
 
 const zkSyncDeploy =
   process.env.TEST_ENV === 'local'
@@ -54,19 +57,21 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {},
-    l2: {
+    zksync: {
       zksync: true,
       url: zkSyncDeploy.zkSyncNetwork,
       ethNetwork: zkSyncDeploy.ethNetwork,
       verifyURL: 'https://zksync2-testnet-explorer.zksync.dev/contract_verification',
     },
-    l1: {
+    goerli: {
       url: zkSyncDeploy.ethNetwork,
     },
   },
-  defaultNetwork: 'l2',
+  defaultNetwork: 'zksync',
   etherscan: {
-    apiKey: process.env.ETHERSCAN_KEY ?? '',
+    apiKey: {
+      goerli: process.env.ETHERSCAN_KEY ?? '',
+    },
   },
 }
 

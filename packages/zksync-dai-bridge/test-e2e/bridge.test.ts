@@ -29,7 +29,7 @@ async function setupSigners(): Promise<{
   l1Signer: Wallet
   l2Signer: zk.Wallet
 }> {
-  const { url, ethNetwork } = hre.config.networks.l2 as any
+  const { url, ethNetwork } = hre.config.networks.zksync as any
   expect(url).to.not.be.undefined
   expect(ethNetwork).to.not.be.undefined
   const l1Provider = new ethers.providers.JsonRpcProvider(ethNetwork)

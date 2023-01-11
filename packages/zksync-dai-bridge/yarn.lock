@@ -111,7 +111,7 @@
     ethers "^5.4.5"
     lodash "^4.17.21"
 
-"@eth-optimism/smock@^1.1.10":
+"@eth-optimism/smock@=1.1.10":
   version "1.1.10"
   resolved "https://registry.yarnpkg.com/@eth-optimism/smock/-/smock-1.1.10.tgz#98a6eefc994ccf707f52ab06849468f3cc57bdb7"
   integrity sha512-XPx1x9odF/noTBHzIhRgL9ihhr769WgUhf9dOm6X7bjSWRAVsII3IqbdB4ssPycaoSuNSmv8HG1xTLgfgcyOYw==
@@ -677,7 +677,7 @@
     "@matterlabs/hardhat-zksync-deploy" "^0.1.2"
     "@matterlabs/hardhat-zksync-solc" "^0.2.1"
 
-"@matterlabs/zksync-contracts@^0.5.1":
+"@matterlabs/zksync-contracts@=0.5.1":
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/@matterlabs/zksync-contracts/-/zksync-contracts-0.5.1.tgz#1b28bd585b34a3890c003a16b2be538f744b5229"
   integrity sha512-9cU5UEh5AZ40q54QmL+BJySwy9iZQv4vvEDQm5A2kyZ6bJD1lxPy0QRPOmP3Y3375Yz7MGtO6ynFPmonMcfAfQ==

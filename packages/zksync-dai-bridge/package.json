@@ -5,10 +5,10 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn build:unit && yarn build:l1 && yarn build:l2",
-    "build:l1": "DOMAIN=l1 hardhat compile --no-typechain --network l1",
-    "build:l2": "DOMAIN=l2 hardhat compile --no-typechain --network l2",
+    "build:l1": "DOMAIN=l1 hardhat compile --no-typechain --network goerli",
+    "build:l2": "DOMAIN=l2 hardhat compile --no-typechain --network zksync",
     "build:unit": "UNIT_TESTS=1 hardhat compile --network hardhat",
-    "clean": "hardhat clean && rm -rf artifacts artifacts-zk cache cache-zk crytic-export corpus",
+    "clean": "hardhat clean && rm -rf artifacts artifacts-zk cache cache-zk crytic-export corpus verify.json",
     "coverage": "UNIT_TESTS=1 hardhat coverage && istanbul check-coverage --branches 100 --lines 100",
     "format": "prettier --check \"./**/*.{ts,sol}\"",
     "format:fix": "prettier --write \"./**/*.{ts,sol}\"",
@@ -20,7 +20,8 @@
     "test-e2e": "yarn test-e2e:local",
     "test-e2e:local": "./scripts/wait-for-local-setup.sh && TEST_ENV=local mocha --config .mocharc-e2e.js",
     "test-e2e:goerli": "TEST_ENV=goerli mocha --config .mocharc-e2e.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "verify": "yarn hardhat run scripts/verify.ts --network goerli"
   },
   "dependencies": {
     "@matterlabs/signature-checker": "^1.1.1",

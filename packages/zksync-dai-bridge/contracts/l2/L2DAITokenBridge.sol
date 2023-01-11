@@ -15,9 +15,15 @@
 
 pragma solidity ^0.8.15;
 
-import "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
+import "@matterlabs/zksync-contracts/l2/system-contracts/interfaces/IL1Messenger.sol";
 import "@matterlabs/zksync-contracts/l1/contracts/bridge/interfaces/IL1Bridge.sol";
 import "@matterlabs/zksync-contracts/l2/contracts/bridge/interfaces/IL2Bridge.sol";
+
+// The following constants are copied from "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
+// We refrain from importing this file directly as it contains a large number of imports,
+// including some cyclic dependencies causing issues with flattening tools
+uint160 constant SYSTEM_CONTRACTS_OFFSET = 0x8000; // 2^15
+IL1Messenger constant L1_MESSENGER_CONTRACT = IL1Messenger(address(SYSTEM_CONTRACTS_OFFSET + 0x08));
 
 interface Mintable {
     function mint(address usr, uint256 wad) external;
