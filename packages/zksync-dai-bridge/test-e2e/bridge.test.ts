@@ -241,6 +241,7 @@ describe('bridge', function () {
 
     const tx = await l1DAITokenBridge.deposit(l2Signer.address, l1Dai.address, depositAmount, { gasLimit: 300000 })
     await tx.wait()
+
     const l2Response = await l2Signer.provider.getL2TransactionFromPriorityOp(tx)
     await expect(l2Response.wait()).to.eventually.be.rejectedWith('transaction failed')
     const l2TxHash = l2Response.hash
