@@ -271,13 +271,7 @@ describe('bridge', function () {
 
     const l1DaiBefore = await l1Dai.balanceOf(l1Signer.address)
 
-    // const fixedZkSync = new Contract(
-    //   zkSyncAddress,
-    //   new Interface(['function l2LogsRootHash(uint256 _blockNumber) view returns (bytes32)']),
-    //   l1Signer,
-    // )
-    // const root = await fixedZkSync.l2LogsRootHash(l1BatchNumber)
-    // // const root = await zkSync.l2LogsRootHash(l1BatchNumber)
+    // const root = await zkSync.l2LogsRootHash(l1BatchNumber)
     // const proofRoot = msgProof!.root
     // console.log(`root=${root} proofRoot=${proofRoot} block=${l1BatchNumber}`)
     // console.log('arg', [l1Signer.address, l1Dai.address, l2TxHash, l1BatchNumber, id, l1BatchTxIndex, proof])
