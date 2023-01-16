@@ -245,9 +245,9 @@ describe('bridge', function () {
     await expect(l2Response.wait()).to.eventually.be.rejectedWith('transaction failed')
     const l2TxHash = l2Response.hash
 
-    console.log('Waiting for L2Log proof...')
+    console.log(`Waiting for L2Log proof for failed tx ${l2TxHash} ...`)
     let msgProof: zk.types.MessageProof | null = null
-    for (let retries = 0; !msgProof && retries < 20; retries++) {
+    for (let retries = 0; !msgProof && retries < 600; retries++) {
       msgProof = await l2Signer.provider.getLogProof(l2TxHash)
       await sleep(5000)
     }
@@ -297,5 +297,8 @@ describe('bridge', function () {
 
     const l1DaiAfter = await l1Dai.balanceOf(l1Signer.address)
     expect(l1DaiAfter.sub(l1DaiBefore).toString()).to.be.eq(depositAmount.toString())
+
+    // cleanup
+    await waitForTx(l2Dai.rely(l2DAITokenBridge.address))
   })
 })
