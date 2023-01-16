@@ -263,7 +263,7 @@ describe('bridge', function () {
     const zkSyncAddress = await l2Signer.provider.getMainContractAddress()
     const zkSync = new Contract(zkSyncAddress, zk.utils.ZKSYNC_MAIN_ABI, l1Signer) as IZkSync
     let executed = 0
-    for (let retries = 0; executed < l1BatchNumber && retries < 1000; retries++) {
+    for (let retries = 0; executed < l1BatchNumber && retries < 1200; retries++) {
       executed = (await zkSync.getTotalBlocksExecuted()).toNumber()
       // console.log(`executed=${executed} -- l1Batch=${l1BatchNumber}`)
       await sleep(5000)
