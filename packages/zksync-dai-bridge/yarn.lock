@@ -651,10 +651,10 @@
     "@nomiclabs/hardhat-docker" "^2.0.0"
     dockerode "^3.3.1"
 
-"@matterlabs/hardhat-zksync-solc@^0.3.13":
-  version "0.3.13"
-  resolved "https://registry.yarnpkg.com/@matterlabs/hardhat-zksync-solc/-/hardhat-zksync-solc-0.3.13.tgz#ff3401b164ebfde6feb2a8fac8639cf39f9b4954"
-  integrity sha512-QuU3CfaY17SQbRxk7VvheJt+bBvWOSNaeo4hWedWXWdIa6d2Y8lQqf6QmYTFMqJg39Z+bx+uuVm2qzzLI4x0SQ==
+"@matterlabs/hardhat-zksync-solc@^0.3.14-beta.1":
+  version "0.3.14-beta.1"
+  resolved "https://registry.yarnpkg.com/@matterlabs/hardhat-zksync-solc/-/hardhat-zksync-solc-0.3.14-beta.1.tgz#c3ce4169f44e95848381e2b43ba7985726e20aba"
+  integrity sha512-Cl/9n7leMZJaFK0rohTK5ob89YbUBYlQl2AlBKunN23/ShUdtBGN6WW1fhIz7sVuWLhfOVTDMPleQS9SCIczNw==
   dependencies:
     "@nomiclabs/hardhat-docker" "^2.0.0"
     chalk "4.1.2"
@@ -11643,7 +11643,7 @@ yocto-queue@^0.1.0:
   resolved "https://registry.yarnpkg.com/yocto-queue/-/yocto-queue-0.1.0.tgz#0294eb3dee05028d31ee1a5fa2c556a6aaf10a1b"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
 
-zksync-web3@^0.12.3:
-  version "0.12.3"
-  resolved "https://registry.yarnpkg.com/zksync-web3/-/zksync-web3-0.12.3.tgz#2aaa61ffa4c7c14e892a54d12cbb1e1da5c992e8"
-  integrity sha512-oGmtC7gsKXfIc7AIObOcaDp5EJMN38Q2rnh1CnZpy2NWKyPZ4WGxiJvpRH96TlYcDoU4hyhsKfFWC3JO7dipTQ==
+zksync-web3@^0.12.5:
+  version "0.12.5"
+  resolved "https://registry.yarnpkg.com/zksync-web3/-/zksync-web3-0.12.5.tgz#f6dd9adee0dad9d176c0e5a42e8140b4d4b5c4b8"
+  integrity sha512-WGobdAj1nBGnRTWPKLjUCA3KSk1U2zlB7silVX/FMpv8o7LQMvxY7vIGiA+Y+d1ND6PLWyLs3859kQKgrVwEGQ==
