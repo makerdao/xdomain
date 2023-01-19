@@ -1,11 +1,13 @@
+import { sleep } from '@eth-optimism/core-utils'
 import { getActiveWards, getAddressOfNextDeployedContract, waitForTx } from '@makerdao/hardhat-utils'
 import { expect, use } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { providers, Wallet } from 'ethers'
+import { Contract, providers, Wallet } from 'ethers'
 import { Interface, parseEther } from 'ethers/lib/utils'
 import { ethers } from 'hardhat'
 import * as hre from 'hardhat'
 import * as zk from 'zksync-web3'
+import { IZkSync } from 'zksync-web3/build/typechain'
 use(chaiAsPromised)
 
 import {
@@ -27,15 +29,17 @@ async function setupSigners(): Promise<{
   l1Signer: Wallet
   l2Signer: zk.Wallet
 }> {
-  const l1Provider = new ethers.providers.JsonRpcProvider(hre.config.zkSyncDeploy.ethNetwork)
-  const l2Provider = new zk.Provider(hre.config.zkSyncDeploy.zkSyncNetwork)
+  const { url, ethNetwork } = hre.config.networks.zksync as any
+  expect(url).to.not.be.undefined
+  expect(ethNetwork).to.not.be.undefined
+  const l1Provider = new ethers.providers.JsonRpcProvider(ethNetwork)
+  const l2Provider = new zk.Provider(url)
 
   const privKey = process.env.TEST_ENV === 'goerli' ? process.env.GOERLI_DEPLOYER_PRIV_KEY : RICH_WALLET_PK
   if (!privKey) throw new Error(`Missing GOERLI_DEPLOYER_PRIV_KEY env var`)
 
   const l1Signer = new Wallet(privKey, l1Provider)
   const l2Signer = new zk.Wallet(privKey, l2Provider, l1Provider)
-
   console.log(`Deployer address: ${l1Signer.address}`)
   return { l1Signer, l2Signer }
 }
@@ -56,7 +60,7 @@ describe('bridge', function () {
   let l1Signer: Wallet
   let l2Signer: zk.Wallet
 
-  let l1Dai: Dai
+  let l1Dai: L1Dai
   let l1Escrow: L1Escrow
   let l1DAITokenBridge: L1DAITokenBridge
   let l1GovernanceRelay: L1GovernanceRelay
@@ -67,9 +71,12 @@ describe('bridge', function () {
   beforeEach(async () => {
     ;({ l1Signer, l2Signer } = await setupSigners())
     l2Dai = await deployL2Contract(l2Signer, 'Dai')
-    l1Dai = await deployL1Contract(l1Signer, 'L1Dai', [], 'l1/test')
     l1Escrow = await deployL1Contract(l1Signer, 'L1Escrow')
-    ;({ l1DAITokenBridge, l2DAITokenBridge } = await deployBridges(l1Signer, l2Signer, l1Dai, l2Dai, l1Escrow))
+    l1Dai = (await deployL1Contract(l1Signer, 'L1Dai', [], 'l1/test')) as L1Dai
+    ;({ l1DAITokenBridge, l2DAITokenBridge } = (await deployBridges(l1Signer, l2Signer, l1Dai, l2Dai, l1Escrow)) as {
+      l1DAITokenBridge: L1DAITokenBridge
+      l2DAITokenBridge: L2DAITokenBridge
+    })
     await approveBridges(l1Dai, l2Dai, l1DAITokenBridge, l2DAITokenBridge)
     // deploy gov relays
     const zkSyncAddress = await l2Signer.provider.getMainContractAddress()
@@ -188,13 +195,13 @@ describe('bridge', function () {
   })
 
   it('upgrades the bridge through governance relay', async () => {
-    const { l1DAITokenBridge: l1DAITokenBridgeV2, l2DAITokenBridge: l2DAITokenBridgeV2 } = await deployBridges(
+    const { l1DAITokenBridge: l1DAITokenBridgeV2, l2DAITokenBridge: l2DAITokenBridgeV2 } = (await deployBridges(
       l1Signer,
       l2Signer,
       l1Dai,
       l2Dai,
       l1Escrow,
-    )
+    )) as { l1DAITokenBridge: L1DAITokenBridge; l2DAITokenBridge: L2DAITokenBridge }
     // Close L1 bridge V1
     console.log('Closing L1 bridge V1...')
     await waitForTx(l1DAITokenBridge.close({ gasLimit: 200000 }))
@@ -220,25 +227,73 @@ describe('bridge', function () {
       l1Escrow.approve(l1Dai.address, l1DAITokenBridgeV2.address, ethers.constants.MaxUint256, { gasLimit: 200000 }),
     )
     await approveBridges(l1Dai, l2Dai, l1DAITokenBridgeV2, l2DAITokenBridgeV2)
-    l1DAITokenBridge = l1DAITokenBridgeV2
-    l2DAITokenBridge = l2DAITokenBridgeV2
+    l1DAITokenBridge = l1DAITokenBridgeV2 as L1DAITokenBridge
+    l2DAITokenBridge = l2DAITokenBridgeV2 as L2DAITokenBridge
     console.log('Testing V2 bridge deposit...')
     await testDepositToL2()
     console.log('Testing V2 bridge withdrawal...')
     await testWithdrawFromL2()
   })
 
-  it.skip('recovers failed l1-to-l2 deposit', async function () {
+  it('recovers failed l1-to-l2 deposit', async function () {
     // revoke L2 bridge mint right to induce a revert on L2 upon deposit
     await waitForTx(l2Dai.deny(l2DAITokenBridge.address))
 
     const tx = await l1DAITokenBridge.deposit(l2Signer.address, l1Dai.address, depositAmount, { gasLimit: 300000 })
     await tx.wait()
+
     const l2Response = await l2Signer.provider.getL2TransactionFromPriorityOp(tx)
-    // const l2TxHash = l2Response.hash
-
     await expect(l2Response.wait()).to.eventually.be.rejectedWith('transaction failed')
+    const l2TxHash = l2Response.hash
 
-    // TODO: construct merkle proof and call l1DaiTokenBridge.claimFailedDeposit
+    console.log(`Waiting for L2Log proof for failed tx ${l2TxHash} ...`)
+    let msgProof: zk.types.MessageProof | null = null
+    for (let retries = 0; !msgProof && retries < 600; retries++) {
+      msgProof = await l2Signer.provider.getLogProof(l2TxHash)
+      await sleep(5000)
+    }
+    // console.log('msgProof', msgProof, 'l2Response', l2Response)
+    expect(msgProof).to.include.all.keys('id', 'proof')
+    const { id, proof } = msgProof!
+
+    console.log('Waiting for L2 tx receipt...')
+    const { l1BatchNumber, l1BatchTxIndex } = await l2Signer.provider.getTransactionReceipt(l2TxHash)
+
+    console.log('Waiting for L1 batch execution...')
+    const zkSyncAddress = await l2Signer.provider.getMainContractAddress()
+    const zkSync = new Contract(zkSyncAddress, zk.utils.ZKSYNC_MAIN_ABI, l1Signer) as IZkSync
+    let executed = 0
+    for (let retries = 0; executed < l1BatchNumber && retries < 1200; retries++) {
+      executed = (await zkSync.getTotalBlocksExecuted()).toNumber()
+      // console.log(`executed=${executed} -- l1Batch=${l1BatchNumber}`)
+      await sleep(5000)
+    }
+    expect(executed).to.be.gte(l1BatchNumber)
+
+    const l1DaiBefore = await l1Dai.balanceOf(l1Signer.address)
+
+    // const root = await zkSync.l2LogsRootHash(l1BatchNumber)
+    // const proofRoot = msgProof!.root
+    // console.log(`root=${root} proofRoot=${proofRoot} block=${l1BatchNumber}`)
+    // console.log('arg', [l1Signer.address, l1Dai.address, l2TxHash, l1BatchNumber, id, l1BatchTxIndex, proof])
+    console.log('Claiming failed deposit...')
+    await waitForTx(
+      l1DAITokenBridge.claimFailedDeposit(
+        l1Signer.address,
+        l1Dai.address,
+        l2TxHash,
+        l1BatchNumber,
+        id,
+        l1BatchTxIndex,
+        proof,
+        { gasLimit: 200000 },
+      ),
+    )
+
+    const l1DaiAfter = await l1Dai.balanceOf(l1Signer.address)
+    expect(l1DaiAfter.sub(l1DaiBefore).toString()).to.be.eq(depositAmount.toString())
+
+    // cleanup
+    await waitForTx(l2Dai.rely(l2DAITokenBridge.address))
   })
 })

@@ -17,14 +17,13 @@ describe('L1GovernanceRelay', () => {
       const { l1GovernanceRelay, zkSyncMock, l2GovernanceRelay } = await setupTest({
         zkSyncImpersonator,
       })
+      const ergsLimit = 2000000
+      const factoryDeps: Array<string> = []
+      await l1GovernanceRelay.connect(deployer).relay(l2spell.address, [], ergsLimit, factoryDeps)
+      const zkMailboxCall = zkSyncMock.requestL2Transaction.atCall(0)
 
-      await l1GovernanceRelay.connect(deployer).relay(l2spell.address, [], 2000000, [])
-      const zkMailboxCall = zkSyncMock.smocked.requestL2Transaction.calls[0]
-
-      expect(zkMailboxCall._contractAddressL2).to.equal(l2GovernanceRelay.address)
-      expect(zkMailboxCall._calldata).to.equal(
-        l2GovernanceRelay.interface.encodeFunctionData('relay', [l2spell.address, []]),
-      )
+      const calldata = l2GovernanceRelay.interface.encodeFunctionData('relay', [l2spell.address, []])
+      expect(zkMailboxCall).to.be.calledWith(l2GovernanceRelay.address, 0, calldata, ergsLimit, factoryDeps)
     })
 
     it('reverts when not authed', async () => {

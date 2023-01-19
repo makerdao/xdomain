@@ -99,7 +99,7 @@ describe('L2DAITokenBridge', () => {
         .to.emit(l2DAITokenBridge, 'WithdrawalInitiated')
         .withArgs(user1.address, user1.address, l2Dai.address, withdrawAmount)
 
-      const withdrawCrossChainCall = zkSyncSysMock.smocked.sendToL1.calls[0]
+      const withdrawCrossChainCall = zkSyncSysMock.sendToL1.atCall(0)
 
       expect(await l2Dai.balanceOf(user1.address)).to.be.eq(initialTotalL2Supply - withdrawAmount)
       expect(await l2Dai.totalSupply()).to.be.eq(initialTotalL2Supply - withdrawAmount)
@@ -107,7 +107,7 @@ describe('L2DAITokenBridge', () => {
         ['bytes', 'address', 'uint256'],
         [l1DAITokenBridge.interface.getSighash('finalizeWithdrawal'), user1.address, withdrawAmount],
       )
-      expect(withdrawCrossChainCall._message).to.equal(msg)
+      expect(withdrawCrossChainCall).to.be.calledWith(msg)
     })
 
     it('sends xdomain message and burns tokens when withdrawing to the 3rd party', async () => {
@@ -117,7 +117,7 @@ describe('L2DAITokenBridge', () => {
       await l2Dai.connect(user1).approve(l2DAITokenBridge.address, withdrawAmount)
       await l2DAITokenBridge.connect(user1).withdraw(user2.address, l2Dai.address, withdrawAmount)
 
-      const withdrawCrossChainCall = zkSyncSysMock.smocked.sendToL1.calls[0]
+      const withdrawCrossChainCall = zkSyncSysMock.sendToL1.atCall(0)
 
       expect(await l2Dai.balanceOf(user1.address)).to.be.eq(initialTotalL2Supply - withdrawAmount)
       expect(await l2Dai.totalSupply()).to.be.eq(initialTotalL2Supply - withdrawAmount)
@@ -126,7 +126,7 @@ describe('L2DAITokenBridge', () => {
         ['bytes', 'address', 'uint256'],
         [l1DAITokenBridge.interface.getSighash('finalizeWithdrawal'), user2.address, withdrawAmount],
       )
-      expect(withdrawCrossChainCall._message).to.equal(msg)
+      expect(withdrawCrossChainCall).to.be.calledWith(msg)
     })
 
     it('reverts when called with a different token', async () => {

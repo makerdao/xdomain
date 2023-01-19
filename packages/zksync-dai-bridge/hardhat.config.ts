@@ -1,5 +1,6 @@
 import '@matterlabs/hardhat-zksync-deploy'
 import '@matterlabs/hardhat-zksync-solc'
+import '@matterlabs/hardhat-zksync-verify'
 import '@nomiclabs/hardhat-etherscan'
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
@@ -8,7 +9,10 @@ import '@typechain/hardhat'
 import 'hardhat-gas-reporter'
 import 'solidity-coverage'
 
+import * as dotenv from 'dotenv'
 import { HardhatUserConfig } from 'hardhat/config'
+
+dotenv.config()
 
 const zkSyncDeploy =
   process.env.TEST_ENV === 'local'
@@ -23,16 +27,15 @@ const zkSyncDeploy =
 
 const config: HardhatUserConfig = {
   zksolc: {
-    version: '1.2.0',
+    version: '1.2.3',
     compilerSource: 'binary',
     settings: {
       experimental: {
         dockerImage: 'matterlabs/zksolc',
-        tag: 'v1.2.0',
+        tag: 'v1.2.3',
       },
     },
   },
-  zkSyncDeploy,
 
   mocha: {
     timeout: 50000,
@@ -50,27 +53,25 @@ const config: HardhatUserConfig = {
     ],
   },
   paths: {
-    sources: process.env.UNIT_TESTS
-      ? './contracts'
-      : process.env.NETWORK === 'zksync'
-      ? './contracts/l2'
-      : './contracts/l1',
+    sources: process.env.UNIT_TESTS ? './contracts' : `./contracts/${process.env.DOMAIN || 'l1'}`,
   },
   networks: {
-    hardhat: {
-      zksync: !process.env.UNIT_TESTS, // unit tests use EVM
-    },
+    hardhat: {},
     zksync: {
       zksync: true,
       url: zkSyncDeploy.zkSyncNetwork,
+      ethNetwork: zkSyncDeploy.ethNetwork,
+      verifyURL: 'https://zksync2-testnet-explorer.zksync.dev/contract_verification',
     },
     goerli: {
-      zksync: false,
       url: zkSyncDeploy.ethNetwork,
     },
   },
+  defaultNetwork: 'zksync',
   etherscan: {
-    apiKey: process.env.ETHERSCAN_KEY ?? '',
+    apiKey: {
+      goerli: process.env.ETHERSCAN_KEY ?? '',
+    },
   },
 }
 
