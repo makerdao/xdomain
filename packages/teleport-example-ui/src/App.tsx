@@ -96,6 +96,11 @@ function App() {
                   onClose={() => setWarningVisible(false)}
                 />
               )}
+              <Alert
+                message={<>Teleports from Optimism Mainnet and Arbitrum One have been temporarily disabled.</>}
+                type="error"
+                closable
+              />
             </Col>
           </Row>
           <Row justify="end" className="box top-bar">
@@ -193,7 +198,7 @@ function App() {
                   size="large"
                   block
                   onClick={mainButton.onClick}
-                  disabled={mainButton.disabled}
+                  disabled={[42161, 10].includes(srcChainId) ? true : mainButton.disabled} // temporarily disabling mainnet teleports
                   loading={mainButton.loading}
                 >
                   {mainButton.label || <></>}
