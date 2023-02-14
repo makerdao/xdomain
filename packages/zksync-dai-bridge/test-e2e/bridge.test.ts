@@ -246,18 +246,10 @@ describe('bridge', function () {
     await expect(l2Response.wait()).to.eventually.be.rejectedWith('transaction failed')
     const l2TxHash = l2Response.hash
 
-    console.log(`Waiting for L2Log proof for failed tx ${l2TxHash} ...`)
-    let msgProof: zk.types.MessageProof | null = null
-    for (let retries = 0; !msgProof && retries < 600; retries++) {
-      msgProof = await l2Signer.provider.getLogProof(l2TxHash)
-      await sleep(5000)
-    }
-    // console.log('msgProof', msgProof, 'l2Response', l2Response)
-    expect(msgProof).to.include.all.keys('id', 'proof')
-    const { id, proof } = msgProof!
+    console.log(`Waiting for L2Log proof for failed tx ${l2TxHash} ...`);
 
     console.log('Waiting for L2 tx receipt...')
-    const { l1BatchNumber, l1BatchTxIndex } = await l2Signer.provider.getTransactionReceipt(l2TxHash)
+    const { l1BatchNumber } = await l2Signer.provider.getTransactionReceipt(l2TxHash);
 
     console.log('Waiting for L1 batch execution...')
     const zkSyncAddress = await l2Signer.provider.getMainContractAddress()
@@ -268,27 +260,13 @@ describe('bridge', function () {
       // console.log(`executed=${executed} -- l1Batch=${l1BatchNumber}`)
       await sleep(5000)
     }
-    expect(executed).to.be.gte(l1BatchNumber)
+    expect(executed).to.be.gte(l1BatchNumber);
 
     const l1DaiBefore = await l1Dai.balanceOf(l1Signer.address)
 
-    // const root = await zkSync.l2LogsRootHash(l1BatchNumber)
-    // const proofRoot = msgProof!.root
-    // console.log(`root=${root} proofRoot=${proofRoot} block=${l1BatchNumber}`)
-    // console.log('arg', [l1Signer.address, l1Dai.address, l2TxHash, l1BatchNumber, id, l1BatchTxIndex, proof])
-    console.log('Claiming failed deposit...')
-    await waitForTx(
-      l1DAITokenBridge.claimFailedDeposit(
-        l1Signer.address,
-        l1Dai.address,
-        l2TxHash,
-        l1BatchNumber,
-        id,
-        l1BatchTxIndex,
-        proof,
-        { gasLimit: 200000 },
-      ),
-    )
+    const wallet = new zk.Wallet(l1Signer.privateKey, l2Signer.provider, l1Signer.provider);
+    const txResp = await wallet.claimFailedDeposit(l2TxHash);
+    await txResp.wait();
 
     const l1DaiAfter = await l1Dai.balanceOf(l1Signer.address)
     expect(l1DaiAfter.sub(l1DaiBefore).toString()).to.be.eq(depositAmount.toString())
