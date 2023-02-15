@@ -25,6 +25,11 @@ import { deployBridges, deployL1Contract, deployL2Contract, waitToRelayTxToL2 } 
 const RICH_WALLET_PK = '0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110'
 const depositAmount = ethers.utils.parseEther('5')
 
+const defaultL1CallValue = 0
+const defaultRelayGasLimit = 10_000_000
+const defaultDepositGasLimit = zk.utils.RECOMMENDED_GAS_LIMIT.DEPOSIT // 600_000
+const defaultGasPerPubdataByte = zk.utils.DEPOSIT_GAS_PER_PUBDATA_LIMIT // 800
+
 async function setupSigners(): Promise<{
   l1Signer: Wallet
   l2Signer: zk.Wallet
@@ -131,7 +136,13 @@ describe('bridge', function () {
 
     const txReceipt = await waitToRelayTxToL2(
       l1DAITokenBridge,
-      l1DAITokenBridge.interface.encodeFunctionData('deposit', [l2Signer.address, l1Dai.address, depositAmount]),
+      l1DAITokenBridge.interface.encodeFunctionData('deposit', [
+        l2Signer.address,
+        l1Dai.address,
+        depositAmount,
+        defaultDepositGasLimit,
+        defaultGasPerPubdataByte,
+      ]),
       l2Signer.provider,
       l2DAITokenBridge.interface.encodeFunctionData('finalizeDeposit', [
         l1Signer.address,
@@ -141,6 +152,7 @@ describe('bridge', function () {
         '0x',
       ]),
       { gasLimit: 300000 },
+      defaultDepositGasLimit,
     )
 
     const l2DaiAfter = await l2Dai.balanceOf(l2Signer.address)
@@ -215,11 +227,18 @@ describe('bridge', function () {
     console.log('Executing spell to close L2 Bridge V1 and grant minting permissions to L2 Bridge V2...')
     await waitToRelayTxToL2(
       l1GovernanceRelay,
-      l1GovernanceRelay.interface.encodeFunctionData('relay', [l2UpgradeSpell.address, l2Calldata, 2000000, []]),
+      l1GovernanceRelay.interface.encodeFunctionData('relay', [
+        l2UpgradeSpell.address,
+        l2Calldata,
+        defaultL1CallValue,
+        defaultRelayGasLimit,
+        defaultGasPerPubdataByte,
+        [],
+      ]),
       l2Signer.provider,
       l2Calldata,
       { gasLimit: 300000 },
-      2000000,
+      defaultRelayGasLimit,
     )
     console.log('L2 Bridge Closed')
     console.log('Approving l1DAITokenBridgeV2 to move l1Dai from L1Escrow...')
@@ -239,56 +258,44 @@ describe('bridge', function () {
     // revoke L2 bridge mint right to induce a revert on L2 upon deposit
     await waitForTx(l2Dai.deny(l2DAITokenBridge.address))
 
-    const tx = await l1DAITokenBridge.deposit(l2Signer.address, l1Dai.address, depositAmount, { gasLimit: 300000 })
+    const tx = await l1DAITokenBridge.deposit(
+      l2Signer.address,
+      l1Dai.address,
+      depositAmount,
+      defaultDepositGasLimit,
+      defaultGasPerPubdataByte,
+      { gasLimit: 300000 },
+    )
     await tx.wait()
 
     const l2Response = await l2Signer.provider.getL2TransactionFromPriorityOp(tx)
     await expect(l2Response.wait()).to.eventually.be.rejectedWith('transaction failed')
     const l2TxHash = l2Response.hash
 
-    console.log(`Waiting for L2Log proof for failed tx ${l2TxHash} ...`)
-    let msgProof: zk.types.MessageProof | null = null
-    for (let retries = 0; !msgProof && retries < 600; retries++) {
-      msgProof = await l2Signer.provider.getLogProof(l2TxHash)
+    console.log('Waiting for L2 tx receipt...')
+    let l2TxReceipt: zk.types.TransactionReceipt
+    for (let retries = 0; retries < 1200; retries++) {
+      l2TxReceipt = await l2Signer.provider.getTransactionReceipt(l2TxHash)
+      if (l2TxReceipt.l1BatchNumber !== undefined) break
       await sleep(5000)
     }
-    // console.log('msgProof', msgProof, 'l2Response', l2Response)
-    expect(msgProof).to.include.all.keys('id', 'proof')
-    const { id, proof } = msgProof!
-
-    console.log('Waiting for L2 tx receipt...')
-    const { l1BatchNumber, l1BatchTxIndex } = await l2Signer.provider.getTransactionReceipt(l2TxHash)
 
     console.log('Waiting for L1 batch execution...')
     const zkSyncAddress = await l2Signer.provider.getMainContractAddress()
     const zkSync = new Contract(zkSyncAddress, zk.utils.ZKSYNC_MAIN_ABI, l1Signer) as IZkSync
     let executed = 0
-    for (let retries = 0; executed < l1BatchNumber && retries < 1200; retries++) {
+    for (let retries = 0; executed < l2TxReceipt!.l1BatchNumber && retries < 1200; retries++) {
       executed = (await zkSync.getTotalBlocksExecuted()).toNumber()
-      // console.log(`executed=${executed} -- l1Batch=${l1BatchNumber}`)
       await sleep(5000)
     }
-    expect(executed).to.be.gte(l1BatchNumber)
+    expect(executed).to.be.gte(l2TxReceipt!.l1BatchNumber)
 
     const l1DaiBefore = await l1Dai.balanceOf(l1Signer.address)
 
-    // const root = await zkSync.l2LogsRootHash(l1BatchNumber)
-    // const proofRoot = msgProof!.root
-    // console.log(`root=${root} proofRoot=${proofRoot} block=${l1BatchNumber}`)
-    // console.log('arg', [l1Signer.address, l1Dai.address, l2TxHash, l1BatchNumber, id, l1BatchTxIndex, proof])
     console.log('Claiming failed deposit...')
-    await waitForTx(
-      l1DAITokenBridge.claimFailedDeposit(
-        l1Signer.address,
-        l1Dai.address,
-        l2TxHash,
-        l1BatchNumber,
-        id,
-        l1BatchTxIndex,
-        proof,
-        { gasLimit: 200000 },
-      ),
-    )
+    const wallet = new zk.Wallet(l1Signer.privateKey, l2Signer.provider, l1Signer.provider)
+    const claimTx = await wallet.claimFailedDeposit(l2TxHash) // this sdk method can be used as zksync-dai-bridge has the same interface as the standard ERC20 bridge
+    await claimTx.wait()
 
     const l1DaiAfter = await l1Dai.balanceOf(l1Signer.address)
     expect(l1DaiAfter.sub(l1DaiBefore).toString()).to.be.eq(depositAmount.toString())

@@ -8,9 +8,10 @@ import {
   L2GovernanceRelay__factory,
   TestDaiMintSpell__factory,
 } from '../../typechain-types'
+import { getL2SignerFromL1Address } from '../../zksync-helpers'
 
 const errorMessages = {
-  callFromL1GovRelay: 'Only l1GovRelay can call',
+  callFromL1GovRelay: 'L2GovernanceRelay/sender-not-l1GovRelay',
   delegatecallError: 'L2GovernanceRelay/delegatecall-error',
 }
 
@@ -22,7 +23,7 @@ describe('L2GovernanceRelay', () => {
       const { l1GovRelay, l2GovRelay, l2Dai, l2daiMintSpell, user1 } = await setupTest()
 
       await l2GovRelay
-        .connect(l1GovRelay)
+        .connect(await getL2SignerFromL1Address(await l1GovRelay.getAddress()))
         .relay(
           l2daiMintSpell.address,
           l2daiMintSpell.interface.encodeFunctionData('mintDai', [l2Dai.address, user1.address, depositAmount]),
@@ -32,7 +33,7 @@ describe('L2GovernanceRelay', () => {
       expect(await l2Dai.totalSupply()).to.be.eq(depositAmount)
     })
 
-    it('reverts when called not by l1GovRelay', async () => {
+    it('reverts when called not by aliased l1GovRelay', async () => {
       const { l2GovRelay, l2Dai, l2daiMintSpell, user1 } = await setupTest()
 
       await expect(
@@ -50,7 +51,9 @@ describe('L2GovernanceRelay', () => {
       const badSpell = await simpleDeploy<BadSpell__factory>('BadSpell', [])
 
       await expect(
-        l2GovRelay.connect(l1GovRelay).relay(badSpell.address, badSpell.interface.encodeFunctionData('abort')),
+        l2GovRelay
+          .connect(await getL2SignerFromL1Address(await l1GovRelay.getAddress()))
+          .relay(badSpell.address, badSpell.interface.encodeFunctionData('abort')),
       ).to.be.revertedWith(errorMessages.delegatecallError)
     })
 

@@ -27,12 +27,12 @@ const zkSyncDeploy =
 
 const config: HardhatUserConfig = {
   zksolc: {
-    version: '1.2.3',
+    version: '1.3.1',
     compilerSource: 'binary',
     settings: {
       experimental: {
         dockerImage: 'matterlabs/zksolc',
-        tag: 'v1.2.3',
+        tag: 'v1.3.1',
       },
     },
   },

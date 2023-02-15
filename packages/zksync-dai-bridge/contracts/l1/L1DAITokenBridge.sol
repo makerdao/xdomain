@@ -54,7 +54,6 @@ contract L1DAITokenBridge is IL1Bridge {
   address public immutable escrow; // contract holding all deposited L1 Dai
   IMailbox public immutable zkSyncMailbox; // zkSync main contract on L1
   uint256 public isOpen = 1; // flag indicating if the bridge is open to deposits
-  uint256 public ergsLimit = 2097152; // ergs limit used for deposit messages. Set to its max possible value by default.
 
   mapping(uint256 => mapping(uint256 => bool)) public isWithdrawalFinalized; // flag used to mark a pending withdrawal as finalized and prevent it from being double-spent
   mapping(address => mapping(bytes32 => uint256)) public depositAmount; // the amount of Dai deposited for a given depositer and L2 transaction hash (used for deposit cancellation).
@@ -91,21 +90,6 @@ contract L1DAITokenBridge is IL1Bridge {
   }
 
   /**
-   * @notice Allows auth to configure the bridge parameters. The only supported operation is "ergsLimit",
-   * which allows specifying the default ergs limit used for deposit messages.
-   * @param what The name of the operation. Only "ergsLimit" is supported.
-   * @param data The value of the default ergsLimit
-   */
-  function file(bytes32 what, uint256 data) external auth {
-    if (what == "ergsLimit") {
-      ergsLimit = data;
-    } else {
-      revert("L1DAITokenBridge/file-unrecognized-param");
-    }
-    emit File(what, data);
-  }
-
-  /**
    * @notice Close the L1 side of the bridge, preventing future deposits
    */
   function close() external auth {
@@ -119,11 +103,15 @@ contract L1DAITokenBridge is IL1Bridge {
    * @param _l2Receiver The recipient address on L2
    * @param _l1Token The address of the Dai token on L1
    * @param _amount The amount of Dai to deposit (in WAD)
+   * @param _l2TxGasLimit The L2 gas limit to be used in the corresponding L2 transaction
+   * @param _l2TxGasPerPubdataByte The gasPerPubdataByteLimit to be used in the corresponding L2 transaction
    */
   function deposit(
     address _l2Receiver,
     address _l1Token,
-    uint256 _amount
+    uint256 _amount,
+    uint256 _l2TxGasLimit,
+    uint256 _l2TxGasPerPubdataByte
   ) external payable returns (bytes32 txHash) {
     require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
     require(isOpen == 1, "L1DAITokenBridge/closed");
@@ -143,8 +131,10 @@ contract L1DAITokenBridge is IL1Bridge {
       l2Bridge,
       0, // l2Value is the amount of ETH sent to the L2 method. As the L2 method is non-payable, this is always 0
       l2TxCalldata,
-      ergsLimit,
-      new bytes[](0) // array of L2 bytecodes that will be marked as known on L2. This is only required when deploying an L2 contract, so is left empty here
+      _l2TxGasLimit,
+      _l2TxGasPerPubdataByte,
+      new bytes[](0), // array of L2 bytecodes that will be marked as known on L2. This is only required when deploying an L2 contract, so is left empty here
+      msg.sender // The address on L2 that will receive the refund for the transaction
     );
 
     depositAmount[msg.sender][txHash] = _amount;
