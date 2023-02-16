@@ -15,6 +15,8 @@ const errorMessages = {
   delegatecallError: 'L2GovernanceRelay/delegatecall-error',
 }
 
+const defaultEthValue = ethers.utils.parseEther('0.01')
+
 describe('L2GovernanceRelay', () => {
   describe('relay', () => {
     const depositAmount = 100
@@ -69,6 +71,17 @@ describe('L2GovernanceRelay', () => {
 
     it('has correct public interface', async () => {
       await assertPublicMutableMethods('L2GovernanceRelay', ['relay(address,bytes)'])
+    })
+  })
+
+  describe('receives', () => {
+    it('receives eth', async () => {
+      const { l2GovRelay, user1 } = await setupTest()
+
+      const fundTx = await user1.sendTransaction({ to: l2GovRelay.address, value: defaultEthValue })
+      await fundTx.wait()
+
+      expect(await user1.provider!.getBalance(l2GovRelay.address)).to.eq(defaultEthValue)
     })
   })
 })
