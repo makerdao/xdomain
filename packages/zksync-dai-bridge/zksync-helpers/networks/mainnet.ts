@@ -1,6 +1,6 @@
 require('dotenv').config()
 import { getRequiredEnv } from '@makerdao/hardhat-utils'
-import { assert, expect } from 'chai'
+import { assert } from 'chai'
 import { Wallet } from 'ethers'
 import * as hre from 'hardhat'
 import * as zk from 'zksync-web3'
@@ -11,16 +11,15 @@ export async function setupSigners(): Promise<{
   l1Signer: Wallet
   l2Signer: zk.Wallet
 }> {
-  const privKey = getRequiredEnv('GOERLI_DEPLOYER_PRIV_KEY')
+  const privKey = getRequiredEnv('ETH_DEPLOYER_PRIV_KEY')
 
-  const { url: zkSyncNetwork, ethNetwork } = hre.config.networks.zksync as any
-  expect(zkSyncNetwork).to.not.be.undefined
-  expect(ethNetwork).to.not.be.undefined
+  const zkSyncNetwork = 'https://zksync2-mainnet.zksync.io'
+  const ethNetwork = getRequiredEnv('ETH_RPC_URL')
 
   const l1Provider = new hre.ethers.providers.JsonRpcProvider(ethNetwork)
   const l2Provider = new zk.Provider(zkSyncNetwork)
-  assert((await l1Provider.getNetwork()).chainId === 5, 'Not Ethereum Goerli!')
-  assert((await l2Provider.getNetwork()).chainId === 280, 'Not zkSync Goerli!')
+  assert((await l1Provider.getNetwork()).chainId === 1, 'Not Ethereum Mainnet!')
+  assert((await l2Provider.getNetwork()).chainId === 324, 'Not zkSync Era Mainnet!')
 
   const l1Signer = new Wallet(privKey, l1Provider)
   const l2Signer = new zk.Wallet(privKey, l2Provider, l1Provider)
@@ -29,12 +28,12 @@ export async function setupSigners(): Promise<{
   return { l1Signer, l2Signer }
 }
 
-export async function getGoerliNetworkConfig(): Promise<NetworkConfig> {
+export async function getMainnetNetworkConfig(): Promise<NetworkConfig> {
   return {
     l1: {
-      dai: '0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844',
-      makerPauseProxy: '0x5DCdbD3cCF9B09EAAD03bc5f50fA2B3d3ACA0121',
-      makerESM: '0x023A960cb9BE7eDE35B433256f4AfE9013334b55',
+      dai: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+      makerPauseProxy: '0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB',
+      makerESM: '0x09e05fF6142F2f9de8B6B65855A1d56B6cfE4c58',
     },
     l2: {
       dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',

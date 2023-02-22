@@ -11,18 +11,14 @@ import {
   performSanityChecks,
   setupSigners,
   BridgeDeployment,
-  getGoerliNetworkConfig,
   denyDeployer,
+  NetworkConfig,
 } from '../zksync-helpers'
 import { getAddressOfNextDeployedContract } from '@makerdao/hardhat-utils'
 import { expect } from 'chai'
 
-const DENY_DEPLOYER = true
-
-async function main() {
+export async function deploy(cfg: NetworkConfig, shouldDenyDeployer: boolean = true) {
   const { l1Signer, l2Signer } = await setupSigners()
-
-  const cfg = await getGoerliNetworkConfig()
 
   const l1BlockOfBeginningOfDeployment = await l1Signer.provider.getBlockNumber()
   const l2BlockOfBeginningOfDeployment = await l2Signer.provider.getBlockNumber()
@@ -64,13 +60,13 @@ async function main() {
   await (await l1GovernanceRelay.rely(cfg.l1.makerPauseProxy)).wait()
   await (await l1GovernanceRelay.rely(cfg.l1.makerESM)).wait()
 
-  if (DENY_DEPLOYER) {
+  if (shouldDenyDeployer) {
     await denyDeployer(l1Signer.address, l2Signer.address, bridgeDeployment)
   }
 
   await performSanityChecks(
     bridgeDeployment,
-    compact([cfg.l1.makerPauseProxy, cfg.l1.makerESM, !DENY_DEPLOYER && l1Signer.address]),
+    compact([cfg.l1.makerPauseProxy, cfg.l1.makerESM, !shouldDenyDeployer && l1Signer.address]),
     l1BlockOfBeginningOfDeployment,
     l2BlockOfBeginningOfDeployment,
   )
@@ -83,10 +79,3 @@ async function main() {
     ),
   )
 }
-
-main()
-  .then(() => console.log('DONE'))
-  .catch((error) => {
-    console.error(error)
-    process.exit(1)
-  })

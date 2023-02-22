@@ -10,7 +10,8 @@
     "build:unit": "UNIT_TESTS=1 hardhat compile --network hardhat",
     "clean": "hardhat clean && rm -rf artifacts artifacts-zk cache cache-zk crytic-export corpus verify.json",
     "coverage": "UNIT_TESTS=1 hardhat coverage --network hardhat && istanbul check-coverage --branches 100 --lines 100",
-    "deploy:goerli": "yarn ts-node --transpile-only ./scripts/deployGoerli.ts && yarn verify:goerli",
+    "deploy:goerli": "yarn ts-node --transpile-only ./deploy/deployGoerli.ts && yarn verify:goerli",
+    "deploy:mainnet": "yarn ts-node --transpile-only ./deploy/deployMainnet.ts && yarn verify:mainnet",
     "format": "prettier --check \"./**/*.{ts,sol}\"",
     "format:fix": "prettier --write \"./**/*.{ts,sol}\"",
     "lint": "eslint --ext .ts test test-e2e zksync-helpers hardhat.config.ts",
@@ -22,7 +23,8 @@
     "test-e2e:local": "./scripts/wait-for-local-setup.sh && TEST_ENV=local mocha --config .mocharc-e2e.js",
     "test-e2e:goerli": "TEST_ENV=goerli mocha --config .mocharc-e2e.js",
     "typecheck": "tsc --noEmit",
-    "verify:goerli": "yarn hardhat run scripts/verify.ts --network goerli"
+    "verify:goerli": "yarn hardhat run scripts/verify.ts --network goerli",
+    "verify:mainnet": "yarn hardhat run scripts/verify.ts --network mainnet"
   },
   "dependencies": {
     "@matterlabs/signature-checker": "^1.1.1",

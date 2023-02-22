@@ -66,11 +66,15 @@ const config: HardhatUserConfig = {
     goerli: {
       url: zkSyncDeploy.ethNetwork,
     },
+    mainnet: {
+      url: process.env.ETH_RPC_URL || '',
+    },
   },
   defaultNetwork: 'zksync',
   etherscan: {
     apiKey: {
       goerli: process.env.ETHERSCAN_KEY ?? '',
+      mainnet: process.env.ETHERSCAN_KEY ?? '',
     },
   },
 }

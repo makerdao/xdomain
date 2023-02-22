@@ -61,8 +61,16 @@ export async function deployL1Contract<T extends Contract>(
     if (!fs.existsSync(VERIFICATION_FILE_PATH)) {
       fs.writeFileSync(VERIFICATION_FILE_PATH, '{}')
     }
+    const { chainId } = await l1Signer.provider!.getNetwork()
     const verificationData = JSON.parse(fs.readFileSync(VERIFICATION_FILE_PATH, 'utf8'))
-    verificationData[contractName] = { address: contract.address, constructorArguments: constructorArguments.join(' ') }
+
+    verificationData[chainId] = {
+      ...verificationData[chainId],
+      [contractName]: {
+        address: contract.address,
+        constructorArguments: constructorArguments.join(' '),
+      },
+    }
     fs.writeFileSync(VERIFICATION_FILE_PATH, JSON.stringify(verificationData))
   }
 

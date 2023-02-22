@@ -1,4 +1,5 @@
 export * from './goerli'
+export * from './mainnet'
 
 export interface NetworkConfig {
   l1: {
