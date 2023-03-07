@@ -2,11 +2,11 @@ import { getActiveWards, getAddressOfNextDeployedContract } from '@makerdao/hard
 import { AuthableLike } from '@makerdao/hardhat-utils/dist/auth/AuthableContract'
 import { expect } from 'chai'
 import { providers, Signer, Wallet } from 'ethers'
-import { ethers } from 'hardhat'
+import hre, { ethers } from 'hardhat'
 import { compact } from 'lodash'
 import { assert, Awaited } from 'ts-essentials'
+import { waitForTx } from 'xdomain-utils'
 
-import { waitForTx } from '../arbitrum-helpers'
 import { Dai, L1DaiGateway, L1Escrow, L1GovernanceRelay, L2DaiGateway, L2GovernanceRelay } from '../typechain-types'
 import { getArbitrumArtifact, getArbitrumArtifactFactory } from './contracts'
 import { deployUsingFactoryAndVerify } from './deployment'
@@ -47,14 +47,17 @@ export type BridgeDeployment = Awaited<ReturnType<typeof deployBridge>>
 export async function deployRouter(deps: RouterDependencies): Promise<RouterDeployment> {
   const zeroAddr = ethers.constants.AddressZero
 
+  console.log('Deploying l1GatewayRouter...')
   const l1GatewayRouter = await deployUsingFactoryAndVerify(
     deps.l1.deployer,
     getArbitrumArtifactFactory('L1GatewayRouter'),
     [],
   )
+  console.log('l1GatewayRouter deployed at', l1GatewayRouter.address)
 
   const futureAddressOfL2GatewayRouter = await getAddressOfNextDeployedContract(deps.l2.deployer)
 
+  console.log('Initializing l1GatewayRouter...')
   await waitForTx(
     l1GatewayRouter.initialize(
       await deps.l1.deployer.getAddress(),
@@ -65,13 +68,17 @@ export async function deployRouter(deps: RouterDependencies): Promise<RouterDepl
     ),
   )
 
+  console.log('Deploying l2GatewayRouter...')
   const l2GatewayRouter = await deployUsingFactoryAndVerify(
     deps.l2.deployer,
     getArbitrumArtifactFactory('L2GatewayRouter'),
     [],
   )
+  console.log('l2GatewayRouter deployed at', l2GatewayRouter.address)
+
   expect(l2GatewayRouter.address).to.be.eq(futureAddressOfL2GatewayRouter)
 
+  console.log('Initializing l2GatewayRouter...')
   await waitForTx(l2GatewayRouter.initialize(l1GatewayRouter.address, zeroAddr))
 
   return {
@@ -101,31 +108,6 @@ export async function deployBridge(
 
   const l2Dai = await deployUsingFactoryAndVerify(deps.l2.deployer, await ethers.getContractFactory('Dai'), [])
   console.log('Deployed l2Dai at: ', l2Dai.address)
-  const l1DaiGatewayFutureAddr = await getAddressOfNextDeployedContract(deps.l1.deployer)
-  const l2DaiGateway = await deployUsingFactoryAndVerify(
-    deps.l2.deployer,
-    await ethers.getContractFactory('L2DaiGateway'),
-    [l1DaiGatewayFutureAddr, routerDeployment.l2GatewayRouter.address, deps.l1.dai, l2Dai.address],
-  )
-  console.log('Deployed l2DaiGateway at: ', l2DaiGateway.address)
-
-  const l1DaiGateway = await deployUsingFactoryAndVerify(
-    deps.l1.deployer,
-    await ethers.getContractFactory('L1DaiGateway'),
-    [
-      l2DaiGateway.address,
-      routerDeployment.l1GatewayRouter.address,
-      deps.l1.inbox,
-      deps.l1.dai,
-      l2Dai.address,
-      l1Escrow.address,
-    ],
-  )
-  console.log('Deployed l1DaiGateway at: ', l1DaiGateway.address)
-  expect(l1DaiGateway.address).to.be.eq(
-    l1DaiGatewayFutureAddr,
-    "Expected future address of l1DaiGateway doesn't match actual address!",
-  )
 
   const l2GovRelayFutureAddr = await getAddressOfNextDeployedContract(deps.l2.deployer)
   const l1GovRelay = await deployUsingFactoryAndVerify(
@@ -142,31 +124,91 @@ export async function deployBridge(
   expect(l2GovRelay.address).to.be.eq(l2GovRelayFutureAddr)
   console.log('Deployed l2GovernanceRelay at: ', l2GovRelay.address)
 
+  const { l1DaiGateway, l2DaiGateway } = await deployDaiGateways(
+    deps,
+    routerDeployment,
+    l1Escrow as any,
+    l2Dai as any,
+    l2GovRelay as any,
+  )
+
   // permissions
   console.log('Setting permissions...')
-  await waitForTx(l2Dai.rely(l2DaiGateway.address)) // allow minting/burning from the bridge
+
   await waitForTx(l2Dai.rely(l2GovRelay.address)) // allow granting new minting rights by the governance
 
-  await waitForTx(l2DaiGateway.rely(l2GovRelay.address)) // allow closing bridge by the governance
-
-  await waitForTx(l1Escrow.approve(deps.l1.dai, l1DaiGateway.address, ethers.constants.MaxUint256)) // allow l1DaiGateway accessing funds from the bridge for withdrawals
   await waitForTx(l1Escrow.rely(deps.l1.makerPauseProxy))
   await waitForTx(l1Escrow.rely(deps.l1.makerESM))
 
-  await waitForTx(l1DaiGateway.rely(deps.l1.makerPauseProxy))
-  await waitForTx(l1DaiGateway.rely(deps.l1.makerESM))
-
   await waitForTx(l1GovRelay.rely(deps.l1.makerPauseProxy))
   await waitForTx(l1GovRelay.rely(deps.l1.makerESM))
+
+  const daiArtifact = await hre.artifacts.readArtifact('Dai')
+  const l1Dai = (await ethers.getContractAtFromArtifact(daiArtifact, deps.l1.dai, deps.l1.deployer)) as Dai
 
   return {
     l1DaiGateway,
     l1Escrow,
     l2Dai,
     l2DaiGateway,
-    l1Dai: (await ethers.getContractAt('Dai', deps.l1.dai, deps.l1.deployer)) as Dai,
+    l1Dai,
     l1GovRelay,
     l2GovRelay,
+  }
+}
+
+export async function deployDaiGateways(
+  deps: NetworkConfig,
+  routerDeployment: RouterDeployment,
+  l1Escrow: L1Escrow,
+  l2Dai: Dai,
+  l2GovRelay: L2GovernanceRelay,
+) {
+  expect(await deps.l1.deployer.getBalance()).to.not.be.eq(0, 'Not enough balance on L1')
+  expect(await deps.l2.deployer.getBalance()).to.not.be.eq(0, 'Not enough balance on L2')
+
+  const l1DaiGatewayFutureAddr = await getAddressOfNextDeployedContract(deps.l1.deployer)
+  console.log('Deploying l2DaiGateway...')
+  const l2DaiGateway = await deployUsingFactoryAndVerify(
+    deps.l2.deployer,
+    await ethers.getContractFactory('L2DaiGateway'),
+    [l1DaiGatewayFutureAddr, routerDeployment.l2GatewayRouter.address, deps.l1.dai, l2Dai.address],
+  )
+  console.log('Deployed l2DaiGateway at', l2DaiGateway.address)
+
+  console.log('Deploying l1DaiGateway...')
+  const l1DaiGateway = await deployUsingFactoryAndVerify(
+    deps.l1.deployer,
+    await ethers.getContractFactory('L1DaiGateway'),
+    [
+      l2DaiGateway.address,
+      routerDeployment.l1GatewayRouter.address,
+      deps.l1.inbox,
+      deps.l1.dai,
+      l2Dai.address,
+      l1Escrow.address,
+    ],
+  )
+  console.log('Deployed l1DaiGateway at', l1DaiGateway.address)
+  expect(l1DaiGateway.address).to.be.eq(
+    l1DaiGatewayFutureAddr,
+    "Expected future address of l1DaiGateway doesn't match actual address!",
+  )
+
+  // permissions
+  console.log('Setting permissions...')
+  await waitForTx(l2Dai.rely(l2DaiGateway.address)) // allow minting/burning from the bridge
+
+  await waitForTx(l2DaiGateway.rely(l2GovRelay.address)) // allow closing bridge by the governance
+
+  await waitForTx(l1Escrow.approve(deps.l1.dai, l1DaiGateway.address, ethers.constants.MaxUint256)) // allow l1DaiGateway accessing funds from the bridge for withdrawals
+
+  await waitForTx(l1DaiGateway.rely(deps.l1.makerPauseProxy))
+  await waitForTx(l1DaiGateway.rely(deps.l1.makerESM))
+
+  return {
+    l1DaiGateway,
+    l2DaiGateway,
   }
 }
 
@@ -190,22 +232,22 @@ export async function performSanityChecks(
     expect(normalizeAddresses(actualPermissions)).to.deep.eq(normalizeAddresses(expectedPermissions))
   }
 
-  await checkPermissions(bridgeDeployment.l1Escrow, l1BlockOfBeginningOfDeployment, [
+  await checkPermissions(bridgeDeployment.l1Escrow as any, l1BlockOfBeginningOfDeployment, [
     deps.l1.makerPauseProxy,
     deps.l1.makerESM,
   ])
-  await checkPermissions(bridgeDeployment.l1DaiGateway, l1BlockOfBeginningOfDeployment, [
+  await checkPermissions(bridgeDeployment.l1DaiGateway as any, l1BlockOfBeginningOfDeployment, [
     deps.l1.makerPauseProxy,
     deps.l1.makerESM,
   ])
-  await checkPermissions(bridgeDeployment.l1GovRelay, l1BlockOfBeginningOfDeployment, [
+  await checkPermissions(bridgeDeployment.l1GovRelay as any, l1BlockOfBeginningOfDeployment, [
     deps.l1.makerPauseProxy,
     deps.l1.makerESM,
   ])
-  await checkPermissions(bridgeDeployment.l2DaiGateway, l2BlockOfBeginningOfDeployment, [
+  await checkPermissions(bridgeDeployment.l2DaiGateway as any, l2BlockOfBeginningOfDeployment, [
     bridgeDeployment.l2GovRelay.address,
   ])
-  await checkPermissions(bridgeDeployment.l2Dai, l2BlockOfBeginningOfDeployment, [
+  await checkPermissions(bridgeDeployment.l2Dai as any, l2BlockOfBeginningOfDeployment, [
     bridgeDeployment.l2DaiGateway.address,
     bridgeDeployment.l2GovRelay.address,
   ])

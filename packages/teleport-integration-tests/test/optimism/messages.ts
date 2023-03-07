@@ -2,8 +2,8 @@ import { Watcher } from '@eth-optimism/core-utils'
 import { getMessagesAndProofsForL2Transaction } from '@eth-optimism/message-relayer'
 import { ContractReceipt, ContractTransaction, ethers, providers, Signer } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
+import { waitForTx } from 'xdomain-utils'
 
-import { waitForTx } from '../helpers'
 import { retry } from '../helpers/async'
 import { OptimismRollupSdk } from '.'
 

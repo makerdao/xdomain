@@ -4,18 +4,11 @@ import { randomBytes } from '@ethersproject/random'
 import { BigNumber, BigNumberish, Contract, Wallet } from 'ethers'
 import { ethers } from 'hardhat'
 
-import {
-  BasicRelay,
-  TeleportConstantFee,
-  TeleportJoin,
-  TeleportOracleAuth,
-  TeleportRouter,
-  TrustedRelay,
-} from '../../typechain'
+import { BasicRelay, TeleportJoin, TeleportOracleAuth, TeleportRouter, TrustedRelay } from '../../typechain'
 import { BaseBridgeSdk, DaiLike, L1EscrowLike, TeleportBridgeSdk } from '.'
 import { performSanityChecks } from './checks'
 import { RelayTxToL1Function, RelayTxToL2Function } from './messages'
-import { configureTeleport, TeleportSdk } from './teleport'
+import { configureTeleport, FeeContractLike, TeleportSdk } from './teleport'
 
 const bytes32 = ethers.utils.formatBytes32String
 
@@ -74,7 +67,7 @@ interface SetupTestResult {
   join: TeleportJoin
   oracleAuth: TeleportOracleAuth
   router: TeleportRouter
-  constantFee: TeleportConstantFee
+  feeContract: FeeContractLike
   basicRelay: BasicRelay
   trustedRelay: TrustedRelay
   l2Dai: DaiLike
@@ -121,6 +114,17 @@ export async function setupTest({
     line,
   })
 
+  await performSanityChecks(
+    l1Signer,
+    makerSdk,
+    teleportSdk,
+    baseBridgeSdk,
+    teleportBridgeSdk,
+    l1StartingBlock,
+    l2StartingBlock,
+    false,
+  )
+
   await configureTeleport({
     makerSdk,
     teleportSdk,
@@ -132,17 +136,6 @@ export async function setupTest({
     relayTxToL2,
     addTeleportDomainSpell,
   })
-
-  await performSanityChecks(
-    l1Signer,
-    makerSdk,
-    teleportSdk,
-    baseBridgeSdk,
-    teleportBridgeSdk,
-    l1StartingBlock,
-    l2StartingBlock,
-    false,
-  )
 
   console.log('Setup complete.')
 

@@ -28,12 +28,16 @@ export async function getFeesAndMintableAmounts(
   pending: BigNumber
   mintable: BigNumber
   bridgeFee: BigNumber
-  relayFee: BigNumber
+  relayFee?: BigNumber
 }> {
   const sdk = getSdk(dstDomain, dstDomainProvider)
   const join = sdk.TeleportJoin!
 
   const guidHash = getGuidHash(teleportGUID)
+
+  const teleportsMethodName = ['KOVAN-SLAVE-OPTIMISM-1', 'RINKEBY-SLAVE-ARBITRUM-1'].includes(srcDomain)
+    ? 'wormholes'
+    : 'teleports'
 
   const [{ vatLive }, { blessed, pending: pendingInJoin }, { line }, { debt }, { feeAddress }] = await multicall(
     sdk.Multicall!,
@@ -45,7 +49,7 @@ export async function getFeesAndMintableAmounts(
       },
       {
         target: join,
-        method: 'wormholes',
+        method: `${teleportsMethodName}`,
         params: [guidHash],
         outputTypes: ['bool blessed', 'uint248 pending'],
       },
@@ -70,7 +74,7 @@ export async function getFeesAndMintableAmounts(
     ],
   )
 
-  let relayFee = BigNumber.from(-1)
+  let relayFee = undefined
   if (relay) {
     try {
       relayFee = BigNumber.from(await getRelayGasFee(relay, isHighPriority, relayParams))

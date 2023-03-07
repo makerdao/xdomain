@@ -1,21 +1,21 @@
 const fs = require('fs')
 const { join, basename } = require('path')
 
-function copyDappToolsArtifact(inputDirPath, name, destinationDirPath) {
-  const abiFilePath = join(inputDirPath, `${name}.abi`)
-  const binFilePath = join(inputDirPath, `${name}.bin`)
-  console.log(`Reading dapp tools artifact ${abiFilePath}`)
-
-  if (!fs.existsSync(abiFilePath) || !fs.existsSync(binFilePath)) {
-    throw new Error(`${abiFilePath} or ${binFilePath} doesnt exist!`)
+function copyDappToolsArtifact(inputDirPath, srcPath, destinationDirPath) {
+  const jsonFilePath = join(inputDirPath, `dapp.sol.json`)
+  if (!fs.existsSync(jsonFilePath)) {
+    throw new Error(`${jsonFilePath}  doesnt exist!`)
   }
+  const json = JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'))
+  const contractName = basename(srcPath)
 
+  const entry = json.contracts[`${srcPath}.sol`][contractName]
   const artifact = {
-    abi: JSON.parse(fs.readFileSync(abiFilePath, 'utf-8')),
-    bytecode: fs.readFileSync(binFilePath, 'utf-8').trim(),
+    abi: entry.abi,
+    bytecode: entry.evm.bytecode.object,
   }
 
-  const destinationPath = join(destinationDirPath, `${name}.json`)
+  const destinationPath = join(destinationDirPath, `${contractName}.json`)
   console.log(`Writing to ${destinationPath}`)
   fs.writeFileSync(destinationPath, JSON.stringify(artifact, null, 2))
 }
@@ -61,12 +61,13 @@ console.log(`Creating ${output} dir`)
 fs.mkdirSync(output)
 
 // copy dss-teleport artifacts
-copyDappToolsArtifact(dappToolsArtifacts, 'TeleportJoin', output)
-copyDappToolsArtifact(dappToolsArtifacts, 'TeleportConstantFee', output)
-copyDappToolsArtifact(dappToolsArtifacts, 'TeleportOracleAuth', output)
-copyDappToolsArtifact(dappToolsArtifacts, 'TeleportRouter', output)
-copyDappToolsArtifact(dappToolsArtifacts, 'BasicRelay', output)
-copyDappToolsArtifact(dappToolsArtifacts, 'TrustedRelay', output)
+copyDappToolsArtifact(dappToolsArtifacts, 'src/TeleportJoin', output)
+copyDappToolsArtifact(dappToolsArtifacts, 'src/TeleportConstantFee', output)
+copyDappToolsArtifact(dappToolsArtifacts, 'src/TeleportLinearFee', output)
+copyDappToolsArtifact(dappToolsArtifacts, 'src/TeleportOracleAuth', output)
+copyDappToolsArtifact(dappToolsArtifacts, 'src/TeleportRouter', output)
+copyDappToolsArtifact(dappToolsArtifacts, 'src/relays/BasicRelay', output)
+copyDappToolsArtifact(dappToolsArtifacts, 'src/relays/TrustedRelay', output)
 
 // copy optimism-dai-bridge artifacts
 copyOptimismBridgeArtifact('l2/dai.sol/Dai.json', output)

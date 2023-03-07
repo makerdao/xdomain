@@ -58,6 +58,18 @@ export class TeleportBridge {
     this.settings = { useFakeArbitrumOutbox: false, ...settings }
   }
 
+  public async approveSrcGateway(sender?: Signer, amount?: BigNumberish, overrides?: Overrides): Promise<Call> {
+    const shouldSendTx = Boolean(sender)
+    const sdk = getSdk(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender))
+    return await _optionallySendTx(
+      shouldSendTx,
+      sdk.Dai!,
+      'approve(address,uint256)',
+      [sdk.TeleportOutboundGateway!.address, amount || ethers.constants.MaxUint256],
+      overrides,
+    )
+  }
+
   public async initTeleport(
     receiverAddress: string,
     amount: BigNumberish,
@@ -70,11 +82,15 @@ export class TeleportBridge {
     const l2Bridge = sdk.TeleportOutboundGateway!
     const dstDomainBytes32 = bytes32(this.dstDomain)
 
+    const methodName = ['KOVAN-SLAVE-OPTIMISM-1', 'RINKEBY-SLAVE-ARBITRUM-1'].includes(this.srcDomain)
+      ? 'initiateWormhole'
+      : 'initiateTeleport'
+
     if (operatorAddress) {
       return await _optionallySendTx(
         shouldSendTx,
         l2Bridge,
-        'initiateWormhole(bytes32,address,uint128,address)',
+        `${methodName}(bytes32,address,uint128,address)`,
         [dstDomainBytes32, receiverAddress, amount, operatorAddress],
         overrides,
       )
@@ -83,7 +99,7 @@ export class TeleportBridge {
     return await _optionallySendTx(
       shouldSendTx,
       l2Bridge,
-      'initiateWormhole(bytes32,address,uint128)',
+      `${methodName}(bytes32,address,uint128)`,
       [dstDomainBytes32, receiverAddress, amount],
       overrides,
     )
@@ -102,7 +118,7 @@ export class TeleportBridge {
 
   public async getAttestations(
     txHash: string,
-    newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void,
+    onNewSignatureReceived?: (numSignatures: number, threshold: number) => void,
     timeoutMs?: number,
     pollingIntervalMs: number = 2000,
     teleportGUID?: TeleportGUID,
@@ -121,8 +137,22 @@ export class TeleportBridge {
       pollingIntervalMs,
       teleportGUID,
       timeoutMs,
-      newSignatureReceivedCallback,
+      onNewSignatureReceived,
     )
+  }
+
+  public async getSrcBalance(userAddress: string): Promise<BigNumber> {
+    return await _getDaiBalance(userAddress, this.srcDomain, this.srcDomainProvider)
+  }
+
+  public async getDstBalance(userAddress: string): Promise<BigNumber> {
+    return await _getDaiBalance(userAddress, this.dstDomain, this.dstDomainProvider)
+  }
+
+  public async getSrcGatewayAllowance(userAddress: string): Promise<BigNumber> {
+    const sdk = getSdk(this.srcDomain, this.srcDomainProvider)
+    const allowance = await sdk.Dai!.allowance(userAddress, sdk.TeleportOutboundGateway!.address)
+    return allowance
   }
 
   public async getAmounts(
@@ -132,7 +162,7 @@ export class TeleportBridge {
   ): Promise<{
     mintable: BigNumber
     bridgeFee: BigNumber
-    relayFee: BigNumber
+    relayFee?: BigNumber
   }> {
     const zero = hexZeroPad('0x', 32)
     const amount = hexZeroPad(BigNumber.from(withdrawn).toHexString(), 32)
@@ -166,7 +196,7 @@ export class TeleportBridge {
     pending: BigNumber
     mintable: BigNumber
     bridgeFee: BigNumber
-    relayFee: BigNumber
+    relayFee?: BigNumber
   }> {
     const sdk = getSdk(this.dstDomain, this.dstDomainProvider)
     const relay = sdk.BasicRelay && _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
@@ -179,6 +209,16 @@ export class TeleportBridge {
       isHighPriority,
       relayParams,
     )
+  }
+
+  public async requestFaucetDai(sender: Signer, overrides?: Overrides): Promise<ContractTransaction> {
+    const sdk = getSdk(this.srcDomain, _getSignerOrProvider(this.srcDomainProvider, sender))
+    if (!sdk.Faucet) throw new Error(`No faucet setup for source domain ${this.srcDomain}!`)
+    const senderAddress = await sender.getAddress()
+    const done = await sdk.Faucet.done(senderAddress, sdk.Dai!.address)
+    if (done) throw new Error(`${this.srcDomain} faucet already used for ${senderAddress}!`)
+    const tx = await sdk.Faucet['gulp(address)'](sdk.Dai!.address, { ...overrides })
+    return tx
   }
 
   public async mintWithOracles(
@@ -228,9 +268,25 @@ export class TeleportBridge {
     to?: string,
     data?: string,
     relayAddress?: string,
+    pollingIntervalMs?: number,
+    timeoutMs?: number,
+    onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
   ): Promise<string> {
     const relay = _getRelay(this.dstDomain, this.dstDomainProvider, relayAddress)
-    return await waitForRelay(relay, receiver, teleportGUID, signatures, relayFee, maxFeePercentage, expiry, to, data)
+    return await waitForRelay(
+      relay,
+      receiver,
+      teleportGUID,
+      signatures,
+      relayFee,
+      maxFeePercentage,
+      expiry,
+      to,
+      data,
+      pollingIntervalMs,
+      timeoutMs,
+      onPayloadSigned,
+    )
   }
 
   public async canMintWithoutOracle(txHash: string): Promise<boolean> {
@@ -263,7 +319,14 @@ export class TeleportBridge {
 }
 
 function _getSignerOrProvider(provider: Provider, signer?: Signer): Signer | Provider {
-  return signer ? signer.connect(provider) : provider
+  if (signer) {
+    try {
+      return signer.connect(provider)
+    } catch {
+      return signer
+    }
+  }
+  return provider
 }
 
 async function _optionallySendTx(
@@ -278,6 +341,12 @@ async function _optionallySendTx(
     to: contract.address,
     data: contract.interface.encodeFunctionData(method, data),
   }
+}
+
+async function _getDaiBalance(userAddress: string, domain: DomainDescription, domainProvider: any): Promise<BigNumber> {
+  const sdk = getSdk(domain, domainProvider)
+  const balance = await sdk.Dai!.balanceOf(userAddress)
+  return balance
 }
 
 function _getRelay(dstDomain: DomainDescription, dstDomainProvider: Provider, relayAddress?: string): Relay {

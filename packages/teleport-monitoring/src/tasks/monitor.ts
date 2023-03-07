@@ -1,61 +1,78 @@
 import { BigNumber, ethers, providers } from 'ethers'
 
-import { onEveryFinalizedBlock } from '../blockchain'
-import { FlushRepository } from '../db/FlushRepository'
-import { SynchronizerStatusRepository } from '../db/SynchronizerStatusRepository'
-import { TeleportRepository } from '../db/TeleportRepository'
-import { bridgeInvariant } from '../monitoring/bridgeInvariant'
+import { bridgeInvariant, DomainId } from '../monitoring/bridgeInvariant'
 import { monitorTeleportFlush } from '../monitoring/teleportFlush'
 import { monitorTeleportMints } from '../monitoring/teleportMints'
+import { monitorTeleportSettle } from '../monitoring/teleportSettle'
+import { EthersBlockchainClient } from '../peripherals/blockchain'
+import { onEveryFinalizedBlock } from '../peripherals/blockchain/onEveryFinalizedBlock'
+import { FlushRepository } from '../peripherals/db/FlushRepository'
+import { SettleRepository } from '../peripherals/db/SettleRepository'
+import { SynchronizerStatusRepository } from '../peripherals/db/SynchronizerStatusRepository'
+import { TeleportRepository } from '../peripherals/db/TeleportRepository'
 import { getL1SdkBasedOnNetworkName, getL2SdkBasedOnNetworkName } from '../sdks'
-import { BaseSynchronizer } from '../synchronizers/BaseSynchronizer'
-import { FlushEventsSynchronizer } from '../synchronizers/FlushEventsSynchronizer'
-import { InitEventsSynchronizer } from '../synchronizers/InitEventsSynchronizer'
+import { FlushEventsSynchronizer, InitEventsSynchronizer, SettleEventsSynchronizer } from '../synchronizers'
+import { GenericSynchronizer } from '../synchronizers/GenericSynchronizer'
 import { Metrics, NetworkConfig } from '../types'
+import { makeMetricName } from '../utils'
 
 export async function monitor({
-  network,
+  networkConfig,
   l1Provider,
   teleportRepository,
   flushRepository,
+  settleRepository,
   synchronizerStatusRepository,
 }: {
-  network: NetworkConfig
+  networkConfig: NetworkConfig
   l1Provider: providers.Provider
   teleportRepository: TeleportRepository
   flushRepository: FlushRepository
+  settleRepository: SettleRepository
   synchronizerStatusRepository: SynchronizerStatusRepository
 }) {
   const metrics: Metrics = {}
+  const synchronizers: GenericSynchronizer[] = []
 
-  const l1Sdk = getL1SdkBasedOnNetworkName(network.sdkName, l1Provider)
+  // sync data from master
+  const l1Sdk = getL1SdkBasedOnNetworkName(networkConfig.sdkName, l1Provider)
+  const synchronizer = new SettleEventsSynchronizer(
+    new EthersBlockchainClient(l1Provider),
+    synchronizerStatusRepository,
+    networkConfig.name,
+    networkConfig.joinDeploymentBlock,
+    networkConfig.syncBatchSize,
+    settleRepository,
+    l1Sdk,
+  )
+  void synchronizer.run()
+  synchronizers.push(synchronizer)
 
   // sync data from slaves
-  const synchronizers: BaseSynchronizer[] = []
-  for (const slave of network.slaves) {
+  for (const slave of networkConfig.slaves) {
     const l2Provider = new ethers.providers.JsonRpcProvider(slave.l2Rpc)
     const l2Sdk = getL2SdkBasedOnNetworkName(slave.sdkName, l2Provider)
 
     const initEventsSynchronizer = new InitEventsSynchronizer(
-      l2Provider,
+      new EthersBlockchainClient(l2Provider),
       synchronizerStatusRepository,
-      teleportRepository,
-      l2Sdk,
       slave.name,
       slave.bridgeDeploymentBlock,
       slave.syncBatchSize,
+      teleportRepository,
+      l2Sdk,
     )
     void initEventsSynchronizer.run()
     synchronizers.push(initEventsSynchronizer)
 
     const flushEventsSynchronizer = new FlushEventsSynchronizer(
-      l2Provider,
+      new EthersBlockchainClient(l2Provider),
       synchronizerStatusRepository,
-      flushRepository,
-      l2Sdk,
       slave.name,
       slave.bridgeDeploymentBlock,
       slave.syncBatchSize,
+      flushRepository,
+      l2Sdk,
     )
     void flushEventsSynchronizer.run()
     synchronizers.push(flushEventsSynchronizer)
@@ -67,37 +84,54 @@ export async function monitor({
 
     const allSynced = synchronizers.every((sc) => sc.state === 'synced')
 
+    const labels = { domain: networkConfig.name, network: networkConfig.networkName }
     if (allSynced) {
-      const newBadDebt = await monitorTeleportMints(l1Sdk, teleportRepository, blockNumber)
-      const previousBadDebt = BigNumber.from(metrics[`teleport_bad_debt{domain="${network.name}"}`] || 0)
+      const newBadDebt = await monitorTeleportMints(
+        l1Sdk,
+        teleportRepository,
+        networkConfig.slaves.map((s) => s.name),
+        blockNumber,
+      )
+      const previousBadDebt = BigNumber.from(metrics[makeMetricName('teleport_bad_debt', labels)] || 0)
 
-      metrics[`teleport_bad_debt{domain="${network.name}"}`] = previousBadDebt.add(newBadDebt).toString()
+      metrics[makeMetricName('teleport_bad_debt', labels)] = previousBadDebt.add(newBadDebt).toString()
     }
 
-    for (const slave of network.slaves) {
+    for (const slave of networkConfig.slaves) {
+      const labels = { domain: slave.name, network: networkConfig.networkName }
       const l2Provider = new ethers.providers.JsonRpcProvider(slave.l2Rpc)
       const l2Sdk = getL2SdkBasedOnNetworkName(slave.sdkName, l2Provider)
 
-      const balances = await bridgeInvariant(l1Sdk, l2Sdk)
-      metrics[`teleport_l1_dai_balance{domain="${slave.name}"}`] = balances.l1Balance
-      metrics[`teleport_l2_dai_balance{domain="${slave.name}"}`] = balances.l2Balance
-      metrics[`teleport_l1_block{domain="${slave.name}"}`] = blockNumber
+      const balances = await bridgeInvariant(l1Sdk, l2Sdk, slave.name as DomainId)
+      metrics[makeMetricName('teleport_l1_dai_balance', labels)] = balances.l1Balance
+      metrics[makeMetricName('teleport_l2_dai_balance', labels)] = balances.l2Balance
+      metrics[makeMetricName('teleport_bad_debt_l1_block', labels)] = blockNumber
 
       if (allSynced) {
         const { sinceLastFlush, debtToFlush } = await monitorTeleportFlush(
           l2Sdk,
           flushRepository,
           slave.name,
-          network.name,
+          networkConfig.name,
         )
-        metrics[`teleport_last_flush_ms{domain="${slave.name}"}`] = sinceLastFlush
-        metrics[`teleport_debt_to_flush{domain="${slave.name}"}`] = debtToFlush
+        metrics[makeMetricName('teleport_last_flush_ms', labels)] = sinceLastFlush
+        metrics[makeMetricName('teleport_debt_to_flush', labels)] = debtToFlush
+
+        const { sinceLastSettle, debtToSettle } = await monitorTeleportSettle(
+          l1Sdk,
+          settleRepository,
+          slave.name,
+          networkConfig.name,
+        )
+        metrics[makeMetricName('teleport_last_settle_ms', labels)] = sinceLastSettle
+        metrics[makeMetricName('teleport_debt_to_settle', labels)] = debtToSettle
       }
     }
   }, l1Provider)
 
   return {
     metrics,
+    isAllSync: () => synchronizers.every((sc) => sc.state === 'synced'),
     cancel: () => {
       cancelBlockWatcher()
       synchronizers.forEach((sc) => sc.stop())

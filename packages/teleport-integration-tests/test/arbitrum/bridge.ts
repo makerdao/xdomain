@@ -1,5 +1,7 @@
 import { expect } from 'chai'
 import { constants, Signer } from 'ethers'
+import { formatBytes32String } from 'ethers/lib/utils'
+import { waitForTx } from 'xdomain-utils'
 
 import {
   ArbitrumDai__factory,
@@ -14,7 +16,7 @@ import {
   FakeArbitrumInbox__factory,
   FakeArbitrumOutbox__factory,
 } from '../../typechain'
-import { deployUsingFactoryAndVerify, getContractFactory, waitForTx } from '../helpers'
+import { deployUsingFactoryAndVerify, getContractFactory } from '../helpers'
 import { getAddressOfNextDeployedContract } from '../pe-utils/address'
 import { MakerSdk } from '../teleport'
 import { TeleportSdk } from '../teleport/teleport'
@@ -28,6 +30,7 @@ interface ArbitrumTeleportBridgeDeployOpts {
   teleportSdk: TeleportSdk
   baseBridgeSdk: ArbitrumBaseBridgeSdk
   slaveDomain: string
+  masterDomain: string
 }
 
 export async function deployArbitrumTeleportBridge(opts: ArbitrumTeleportBridgeDeployOpts) {
@@ -56,8 +59,9 @@ export async function deployArbitrumTeleportBridge(opts: ArbitrumTeleportBridgeD
   expect(l1TeleportBridge.address).to.be.eq(futureL1TeleportBridgeAddress, 'Future address doesnt match actual address')
   console.log('L1DaiTeleportGateway deployed at: ', l1TeleportBridge.address)
 
-  await l2TeleportBridge.rely(opts.baseBridgeSdk.l2GovRelay.address)
-  await l2TeleportBridge.deny(await opts.l2Signer.getAddress())
+  await waitForTx(l2TeleportBridge.file(formatBytes32String('validDomains'), opts.masterDomain, 1))
+  await waitForTx(l2TeleportBridge.rely(opts.baseBridgeSdk.l2GovRelay.address))
+  await waitForTx(l2TeleportBridge.deny(await opts.l2Signer.getAddress()))
 
   return { l2TeleportBridge, l1TeleportBridge }
 }

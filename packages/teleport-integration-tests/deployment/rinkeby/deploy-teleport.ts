@@ -38,7 +38,7 @@ async function main() {
     l1DaiTokenBridge: rinkebySdk.arbitrumDaiBridge.l1DaiGateway,
     l2Dai: arbitrumTestnetSdk.arbitrumDaiBridge.dai as any, // @todo: due to a problem in eth-sdk daiBridge.dai has l1Dai type...
     l2GovRelay: arbitrumTestnetSdk.arbitrumDaiBridge.l2GovernanceRelay as any, // @todo: due to a problem in eth-sdk daiBridge.l2GovernanceRelay has OptimismL2GovernanceRelay type...
-    l2DaiTokenBridge: arbitrumTestnetSdk.arbitrumDaiBridge.l2DaiGateway,
+    l2DaiTokenBridge: arbitrumTestnetSdk.arbitrumDaiBridge.l2DaiGateway as any,
   }
 
   const teleportSdk = await deployTeleport({
@@ -48,6 +48,7 @@ async function main() {
     joinDomain: masterDomain,
     globalFee: fee,
     globalFeeTTL: feeTTL,
+    globalFeeType: 'constant',
   })
 
   // Deploy a fake Arbitrum Inbox that allows relaying arbitrary L2>L1 messages without delay
@@ -60,6 +61,7 @@ async function main() {
     teleportSdk,
     baseBridgeSdk,
     slaveDomain: arbitrumSlaveDomain,
+    masterDomain,
     arbitrumRollupSdk: { ...arbitrumRollupSdk, inbox: fakeInbox },
   })
 

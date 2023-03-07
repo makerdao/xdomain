@@ -4,7 +4,7 @@ import { arrayify, hashMessage } from 'ethers/lib/utils'
 import { decodeTeleportData, getGuidHash, sleep, TeleportGUID } from '.'
 import { TeleportOracleAuth } from './sdk/esm/types'
 
-const ORACLE_API_URL = 'http://52.42.179.195:8080'
+const ORACLE_API_URL = 'https://lair.chroniclelabs.org'
 
 interface OracleData {
   data: { event: string; hash: string }
@@ -23,7 +23,7 @@ interface Attestation {
 async function fetchAttestations(txHash: string): Promise<Attestation[]> {
   const response = await axios.get(ORACLE_API_URL, {
     params: {
-      type: 'wormhole',
+      type: 'teleport_evm',
       index: txHash,
     },
   })
@@ -49,7 +49,7 @@ export async function waitForAttestations(
   pollingIntervalMs: number,
   teleportGUID?: TeleportGUID,
   timeoutMs?: number,
-  newSignatureReceivedCallback?: (numSignatures: number, threshold: number) => void,
+  onNewSignatureReceived?: (numSignatures: number, threshold: number) => void,
 ): Promise<{
   signatures: string
   teleportGUID: TeleportGUID
@@ -73,7 +73,7 @@ export async function waitForAttestations(
     const numSigs = (signatures.length - 2) / 130
 
     if (prevNumSigs === undefined || prevNumSigs! < numSigs) {
-      newSignatureReceivedCallback?.(numSigs, threshold)
+      onNewSignatureReceived?.(numSigs, threshold)
 
       if (guid && numSigs >= threshold) {
         const guidHash = getGuidHash(guid!)

@@ -6,7 +6,7 @@ import { NetworkData } from "./constants";
 import { BigNumber } from "ethers";
 import { when, resetAllWhenMocks } from "jest-when";
 
-const createFinding = (dai: string, chainId: number, escrow: string, escrowSupply: number, l2Supply: number) =>
+const createFinding = (dai: string, chainId: number, l1Escrow: string, escrowSupply: number, l2Supply: number) =>
   Finding.from({
     alertId: "MAKER-BRIDGE-INVARIANT",
     description: "Escrow DAI balance is less than L2 DAI total supply",
@@ -16,11 +16,11 @@ const createFinding = (dai: string, chainId: number, escrow: string, escrowSuppl
     protocol: "MakerDAO",
     metadata: {
       chainId: chainId.toString(),
-      escrow,
-      escrowBalance: escrowSupply.toString(),
+      l1Escrow,
+      l1EscrowBalance: escrowSupply.toString(),
       totalSupply: l2Supply.toString(),
     },
-    addresses: [escrow, dai],
+    addresses: [l1Escrow, dai],
   });
 
 describe("Bridge invariant tests", () => {
@@ -33,20 +33,20 @@ describe("Bridge invariant tests", () => {
   const multiL2Data: NetworkData[] = [
     {
       chainId: 42,
-      escrow: createAddress("0xe0a"),
+      l1Escrow: createAddress("0xe0a"),
     },
     {
       chainId: 2022,
-      escrow: createAddress("0xf33"),
+      l1Escrow: createAddress("0xf33"),
     },
     {
       chainId: 7115,
-      escrow: createAddress("0x7115"),
+      l1Escrow: createAddress("0x7115"),
     },
   ];
   const data: NetworkData = {
     chainId: 15,
-    escrow: createAddress("0xdead"),
+    l1Escrow: createAddress("0xdead"),
   };
   const handler: HandleBlock = provideHandleBlock(mockProvider as any, [data], mockFetcher as any, dai);
 
@@ -67,13 +67,13 @@ describe("Bridge invariant tests", () => {
     ];
 
     for (let [block, timestamp, balance, supply] of TEST_CASES) {
-      mockProvider.addCallTo(dai, block, abi.DAI, "balanceOf", { inputs: [data.escrow], outputs: [balance] });
+      mockProvider.addCallTo(dai, block, abi.DAI, "balanceOf", { inputs: [data.l1Escrow], outputs: [balance] });
       when(mockGetL2Supply).calledWith(data.chainId, timestamp, BigNumber.from(balance)).mockReturnValueOnce(supply);
 
       const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(timestamp).setNumber(block);
       const findings: Finding[] = await handler(blockEvent);
       if (balance >= supply) expect(findings).toStrictEqual([]);
-      else expect(findings).toStrictEqual([createFinding(dai, data.chainId, data.escrow, balance, supply)]);
+      else expect(findings).toStrictEqual([createFinding(dai, data.chainId, data.l1Escrow, balance, supply)]);
     }
   });
 
@@ -91,7 +91,7 @@ describe("Bridge invariant tests", () => {
     const expectedFindings: Finding[] = [];
     for (let [l2, balance, supply] of DATA) {
       mockProvider.addCallTo(dai, block, abi.DAI, "balanceOf", {
-        inputs: [multiL2Data[l2].escrow],
+        inputs: [multiL2Data[l2].l1Escrow],
         outputs: [balance],
       });
       when(mockGetL2Supply)
@@ -99,7 +99,7 @@ describe("Bridge invariant tests", () => {
         .mockReturnValueOnce(supply);
 
       if (balance < supply)
-        expectedFindings.push(createFinding(dai, multiL2Data[l2].chainId, multiL2Data[l2].escrow, balance, supply));
+        expectedFindings.push(createFinding(dai, multiL2Data[l2].chainId, multiL2Data[l2].l1Escrow, balance, supply));
     }
 
     const blockEvent: BlockEvent = new TestBlockEvent().setTimestamp(timestamp).setNumber(block);

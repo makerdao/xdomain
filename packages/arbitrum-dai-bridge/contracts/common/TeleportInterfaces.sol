@@ -20,58 +20,58 @@ pragma experimental ABIEncoderV2;
 import {TeleportGUID} from "./TeleportGUID.sol";
 
 interface IL1TeleportRouter {
-  function requestMint(
-    TeleportGUID calldata teleportGUID,
-    uint256 maxFeePercentage,
-    uint256 operatorFee
-  ) external returns (uint256 postFeeAmount, uint256 totalFee);
+    function requestMint(
+        TeleportGUID calldata teleportGUID,
+        uint256 maxFeePercentage,
+        uint256 operatorFee
+    ) external returns (uint256 postFeeAmount, uint256 totalFee);
 
-  function settle(bytes32 targetDomain, uint256 batchedDaiToFlush) external;
+    function settle(bytes32 targetDomain, uint256 batchedDaiToFlush) external;
 }
 
 interface IL1TeleportGateway {
-  function l1Token() external view returns (address);
+    function l1Token() external view returns (address);
 
-  function l1Escrow() external view returns (address);
+    function l1Escrow() external view returns (address);
 
-  function l1TeleportRouter() external view returns (IL1TeleportRouter);
+    function l1TeleportRouter() external view returns (IL1TeleportRouter);
 
-  function l2TeleportGateway() external view returns (address);
+    function l2TeleportGateway() external view returns (address);
 
-  function finalizeFlush(bytes32 targetDomain, uint256 daiToFlush) external;
+    function finalizeFlush(bytes32 targetDomain, uint256 daiToFlush) external;
 
-  function finalizeRegisterTeleport(TeleportGUID calldata teleport) external;
+    function finalizeRegisterTeleport(TeleportGUID calldata teleport) external;
 }
 
 interface IL2TeleportGateway {
-  event TeleportInitialized(TeleportGUID teleport);
-  event Flushed(bytes32 indexed targetDomain, uint256 dai);
+    event TeleportInitialized(TeleportGUID teleport);
+    event Flushed(bytes32 indexed targetDomain, uint256 dai);
 
-  function l2Token() external view returns (address);
+    function l2Token() external view returns (address);
 
-  function l1TeleportGateway() external view returns (address);
+    function l1TeleportGateway() external view returns (address);
 
-  function domain() external view returns (bytes32);
+    function domain() external view returns (bytes32);
 
-  function initiateTeleport(
-    bytes32 targetDomain,
-    address receiver,
-    uint128 amount
-  ) external;
+    function initiateTeleport(
+        bytes32 targetDomain,
+        address receiver,
+        uint128 amount
+    ) external;
 
-  function initiateTeleport(
-    bytes32 targetDomain,
-    address receiver,
-    uint128 amount,
-    address operator
-  ) external;
+    function initiateTeleport(
+        bytes32 targetDomain,
+        address receiver,
+        uint128 amount,
+        address operator
+    ) external;
 
-  function initiateTeleport(
-    bytes32 targetDomain,
-    bytes32 receiver,
-    uint128 amount,
-    bytes32 operator
-  ) external;
+    function initiateTeleport(
+        bytes32 targetDomain,
+        bytes32 receiver,
+        uint128 amount,
+        bytes32 operator
+    ) external;
 
-  function flush(bytes32 targetDomain) external;
+    function flush(bytes32 targetDomain) external;
 }

@@ -3,13 +3,13 @@
 pragma solidity >=0.7.6;
 
 contract BadSpell {
-  uint256 public someVar;
+    uint256 public someVar;
 
-  function modifyStorage() external {
-    someVar = 5;
-  }
+    function modifyStorage() external {
+        someVar = 5;
+    }
 
-  function abort() external pure {
-    require(false, "ABORT!");
-  }
+    function abort() external pure {
+        require(false, "ABORT!");
+    }
 }

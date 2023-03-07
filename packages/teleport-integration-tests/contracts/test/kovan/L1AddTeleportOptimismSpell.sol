@@ -14,97 +14,97 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.13;
+pragma solidity 0.8.15;
 
 interface TeleportJoinLike {
-  function file(
-    bytes32 what,
-    bytes32 domain_,
-    uint256 data
-  ) external;
+    function file(
+        bytes32 what,
+        bytes32 domain_,
+        uint256 data
+    ) external;
 
-  function file(
-    bytes32 what,
-    bytes32 domain_,
-    address data
-  ) external;
+    function file(
+        bytes32 what,
+        bytes32 domain_,
+        address data
+    ) external;
 }
 
 interface RouterLike {
-  function file(
-    bytes32 what,
-    bytes32 domain,
-    address data
-  ) external;
+    function file(
+        bytes32 what,
+        bytes32 domain,
+        address data
+    ) external;
 }
 
 interface L1Escrow {
-  function approve(
-    address token,
-    address spender,
-    uint256 value
-  ) external;
+    function approve(
+        address token,
+        address spender,
+        uint256 value
+    ) external;
 }
 
 interface GovernanceRelayLike {
-  function relay(
-    address target,
-    bytes calldata targetData,
-    uint32 l2gas
-  ) external;
+    function relay(
+        address target,
+        bytes calldata targetData,
+        uint32 l2gas
+    ) external;
 }
 
 contract L1AddTeleportOptimismSpell {
-  uint256 public constant RAY = 10**27;
+    uint256 public constant RAY = 10**27;
 
-  bytes32 public immutable slaveDomain;
+    bytes32 public immutable slaveDomain;
 
-  TeleportJoinLike public immutable teleportJoin;
-  address public immutable constantFees;
+    TeleportJoinLike public immutable teleportJoin;
+    address public immutable constantFees;
 
-  uint256 public immutable line;
+    uint256 public immutable line;
 
-  RouterLike public immutable router;
-  address public immutable slaveDomainBridge;
+    RouterLike public immutable router;
+    address public immutable slaveDomainBridge;
 
-  L1Escrow public immutable escrow;
-  address public immutable dai;
+    L1Escrow public immutable escrow;
+    address public immutable dai;
 
-  GovernanceRelayLike public immutable l1GovRelay;
-  address public immutable l2ConfigureDomainSpell;
+    GovernanceRelayLike public immutable l1GovRelay;
+    address public immutable l2ConfigureDomainSpell;
 
-  constructor(
-    bytes32 _slaveDomain,
-    TeleportJoinLike _teleportJoin,
-    address _constantFees,
-    uint256 _line,
-    RouterLike _router,
-    address _slaveDomainBridge,
-    L1Escrow _escrow,
-    address _dai,
-    GovernanceRelayLike _l1GovRelay,
-    address _l2ConfigureDomainSpell
-  ) {
-    slaveDomain = _slaveDomain;
-    teleportJoin = _teleportJoin;
-    constantFees = _constantFees;
-    line = _line;
-    router = _router;
-    slaveDomainBridge = _slaveDomainBridge;
-    escrow = _escrow;
-    dai = _dai;
-    l1GovRelay = _l1GovRelay;
-    l2ConfigureDomainSpell = _l2ConfigureDomainSpell;
-  }
+    constructor(
+        bytes32 _slaveDomain,
+        TeleportJoinLike _teleportJoin,
+        address _constantFees,
+        uint256 _line,
+        RouterLike _router,
+        address _slaveDomainBridge,
+        L1Escrow _escrow,
+        address _dai,
+        GovernanceRelayLike _l1GovRelay,
+        address _l2ConfigureDomainSpell
+    ) {
+        slaveDomain = _slaveDomain;
+        teleportJoin = _teleportJoin;
+        constantFees = _constantFees;
+        line = _line;
+        router = _router;
+        slaveDomainBridge = _slaveDomainBridge;
+        escrow = _escrow;
+        dai = _dai;
+        l1GovRelay = _l1GovRelay;
+        l2ConfigureDomainSpell = _l2ConfigureDomainSpell;
+    }
 
-  function execute() external {
-    router.file(bytes32("gateway"), slaveDomain, slaveDomainBridge);
+    function execute() external {
+        router.file(bytes32("gateway"), slaveDomain, slaveDomainBridge);
 
-    teleportJoin.file(bytes32("fees"), slaveDomain, constantFees);
-    teleportJoin.file(bytes32("line"), slaveDomain, line);
+        teleportJoin.file(bytes32("fees"), slaveDomain, constantFees);
+        teleportJoin.file(bytes32("line"), slaveDomain, line);
 
-    escrow.approve(dai, slaveDomainBridge, type(uint256).max);
+        escrow.approve(dai, slaveDomainBridge, type(uint256).max);
 
-    l1GovRelay.relay(l2ConfigureDomainSpell, abi.encodeWithSignature("execute()"), 3_000_000);
-  }
+        l1GovRelay.relay(l2ConfigureDomainSpell, abi.encodeWithSignature("execute()"), 3_000_000);
+    }
 }

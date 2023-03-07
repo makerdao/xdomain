@@ -4,10 +4,12 @@ import { waffleChai } from '@ethereum-waffle/chai'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { expect, use } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { Contract, ContractTransaction, ethers, Wallet } from 'ethers'
+import { Contract, ContractTransaction, ethers } from 'ethers'
 import { formatBytes32String, parseEther } from 'ethers/lib/utils'
+import { RetryProvider, RetryWallet } from 'xdomain-utils'
 
 import {
+  approveSrcGateway,
   BridgeSettings,
   canMintWithoutOracle,
   decodeTeleportData,
@@ -18,8 +20,11 @@ import {
   getAmountsForTeleportGUID,
   getAttestations,
   getDefaultDstDomain,
+  getDstBalance,
   getLikelyDomainId,
   getSdk,
+  getSrcBalance,
+  getSrcGatewayAllowance,
   getTeleportBridge,
   initRelayedTeleport,
   initTeleport,
@@ -38,17 +43,40 @@ ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
 const WAD = parseEther('1.0')
 const amount = 3
 
+const privKeyEnvVars = {
+  'KOVAN-MASTER-1': 'KOVAN_USER_PRIV_KEY',
+  'KOVAN-SLAVE-OPTIMISM-1': 'KOVAN_OPTIMISM_USER_PRIV_KEY',
+  'RINKEBY-MASTER-1': 'RINKEBY_USER_PRIV_KEY',
+  'RINKEBY-SLAVE-ARBITRUM-1': 'RINKEBY_ARBITRUM_USER_PRIV_KEY',
+  'ETH-GOER-A': 'GOERLI_USER_PRIV_KEY',
+  'OPT-GOER-A': 'GOERLI_OPTIMISM_USER_PRIV_KEY',
+  'ARB-GOER-A': 'GOERLI_ARBITRUM_USER_PRIV_KEY',
+}
+
 async function getTestWallets(srcDomainDescr: DomainDescription) {
   const srcDomain = getLikelyDomainId(srcDomainDescr)
-  const pkeyEnvVar = srcDomain.includes('KOVAN') ? 'KOVAN_OPTIMISM_USER_PRIV_KEY' : 'RINKEBY_ARBITRUM_USER_PRIV_KEY'
-  const pkey = process.env[pkeyEnvVar]!
+  const pkeyEnvVar = privKeyEnvVars[srcDomain]
+  const pkey = process.env[pkeyEnvVar] || process.env.USER_PRIV_KEY
+  if (!pkey) throw new Error(`Missing ${pkeyEnvVar} in .env`)
   const dstDomain = getDefaultDstDomain(srcDomain)
-  const l1Provider = new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[dstDomain])
-  const l2Provider = new ethers.providers.JsonRpcProvider(DEFAULT_RPC_URLS[srcDomain])
-  const l1User = new Wallet(pkey, l1Provider)
-  const l2User = new Wallet(pkey, l2Provider)
+  const l1Provider = new RetryProvider(10, DEFAULT_RPC_URLS[dstDomain])
+  const l2Provider = new RetryProvider(10, DEFAULT_RPC_URLS[srcDomain])
+  const l1User = new RetryWallet(10, pkey, l1Provider)
+  const l2User = new RetryWallet(10, pkey, l2Provider)
 
   await fundTestWallet(l1User, l2User, srcDomain, dstDomain, amount)
+
+  const srcBalance = await getSrcBalance({ userAddress: l2User.address, srcDomain })
+  expect(srcBalance).to.be.gt(0)
+
+  let allowance = await getSrcGatewayAllowance({ userAddress: l2User.address, srcDomain })
+  if (allowance.lt(amount)) {
+    console.log('Approving source gateway...')
+    const { tx } = await approveSrcGateway({ sender: l2User, srcDomain })
+    await tx?.wait()
+    allowance = await getSrcGatewayAllowance({ userAddress: l2User.address, srcDomain })
+    expect(allowance).to.be.gte(ethers.BigNumber.from(amount))
+  }
 
   return { l1User, l2User, dstDomain }
 }
@@ -68,9 +96,14 @@ describe('TeleportBridge', () => {
     it('should auto-fill default RPC URLs and dstDomain (kovan-optimism)', () => {
       testDefaults('KOVAN-SLAVE-OPTIMISM-1')
     })
-
     it('should auto-fill default RPC URLs and dstDomain (rinkeby-arbitrum)', () => {
       testDefaults('RINKEBY-SLAVE-ARBITRUM-1')
+    })
+    it('should auto-fill default RPC URLs and dstDomain (goerli-optimism)', () => {
+      testDefaults('OPT-GOER-A')
+    })
+    it('should auto-fill default RPC URLs and dstDomain (goerli-arbitrun)', () => {
+      testDefaults('ARB-GOER-A')
     })
   })
 
@@ -154,6 +187,22 @@ describe('TeleportBridge', () => {
     it.skip('should initiate withdrawal (rinkeby-arbitrum, wrapper)', async () => {
       await testInitTeleport({ srcDomain: 'arbitrum-testnet', useWrapper: true })
     })
+
+    it.skip('should initiate withdrawal (goerli-optimism)', async () => {
+      await testInitTeleport({ srcDomain: 'optimism-goerli-testnet' })
+    })
+
+    it.skip('should initiate withdrawal (goerli-optimism, build-only)', async () => {
+      await testInitTeleport({ srcDomain: 'optimism-goerli-testnet', buildOnly: true })
+    })
+
+    it.skip('should initiate withdrawal (goerli-arbitrum)', async () => {
+      await testInitTeleport({ srcDomain: 'arbitrum-goerli-testnet' })
+    })
+
+    it.skip('should initiate withdrawal (goerli-arbitrum, wrapper)', async () => {
+      await testInitTeleport({ srcDomain: 'arbitrum-goerli-testnet', useWrapper: true })
+    })
   })
 
   async function testGetAttestations({
@@ -183,7 +232,7 @@ describe('TeleportBridge', () => {
     let signatures: string
     let guid: TeleportGUID | undefined
 
-    const newSignatureReceivedCallback = (numSigs: number, threshold: number) =>
+    const onNewSignatureReceived = (numSigs: number, threshold: number) =>
       console.log(`Signatures received: ${numSigs} (required: ${threshold}).`)
 
     console.log(`Requesting attestation for ${txHash} (timeout: ${timeoutMs}ms)`)
@@ -192,13 +241,13 @@ describe('TeleportBridge', () => {
         txHash,
         srcDomain,
         timeoutMs,
-        newSignatureReceivedCallback,
+        onNewSignatureReceived,
         teleportGUID,
       }))
     } else {
       ;({ signatures, teleportGUID: guid } = await bridge!.getAttestations(
         txHash,
-        newSignatureReceivedCallback,
+        onNewSignatureReceived,
         timeoutMs,
         undefined,
         teleportGUID,
@@ -221,6 +270,18 @@ describe('TeleportBridge', () => {
 
     it.skip('should produce attestations (rinkeby-arbitrum, wrapper)', async () => {
       await testGetAttestations({ srcDomain: 'arbitrum-testnet', useWrapper: true })
+    })
+
+    it.skip('should produce attestations (goerli-optimism)', async () => {
+      await testGetAttestations({ srcDomain: 'optimism-goerli-testnet' })
+    })
+
+    it.skip('should produce attestations (goerli-arbitrum)', async () => {
+      await testGetAttestations({ srcDomain: 'arbitrum-goerli-testnet' })
+    })
+
+    it.skip('should produce attestations (goerli-arbitrum, wrapper)', async () => {
+      await testGetAttestations({ srcDomain: 'arbitrum-goerli-testnet', useWrapper: true })
     })
 
     it('should produce attestations for a tx initiating multiple withdrawals (rinkeby-arbitrum, wrapper)', async () => {
@@ -325,6 +386,14 @@ describe('TeleportBridge', () => {
     it('should return fees and mintable amounts (rinkeby-arbitrum, wrapper, without teleportGUID)', async () => {
       await testGetAmounts({ srcDomain: 'arbitrum-testnet', useWrapper: true })
     })
+
+    it('should return fees and mintable amounts (goerli-optimism, wrapper, with teleportGUID)', async () => {
+      await testGetAmountsForTeleportGUID({ srcDomain: 'optimism-goerli-testnet', useWrapper: true })
+    })
+
+    it('should return fees and mintable amounts (goerli-arbitrum, wrapper, without teleportGUID)', async () => {
+      await testGetAmounts({ srcDomain: 'arbitrum-goerli-testnet', useWrapper: true })
+    })
   })
 
   async function testMintWithOracles({
@@ -362,8 +431,11 @@ describe('TeleportBridge', () => {
       res = await bridge!.getAmountsForTeleportGUID(teleportGUID!, undefined, relayParams, relayAddress)
     }
     const { mintable, bridgeFee, relayFee } = res
+    expect(relayFee).to.not.be.undefined
 
     const maxFeePercentage = bridgeFee.mul(WAD).div(mintable)
+
+    const initialDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
 
     if (useRelay) {
       let txHash
@@ -373,21 +445,33 @@ describe('TeleportBridge', () => {
           receiver: l1User,
           teleportGUID: teleportGUID!,
           signatures,
-          relayFee,
+          relayFee: relayFee || 0,
           maxFeePercentage,
           relayAddress,
+          onPayloadSigned: (payload, r, s) => {
+            expect(payload).to.satisfy((h: string) => h.startsWith('0x'))
+            expect(r).to.satisfy((h: string) => h.startsWith('0x'))
+            expect(s).to.satisfy((h: string) => h.startsWith('0x'))
+          },
         })
       } else {
         txHash = await bridge!.relayMintWithOracles(
           l1User,
           teleportGUID!,
           signatures,
-          relayFee,
+          relayFee || 0,
           maxFeePercentage,
           undefined,
           undefined,
           undefined,
           relayAddress,
+          undefined,
+          undefined,
+          (payload, r, s) => {
+            expect(payload).to.satisfy((h: string) => h.startsWith('0x'))
+            expect(r).to.satisfy((h: string) => h.startsWith('0x'))
+            expect(s).to.satisfy((h: string) => h.startsWith('0x'))
+          },
         )
       }
 
@@ -429,6 +513,10 @@ describe('TeleportBridge', () => {
     }
 
     await tx!.wait()
+
+    const finalDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
+    expect(finalDstBalance).to.be.gt(initialDstBalance)
+
     return { txHash: tx!.hash, bridge }
   }
 
@@ -447,6 +535,14 @@ describe('TeleportBridge', () => {
 
     it('should mint with oracles (rinkeby-arbitrum, wrapper)', async () => {
       await testMintWithOracles({ srcDomain: 'arbitrum-testnet', useWrapper: true })
+    })
+
+    it('should mint with oracles (goerli-arbitrum, wrapper)', async () => {
+      await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet', useWrapper: true })
+    })
+
+    it('should mint with oracles (goerli-optimism, wrapper)', async () => {
+      await testMintWithOracles({ srcDomain: 'optimism-goerli-testnet', useWrapper: true })
     })
   })
 
@@ -472,10 +568,31 @@ describe('TeleportBridge', () => {
         await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay })
       })
 
-      it('should relay a mint with oracles (kovan-optimism, wrapper, non-precise relayFee)', async () => {
-        await testMintWithOracles({ srcDomain: 'optimism-testnet', useRelay, useWrapper: true })
+      it('should relay a mint with oracles (goerli-optimism, precise relayFee)', async () => {
+        await testMintWithOracles({
+          srcDomain: 'optimism-goerli-testnet',
+          useRelay,
+          usePreciseRelayFeeEstimation: true,
+        })
+      })
+
+      it('should relay a mint with oracles (goerli-optimism, non-precise relayFee)', async () => {
+        await testMintWithOracles({ srcDomain: 'optimism-goerli-testnet', useRelay })
+      })
+
+      it('should relay a mint with oracles (goerli-arbitrum, precise relayFee)', async () => {
+        await testMintWithOracles({
+          srcDomain: 'arbitrum-goerli-testnet',
+          useRelay,
+          usePreciseRelayFeeEstimation: true,
+        })
+      })
+
+      it('should relay a mint with oracles (goerli-arbitrum, non-precise relayFee)', async () => {
+        await testMintWithOracles({ srcDomain: 'arbitrum-goerli-testnet', useRelay })
       })
     }
+
     describe('Using BasicRelay', async () => {
       await testRelayMint({ useRelay: true })
     })
@@ -507,6 +624,7 @@ describe('TeleportBridge', () => {
       expect(canMint).to.be.eq(settings.useFakeArbitrumOutbox || false)
 
       if (canMint) {
+        const initialDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
         let tx: ContractTransaction
         if (useWrapper) {
           tx = await mintWithoutOracles({
@@ -520,6 +638,9 @@ describe('TeleportBridge', () => {
         }
 
         await tx.wait()
+
+        const finalDstBalance = await getDstBalance({ userAddress: l1User.address, srcDomain })
+        expect(finalDstBalance).to.be.gt(initialDstBalance)
       }
     }
 

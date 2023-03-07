@@ -5,8 +5,9 @@ import * as dotenv from 'dotenv'
 import { ethers, Wallet } from 'ethers'
 import { formatEther, Interface, parseUnits } from 'ethers/lib/utils'
 import * as hre from 'hardhat'
+import { waitForTx } from 'xdomain-utils'
 
-import { getContractFactory, impersonateAccount, waitForTx } from '../../test/helpers'
+import { getContractFactory, impersonateAccount } from '../../test/helpers'
 import { getAttestations } from '../../test/teleport'
 dotenv.config()
 

@@ -6,4 +6,4 @@ export type RelayTxToL1Function = (
 
 export type RelayTxToL2Function = (
   l1OriginatingTx: Promise<ContractTransaction> | ContractTransaction | ContractReceipt,
-) => Promise<providers.TransactionReceipt>
+) => Promise<providers.TransactionReceipt | void>

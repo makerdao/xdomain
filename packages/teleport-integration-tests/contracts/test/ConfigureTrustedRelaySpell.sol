@@ -14,39 +14,39 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.13;
+pragma solidity 0.8.15;
 
 interface TrustedRelayLike {
-  function file(bytes32 what, uint256 data) external;
+    function file(bytes32 what, uint256 data) external;
 
-  function kiss(address usr) external;
+    function kiss(address usr) external;
 
-  function ethPriceOracle() external view returns (address);
+    function ethPriceOracle() external view returns (address);
 }
 
 interface MedianLike {
-  function kiss(address usr) external;
+    function kiss(address usr) external;
 }
 
 contract ConfigureTrustedRelaySpell {
-  TrustedRelayLike public immutable trustedRelay;
-  address public immutable bud;
-  uint256 public immutable gasMargin;
+    TrustedRelayLike public immutable trustedRelay;
+    address public immutable bud;
+    uint256 public immutable gasMargin;
 
-  constructor(
-    address _trustedRelay,
-    uint256 _gasMargin,
-    address _bud
-  ) {
-    trustedRelay = TrustedRelayLike(_trustedRelay);
-    gasMargin = _gasMargin;
-    bud = _bud;
-  }
+    constructor(
+        address _trustedRelay,
+        uint256 _gasMargin,
+        address _bud
+    ) {
+        trustedRelay = TrustedRelayLike(_trustedRelay);
+        gasMargin = _gasMargin;
+        bud = _bud;
+    }
 
-  function execute() external {
-    MedianLike median = MedianLike(trustedRelay.ethPriceOracle());
-    median.kiss(address(trustedRelay));
-    trustedRelay.file(bytes32("margin"), gasMargin);
-    trustedRelay.kiss(bud);
-  }
+    function execute() external {
+        MedianLike median = MedianLike(trustedRelay.ethPriceOracle());
+        median.kiss(address(trustedRelay));
+        trustedRelay.file(bytes32("margin"), gasMargin);
+        trustedRelay.kiss(bud);
+    }
 }

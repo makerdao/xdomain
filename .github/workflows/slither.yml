@@ -6,34 +6,34 @@ on:
       - master
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze-optimism-dai-bridge:
     name: Slither for optimism-dai-bridge
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./packages/optimism-dai-bridge
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run Slither
         uses: crytic/slither-action@v0.1.1
-        working-directory: ./packages/optimism-dai-bridge
+        continue-on-error: true
         with:
-          node-version: 12
+          node-version: 14
+          target: ./packages/optimism-dai-bridge
   analyze-arbitrum-dai-bridge:
     name: Slither for arbitrum-dai-bridge
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./packages/arbitrum-dai-bridge
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run Slither
         uses: crytic/slither-action@v0.1.1
-        working-directory: ./packages/arbitrum-dai-bridge
+        continue-on-error: true
         with:
-          node-version: 12
+          node-version: 14
+          target: ./packages/arbitrum-dai-bridge

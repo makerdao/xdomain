@@ -2,10 +2,10 @@ import { getMainnetSdk } from '@dethcrypto/eth-sdk-client'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { getOptionalEnv, getRequiredEnv } from '@makerdao/hardhat-utils'
 import { ethers, Wallet } from 'ethers'
+import { RetryProvider } from 'xdomain-utils'
 
 import { L1AddTeleportOptimismSpell__factory, L2AddTeleportDomainSpell__factory } from '../../typechain'
 import { deployUsingFactory, forwardTime, getContractFactory, mintEther, toEthersBigNumber } from '../helpers'
-import { RetryProvider } from '../helpers/RetryProvider'
 import {
   deployTeleport,
   DomainSetupOpts,
@@ -79,6 +79,7 @@ export async function setupOptimismTests({
     joinDomain: masterDomain,
     globalFee: fee,
     globalFeeTTL: TTL,
+    globalFeeType: 'constant',
   })
 
   const baseBridgeSdk = await deployOptimismBaseBridge({
@@ -94,6 +95,7 @@ export async function setupOptimismTests({
     teleportSdk,
     baseBridgeSdk,
     slaveDomain: domain,
+    masterDomain,
     optimismRollupSdk,
   })
 
@@ -111,7 +113,7 @@ export async function setupOptimismTests({
   const addTeleportDomainSpell = await L1AddTeleportOptimismSpellFactory.deploy(
     domain,
     teleportSdk.join.address,
-    teleportSdk.constantFee.address,
+    teleportSdk.feeContract.address,
     line,
     teleportSdk.router.address,
     teleportBridgeSdk.l1TeleportBridge.address,
@@ -152,5 +154,5 @@ export async function setupOptimismTests({
 }
 
 async function forwardTimeToAfterFinalization(l1Provider: JsonRpcProvider) {
-  await forwardTime(l1Provider, TTL)
+  await forwardTime(l1Provider as any, TTL)
 }

@@ -14,7 +14,7 @@ export default class SupplyFetcher {
 
   public async getL2Supply(chainId: number, timestamp: number, fallback: any = undefined) {
     let offset: any = {};
-    const miliseconds: number = timestamp * 1000;
+    const milliseconds: number = timestamp * 1000;
     while (true) {
       const { data } = await this.post(
         this.endpoint,
@@ -32,7 +32,7 @@ export default class SupplyFetcher {
 
       for (let alert of alerts.alerts) {
         const date: Date = new Date(alert.source.block.timestamp);
-        if (date.valueOf() <= miliseconds) return alert.metadata.supply;
+        if (date.valueOf() <= milliseconds) return alert.metadata.supply;
       }
 
       if (alerts.pageInfo.hasNextPage) {

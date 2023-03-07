@@ -52,6 +52,7 @@ async function main() {
     joinDomain: masterDomain,
     globalFee: fee,
     globalFeeTTL: feeTTL,
+    globalFeeType: 'constant',
   })
 
   const teleportBridgeSdk = await deployOptimismTeleportBridge({
@@ -61,6 +62,7 @@ async function main() {
     teleportSdk,
     baseBridgeSdk,
     slaveDomain: optimismSlaveDomain,
+    masterDomain,
     optimismRollupSdk,
   })
 

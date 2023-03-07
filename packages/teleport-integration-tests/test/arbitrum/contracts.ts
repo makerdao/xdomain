@@ -1,21 +1,16 @@
-import { Provider } from '@ethersproject/providers'
 import { ethers } from 'ethers'
 
 export const arbitrumL2CoreContracts = {
-  arbRetryableTx: '0x000000000000000000000000000000000000006E',
   nodeInterface: '0x00000000000000000000000000000000000000C8',
 }
 
-export function getArbitrumCoreContracts(l2: Provider) {
+export function getArbitrumCoreContracts(l2: ethers.providers.Provider) {
   return {
-    arbRetryableTx: new ethers.Contract(
-      arbitrumL2CoreContracts.arbRetryableTx,
-      require('./abis/ArbRetryableTx.json').abi,
-      l2,
-    ),
-    nodeInterface: new ethers.Contract(
+    nodeInterface_Nitro: new ethers.Contract(
       arbitrumL2CoreContracts.nodeInterface,
-      require('./abis/NodeInterface.json').abi,
+      new ethers.utils.Interface([
+        'function estimateRetryableTicket(address sender,uint256 deposit,address to,uint256 l2CallValue,address excessFeeRefundAddress,address callValueRefundAddress,bytes calldata data) external',
+      ]),
       l2,
     ),
   }

@@ -14,104 +14,104 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.13;
+pragma solidity 0.8.15;
 
 interface IFakeArbitrumInbox {
-  function bridge() external view returns (address);
+    function bridge() external view returns (address);
 
-  function setBridge(address _bridge) external;
+    function setBridge(address _bridge) external;
 }
 
 library Address {
-  function isContract(address account) internal view returns (bool) {
-    uint256 size;
-    // solhint-disable-next-line no-inline-assembly
-    assembly {
-      size := extcodesize(account)
+    function isContract(address account) internal view returns (bool) {
+        uint256 size;
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            size := extcodesize(account)
+        }
+        return size > 0;
     }
-    return size > 0;
-  }
 }
 
 contract FakeArbitrumBridge {
-  using Address for address;
+    using Address for address;
 
-  event OwnerUpdated(address newOwner);
-  event OutboxToggle(address indexed outbox, bool enabled);
-  event BridgeCallTriggered(
-    address indexed outbox,
-    address indexed destAddr,
-    uint256 amount,
-    bytes data
-  );
+    event OwnerUpdated(address newOwner);
+    event OutboxToggle(address indexed outbox, bool enabled);
+    event BridgeCallTriggered(
+        address indexed outbox,
+        address indexed destAddr,
+        uint256 amount,
+        bytes data
+    );
 
-  struct InOutInfo {
-    uint256 index;
-    bool allowed;
-  }
-  mapping(address => InOutInfo) private allowedOutboxesMap;
-  address[] public allowedOutboxList;
+    struct InOutInfo {
+        uint256 index;
+        bool allowed;
+    }
+    mapping(address => InOutInfo) private allowedOutboxesMap;
+    address[] public allowedOutboxList;
 
-  address public owner;
-  IFakeArbitrumInbox public immutable fakeInbox;
+    address public owner;
+    IFakeArbitrumInbox public immutable fakeInbox;
 
-  address public activeOutbox;
+    address public activeOutbox;
 
-  constructor(address _fakeInbox) {
-    owner = msg.sender;
-    fakeInbox = IFakeArbitrumInbox(_fakeInbox);
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == owner, "FakeArbitrumBridge/ONLY_OWNER");
-    _;
-  }
-
-  function setOwner(address newOwner) external onlyOwner {
-    owner = newOwner;
-    emit OwnerUpdated(newOwner);
-  }
-
-  function executeCall(
-    address destAddr,
-    uint256 amount,
-    bytes calldata data
-  ) external returns (bool success, bytes memory returnData) {
-    require(allowedOutboxesMap[msg.sender].allowed, "FakeArbitrumBridge/NOT_FROM_OUTBOX");
-    if (data.length > 0) require(destAddr.isContract(), "FakeArbitrumBridge/NO_CODE_AT_DEST");
-
-    address prevBridge = fakeInbox.bridge();
-    if (prevBridge != address(this)) {
-      fakeInbox.setBridge(address(this));
+    constructor(address _fakeInbox) {
+        owner = msg.sender;
+        fakeInbox = IFakeArbitrumInbox(_fakeInbox);
     }
 
-    address currentOutbox = activeOutbox;
-    activeOutbox = msg.sender;
-    // We set and reset active outbox around external call so activeOutbox remains valid during call
-    (success, returnData) = destAddr.call{value: amount}(data);
-    activeOutbox = currentOutbox;
+    modifier onlyOwner() {
+        require(msg.sender == owner, "FakeArbitrumBridge/ONLY_OWNER");
+        _;
+    }
 
-    if (prevBridge != address(this)) {
-      fakeInbox.setBridge(prevBridge);
+    function setOwner(address newOwner) external onlyOwner {
+        owner = newOwner;
+        emit OwnerUpdated(newOwner);
     }
-    emit BridgeCallTriggered(msg.sender, destAddr, amount, data);
-  }
 
-  function setOutbox(address outbox, bool enabled) external onlyOwner {
-    InOutInfo storage info = allowedOutboxesMap[outbox];
-    bool alreadyEnabled = info.allowed;
-    emit OutboxToggle(outbox, enabled);
-    if ((alreadyEnabled && enabled) || (!alreadyEnabled && !enabled)) {
-      return;
+    function executeCall(
+        address destAddr,
+        uint256 amount,
+        bytes calldata data
+    ) external returns (bool success, bytes memory returnData) {
+        require(allowedOutboxesMap[msg.sender].allowed, "FakeArbitrumBridge/NOT_FROM_OUTBOX");
+        if (data.length > 0) require(destAddr.isContract(), "FakeArbitrumBridge/NO_CODE_AT_DEST");
+
+        address prevBridge = fakeInbox.bridge();
+        if (prevBridge != address(this)) {
+            fakeInbox.setBridge(address(this));
+        }
+
+        address currentOutbox = activeOutbox;
+        activeOutbox = msg.sender;
+        // We set and reset active outbox around external call so activeOutbox remains valid during call
+        (success, returnData) = destAddr.call{value: amount}(data);
+        activeOutbox = currentOutbox;
+
+        if (prevBridge != address(this)) {
+            fakeInbox.setBridge(prevBridge);
+        }
+        emit BridgeCallTriggered(msg.sender, destAddr, amount, data);
     }
-    if (enabled) {
-      allowedOutboxesMap[outbox] = InOutInfo(allowedOutboxList.length, true);
-      allowedOutboxList.push(outbox);
-    } else {
-      allowedOutboxList[info.index] = allowedOutboxList[allowedOutboxList.length - 1];
-      allowedOutboxesMap[allowedOutboxList[info.index]].index = info.index;
-      allowedOutboxList.pop();
-      delete allowedOutboxesMap[outbox];
+
+    function setOutbox(address outbox, bool enabled) external onlyOwner {
+        InOutInfo storage info = allowedOutboxesMap[outbox];
+        bool alreadyEnabled = info.allowed;
+        emit OutboxToggle(outbox, enabled);
+        if ((alreadyEnabled && enabled) || (!alreadyEnabled && !enabled)) {
+            return;
+        }
+        if (enabled) {
+            allowedOutboxesMap[outbox] = InOutInfo(allowedOutboxList.length, true);
+            allowedOutboxList.push(outbox);
+        } else {
+            allowedOutboxList[info.index] = allowedOutboxList[allowedOutboxList.length - 1];
+            allowedOutboxesMap[allowedOutboxList[info.index]].index = info.index;
+            allowedOutboxList.pop();
+            delete allowedOutboxesMap[outbox];
+        }
     }
-  }
 }

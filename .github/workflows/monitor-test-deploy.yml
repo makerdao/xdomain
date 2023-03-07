@@ -1,4 +1,4 @@
-name: Teleport Monitoring
+name: Teleport Monitor Test Deploy
 
 on:
   push:
@@ -8,10 +8,17 @@ on:
       - packages/teleport-monitoring/**
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:password@localhost:5432/local
+      L1_RPC: ${{ secrets.GOERLI_RPC_URL }}
     defaults:
       run:
         working-directory: ./packages/teleport-monitoring
@@ -40,19 +47,20 @@ jobs:
 
       - run: yarn lint
       - run: yarn format
+      - run: ./scripts/db.sh
       - run: yarn test
-        env:
-          TEST_RPC: ${{ secrets.KOVAN_RPC_URL }}
       - run: yarn typecheck
 
   deploy:
     name: Deploy
+    needs: test
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     env:
       REGION: us-east-1
-      SERVICE_NAME: teleport-monitor-prod
+      SERVICE_NAME_GOERLI: optimism-teleport-monitor-goerli-prod
       CLUSTER_NAME: teleport-monitor-prod
-      ECR_REPO_NAME: teleport-monitor-prod
+      ECR_REPO_NAME: optimism-teleport-monitor-prod
 
     steps:
       - name: Checkout
@@ -94,11 +102,11 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPO_NAME --all-tags
         working-directory: ./packages/teleport-monitoring
 
-      - name: Update ECS service
-        id: service-update
+      - name: Update ECS Goerli service
+        id: service-update-goerli
         run: |
           aws ecs update-service --cluster ${{ env.CLUSTER_NAME }} \
-                                --service ${{ env.SERVICE_NAME }} \
+                                --service ${{ env.SERVICE_NAME_GOERLI }} \
                                 --force-new-deployment \
                                 --region ${{ env.REGION }}
 
@@ -106,4 +114,4 @@ jobs:
         run: |
           aws ecs wait services-stable \
                     --cluster ${{ env.CLUSTER_NAME }} \
-                    --services '[ "${{ env.SERVICE_NAME }}" ]'
+                    --services '[ "${{ env.SERVICE_NAME_GOERLI }}" ]'

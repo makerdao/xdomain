@@ -1,34 +1,35 @@
 {
-  "name": "wormhole-sdk",
+  "name": "teleport-sdk",
   "version": "1.0.0",
-  "description": "Frontend SDK to @makerdao/dss-wormhole",
+  "description": "Frontend SDK to @makerdao/dss-teleport",
   "files": [
     "/dist"
   ],
   "license": "AGPL-3.0",
   "main": "dist/index.js",
   "scripts": {
-    "postinstall": "eth-sdk",
     "format": "prettier --check \"./**/*.ts\"",
     "format:fix": "prettier --write \"./**/*.ts\"",
     "lint": "eslint --ext .ts src test scripts",
     "lint:fix": "yarn lint --fix",
     "test": "mocha -r ts-node/register test/**/*.test.ts",
     "test:fix": "yarn lint:fix && yarn format:fix && yarn test && yarn typecheck",
-    "typecheck": "tsc --noEmit",
-    "build": "rm -rf ./dist && tsc -p ./tsconfig.build.json && cp -R ./src/sdk ./dist/sdk",
-    "demo:arbitrum": "yarn ts-node ./scripts/demo.arbitrum.ts | grep -v \"Duplicate definition of File\"",
-    "demo:optimism": "yarn ts-node ./scripts/demo.optimism.ts | grep -v \"Duplicate definition of File\""
+    "typecheck": "yarn eth-sdk && tsc --noEmit",
+    "build": "yarn eth-sdk && rm -rf ./dist && tsc -p ./tsconfig.build.json && cp -R ./src/sdk ./dist/sdk",
+    "demo:arbitrum:rinkeby": "yarn ts-node ./scripts/demo.arbitrum-rinkeby.ts | grep -v \"Duplicate definition of File\"",
+    "demo:arbitrum:goerli": "yarn ts-node ./scripts/demo.arbitrum-goerli.ts | grep -v \"Duplicate definition of File\"",
+    "demo:optimism:kovan": "yarn ts-node ./scripts/demo.optimism-kovan.ts | grep -v \"Duplicate definition of File\"",
+    "demo:optimism:goerli": "yarn ts-node ./scripts/demo.optimism-goerli.ts | grep -v \"Duplicate definition of File\""
   },
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@dethcrypto/eth-sdk": "^0.3.0",
+    "@arbitrum/sdk": "1.1.2",
     "axios": "^0.26.0",
     "ethers": "^5.5.4",
     "ts-essentials": "^9.1.2"
   },
   "devDependencies": {
-    "@arbitrum/sdk": "^1.1.2",
+    "@dethcrypto/eth-sdk": "0.3.1",
     "@ethereum-waffle/chai": "^4.0.0-alpha.0",
     "@types/chai": "^4.3.0",
     "@types/chai-as-promised": "^7.1.5",
@@ -48,6 +49,7 @@
     "mocha": "^9.2.1",
     "prettier": "^2.5.1",
     "ts-node": "^10.7.0",
-    "typescript": "^4.5.5"
+    "typescript": "^4.5.5",
+    "xdomain-utils": "https://gitpkg.now.sh/makerdao/xdomain/packages/xdomain-utils?154687086580ebd29bf44cbbab4a30fee47fcd8f"
   }
 }

@@ -1,5 +1,7 @@
 import { expect } from 'chai'
 import { constants, ethers, Signer } from 'ethers'
+import { formatBytes32String } from 'ethers/lib/utils'
+import { waitForTx } from 'xdomain-utils'
 
 import {
   OptimismDai__factory,
@@ -12,7 +14,6 @@ import {
   OptimismL2GovernanceRelay__factory,
 } from '../../typechain'
 import { deployUsingFactoryAndVerify, getContractFactory, mintEther } from '../helpers'
-import { waitForTx } from '../helpers'
 import { getAddressOfNextDeployedContract } from '../pe-utils/address'
 import { MakerSdk } from '../teleport'
 import { TeleportSdk } from '../teleport/teleport'
@@ -26,6 +27,7 @@ interface OptimismTeleportBridgeDeployOpts {
   baseBridgeSdk: OptimismBaseBridgeSdk
   optimismRollupSdk: OptimismRollupSdk
   slaveDomain: string
+  masterDomain: string
 }
 
 export async function deployOptimismTeleportBridge(opts: OptimismTeleportBridgeDeployOpts) {
@@ -53,6 +55,7 @@ export async function deployOptimismTeleportBridge(opts: OptimismTeleportBridgeD
   expect(l1TeleportBridge.address).to.be.eq(futureL1TeleportBridgeAddress, 'Future address doesnt match actual address')
   console.log('L1TeleportBridge deployed at: ', l1TeleportBridge.address)
 
+  await waitForTx(l2TeleportBridge.file(formatBytes32String('validDomains'), opts.masterDomain, 1))
   await waitForTx(l2TeleportBridge.rely(opts.baseBridgeSdk.l2GovRelay.address))
   await waitForTx(l2TeleportBridge.deny(await opts.l2Signer.getAddress()))
 

@@ -8,4 +8,3 @@ COPY . .
 
 # will timeout after 10 minutes
 ENTRYPOINT ["timeout", "-k", "650", "600", "yarn", "start" ]
-

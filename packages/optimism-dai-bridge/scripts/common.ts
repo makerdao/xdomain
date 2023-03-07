@@ -1,4 +1,3 @@
-import { Signer } from '@ethersproject/abstract-signer'
 import {
   deployUsingFactoryAndVerify,
   getActiveWards,
@@ -6,6 +5,7 @@ import {
   waitForTx,
 } from '@makerdao/hardhat-utils'
 import { expect } from 'chai'
+import { Signer } from 'ethers'
 import { ethers } from 'ethers'
 import { ethers as l1 } from 'hardhat'
 

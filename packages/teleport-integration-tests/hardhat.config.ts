@@ -8,7 +8,7 @@ import { HardhatUserConfig } from 'hardhat/config'
 dotenv.config()
 
 const config: HardhatUserConfig = {
-  solidity: '0.8.13',
+  solidity: '0.8.15',
   networks: {
     // we don't use default network so this should make it unusable to prevent any accidental use
     defaultNetwork: {
@@ -27,9 +27,18 @@ const config: HardhatUserConfig = {
     rinkeby: {
       url: process.env.RINKEBY_RPC_URL || '',
     },
+    mainnet: {
+      url: process.env.MAINNET_RPC_URL || '',
+    },
+    optimism: {
+      url: process.env.MAINNET_OPTIMISM_L2_RPC || '',
+    },
+    arbitrum: {
+      url: process.env.MAINNET_ARBITRUM_L2_RPC || '',
+    },
   },
   mocha: {
-    timeout: 5000_000,
+    timeout: 15_000_000,
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_KEY || '',

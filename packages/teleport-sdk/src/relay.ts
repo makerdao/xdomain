@@ -10,12 +10,16 @@ const GELATO_API_URL = 'https://relay.gelato.digital'
 const ETHEREUM_DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f'
 const GELATO_ADDRESSES: { [chainId: number]: { service: string; gelato: string } } = {
   4: {
-    service: '0x7084d869F0C120957E40D762Ebe3104474D5248f',
+    service: '0x9B79b798563e538cc326D03696B3Be38b971D282',
     gelato: '0x0630d1b8C2df3F0a68Df578D02075027a6397173',
   },
   42: {
-    service: '0xb34758F24fFEf132dc5831C2Cd9A0a5e120CD564',
+    service: '0x4F36f93F58d36DcbC1E60b9bdBE213482285C482',
     gelato: '0xDf592cB2d32445F8e831d211AB20D3233cA41bD8',
+  },
+  5: {
+    service: '0x61BF11e6641C289d4DA1D59dC3E03E15D2BA971c',
+    gelato: '0x683913B3A32ada4F8100458A3E1675425BdAa7DF',
   },
 }
 
@@ -30,15 +34,26 @@ function getEstimatedRelayGasLimit(relay: BasicRelay | TrustedRelay): string {
 }
 
 async function queryGelatoApi(url: string, method: 'get' | 'post', params?: Object): Promise<any> {
-  try {
-    const response = await axios[method](`${GELATO_API_URL}/${url}`, params)
-    return response.data
-  } catch (err) {
-    if (axios.isAxiosError(err)) {
-      const { response } = err
-      throw new Error(`Gelato API ${response?.status} error: "${response?.data?.message}"`)
+  let attempt = 1
+  while (true) {
+    try {
+      const response = await axios[method](`${GELATO_API_URL}/${url}`, params)
+      return response.data
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        const { response } = err
+        const errorMsg = `Gelato API ${response?.status} error (attempt ${attempt}/5): "${response?.data?.message}"`
+        if (attempt <= 5) {
+          console.error((response?.status && errorMsg) || `Gelato API unknown error (attempt ${attempt}/5): ${err}`)
+          await sleep(2000 * attempt)
+          attempt++
+        } else {
+          throw new Error(errorMsg)
+        }
+      } else {
+        throw err
+      }
     }
-    throw err
   }
 }
 
@@ -52,6 +67,7 @@ async function getRelayCalldata(
   expiry?: BigNumberish,
   to?: string,
   data?: string,
+  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
 ): Promise<string> {
   maxFeePercentage ||= 0
   expiry ||= Math.floor(Date.now() / 1000 + 3600)
@@ -66,6 +82,7 @@ async function getRelayCalldata(
     ]),
   )
   const { r, s, v } = splitSignature(await receiver.signMessage(arrayify(payload)))
+  onPayloadSigned?.(payload, r, s, v)
 
   const useTrustedRelay = relayInterface.functions.hasOwnProperty('signers(address)')
   const extCall = useTrustedRelay ? [to || constants.AddressZero, data || '0x'] : []
@@ -83,18 +100,21 @@ async function getRelayCalldata(
   return calldata
 }
 
-async function createRelayTask(relay: Relay, calldata: string, gasFee: BigNumberish): Promise<string> {
+async function createRelayTask(relay: Relay, calldata: string, gasLimit: BigNumberish): Promise<string> {
   const { chainId } = await relay.provider.getNetwork()
   const token = await relay.dai()
-  const { taskId } = await queryGelatoApi(`relays/${chainId}`, 'post', {
+  const { taskId } = await queryGelatoApi(`metabox-relays/${chainId}`, 'post', {
+    typeId: 'ForwardCall',
+    chainId,
+    target: relay.address,
     data: calldata,
-    dest: relay.address,
-    token,
-    relayerFee: gasFee.toString(),
+    feeToken: token,
+    gas: gasLimit.toString(),
   })
   return taskId
 }
 
+let lastTaskLog: string | undefined
 async function waitForRelayTaskConfirmation(
   taskId: string,
   pollingIntervalMs: number,
@@ -103,8 +123,12 @@ async function waitForRelayTaskConfirmation(
   let timeSlept = 0
   let isExecPending = false
   while (true) {
-    const { data } = await queryGelatoApi(`tasks/${taskId}`, 'get')
-    // console.log(`TaskId=${taskId}, data:`, data[0])
+    const { data } = await queryGelatoApi(`tasks/GelatoMetaBox/${taskId}`, 'get')
+    const taskLog = `TaskId=${taskId}, data: ${JSON.stringify(data[0])}`
+    if (lastTaskLog !== taskLog) {
+      console.log(taskLog)
+      lastTaskLog = taskLog
+    }
     if (data[0]?.taskState === 'ExecSuccess') {
       const txHash = data[0].execution?.transactionHash
       if (txHash) return txHash
@@ -135,6 +159,7 @@ async function getRelayGasLimit(
     to?: string
     data?: string
   },
+  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
 ): Promise<string> {
   if (!relayParams) return getEstimatedRelayGasLimit(relay)
   const { receiver, teleportGUID, signatures, maxFeePercentage, expiry, to, data } = relayParams
@@ -149,23 +174,27 @@ async function getRelayGasLimit(
     expiry,
     to,
     data,
+    onPayloadSigned,
   )
   const { chainId } = await relay.provider.getNetwork()
   const addresses = GELATO_ADDRESSES[chainId]
 
   const serviceAddress = addresses.service
+  if (!serviceAddress) throw new Error(`Missing "service" address for chainId ${chainId}`)
   const serviceInterface = new Interface([
-    'function execTransit(address _dest,bytes calldata _data,uint256 _minFee,address _token,bytes32 _taskId)',
+    'function forwardCallSyncFee(address _target,bytes calldata _data,address _feeToken,uint256 _gas,uint256 _gelatoFee,bytes32 _taskId)',
   ])
-  const serviceData = serviceInterface.encodeFunctionData('execTransit', [
+  const serviceData = serviceInterface.encodeFunctionData('forwardCallSyncFee', [
     relay.address,
     relayData,
-    0,
     await relay.dai(),
+    2000000,
+    0,
     ethers.constants.MaxUint256.toHexString(),
   ])
 
   const gelatoAddress = addresses.gelato
+  if (!gelatoAddress) throw new Error(`Missing "gelato" address for chainId ${chainId}`)
   const gelatoInterface = new Interface([
     'function exec(address _service,bytes calldata _data,address _creditToken) returns (uint256 credit,uint256 gasDebitInNativeToken,uint256 gasDebitInCreditToken,uint256 estimatedGasUsed)',
     'function executors() view returns (address[] memory)',
@@ -212,13 +241,13 @@ export async function getRelayGasFee(
   const { chainId } = await relay.provider.getNetwork()
   const oracleChainId = oracles.includes(chainId.toString()) ? chainId : 1
 
+  if ([3, 4, 5, 42].includes(chainId)) {
+    return '1' // use 1 wei for the relay fee on testnets
+  }
   const { estimatedFee } = await queryGelatoApi(`oracles/${oracleChainId}/estimate`, 'get', {
     params: { paymentToken: ETHEREUM_DAI_ADDRESS, gasLimit, isHighPriority },
   })
 
-  if ([3, 4, 5, 42].includes(chainId)) {
-    return '1' // use 1 wei for the relay fee on testnets
-  }
   return estimatedFee
 }
 
@@ -234,6 +263,7 @@ export async function waitForRelay(
   data?: string,
   pollingIntervalMs?: number,
   timeoutMs?: number,
+  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
 ): Promise<string> {
   pollingIntervalMs ||= 2000
 
@@ -255,8 +285,9 @@ export async function waitForRelay(
     expiry,
     to,
     data,
+    onPayloadSigned,
   )
-  const taskId = await createRelayTask(relay, relayData, relayFee)
+  const taskId = await createRelayTask(relay, relayData, getEstimatedRelayGasLimit(relay))
   const txHash = await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)
   return txHash
 }

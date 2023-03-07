@@ -6,6 +6,10 @@ on:
       - master
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   echidna-optimism-dai-bridge:
     name: Echidna for optimism-dai-bridge
@@ -24,7 +28,7 @@ jobs:
       - name: Set up node
         uses: actions/setup-node@v2
         with:
-          node-version: 12
+          node-version: 16
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
@@ -81,7 +85,7 @@ jobs:
       - name: Set up node
         uses: actions/setup-node@v2
         with:
-          node-version: 12
+          node-version: 16
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v2

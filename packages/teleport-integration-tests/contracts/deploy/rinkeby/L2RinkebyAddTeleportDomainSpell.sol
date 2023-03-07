@@ -14,31 +14,31 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.13;
+pragma solidity 0.8.15;
 
 interface DaiLike {
-  function rely(address usr) external;
+    function rely(address usr) external;
 }
 
 interface TeleportBridgeLike {
-  function file(
-    bytes32 what,
-    bytes32 domain,
-    uint256 data
-  ) external;
+    function file(
+        bytes32 what,
+        bytes32 domain,
+        uint256 data
+    ) external;
 }
 
 contract L2RinkebyAddTeleportDomainSpell {
-  function execute() external {
-    DaiLike dai = DaiLike(0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15);
-    TeleportBridgeLike teleportBridge = TeleportBridgeLike(
-      0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3
-    );
-    bytes32 masterDomain = "RINKEBY-MASTER-1";
+    function execute() external {
+        DaiLike dai = DaiLike(0x78e59654Bc33dBbFf9FfF83703743566B1a0eA15);
+        TeleportBridgeLike teleportBridge = TeleportBridgeLike(
+            0x327c2f7aCd799f31535880Af54C2bCAB1384Ecc3
+        );
+        bytes32 masterDomain = "RINKEBY-MASTER-1";
 
-    // teleport bridge has to burn without approval
-    dai.rely(address(teleportBridge));
+        // teleport bridge has to burn without approval
+        dai.rely(address(teleportBridge));
 
-    teleportBridge.file(bytes32("validDomains"), masterDomain, 1);
-  }
+        teleportBridge.file(bytes32("validDomains"), masterDomain, 1);
+    }
 }
