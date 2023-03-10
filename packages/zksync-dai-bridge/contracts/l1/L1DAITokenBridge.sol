@@ -18,6 +18,7 @@ pragma solidity ^0.8.15;
 import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IMailbox.sol";
 import "@matterlabs/zksync-contracts/l1/contracts/bridge/interfaces/IL1Bridge.sol";
 import "@matterlabs/zksync-contracts/l2/contracts/bridge/interfaces/IL2Bridge.sol";
+import "@matterlabs/zksync-contracts/l1/contracts/vendor/AddressAliasHelper.sol";
 
 interface TokenLike {
   function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
@@ -134,7 +135,7 @@ contract L1DAITokenBridge is IL1Bridge {
       _l2TxGasLimit,
       _l2TxGasPerPubdataByte,
       new bytes[](0), // array of L2 bytecodes that will be marked as known on L2. This is only required when deploying an L2 contract, so is left empty here
-      msg.sender // The address on L2 that will receive the refund for the transaction
+      msg.sender != tx.origin ? AddressAliasHelper.applyL1ToL2Alias(msg.sender) : msg.sender // The address on L2 that will receive the refund for the transaction
     );
 
     depositAmount[msg.sender][txHash] = _amount;
