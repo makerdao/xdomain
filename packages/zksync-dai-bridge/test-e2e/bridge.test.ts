@@ -1,5 +1,5 @@
 import { sleep } from '@eth-optimism/core-utils'
-import { getActiveWards, getAddressOfNextDeployedContract, waitForTx } from '@makerdao/hardhat-utils'
+import { getActiveWards, waitForTx } from '@makerdao/hardhat-utils'
 import { expect, use } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import { Contract, providers, Wallet } from 'ethers'
@@ -20,7 +20,13 @@ import {
   L2GovernanceRelay,
   TestBridgeUpgradeSpell,
 } from '../typechain-types'
-import { deployBridges, deployL1Contract, deployL2Contract, waitToRelayTxToL2 } from '../zksync-helpers'
+import {
+  deployBridges,
+  deployGovRelays,
+  deployL1Contract,
+  deployL2Contract,
+  waitToRelayTxToL2,
+} from '../zksync-helpers'
 
 const RICH_WALLET_PK = '0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110'
 const depositAmount = ethers.utils.parseEther('5')
@@ -29,6 +35,8 @@ const defaultL1CallValue = 0
 const defaultRelayGasLimit = 10_000_000
 const defaultDepositGasLimit = zk.utils.RECOMMENDED_DEPOSIT_L2_GAS_LIMIT // 10_000_000
 const defaultGasPerPubdataByte = zk.utils.DEPOSIT_GAS_PER_PUBDATA_LIMIT // 800
+
+const verify: boolean = process.env.TEST_ENV === 'goerli'
 
 async function setupSigners(): Promise<{
   l1Signer: Wallet
@@ -75,26 +83,25 @@ describe('bridge', function () {
   let l2GovernanceRelay: L2GovernanceRelay
   beforeEach(async () => {
     ;({ l1Signer, l2Signer } = await setupSigners())
-    l2Dai = await deployL2Contract(l2Signer, 'Dai')
-    l1Escrow = await deployL1Contract(l1Signer, 'L1Escrow')
-    l1Dai = (await deployL1Contract(l1Signer, 'L1Dai', [], 'l1/test')) as L1Dai
-    ;({ l1DAITokenBridge, l2DAITokenBridge } = (await deployBridges(l1Signer, l2Signer, l1Dai, l2Dai, l1Escrow)) as {
+    l2Dai = await deployL2Contract(l2Signer, 'Dai', [], verify)
+    l1Escrow = await deployL1Contract(l1Signer, 'L1Escrow', [], 'l1', verify)
+    l1Dai = (await deployL1Contract(l1Signer, 'L1Dai', [], 'l1/test', verify)) as L1Dai
+    ;({ l1DAITokenBridge, l2DAITokenBridge } = (await deployBridges(
+      l1Signer,
+      l2Signer,
+      l1Dai,
+      l2Dai,
+      l1Escrow,
+      verify,
+    )) as {
       l1DAITokenBridge: L1DAITokenBridge
       l2DAITokenBridge: L2DAITokenBridge
     })
     await approveBridges(l1Dai, l2Dai, l1DAITokenBridge, l2DAITokenBridge)
-    // deploy gov relays
-    const zkSyncAddress = await l2Signer.provider.getMainContractAddress()
-    const futureL1GovRelayAddress = await getAddressOfNextDeployedContract(l1Signer)
-    l2GovernanceRelay = await deployL2Contract(l2Signer, 'L2GovernanceRelay', [futureL1GovRelayAddress])
-    l1GovernanceRelay = await deployL1Contract(l1Signer, 'L1GovernanceRelay', [
-      l2GovernanceRelay.address,
-      zkSyncAddress,
-    ])
-    expect(l1GovernanceRelay.address).to.be.eq(
-      futureL1GovRelayAddress,
-      'Predicted address of l1GovernanceRelay doesnt match actual address',
-    )
+    ;({ l1GovernanceRelay, l2GovernanceRelay } = (await deployGovRelays(l1Signer, l2Signer, verify)) as {
+      l1GovernanceRelay: L1GovernanceRelay
+      l2GovernanceRelay: L2GovernanceRelay
+    })
 
     console.log('Minting deployer Dai...')
     await waitForTx(l1Dai.mint(l1Signer.address, parseEther('1000000'), { gasLimit: 200000 }))
