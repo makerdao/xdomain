@@ -27,7 +27,7 @@ const depositAmount = ethers.utils.parseEther('5')
 
 const defaultL1CallValue = 0
 const defaultRelayGasLimit = 10_000_000
-const defaultDepositGasLimit = zk.utils.RECOMMENDED_GAS_LIMIT.DEPOSIT // 600_000
+const defaultDepositGasLimit = zk.utils.RECOMMENDED_DEPOSIT_L2_GAS_LIMIT // 10_000_000
 const defaultGasPerPubdataByte = zk.utils.DEPOSIT_GAS_PER_PUBDATA_LIMIT // 800
 
 async function setupSigners(): Promise<{
@@ -142,6 +142,7 @@ describe('bridge', function () {
         depositAmount,
         defaultDepositGasLimit,
         defaultGasPerPubdataByte,
+        ethers.constants.AddressZero,
       ]),
       l2Signer.provider,
       l2DAITokenBridge.interface.encodeFunctionData('finalizeDeposit', [
@@ -264,6 +265,7 @@ describe('bridge', function () {
       depositAmount,
       defaultDepositGasLimit,
       defaultGasPerPubdataByte,
+      ethers.constants.AddressZero,
       { gasLimit: 300000 },
     )
     await tx.wait()

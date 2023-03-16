@@ -40,10 +40,10 @@ describe('L1DAITokenBridge', () => {
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
       const depositTx = await l1DAITokenBridge
         .connect(user1)
-        .deposit(user2.address, l1Dai.address, depositAmount, defaultGasLimit, defaultGasPerPubdataByte)
+        .deposit(user2.address, l1Dai.address, depositAmount, defaultGasLimit, defaultGasPerPubdataByte, user1.address)
       await expect(depositTx)
         .to.emit(l1DAITokenBridge, 'DepositInitiated')
-        .withArgs(user1.address, user2.address, l1Dai.address, depositAmount)
+        .withNamedArgs({ from: user1.address, to: user2.address, l1Token: l1Dai.address, amount: depositAmount })
 
       const depositCallToMessengerCall = zkSyncMock.requestL2Transaction.atCall(0)
 
@@ -80,7 +80,14 @@ describe('L1DAITokenBridge', () => {
       await expect(
         l1DAITokenBridge
           .connect(user1)
-          .deposit(user2.address, dummyL1Erc20.address, depositAmount, defaultGasLimit, defaultGasPerPubdataByte),
+          .deposit(
+            user2.address,
+            dummyL1Erc20.address,
+            depositAmount,
+            defaultGasLimit,
+            defaultGasPerPubdataByte,
+            ethers.constants.AddressZero,
+          ),
       ).to.be.revertedWith(errorMessages.tokenMismatch)
     })
 
@@ -95,7 +102,14 @@ describe('L1DAITokenBridge', () => {
       await expect(
         l1DAITokenBridge
           .connect(user1)
-          .deposit(user2.address, l1Dai.address, depositAmount, defaultGasLimit, defaultGasPerPubdataByte),
+          .deposit(
+            user2.address,
+            l1Dai.address,
+            depositAmount,
+            defaultGasLimit,
+            defaultGasPerPubdataByte,
+            ethers.constants.AddressZero,
+          ),
       ).to.be.revertedWith(errorMessages.daiInsufficientAllowance)
     })
 
@@ -110,7 +124,14 @@ describe('L1DAITokenBridge', () => {
       await expect(
         l1DAITokenBridge
           .connect(user2)
-          .deposit(user2.address, l1Dai.address, depositAmount, defaultGasLimit, defaultGasPerPubdataByte),
+          .deposit(
+            user2.address,
+            l1Dai.address,
+            depositAmount,
+            defaultGasLimit,
+            defaultGasPerPubdataByte,
+            ethers.constants.AddressZero,
+          ),
       ).to.be.revertedWith(errorMessages.daiInsufficientBalance)
     })
 
@@ -128,7 +149,14 @@ describe('L1DAITokenBridge', () => {
       await expect(
         l1DAITokenBridge
           .connect(user1)
-          .deposit(user2.address, l1Dai.address, depositAmount, defaultGasLimit, defaultGasPerPubdataByte),
+          .deposit(
+            user2.address,
+            l1Dai.address,
+            depositAmount,
+            defaultGasLimit,
+            defaultGasPerPubdataByte,
+            ethers.constants.AddressZero,
+          ),
       ).to.be.revertedWith(errorMessages.bridgeClosed)
     })
   })
@@ -382,7 +410,14 @@ describe('L1DAITokenBridge', () => {
       zkSyncMock.requestL2Transaction.returns(txHash)
       await l1DAITokenBridge
         .connect(user1)
-        .deposit(user2.address, l1Dai.address, depositAmount, defaultGasLimit, defaultGasPerPubdataByte)
+        .deposit(
+          user2.address,
+          l1Dai.address,
+          depositAmount,
+          defaultGasLimit,
+          defaultGasPerPubdataByte,
+          ethers.constants.AddressZero,
+        )
 
       const blockNumber = 200
       const messageIndex = 100
@@ -419,7 +454,14 @@ describe('L1DAITokenBridge', () => {
       zkSyncMock.requestL2Transaction.returns(txHash)
       await l1DAITokenBridge
         .connect(user1)
-        .deposit(user2.address, l1Dai.address, depositAmount, defaultGasLimit, defaultGasPerPubdataByte)
+        .deposit(
+          user2.address,
+          l1Dai.address,
+          depositAmount,
+          defaultGasLimit,
+          defaultGasPerPubdataByte,
+          ethers.constants.AddressZero,
+        )
 
       const blockNumber = 200
       const messageIndex = 100
@@ -452,7 +494,14 @@ describe('L1DAITokenBridge', () => {
       zkSyncMock.requestL2Transaction.returns(txHash)
       await l1DAITokenBridge
         .connect(user1)
-        .deposit(user2.address, l1Dai.address, depositAmount, defaultGasLimit, defaultGasPerPubdataByte)
+        .deposit(
+          user2.address,
+          l1Dai.address,
+          depositAmount,
+          defaultGasLimit,
+          defaultGasPerPubdataByte,
+          ethers.constants.AddressZero,
+        )
 
       const blockNumber = 200
       const messageIndex = 100

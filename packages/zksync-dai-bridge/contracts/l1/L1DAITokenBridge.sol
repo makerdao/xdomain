@@ -16,9 +16,59 @@
 pragma solidity ^0.8.15;
 
 import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IMailbox.sol";
-import "@matterlabs/zksync-contracts/l1/contracts/bridge/interfaces/IL1Bridge.sol";
 import "@matterlabs/zksync-contracts/l2/contracts/bridge/interfaces/IL2Bridge.sol";
 import "@matterlabs/zksync-contracts/l1/contracts/vendor/AddressAliasHelper.sol";
+
+// Note: We use the below IL1Bridge interface instead of importing "@matterlabs/zksync-contracts/l1/contracts/bridge/interfaces/IL1Bridge.sol"
+// because as of today (16.03.2023), the interface update in https://github.com/matter-labs/v2-testnet-contracts/pull/17/commits/887b04bbe4416f63fd318c6b9c402c8f3cb55e52#diff-1c6643d6a0a1b35aa79e67c747371c4a62d76acee6f657c990e6c339f683f955
+// hasn't yet been ported to @matterlabs/zksync-contracts
+interface IL1Bridge {
+  event DepositInitiated(
+    bytes32 indexed l2DepositTxHash,
+    address indexed from,
+    address indexed to,
+    address l1Token,
+    uint256 amount
+  );
+
+  event WithdrawalFinalized(address indexed to, address indexed l1Token, uint256 amount);
+
+  event ClaimedFailedDeposit(address indexed to, address indexed l1Token, uint256 amount);
+
+  function isWithdrawalFinalized(
+    uint256 _l2BlockNumber,
+    uint256 _l2MessageIndex
+  ) external view returns (bool);
+
+  function deposit(
+    address _l2Receiver,
+    address _l1Token,
+    uint256 _amount,
+    uint256 _l2TxGasLimit,
+    uint256 _l2TxGasPerPubdataByte,
+    address _refundRecipient
+  ) external payable returns (bytes32 txHash);
+
+  function claimFailedDeposit(
+    address _depositSender,
+    address _l1Token,
+    bytes32 _l2TxHash,
+    uint256 _l2BlockNumber,
+    uint256 _l2MessageIndex,
+    uint16 _l2TxNumberInBlock,
+    bytes32[] calldata _merkleProof
+  ) external;
+
+  function finalizeWithdrawal(
+    uint256 _l2BlockNumber,
+    uint256 _l2MessageIndex,
+    uint16 _l2TxNumberInBlock,
+    bytes calldata _message,
+    bytes32[] calldata _merkleProof
+  ) external;
+
+  function l2TokenAddress(address _l1Token) external view returns (address);
+}
 
 interface TokenLike {
   function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
@@ -106,14 +156,16 @@ contract L1DAITokenBridge is IL1Bridge {
    * @param _amount The amount of Dai to deposit (in WAD)
    * @param _l2TxGasLimit The L2 gas limit to be used in the corresponding L2 transaction
    * @param _l2TxGasPerPubdataByte The gasPerPubdataByteLimit to be used in the corresponding L2 transaction
+   * @param _refundRecipient The address on L2 that will receive the refund for the transaction. If zero, the refund will be sent to the sender of the transaction.
    */
   function deposit(
     address _l2Receiver,
     address _l1Token,
     uint256 _amount,
     uint256 _l2TxGasLimit,
-    uint256 _l2TxGasPerPubdataByte
-  ) external payable returns (bytes32 txHash) {
+    uint256 _l2TxGasPerPubdataByte,
+    address _refundRecipient
+  ) public payable returns (bytes32 l2TxHash) {
     require(_l1Token == l1Token, "L1DAITokenBridge/token-not-dai");
     require(isOpen == 1, "L1DAITokenBridge/closed");
 
@@ -128,19 +180,26 @@ contract L1DAITokenBridge is IL1Bridge {
       "" // _data is not used in this bridge but still kept as an argument of finalizeDeposit for consistency with ZkSync's standard ERC20 bridge
     );
 
-    txHash = zkSyncMailbox.requestL2Transaction{value: msg.value}(
+    address refundRecipient = _refundRecipient;
+    if (_refundRecipient == address(0)) {
+      refundRecipient = msg.sender != tx.origin
+        ? AddressAliasHelper.applyL1ToL2Alias(msg.sender)
+        : msg.sender;
+    }
+
+    l2TxHash = zkSyncMailbox.requestL2Transaction{value: msg.value}(
       l2Bridge,
       0, // l2Value is the amount of ETH sent to the L2 method. As the L2 method is non-payable, this is always 0
       l2TxCalldata,
       _l2TxGasLimit,
       _l2TxGasPerPubdataByte,
       new bytes[](0), // array of L2 bytecodes that will be marked as known on L2. This is only required when deploying an L2 contract, so is left empty here
-      msg.sender != tx.origin ? AddressAliasHelper.applyL1ToL2Alias(msg.sender) : msg.sender // The address on L2 that will receive the refund for the transaction
+      refundRecipient // The address on L2 that will receive the refund for the transaction
     );
 
-    depositAmount[msg.sender][txHash] = _amount;
+    depositAmount[msg.sender][l2TxHash] = _amount;
 
-    emit DepositInitiated(msg.sender, _l2Receiver, _l1Token, _amount);
+    emit DepositInitiated(l2TxHash, msg.sender, _l2Receiver, _l1Token, _amount);
   }
 
   /**
