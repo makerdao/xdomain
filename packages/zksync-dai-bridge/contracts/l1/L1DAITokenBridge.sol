@@ -15,60 +15,10 @@
 
 pragma solidity ^0.8.15;
 
-import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IMailbox.sol";
-import "@matterlabs/zksync-contracts/l2/contracts/bridge/interfaces/IL2Bridge.sol";
 import "@matterlabs/zksync-contracts/l1/contracts/vendor/AddressAliasHelper.sol";
-
-// Note: We use the below IL1Bridge interface instead of importing "@matterlabs/zksync-contracts/l1/contracts/bridge/interfaces/IL1Bridge.sol"
-// because as of today (16.03.2023), the interface update in https://github.com/matter-labs/v2-testnet-contracts/pull/17/commits/887b04bbe4416f63fd318c6b9c402c8f3cb55e52#diff-1c6643d6a0a1b35aa79e67c747371c4a62d76acee6f657c990e6c339f683f955
-// hasn't yet been ported to @matterlabs/zksync-contracts
-interface IL1Bridge {
-  event DepositInitiated(
-    bytes32 indexed l2DepositTxHash,
-    address indexed from,
-    address indexed to,
-    address l1Token,
-    uint256 amount
-  );
-
-  event WithdrawalFinalized(address indexed to, address indexed l1Token, uint256 amount);
-
-  event ClaimedFailedDeposit(address indexed to, address indexed l1Token, uint256 amount);
-
-  function isWithdrawalFinalized(
-    uint256 _l2BlockNumber,
-    uint256 _l2MessageIndex
-  ) external view returns (bool);
-
-  function deposit(
-    address _l2Receiver,
-    address _l1Token,
-    uint256 _amount,
-    uint256 _l2TxGasLimit,
-    uint256 _l2TxGasPerPubdataByte,
-    address _refundRecipient
-  ) external payable returns (bytes32 txHash);
-
-  function claimFailedDeposit(
-    address _depositSender,
-    address _l1Token,
-    bytes32 _l2TxHash,
-    uint256 _l2BlockNumber,
-    uint256 _l2MessageIndex,
-    uint16 _l2TxNumberInBlock,
-    bytes32[] calldata _merkleProof
-  ) external;
-
-  function finalizeWithdrawal(
-    uint256 _l2BlockNumber,
-    uint256 _l2MessageIndex,
-    uint16 _l2TxNumberInBlock,
-    bytes calldata _message,
-    bytes32[] calldata _merkleProof
-  ) external;
-
-  function l2TokenAddress(address _l1Token) external view returns (address);
-}
+import "@matterlabs/zksync-contracts/l1/contracts/zksync/interfaces/IMailbox.sol";
+import "@matterlabs/zksync-contracts/l1/contracts/bridge/interfaces/IL1Bridge.sol";
+import "@matterlabs/zksync-contracts/l2/contracts/bridge/interfaces/IL2Bridge.sol";
 
 interface TokenLike {
   function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);

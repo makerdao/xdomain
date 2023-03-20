@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@matterlabs/signature-checker": "^1.1.1",
-    "@matterlabs/zksync-contracts": "0.5.2"
+    "@matterlabs/zksync-contracts": "0.6.0"
   },
   "devDependencies": {
     "@defi-wonderland/smock": "^2.3.4",
