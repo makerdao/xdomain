@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import "@matterlabs/zksync-contracts/l2/contracts/vendor/AddressAliasHelper.sol";
+
 pragma solidity ^0.8.15;
 
 contract L2GovernanceRelay {
@@ -22,20 +24,26 @@ contract L2GovernanceRelay {
     l1GovernanceRelay = _l1GovernanceRelay;
   }
 
+  // Allow contract to receive ether (e.g. for L2 gas refunds)
+  receive() external payable {}
+
   /**
    * @notice Execute the L2 call from L1. This is called via a xchain message from the
    * L1 counterpart. This method is used to execute a previously deployed L2 spell.
-   * @param target The contract to call
-   * @param targetData The calldata of the call
+   * @param _target The contract to call
+   * @param _targetData The calldata of the call
    */
-  function relay(address target, bytes calldata targetData) external {
+  function relay(address _target, bytes calldata _targetData) external {
     // Ensure no storage changes in the delegate call
     // Target address is trusted so this is mostly to avoid a human error
     // Note: we don't check l1GovernanceRelay because it's immutable
-    require(msg.sender == l1GovernanceRelay, "Only l1GovRelay can call");
+    require(
+      AddressAliasHelper.undoL1ToL2Alias(msg.sender) == l1GovernanceRelay,
+      "L2GovernanceRelay/sender-not-l1GovRelay"
+    );
 
     bool ok;
-    (ok, ) = target.delegatecall(targetData);
+    (ok, ) = _target.delegatecall(_targetData);
     require(ok, "L2GovernanceRelay/delegatecall-error");
   }
 }

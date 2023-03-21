@@ -11,9 +11,9 @@ use(smock.matchers)
 
 const initialTotalL1Supply = 3000
 const depositAmount = 100
-const defaultErgLimit = 2097152
+const defaultGasLimit = 600_000
+const defaultGasPerPubdataByte = 800
 const defaultData = '0x'
-const FILE_ERGS_LIMIT = ethers.utils.formatBytes32String('ergsLimit')
 
 const errorMessages = {
   invalidMessenger: 'OVM_XCHAIN: messenger contract unauthenticated',
@@ -38,10 +38,12 @@ describe('L1DAITokenBridge', () => {
       })
 
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
-      const depositTx = await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
+      const depositTx = await l1DAITokenBridge
+        .connect(user1)
+        .deposit(user2.address, l1Dai.address, depositAmount, defaultGasLimit, defaultGasPerPubdataByte, user1.address)
       await expect(depositTx)
         .to.emit(l1DAITokenBridge, 'DepositInitiated')
-        .withArgs(user1.address, user2.address, l1Dai.address, depositAmount)
+        .withNamedArgs({ from: user1.address, to: user2.address, l1Token: l1Dai.address, amount: depositAmount })
 
       const depositCallToMessengerCall = zkSyncMock.requestL2Transaction.atCall(0)
 
@@ -57,7 +59,15 @@ describe('L1DAITokenBridge', () => {
         defaultData,
       ])
 
-      expect(depositCallToMessengerCall).to.be.calledWith(l2DAITokenBridge.address, 0, calldata, defaultErgLimit, [])
+      expect(depositCallToMessengerCall).to.be.calledWith(
+        l2DAITokenBridge.address,
+        0,
+        calldata,
+        defaultGasLimit,
+        defaultGasPerPubdataByte,
+        [],
+        user1.address,
+      )
     })
 
     it('reverts when called with a different token', async () => {
@@ -68,7 +78,16 @@ describe('L1DAITokenBridge', () => {
       })
 
       await expect(
-        l1DAITokenBridge.connect(user1).deposit(user2.address, dummyL1Erc20.address, depositAmount),
+        l1DAITokenBridge
+          .connect(user1)
+          .deposit(
+            user2.address,
+            dummyL1Erc20.address,
+            depositAmount,
+            defaultGasLimit,
+            defaultGasPerPubdataByte,
+            ethers.constants.AddressZero,
+          ),
       ).to.be.revertedWith(errorMessages.tokenMismatch)
     })
 
@@ -81,7 +100,16 @@ describe('L1DAITokenBridge', () => {
 
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, 0)
       await expect(
-        l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount),
+        l1DAITokenBridge
+          .connect(user1)
+          .deposit(
+            user2.address,
+            l1Dai.address,
+            depositAmount,
+            defaultGasLimit,
+            defaultGasPerPubdataByte,
+            ethers.constants.AddressZero,
+          ),
       ).to.be.revertedWith(errorMessages.daiInsufficientAllowance)
     })
 
@@ -94,7 +122,16 @@ describe('L1DAITokenBridge', () => {
 
       await l1Dai.connect(user2).approve(l1DAITokenBridge.address, depositAmount)
       await expect(
-        l1DAITokenBridge.connect(user2).deposit(user2.address, l1Dai.address, depositAmount),
+        l1DAITokenBridge
+          .connect(user2)
+          .deposit(
+            user2.address,
+            l1Dai.address,
+            depositAmount,
+            defaultGasLimit,
+            defaultGasPerPubdataByte,
+            ethers.constants.AddressZero,
+          ),
       ).to.be.revertedWith(errorMessages.daiInsufficientBalance)
     })
 
@@ -110,7 +147,16 @@ describe('L1DAITokenBridge', () => {
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
 
       await expect(
-        l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount),
+        l1DAITokenBridge
+          .connect(user1)
+          .deposit(
+            user2.address,
+            l1Dai.address,
+            depositAmount,
+            defaultGasLimit,
+            defaultGasPerPubdataByte,
+            ethers.constants.AddressZero,
+          ),
       ).to.be.revertedWith(errorMessages.bridgeClosed)
     })
   })
@@ -362,7 +408,16 @@ describe('L1DAITokenBridge', () => {
       await l1Escrow.approve(l1Dai.address, l1DAITokenBridge.address, ethers.constants.MaxUint256)
       const txHash = '0xd85a3836a808c1a65f53182b133cf25b18e7014a834ee6b9d9e03d9a18c7bbe5'
       zkSyncMock.requestL2Transaction.returns(txHash)
-      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
+      await l1DAITokenBridge
+        .connect(user1)
+        .deposit(
+          user2.address,
+          l1Dai.address,
+          depositAmount,
+          defaultGasLimit,
+          defaultGasPerPubdataByte,
+          ethers.constants.AddressZero,
+        )
 
       const blockNumber = 200
       const messageIndex = 100
@@ -397,7 +452,16 @@ describe('L1DAITokenBridge', () => {
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
       const txHash = '0xd85a3836a808c1a65f53182b133cf25b18e7014a834ee6b9d9e03d9a18c7bbe5'
       zkSyncMock.requestL2Transaction.returns(txHash)
-      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
+      await l1DAITokenBridge
+        .connect(user1)
+        .deposit(
+          user2.address,
+          l1Dai.address,
+          depositAmount,
+          defaultGasLimit,
+          defaultGasPerPubdataByte,
+          ethers.constants.AddressZero,
+        )
 
       const blockNumber = 200
       const messageIndex = 100
@@ -428,7 +492,16 @@ describe('L1DAITokenBridge', () => {
       await l1Dai.connect(user1).approve(l1DAITokenBridge.address, depositAmount)
       const txHash = '0xd85a3836a808c1a65f53182b133cf25b18e7014a834ee6b9d9e03d9a18c7bbe5'
       zkSyncMock.requestL2Transaction.returns(txHash)
-      await l1DAITokenBridge.connect(user1).deposit(user2.address, l1Dai.address, depositAmount)
+      await l1DAITokenBridge
+        .connect(user1)
+        .deposit(
+          user2.address,
+          l1Dai.address,
+          depositAmount,
+          defaultGasLimit,
+          defaultGasPerPubdataByte,
+          ethers.constants.AddressZero,
+        )
 
       const blockNumber = 200
       const messageIndex = 100
@@ -548,35 +621,7 @@ describe('L1DAITokenBridge', () => {
 
       return [l1Dai, l2DAITokenBridge, l2Dai, l1CrossDomainMessengerMock, l1Escrow]
     },
-    authedMethods: [(c) => c.close(), (c) => c.file(FILE_ERGS_LIMIT, defaultErgLimit)],
-  })
-
-  describe('file', () => {
-    it('allows governance to change the ergsLimit', async () => {
-      const [zkSyncImpersonator, user1] = await ethers.getSigners()
-      const { l1DAITokenBridge } = await setupTest({
-        zkSyncImpersonator,
-        user1,
-      })
-
-      expect(await l1DAITokenBridge.ergsLimit()).to.be.eq(defaultErgLimit)
-
-      const newErgsLimit = '2000000'
-      await l1DAITokenBridge.file(FILE_ERGS_LIMIT, newErgsLimit)
-
-      expect(await l1DAITokenBridge.ergsLimit()).to.be.eq(newErgsLimit)
-    })
-    it('disallows invalid "what"', async () => {
-      const [zkSyncImpersonator, user1] = await ethers.getSigners()
-      const { l1DAITokenBridge } = await setupTest({
-        zkSyncImpersonator,
-        user1,
-      })
-
-      await expect(l1DAITokenBridge.file(ethers.utils.formatBytes32String('invalid'), 123456)).to.be.revertedWith(
-        errorMessages.unrecognizedParam,
-      )
-    })
+    authedMethods: [(c) => c.close()],
   })
 
   describe('view functions', () => {

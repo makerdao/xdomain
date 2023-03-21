@@ -11,13 +11,14 @@ export async function deployL2Contract<T extends zk.Contract>(
   l2Signer: zk.Wallet,
   contractName: string,
   constructorArguments: Array<any> = [],
+  verify: boolean = false,
 ): Promise<T> {
   const deployer = new Deployer(hre, l2Signer)
   const artifact = await deployer.loadArtifact(contractName)
   const contract = await deployer.deploy(artifact, constructorArguments)
   console.log(`${contractName} was deployed on L2 to ${contract.address}`)
 
-  if (process.env.TEST_ENV === 'goerli') {
+  if (verify) {
     console.log(`Verifying ${contractName} source code...`)
     try {
       const cmd = `yarn hardhat verify --no-compile ${contract.address} ${constructorArguments.join(' ')}`
@@ -41,6 +42,7 @@ export async function deployL1Contract<T extends Contract>(
   contractName: string,
   constructorArguments: Array<any> = [],
   subdirectory: string = 'l1',
+  verify: boolean = false,
 ): Promise<T> {
   const jsonFilePath = `./artifacts/contracts/${subdirectory}/${contractName}.sol/${contractName}.json`
   if (!fs.existsSync(jsonFilePath)) {
@@ -54,13 +56,21 @@ export async function deployL1Contract<T extends Contract>(
   const contract = await contractDeployed.deployed()
   console.log(`${contractName} was deployed on L1 to ${contract.address}`)
 
-  if (process.env.TEST_ENV === 'goerli') {
+  if (verify) {
     console.log(`Adding ${contractName} to ${VERIFICATION_FILE_PATH}...`)
     if (!fs.existsSync(VERIFICATION_FILE_PATH)) {
       fs.writeFileSync(VERIFICATION_FILE_PATH, '{}')
     }
+    const { chainId } = await l1Signer.provider!.getNetwork()
     const verificationData = JSON.parse(fs.readFileSync(VERIFICATION_FILE_PATH, 'utf8'))
-    verificationData[contractName] = { address: contract.address, constructorArguments: constructorArguments.join(' ') }
+
+    verificationData[chainId] = {
+      ...verificationData[chainId],
+      [contractName]: {
+        address: contract.address,
+        constructorArguments: constructorArguments.join(' '),
+      },
+    }
     fs.writeFileSync(VERIFICATION_FILE_PATH, JSON.stringify(verificationData))
   }
 

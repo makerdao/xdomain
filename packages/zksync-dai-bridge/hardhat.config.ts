@@ -27,12 +27,12 @@ const zkSyncDeploy =
 
 const config: HardhatUserConfig = {
   zksolc: {
-    version: '1.2.3',
+    version: '1.3.7',
     compilerSource: 'binary',
     settings: {
       experimental: {
         dockerImage: 'matterlabs/zksolc',
-        tag: 'v1.2.3',
+        tag: 'v1.3.7',
       },
     },
   },
@@ -66,11 +66,15 @@ const config: HardhatUserConfig = {
     goerli: {
       url: zkSyncDeploy.ethNetwork,
     },
+    mainnet: {
+      url: process.env.ETH_RPC_URL || '',
+    },
   },
   defaultNetwork: 'zksync',
   etherscan: {
     apiKey: {
       goerli: process.env.ETHERSCAN_KEY ?? '',
+      mainnet: process.env.ETHERSCAN_KEY ?? '',
     },
   },
 }

@@ -4,7 +4,7 @@ import { ethers } from 'hardhat'
 import { utils } from 'zksync-web3'
 
 import { Dai__factory, L2DAITokenBridge__factory } from '../../typechain-types'
-import { deployContractMock, deployL1MessengerMock } from '../../zksync-helpers/mocks'
+import { deployContractMock, deployL1MessengerMock, getL2SignerFromL1Address } from '../../zksync-helpers'
 
 const initialTotalL2Supply = 3000
 const errorMessages = {
@@ -27,7 +27,7 @@ describe('L2DAITokenBridge', () => {
       const [user2] = await ethers.getSigners()
 
       const finalizeDepositTx = await l2DAITokenBridge
-        .connect(l1TokenBridge)
+        .connect(await getL2SignerFromL1Address(await l1TokenBridge.getAddress()))
         .finalizeDeposit(user1.address, user2.address, l1Dai.address, depositAmount, defaultData)
       await expect(finalizeDepositTx)
         .to.emit(l2DAITokenBridge, 'FinalizeDeposit')
@@ -44,7 +44,7 @@ describe('L2DAITokenBridge', () => {
       await l2DAITokenBridge.close()
 
       await l2DAITokenBridge
-        .connect(l1TokenBridge)
+        .connect(await getL2SignerFromL1Address(await l1TokenBridge.getAddress()))
         .finalizeDeposit(user1.address, user2.address, l1Dai.address, depositAmount, defaultData)
 
       expect(await l2Dai.balanceOf(user2.address)).to.be.eq(depositAmount)
@@ -57,7 +57,7 @@ describe('L2DAITokenBridge', () => {
 
       await expect(
         l2DAITokenBridge
-          .connect(l1TokenBridge)
+          .connect(await getL2SignerFromL1Address(await l1TokenBridge.getAddress()))
           .finalizeDeposit(user1.address, user2.address, dummyL1Erc20.address, depositAmount, defaultData),
       ).to.be.revertedWith(errorMessages.tokenMismatch)
     })
@@ -70,12 +70,12 @@ describe('L2DAITokenBridge', () => {
 
       await expect(
         l2DAITokenBridge
-          .connect(l1TokenBridge)
+          .connect(await getL2SignerFromL1Address(await l1TokenBridge.getAddress()))
           .finalizeDeposit(user1.address, user2.address, l1Dai.address, depositAmount, defaultData),
       ).to.be.revertedWith(errorMessages.daiNotAuthorized)
     })
 
-    it('reverts when called not by L1TokenBridge', async () => {
+    it('reverts when called not by aliased L1TokenBridge', async () => {
       const { l2DAITokenBridge, user1 } = await setupTest()
       const [user2, dummyL1Erc20] = await ethers.getSigners()
 

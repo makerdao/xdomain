@@ -10,6 +10,8 @@
     "build:unit": "UNIT_TESTS=1 hardhat compile --network hardhat",
     "clean": "hardhat clean && rm -rf artifacts artifacts-zk cache cache-zk crytic-export corpus verify.json",
     "coverage": "UNIT_TESTS=1 hardhat coverage --network hardhat && istanbul check-coverage --branches 100 --lines 100",
+    "deploy:goerli": "yarn ts-node --transpile-only ./deploy/deployGoerli.ts && yarn verify:goerli",
+    "deploy:mainnet": "yarn ts-node --transpile-only ./deploy/deployMainnet.ts && yarn verify:mainnet",
     "format": "prettier --check \"./**/*.{ts,sol}\"",
     "format:fix": "prettier --write \"./**/*.{ts,sol}\"",
     "lint": "eslint --ext .ts test test-e2e zksync-helpers hardhat.config.ts",
@@ -21,23 +23,24 @@
     "test-e2e:local": "./scripts/wait-for-local-setup.sh && TEST_ENV=local mocha --config .mocharc-e2e.js",
     "test-e2e:goerli": "TEST_ENV=goerli mocha --config .mocharc-e2e.js",
     "typecheck": "tsc --noEmit",
-    "verify": "yarn hardhat run scripts/verify.ts --network goerli"
+    "verify:goerli": "yarn hardhat run scripts/verify.ts --network goerli",
+    "verify:mainnet": "yarn hardhat run scripts/verify.ts --network mainnet"
   },
   "dependencies": {
     "@matterlabs/signature-checker": "^1.1.1",
-    "@matterlabs/zksync-contracts": "^0.5.1"
+    "@matterlabs/zksync-contracts": "0.6.0"
   },
   "devDependencies": {
     "@defi-wonderland/smock": "^2.3.4",
     "@eth-optimism/smock": "=1.1.10",
     "@makerdao/hardhat-utils": "^0.1.3",
-    "@matterlabs/hardhat-zksync-deploy": "^0.6.1",
-    "@matterlabs/hardhat-zksync-solc": "^0.3.14-beta.1",
-    "@matterlabs/hardhat-zksync-verify": "^0.1.1",
+    "@matterlabs/hardhat-zksync-deploy": "^0.6.2",
+    "@matterlabs/hardhat-zksync-solc": "^0.3.14",
+    "@matterlabs/hardhat-zksync-verify": "^0.1.3",
     "@nomiclabs/ethereumjs-vm": "^4.2.2",
     "@nomiclabs/hardhat-ethers": "^2.1.1",
     "@nomiclabs/hardhat-etherscan": "^3.1.4",
-    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@nomiclabs/hardhat-waffle": "^2.0.5",
     "@nomiclabs/hardhat-web3": "^2.0.0",
     "@openzeppelin/contracts": "4.7.3",
     "@openzeppelin/contracts-upgradeable": "4.7.3",
@@ -62,7 +65,7 @@
     "eslint-plugin-sonarjs": "^0.15.0",
     "eslint-plugin-unused-imports": "^2.0.0",
     "eth-permit": "^0.1.9",
-    "ethereum-waffle": "^3.0.0",
+    "ethereum-waffle": "^4.0.10",
     "ethers": "^5.7.0",
     "hardhat": "^2.12.5",
     "hardhat-gas-reporter": "^1.0.4",
@@ -78,6 +81,6 @@
     "typescript": "^4.7.4",
     "utf8": "^3.0.0",
     "web3": "^1.3.4",
-    "zksync-web3": "^0.12.5"
+    "zksync-web3": "^0.13.4"
   }
 }

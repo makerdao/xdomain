@@ -18,6 +18,7 @@ pragma solidity ^0.8.15;
 import "@matterlabs/zksync-contracts/l2/system-contracts/interfaces/IL1Messenger.sol";
 import "@matterlabs/zksync-contracts/l1/contracts/bridge/interfaces/IL1Bridge.sol";
 import "@matterlabs/zksync-contracts/l2/contracts/bridge/interfaces/IL2Bridge.sol";
+import "@matterlabs/zksync-contracts/l2/contracts/vendor/AddressAliasHelper.sol";
 
 // The following constants are copied from "@matterlabs/zksync-contracts/l2/system-contracts/Constants.sol";
 // We refrain from importing this file directly as it contains a large number of imports,
@@ -139,7 +140,10 @@ contract L2DAITokenBridge is IL2Bridge {
     uint256 _amount,
     bytes calldata /* _data */
   ) external {
-    require(msg.sender == l1Bridge, "L2DAITokenBridge/sender-not-l1-bridge"); // only L1 bridge can call
+    require(
+      AddressAliasHelper.undoL1ToL2Alias(msg.sender) == l1Bridge,
+      "L2DAITokenBridge/sender-not-l1-bridge"
+    );
 
     require(_l1Token == l1Token, "L2DAITokenBridge/token-not-dai");
 

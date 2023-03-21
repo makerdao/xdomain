@@ -1,4 +1,6 @@
-import { BigNumber, BigNumberish, Contract, Overrides, providers, utils } from 'ethers'
+import { BigNumber, BigNumberish, Contract, ethers, Overrides, providers, Signer, utils } from 'ethers'
+import { parseEther } from 'ethers/lib/utils'
+import hre from 'hardhat'
 import * as zk from 'zksync-web3'
 import { IZkSync } from 'zksync-web3/build/typechain'
 
@@ -8,7 +10,7 @@ export async function waitToRelayTxToL2(
   l2Provider: zk.Provider,
   l2Calldata?: string,
   l1Overrides?: Overrides,
-  l2ErgsLimit?: BigNumberish,
+  l2GasLimit?: BigNumberish,
 ): Promise<providers.TransactionReceipt> {
   const gasPrice = await l1Contract.provider.getGasPrice()
   const zkSyncAddress = await l2Provider.getMainContractAddress()
@@ -16,7 +18,7 @@ export async function waitToRelayTxToL2(
 
   const l2ExecutionCost = await zkSync.l2TransactionBaseCost(
     gasPrice,
-    l2ErgsLimit || BigNumber.from(1000000),
+    l2GasLimit || BigNumber.from(10000000),
     l2Calldata !== undefined ? utils.hexlify(l2Calldata).length : 1000,
   )
   const tx = await l1Contract.signer.sendTransaction({
@@ -34,4 +36,29 @@ export async function waitToRelayTxToL2(
   const l2TxReceipt = await l2Response.wait()
   console.log(`L1>L2 message confirmed in L2. L2 tx = ${l2Response.hash}.`)
   return l2TxReceipt
+}
+
+export function applyL1ToL2Alias(l1Address: string): string {
+  const offset = ethers.BigNumber.from('0x1111000000000000000000000000000000001111')
+  const l1AddressAsNumber = ethers.BigNumber.from(l1Address)
+
+  const l2AddressAsNumber = l1AddressAsNumber.add(offset)
+
+  const mask = ethers.BigNumber.from(2).pow(160)
+  return l2AddressAsNumber.mod(mask).toHexString()
+}
+
+export async function getL2SignerFromL1Address(l1Address: string): Promise<Signer> {
+  const l2Address = applyL1ToL2Alias(l1Address)
+
+  await hre.network.provider.request({
+    method: 'hardhat_impersonateAccount',
+    params: [l2Address],
+  })
+
+  const [, , , , , , , , , funder] = await hre.ethers.getSigners()
+  await funder.sendTransaction({ to: l2Address, value: parseEther('0.1') })
+
+  const l2Signer = await hre.ethers.getSigner(l2Address)
+  return l2Signer
 }
