@@ -1,22 +1,24 @@
-import { BlockEvent, Finding, HandleBlock, getEthersProvider } from "forta-agent";
+import { Finding, HandleBlock, BlockEvent, getEthersProvider } from "forta-agent";
+import { providers } from "ethers";
+import { NetworkData } from "./network";
 import { NetworkManager } from "forta-agent-tools";
-import { ethers } from "ethers";
-import { CONFIG, L2_DATA, NetworkData, Params } from "./constants";
-import SupplyFetcher from "./api";
+import Fetcher from "./fetchAPI";
+import { CONFIG } from "./network";
+import { Params } from "./utils";
 
 const networkManager = new NetworkManager(CONFIG);
 
-const params: Params = {
-  provider: getEthersProvider(),
-  l2Data: L2_DATA,
-  data: networkManager,
-  fetcher: new SupplyFetcher(),
-};
-
 export const provideInitialize =
-  (provider: ethers.providers.JsonRpcProvider, data: NetworkManager<NetworkData>) => async () => {
-    await data.init(provider);
+  (networkManager: NetworkManager<NetworkData>, provider: providers.Provider) => async () => {
+    await networkManager.init(provider);
   };
+
+const params: Params = {
+  data: networkManager,
+  fetcher: new Fetcher(),
+  provider: getEthersProvider(),
+  init: false,
+};
 
 export const provideHandleBlock = (data: NetworkManager<NetworkData>, params: Params): HandleBlock => {
   // Bot handler
@@ -43,6 +45,6 @@ export const provideHandleBlock = (data: NetworkManager<NetworkData>, params: Pa
 };
 
 export default {
-  initialize: provideInitialize(getEthersProvider(), networkManager),
+  initialize: provideInitialize(networkManager, getEthersProvider()),
   handleBlock: provideHandleBlock(networkManager, params),
 };

@@ -1,8 +1,10 @@
 {
   "name": "mk-2",
   "version": "0.0.1",
-  "description": "MakerDAO L2TeleportGateway's TeleportInitialized events detection bot",
+  "description": "MakerDAO Teleport backing monitoring bot",
+  "repository": "https://github.com/makerdao/xdomain/tree/master/forta-bots/Teleport-Backing",
   "chainIds": [
+    1,
     10,
     42161
   ],
@@ -24,17 +26,17 @@
     "format": "prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
-    "forta-agent": "^0.1.8"
+    "axios": "^0.27.2",
+    "forta-agent": "^0.1.8",
+    "forta-agent-tools": "^2.3.1"
   },
   "devDependencies": {
     "@types/jest": "^27.0.1",
     "@types/nodemon": "^1.19.0",
-    "forta-agent-tools": "^2.2.2",
     "jest": "^27.0.6",
-    "nodemon": "^2.0.8",
-    "prettier": "^2.6.0",
+    "nodemon": "^2.0.19",
+    "prettier": "^2.7.1",
     "ts-jest": "^27.0.3",
     "typescript": "^4.3.4"
-  },
-  "repository": "https://github.com/makerdao/xdomain/tree/master/forta-bots/TeleportInitialized-Events-Monitoring"
+  }
 }
