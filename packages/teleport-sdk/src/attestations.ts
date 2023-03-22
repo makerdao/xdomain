@@ -1,27 +1,52 @@
 import axios from 'axios'
-import { arrayify, hashMessage } from 'ethers/lib/utils'
+import { BigNumber } from 'ethers'
+import { arrayify, hashMessage, hexConcat } from 'ethers/lib/utils'
 
-import { decodeTeleportData, getGuidHash, sleep, TeleportGUID } from '.'
+import { decodeTeleportData, DomainId, getGuidHash, sleep, TeleportGUID } from '.'
 import { TeleportOracleAuth } from './sdk/esm/types'
 
-const ORACLE_API_URL = 'https://lair.chroniclelabs.org'
+export const ORACLE_API_URLS: { [domain in DomainId]: string } = {
+  'ETH-GOER-A': 'https://current-stage-goerli-lair.chroniclelabs.org',
+  'ETH-MAIN-A': 'https://lair.prod.makerops.services',
+  'OPT-GOER-A': '',
+  'ARB-GOER-A': '',
+  'OPT-MAIN-A': '',
+  'ARB-ONE-A': '',
+}
 
+/**
+ * Represents oracle signatures for a particular event on some domain
+ */
 interface OracleData {
   data: { event: string; hash: string }
   signatures: {
     ethereum: {
+      signer: string
       signature: string
     }
   }
 }
 
+/**
+ * Oracle attestation for a particular {@link TeleportGUID}
+ */
 interface Attestation {
   signatures: string
   teleportGUID: TeleportGUID
+  signatureArray: Array<{
+    signer: string
+    signature: string
+  }>
 }
 
-async function fetchAttestations(txHash: string): Promise<Attestation[]> {
-  const response = await axios.get(ORACLE_API_URL, {
+/**
+ * Fetch attestations from the Oracle network.
+ * @internal
+ * @param txHash - transaction hash to be attested
+ * @returns Promise containing oracle attestations
+ */
+async function fetchAttestations(txHash: string, dstDomain: DomainId): Promise<Attestation[]> {
+  const response = await axios.get(ORACLE_API_URLS[dstDomain], {
     params: {
       type: 'teleport_evm',
       index: txHash,
@@ -34,22 +59,43 @@ async function fetchAttestations(txHash: string): Promise<Attestation[]> {
   for (const oracle of results) {
     const h = oracle.data.hash
     if (!teleports.has(h)) {
-      teleports.set(h, { signatures: '0x', teleportGUID: decodeTeleportData(oracle.data.event) })
+      teleports.set(h, { signatureArray: [], signatures: '0x', teleportGUID: decodeTeleportData(oracle.data.event) })
     }
-    teleports.get(h)!.signatures += oracle.signatures.ethereum.signature
+    const teleport = teleports.get(h)!
+
+    const { signer, signature } = oracle.signatures.ethereum
+    teleport.signatureArray.push({ signer: `0x${signer}`, signature: `0x${signature}` })
+    teleport.signatures = hexConcat(
+      teleport.signatureArray
+        .sort((a, b) => (BigNumber.from(a.signer).lt(BigNumber.from(b.signer)) ? -1 : 1))
+        .map((s) => s.signature),
+    )
   }
 
   return Array.from(teleports.values())
 }
 
+/**
+ * Collect attestations for a transaction from the Oracle network
+ * @public
+ * @param txHash - hash of the transaction to attest
+ * @param threshold - number of signatures to collect
+ * @param isValidAttestation - callback to check if an oracle signature is valid
+ * @param pollingIntervalMs
+ * @param teleportGUID - {@link TeleportGUID} created by the `txHash` transaction
+ * @param timeoutMs
+ * @param onNewSignatureReceived - callback
+ * @returns Promise containing oracle attestations, and the attested {@link TeleportGUID}
+ */
 export async function waitForAttestations(
+  dstDomain: DomainId,
   txHash: string,
   threshold: number,
   isValidAttestation: TeleportOracleAuth['isValid'],
   pollingIntervalMs: number,
   teleportGUID?: TeleportGUID,
   timeoutMs?: number,
-  onNewSignatureReceived?: (numSignatures: number, threshold: number) => void,
+  onNewSignatureReceived?: (numSignatures: number, threshold: number, guid?: TeleportGUID) => void,
 ): Promise<{
   signatures: string
   teleportGUID: TeleportGUID
@@ -60,7 +106,7 @@ export async function waitForAttestations(
   let prevNumSigs: number | undefined
 
   while (true) {
-    const attestations = await fetchAttestations(txHash)
+    const attestations = await fetchAttestations(txHash, dstDomain)
     if (attestations.length > 1 && !teleportGUID) {
       throw new Error('Ambiguous teleportGUID: more than one teleport found in tx but no teleportGUID specified')
     }
@@ -73,7 +119,7 @@ export async function waitForAttestations(
     const numSigs = (signatures.length - 2) / 130
 
     if (prevNumSigs === undefined || prevNumSigs! < numSigs) {
-      onNewSignatureReceived?.(numSigs, threshold)
+      onNewSignatureReceived?.(numSigs, threshold, guid)
 
       if (guid && numSigs >= threshold) {
         const guidHash = getGuidHash(guid!)

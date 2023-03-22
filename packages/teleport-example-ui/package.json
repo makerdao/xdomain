@@ -1,0 +1,63 @@
+{
+  "name": "teleport-ui",
+  "homepage": ".",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@types/jest": "^27.0.1",
+    "@types/node": "^16.7.13",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "antd": "^4.21.7",
+    "eslint-config-typestrict": "^1.0.2",
+    "eslint-plugin-no-only-tests": "^2.6.0",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
+    "eslint-plugin-sonarjs": "^0.12.0",
+    "eslint-plugin-unused-imports": "^2.0.0",
+    "ethers": "^5.6.9",
+    "graphql": "^16.5.0",
+    "graphql-request": "^4.3.0",
+    "prettier": "^2.5.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "6",
+    "react-scripts": "^4.0.3",
+    "sass": "^1.53.0",
+    "teleport-sdk": "https://gitpkg.now.sh/makerdao/xdomain/packages/teleport-sdk?eb0b477dbbf80c91b7b7075e1881a2c2c997cd9b",
+    "typescript": "^4.7.4",
+    "use-local-storage": "^2.3.6",
+    "web3modal": "^1.9.8"
+  },
+  "scripts": {
+    "format": "prettier --check \"./**/*.ts\"",
+    "format:fix": "prettier --write \"./**/*.ts\"",
+    "lint": "eslint --ext=.ts,.tsx,.js,.jsx src",
+    "lint:fix": "yarn lint --fix",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "resolutions": {
+    "//": "See https://github.com/facebook/create-react-app/issues/11773",
+    "react-error-overlay": "6.0.9"
+  }
+}

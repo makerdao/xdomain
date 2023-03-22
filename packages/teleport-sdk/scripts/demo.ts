@@ -15,8 +15,10 @@ import {
   initRelayedTeleport,
   initTeleport,
   mintWithOracles,
-  relayMintWithOracles,
-} from '../src/index'
+  requestRelay,
+  signRelay,
+  waitForRelayTask,
+} from '../src'
 import { fundTestWallet } from '../test/faucet'
 
 ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR)
@@ -108,13 +110,19 @@ export async function demo(
   // ***********  getAmountsForTeleportGUID (before mint) ******************/
   // ***********************************************************************/
 
-  const relayParams =
-    (PRECISE_RELAY_FEE_ESTIMATION && {
-      receiver: sender,
-      teleportGUID: teleportGUID!,
-      signatures,
-    }) ||
-    undefined
+  const expiry = Math.floor(Date.now() / 1000 + 24 * 3600)
+  const { r, s, v } = await signRelay({ srcDomain, receiver: sender, teleportGUID, relayFee: 1, expiry })
+
+  const relayParams = PRECISE_RELAY_FEE_ESTIMATION
+    ? {
+        teleportGUID: teleportGUID!,
+        signatures,
+        r,
+        s,
+        v,
+        expiry,
+      }
+    : undefined
   const { mintable, pending, bridgeFee, relayFee } = await getAmountsForTeleportGUID({
     srcDomain,
     teleportGUID: teleportGUID!,
@@ -134,15 +142,16 @@ export async function demo(
   if (RELAY_MINT) {
     console.log(`Relay Fees: ${formatEther(relayFee || '0')} DAI.`)
     console.log(`\nRelaying minting of ${formatEther(mintable)} DAI on ${dstDomain} ...`)
-    const mintTxHash = await relayMintWithOracles({
+    const taskId = await requestRelay({
       receiver: sender,
       srcDomain,
       teleportGUID: teleportGUID!,
       signatures,
       maxFeePercentage,
-      relayFee: relayFee || '0',
+      relayFee: relayFee!,
       relayAddress,
     })
+    const mintTxHash = await waitForRelayTask({ srcDomain, taskId })
     console.log(`Relayed minting tx submitted: ${dstDomainEtherscan}${mintTxHash}`)
     const dstProvider = new providers.JsonRpcProvider(DEFAULT_RPC_URLS[getDefaultDstDomain(srcDomain)])
     await dstProvider.getTransactionReceipt(mintTxHash)

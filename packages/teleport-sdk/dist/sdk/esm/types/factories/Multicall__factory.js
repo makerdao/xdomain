@@ -4,6 +4,7 @@
 import { Contract, utils } from "ethers";
 const _abi = [
     {
+        constant: false,
         inputs: [
             {
                 components: [
@@ -36,10 +37,12 @@ const _abi = [
                 type: "bytes[]",
             },
         ],
+        payable: false,
         stateMutability: "nonpayable",
         type: "function",
     },
     {
+        constant: true,
         inputs: [
             {
                 internalType: "uint256",
@@ -55,10 +58,12 @@ const _abi = [
                 type: "bytes32",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: true,
         inputs: [],
         name: "getCurrentBlockCoinbase",
         outputs: [
@@ -68,10 +73,12 @@ const _abi = [
                 type: "address",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: true,
         inputs: [],
         name: "getCurrentBlockDifficulty",
         outputs: [
@@ -81,10 +88,12 @@ const _abi = [
                 type: "uint256",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: true,
         inputs: [],
         name: "getCurrentBlockGasLimit",
         outputs: [
@@ -94,10 +103,12 @@ const _abi = [
                 type: "uint256",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: true,
         inputs: [],
         name: "getCurrentBlockTimestamp",
         outputs: [
@@ -107,10 +118,12 @@ const _abi = [
                 type: "uint256",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: true,
         inputs: [
             {
                 internalType: "address",
@@ -126,10 +139,12 @@ const _abi = [
                 type: "uint256",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },
     {
+        constant: true,
         inputs: [],
         name: "getLastBlockHash",
         outputs: [
@@ -139,6 +154,7 @@ const _abi = [
                 type: "bytes32",
             },
         ],
+        payable: false,
         stateMutability: "view",
         type: "function",
     },

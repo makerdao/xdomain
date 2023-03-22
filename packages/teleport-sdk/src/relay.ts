@@ -1,38 +1,81 @@
 import axios from 'axios'
-import { BigNumber, BigNumberish, constants, Contract, ethers, Signer } from 'ethers'
-import { arrayify, formatEther, hexConcat, hexZeroPad, Interface, keccak256, splitSignature } from 'ethers/lib/utils'
+import { BigNumber, BigNumberish, Contract, ethers, Signature, Signer } from 'ethers'
+import {
+  arrayify,
+  formatEther,
+  hexConcat,
+  hexZeroPad,
+  Interface,
+  keccak256,
+  parseEther,
+  splitSignature,
+} from 'ethers/lib/utils'
 
 import { getGuidHash, sleep, TeleportGUID } from '.'
 import { BasicRelay, BasicRelayInterface } from './sdk/esm/types/BasicRelay'
 import { TrustedRelay, TrustedRelayInterface } from './sdk/esm/types/TrustedRelay'
 
+const DEFAULT_POLLING_INTERVAL_MS = 2000
 const GELATO_API_URL = 'https://relay.gelato.digital'
-const ETHEREUM_DAI_ADDRESS = '0x6b175474e89094c44da98b954eedeac495271d0f'
 const GELATO_ADDRESSES: { [chainId: number]: { service: string; gelato: string } } = {
+  1: {
+    service: '0x5ca448e53e77499222741DcB6B3c959Fa829dAf2',
+    gelato: '0x3CACa7b48D0573D793d3b0279b5F0029180E83b6',
+  },
   4: {
-    service: '0x9B79b798563e538cc326D03696B3Be38b971D282',
+    service: '0xaBcC9b596420A9E9172FD5938620E265a0f9Df92',
     gelato: '0x0630d1b8C2df3F0a68Df578D02075027a6397173',
   },
-  42: {
-    service: '0x4F36f93F58d36DcbC1E60b9bdBE213482285C482',
-    gelato: '0xDf592cB2d32445F8e831d211AB20D3233cA41bD8',
-  },
   5: {
-    service: '0x61BF11e6641C289d4DA1D59dC3E03E15D2BA971c',
+    service: '0xaBcC9b596420A9E9172FD5938620E265a0f9Df92',
     gelato: '0x683913B3A32ada4F8100458A3E1675425BdAa7DF',
   },
 }
 
+/**
+ * Represents a transaction relay service.
+ */
 export type Relay = BasicRelay | TrustedRelay
+/**
+ * Interface for relay interaction
+ */
 type RelayInterface = BasicRelayInterface | TrustedRelayInterface
 
-function getEstimatedRelayGasLimit(relay: BasicRelay | TrustedRelay): string {
-  if (relay.hasOwnProperty('signers')) {
-    return '420000' // = 385462 + a small margin (estimate for TrustedRelay)
-  }
-  return '400000' // = 371516 + a small margin (estimate for BasicRelay)
+export interface RelayParams {
+  teleportGUID: TeleportGUID
+  signatures: string
+  r: string
+  s: string
+  v: number
+  maxFeePercentage?: BigNumberish
+  expiry?: BigNumberish
+  to?: string
+  data?: string
 }
 
+function getDefaultExpiry(): BigNumberish {
+  return Math.floor(Date.now() / 1000 + 24 * 3600)
+}
+const DEFAULT_MAX_FEE_PERCENTAGE = parseEther('0.1') // 10%
+
+/**
+ * Return an estimation of the base gas usage for relayer transactions
+ * @param relay - {@link Relay} to use
+ * @returns gas limit estimation
+ */
+function getEstimatedRelayGasLimit(relay: BasicRelay | TrustedRelay): string {
+  if (relay.hasOwnProperty('signers')) {
+    return '490000' // = 385462 + a small margin (estimate for TrustedRelay)
+  }
+  return '470000' // = 371516 + a small margin (estimate for BasicRelay)
+}
+/**
+ * @internal
+ * @param url
+ * @param method
+ * @param params
+ * @returns
+ */
 async function queryGelatoApi(url: string, method: 'get' | 'post', params?: Object): Promise<any> {
   let attempt = 1
   while (true) {
@@ -57,21 +100,27 @@ async function queryGelatoApi(url: string, method: 'get' | 'post', params?: Obje
   }
 }
 
-async function getRelayCalldata(
-  relayInterface: RelayInterface,
-  receiver: Signer,
+/**
+ * Generate calldata for the relayer to post on the target domain.
+ * @internal
+ * @remarks
+ * This calldata can include a bundled action to execute after minting the tokens
+ * on the destination domain. The functionality is restricted to `TrustedRelay`s,
+ * which are still under development
+ * @see {@link TrustedRelay}
+ *
+ * @param teleportGUID - TeleportGUID identifying this teleport action
+ * @param gasFee - gas fee to pay
+ * @param maxFeePercentage - maximum fee approved by the user
+ * @param expiry - expiration date of this teleport action
+ * @returns Promise containing calldata to send over to the relayer
+ */
+function getRelayPayload(
   teleportGUID: TeleportGUID,
-  signatures: string,
   gasFee: BigNumberish,
-  maxFeePercentage?: BigNumberish,
-  expiry?: BigNumberish,
-  to?: string,
-  data?: string,
-  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
-): Promise<string> {
-  maxFeePercentage ||= 0
-  expiry ||= Math.floor(Date.now() / 1000 + 3600)
-
+  maxFeePercentage: BigNumberish,
+  expiry: BigNumberish,
+): string {
   const guidHash = getGuidHash(teleportGUID)
   const payload = keccak256(
     hexConcat([
@@ -81,11 +130,40 @@ async function getRelayCalldata(
       hexZeroPad(BigNumber.from(expiry).toHexString(), 32),
     ]),
   )
-  const { r, s, v } = splitSignature(await receiver.signMessage(arrayify(payload)))
-  onPayloadSigned?.(payload, r, s, v)
+  return payload
+}
 
-  const useTrustedRelay = relayInterface.functions.hasOwnProperty('signers(address)')
-  const extCall = useTrustedRelay ? [to || constants.AddressZero, data || '0x'] : []
+export async function signRelayPayload(
+  receiver: Signer,
+  teleportGUID: TeleportGUID,
+  gasFee: BigNumberish,
+  maxFeePercentage?: BigNumberish,
+  expiry?: BigNumberish,
+): Promise<Signature & { payload: string }> {
+  if (BigNumber.from(teleportGUID.amount).lt(gasFee)) {
+    throw new Error(
+      `Amount transferred (${formatEther(teleportGUID.amount)} DAI) must be greater than relay fee (${formatEther(
+        gasFee,
+      )} DAI)`,
+    )
+  }
+  maxFeePercentage ||= DEFAULT_MAX_FEE_PERCENTAGE
+  expiry ||= getDefaultExpiry()
+  const payload = getRelayPayload(teleportGUID, gasFee, maxFeePercentage, expiry)
+  return { payload, ...splitSignature(await receiver.signMessage(arrayify(payload))) }
+}
+
+async function getRelayCalldata(
+  relayInterface: RelayInterface,
+  teleportGUID: TeleportGUID,
+  signatures: string,
+  gasFee: BigNumberish,
+  r: string,
+  s: string,
+  v: number,
+  maxFeePercentage: BigNumberish,
+  expiry: BigNumberish,
+): Promise<string> {
   const calldata = (relayInterface as any).encodeFunctionData('relay', [
     teleportGUID,
     signatures,
@@ -95,31 +173,49 @@ async function getRelayCalldata(
     v,
     r,
     s,
-    ...extCall,
   ])
   return calldata
 }
 
-async function createRelayTask(relay: Relay, calldata: string, gasLimit: BigNumberish): Promise<string> {
+/**
+ * Register a relay task with the relayer
+ * @internal
+ * @see {@link getRelayCalldata}
+ *
+ * @param relay - the Relay to use for this transaction
+ * @param calldata - calldata to include with the relayer's transaction
+ * @returns Promise containing the task's identifier
+ */
+async function createRelayTask(relay: Relay, calldata: string): Promise<string> {
   const { chainId } = await relay.provider.getNetwork()
   const token = await relay.dai()
-  const { taskId } = await queryGelatoApi(`metabox-relays/${chainId}`, 'post', {
-    typeId: 'ForwardCall',
+  const { taskId } = await queryGelatoApi(`relays/v2/call-with-sync-fee`, 'post', {
     chainId,
     target: relay.address,
     data: calldata,
     feeToken: token,
-    gas: gasLimit.toString(),
   })
   return taskId
 }
 
 let lastTaskLog: string | undefined
-async function waitForRelayTaskConfirmation(
+/**
+ * Spins while waiting for the relayer to confirm its transaction
+ * @internal
+ * @param taskId - task identifier from {@link createRelayTask}
+ * @param pollingIntervalMs
+ * @param timeoutMs
+ * @throws {@link Error}
+ * On error, throws an Error containing the failure reason
+ * @returns Promise containing the relayed transaction's hash
+ */
+export async function waitForRelayTaskConfirmation(
   taskId: string,
-  pollingIntervalMs: number,
+  pollingIntervalMs?: number,
   timeoutMs?: number,
 ): Promise<string> {
+  pollingIntervalMs ||= DEFAULT_POLLING_INTERVAL_MS
+
   let timeSlept = 0
   let isExecPending = false
   while (true) {
@@ -129,6 +225,8 @@ async function waitForRelayTaskConfirmation(
       console.log(taskLog)
       lastTaskLog = taskLog
     }
+    if (data[0]?.lastTransactionHash) return data[0].lastTransactionHash
+
     if (data[0]?.taskState === 'ExecSuccess') {
       const txHash = data[0].execution?.transactionHash
       if (txHash) return txHash
@@ -148,33 +246,36 @@ async function waitForRelayTaskConfirmation(
   }
 }
 
-async function getRelayGasLimit(
-  relay: Relay,
-  relayParams?: {
-    receiver: Signer
-    teleportGUID: TeleportGUID
-    signatures: string
-    maxFeePercentage?: BigNumberish
-    expiry?: BigNumberish
-    to?: string
-    data?: string
-  },
-  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
-): Promise<string> {
+/**
+ * Estimate the required gas limit for a relay operation
+ * @internal
+ * @param relay - {@link Relay} to use
+ * @param relayParams - parameters for the relayer's transaction
+ * @param onPayloadSigned - callback
+ * @returns Promise containing gas estimation for the transaction
+ */
+async function getRelayGasLimit(relay: Relay, relayParams?: RelayParams): Promise<string> {
   if (!relayParams) return getEstimatedRelayGasLimit(relay)
-  const { receiver, teleportGUID, signatures, maxFeePercentage, expiry, to, data } = relayParams
+  const {
+    teleportGUID,
+    signatures,
+    r,
+    s,
+    v,
+    maxFeePercentage = DEFAULT_MAX_FEE_PERCENTAGE,
+    expiry = getDefaultExpiry(),
+  } = relayParams
 
   const relayData = await getRelayCalldata(
     relay.interface,
-    receiver,
     teleportGUID,
     signatures,
     1,
+    r,
+    s,
+    v,
     maxFeePercentage,
     expiry,
-    to,
-    data,
-    onPayloadSigned,
   )
   const { chainId } = await relay.provider.getNetwork()
   const addresses = GELATO_ADDRESSES[chainId]
@@ -182,13 +283,12 @@ async function getRelayGasLimit(
   const serviceAddress = addresses.service
   if (!serviceAddress) throw new Error(`Missing "service" address for chainId ${chainId}`)
   const serviceInterface = new Interface([
-    'function forwardCallSyncFee(address _target,bytes calldata _data,address _feeToken,uint256 _gas,uint256 _gelatoFee,bytes32 _taskId)',
+    'function callWithSyncFee(address _target,bytes calldata _data,address _feeToken,uint256 _fee,bytes32 _taskId)',
   ])
-  const serviceData = serviceInterface.encodeFunctionData('forwardCallSyncFee', [
+  const serviceData = serviceInterface.encodeFunctionData('callWithSyncFee', [
     relay.address,
     relayData,
     await relay.dai(),
-    2000000,
     0,
     ethers.constants.MaxUint256.toHexString(),
   ])
@@ -220,18 +320,18 @@ async function getRelayGasLimit(
   return gasUsed
 }
 
+/**
+ * Get the network gas fee to be paid for the transaction
+ * @internal
+ * @param relay - {@link Relay} to use
+ * @param isHighPriority - whether this transaction is to be expedited
+ * @param relayParams - parameters for the relayer's transaction
+ * @returns Promise containing estimated gas fee to be paid
+ */
 export async function getRelayGasFee(
   relay: Relay,
   isHighPriority?: boolean,
-  relayParams?: {
-    receiver: Signer
-    teleportGUID: TeleportGUID
-    signatures: string
-    maxFeePercentage?: BigNumberish
-    expiry?: BigNumberish
-    to?: string
-    data?: string
-  },
+  relayParams?: RelayParams,
 ): Promise<string> {
   isHighPriority ||= false
 
@@ -241,17 +341,33 @@ export async function getRelayGasFee(
   const { chainId } = await relay.provider.getNetwork()
   const oracleChainId = oracles.includes(chainId.toString()) ? chainId : 1
 
-  if ([3, 4, 5, 42].includes(chainId)) {
-    return '1' // use 1 wei for the relay fee on testnets
+  if ([3, 4, 42].includes(chainId)) {
+    return '1' // use 1 wei for the relay fee on testnets other than goerli
   }
+  const paymentToken = await relay.dai()
   const { estimatedFee } = await queryGelatoApi(`oracles/${oracleChainId}/estimate`, 'get', {
-    params: { paymentToken: ETHEREUM_DAI_ADDRESS, gasLimit, isHighPriority },
+    params: { paymentToken, gasLimit, isHighPriority },
   })
 
   return estimatedFee
 }
 
-export async function waitForRelay(
+/**
+ * Relay a Teleport transaction and wait for the relayer to confirm its execution
+ * @public
+ * @param relay - {@link Relay} to use
+ * @param receiver - address that will receive tokens on the target domain
+ * @param teleportGUID - identifier for the teleport action. @see {@link TeleportGUID}
+ * @param signatures - deposit attestations obtained from the oracle network
+ * @param relayFee - fee to be paid to the relayer
+ * @param maxFeePercentage - maximum fee approved by the user
+ * @param expiry - expiration date of the operation
+ * @param pollingIntervalMs -
+ * @param timeoutMs -
+ * @param onPayloadSigned - callback
+ * @returns Promise containing the relayed transaction's hash
+ */
+export async function signAndCreateRelayTask(
   relay: Relay,
   receiver: Signer,
   teleportGUID: TeleportGUID,
@@ -259,35 +375,53 @@ export async function waitForRelay(
   relayFee: BigNumberish,
   maxFeePercentage?: BigNumberish,
   expiry?: BigNumberish,
-  to?: string,
-  data?: string,
-  pollingIntervalMs?: number,
-  timeoutMs?: number,
   onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
 ): Promise<string> {
-  pollingIntervalMs ||= 2000
+  maxFeePercentage ||= DEFAULT_MAX_FEE_PERCENTAGE
+  expiry ||= getDefaultExpiry()
 
-  if (BigNumber.from(teleportGUID.amount).lt(relayFee)) {
-    throw new Error(
-      `Amount transferred (${formatEther(teleportGUID.amount)} DAI) must be greater than relay fee (${formatEther(
-        relayFee,
-      )} DAI)`,
-    )
-  }
+  const { payload, r, s, v } = await signRelayPayload(receiver, teleportGUID, relayFee, maxFeePercentage, expiry)
+  onPayloadSigned?.(payload, r, s, v)
 
   const relayData = await getRelayCalldata(
     relay.interface,
+    teleportGUID,
+    signatures,
+    relayFee,
+    r,
+    s,
+    v,
+    maxFeePercentage,
+    expiry,
+  )
+  const taskId = await createRelayTask(relay, relayData)
+  return taskId
+}
+
+export async function requestAndWaitForRelay(
+  relay: Relay,
+  receiver: Signer,
+  teleportGUID: TeleportGUID,
+  signatures: string,
+  relayFee: BigNumberish,
+  maxFeePercentage?: BigNumberish,
+  expiry?: BigNumberish,
+  pollingIntervalMs?: number,
+  timeoutMs?: number,
+  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void,
+  onRelayTaskCreated?: (taskId: string) => void,
+): Promise<string> {
+  const taskId = await signAndCreateRelayTask(
+    relay,
     receiver,
     teleportGUID,
     signatures,
     relayFee,
     maxFeePercentage,
     expiry,
-    to,
-    data,
     onPayloadSigned,
   )
-  const taskId = await createRelayTask(relay, relayData, getEstimatedRelayGasLimit(relay))
+  onRelayTaskCreated?.(taskId)
   const txHash = await waitForRelayTaskConfirmation(taskId, pollingIntervalMs, timeoutMs)
   return txHash
 }

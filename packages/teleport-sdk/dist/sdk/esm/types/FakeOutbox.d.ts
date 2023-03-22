@@ -7,6 +7,7 @@ export interface FakeOutboxInterface extends utils.Interface {
     functions: {
         "bridge()": FunctionFragment;
         "executeTransaction(uint256,bytes32[],uint256,address,address,uint256,uint256,uint256,uint256,bytes)": FunctionFragment;
+        "l2ToL1Sender()": FunctionFragment;
     };
     encodeFunctionData(functionFragment: "bridge", values?: undefined): string;
     encodeFunctionData(functionFragment: "executeTransaction", values: [
@@ -21,8 +22,10 @@ export interface FakeOutboxInterface extends utils.Interface {
         BigNumberish,
         BytesLike
     ]): string;
+    encodeFunctionData(functionFragment: "l2ToL1Sender", values?: undefined): string;
     decodeFunctionResult(functionFragment: "bridge", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "executeTransaction", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "l2ToL1Sender", data: BytesLike): Result;
     events: {
         "OutBoxTransactionExecuted(address,address,uint256,uint256)": EventFragment;
     };
@@ -57,17 +60,20 @@ export interface FakeOutbox extends BaseContract {
     removeListener: OnEvent<this>;
     functions: {
         bridge(overrides?: CallOverrides): Promise<[string]>;
-        executeTransaction(batchNum: BigNumberish, arg1: BytesLike[], index: BigNumberish, l2Sender: string, destAddr: string, arg5: BigNumberish, arg6: BigNumberish, arg7: BigNumberish, arg8: BigNumberish, calldataForL1: BytesLike, overrides?: Overrides & {
+        executeTransaction(batchNum: BigNumberish, arg1: BytesLike[], index: BigNumberish, l2Sender: string, destAddr: string, l2Block: BigNumberish, l1Block: BigNumberish, l2Timestamp: BigNumberish, amount: BigNumberish, calldataForL1: BytesLike, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<ContractTransaction>;
+        l2ToL1Sender(overrides?: CallOverrides): Promise<[string]>;
     };
     bridge(overrides?: CallOverrides): Promise<string>;
-    executeTransaction(batchNum: BigNumberish, arg1: BytesLike[], index: BigNumberish, l2Sender: string, destAddr: string, arg5: BigNumberish, arg6: BigNumberish, arg7: BigNumberish, arg8: BigNumberish, calldataForL1: BytesLike, overrides?: Overrides & {
+    executeTransaction(batchNum: BigNumberish, arg1: BytesLike[], index: BigNumberish, l2Sender: string, destAddr: string, l2Block: BigNumberish, l1Block: BigNumberish, l2Timestamp: BigNumberish, amount: BigNumberish, calldataForL1: BytesLike, overrides?: Overrides & {
         from?: string | Promise<string>;
     }): Promise<ContractTransaction>;
+    l2ToL1Sender(overrides?: CallOverrides): Promise<string>;
     callStatic: {
         bridge(overrides?: CallOverrides): Promise<string>;
-        executeTransaction(batchNum: BigNumberish, arg1: BytesLike[], index: BigNumberish, l2Sender: string, destAddr: string, arg5: BigNumberish, arg6: BigNumberish, arg7: BigNumberish, arg8: BigNumberish, calldataForL1: BytesLike, overrides?: CallOverrides): Promise<void>;
+        executeTransaction(batchNum: BigNumberish, arg1: BytesLike[], index: BigNumberish, l2Sender: string, destAddr: string, l2Block: BigNumberish, l1Block: BigNumberish, l2Timestamp: BigNumberish, amount: BigNumberish, calldataForL1: BytesLike, overrides?: CallOverrides): Promise<void>;
+        l2ToL1Sender(overrides?: CallOverrides): Promise<string>;
     };
     filters: {
         "OutBoxTransactionExecuted(address,address,uint256,uint256)"(destAddr?: string | null, l2Sender?: string | null, outboxEntryIndex?: BigNumberish | null, transactionIndex?: null): OutBoxTransactionExecutedEventFilter;
@@ -75,14 +81,16 @@ export interface FakeOutbox extends BaseContract {
     };
     estimateGas: {
         bridge(overrides?: CallOverrides): Promise<BigNumber>;
-        executeTransaction(batchNum: BigNumberish, arg1: BytesLike[], index: BigNumberish, l2Sender: string, destAddr: string, arg5: BigNumberish, arg6: BigNumberish, arg7: BigNumberish, arg8: BigNumberish, calldataForL1: BytesLike, overrides?: Overrides & {
+        executeTransaction(batchNum: BigNumberish, arg1: BytesLike[], index: BigNumberish, l2Sender: string, destAddr: string, l2Block: BigNumberish, l1Block: BigNumberish, l2Timestamp: BigNumberish, amount: BigNumberish, calldataForL1: BytesLike, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<BigNumber>;
+        l2ToL1Sender(overrides?: CallOverrides): Promise<BigNumber>;
     };
     populateTransaction: {
         bridge(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        executeTransaction(batchNum: BigNumberish, arg1: BytesLike[], index: BigNumberish, l2Sender: string, destAddr: string, arg5: BigNumberish, arg6: BigNumberish, arg7: BigNumberish, arg8: BigNumberish, calldataForL1: BytesLike, overrides?: Overrides & {
+        executeTransaction(batchNum: BigNumberish, arg1: BytesLike[], index: BigNumberish, l2Sender: string, destAddr: string, l2Block: BigNumberish, l1Block: BigNumberish, l2Timestamp: BigNumberish, amount: BigNumberish, calldataForL1: BytesLike, overrides?: Overrides & {
             from?: string | Promise<string>;
         }): Promise<PopulatedTransaction>;
+        l2ToL1Sender(overrides?: CallOverrides): Promise<PopulatedTransaction>;
     };
 }

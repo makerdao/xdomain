@@ -90,22 +90,22 @@ const _abi = [
             },
             {
                 internalType: "uint256",
-                name: "",
+                name: "l2Block",
                 type: "uint256",
             },
             {
                 internalType: "uint256",
-                name: "",
+                name: "l1Block",
                 type: "uint256",
             },
             {
                 internalType: "uint256",
-                name: "",
+                name: "l2Timestamp",
                 type: "uint256",
             },
             {
                 internalType: "uint256",
-                name: "",
+                name: "amount",
                 type: "uint256",
             },
             {
@@ -117,6 +117,19 @@ const _abi = [
         name: "executeTransaction",
         outputs: [],
         stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        inputs: [],
+        name: "l2ToL1Sender",
+        outputs: [
+            {
+                internalType: "address",
+                name: "",
+                type: "address",
+            },
+        ],
+        stateMutability: "view",
         type: "function",
     },
 ];

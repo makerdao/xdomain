@@ -1,13 +1,28 @@
 import { Provider } from '@ethersproject/abstract-provider'
-import { BigNumber, BigNumberish, Contract, ethers, Signer } from 'ethers'
+import { BigNumber, Contract, ethers } from 'ethers'
 import { Interface } from 'ethers/lib/utils'
 
-import { DomainId, getGuidHash, getRelayGasFee, getSdk, multicall, Relay, TeleportGUID } from '.'
+import { DomainId, getGuidHash, getRelayGasFee, getSdk, multicall, Relay, RelayParams, TeleportGUID } from '.'
 
 const bytes32 = ethers.utils.formatBytes32String
 const GET_FEE_METHOD_FRAGMENT =
   'function getFee((bytes32,bytes32,bytes32,bytes32,uint128,uint80,uint48),uint256,int256,uint256,uint256) view returns (uint256)'
 
+/**
+ * Check the Teleport system for fees and amounts mintable for a certain TeleportGUID
+ * @internal
+ * @see {@link TeleportGUID}
+ * @see {@link Relay}
+ *
+ * @param srcDomain - domain identifier for the source domain
+ * @param dstDomain - domain identifier for the destination domain
+ * @param dstDomainProvider - ethers rpc provider for destination domain
+ * @param teleportGUID - teleport action identifier
+ * @param relay - relay to use when transmitting transaction to the destination domain
+ * @param isHighPriority - whether this teleport action is to be expedited
+ * @param relayParams - parameters passed onto the relayer
+ * @returns promise to resolve with amounts corresponding to mintable tokens, bridge and relayer fees to be paid
+ */
 export async function getFeesAndMintableAmounts(
   srcDomain: DomainId,
   dstDomain: DomainId,
@@ -15,15 +30,7 @@ export async function getFeesAndMintableAmounts(
   teleportGUID: TeleportGUID,
   relay?: Relay,
   isHighPriority?: boolean,
-  relayParams?: {
-    receiver: Signer
-    teleportGUID: TeleportGUID
-    signatures: string
-    maxFeePercentage?: BigNumberish
-    expiry?: BigNumberish
-    to?: string
-    data?: string
-  },
+  relayParams?: RelayParams,
 ): Promise<{
   pending: BigNumber
   mintable: BigNumber
@@ -35,10 +42,6 @@ export async function getFeesAndMintableAmounts(
 
   const guidHash = getGuidHash(teleportGUID)
 
-  const teleportsMethodName = ['KOVAN-SLAVE-OPTIMISM-1', 'RINKEBY-SLAVE-ARBITRUM-1'].includes(srcDomain)
-    ? 'wormholes'
-    : 'teleports'
-
   const [{ vatLive }, { blessed, pending: pendingInJoin }, { line }, { debt }, { feeAddress }] = await multicall(
     sdk.Multicall!,
     [
@@ -49,7 +52,7 @@ export async function getFeesAndMintableAmounts(
       },
       {
         target: join,
-        method: `${teleportsMethodName}`,
+        method: 'teleports',
         params: [guidHash],
         outputTypes: ['bool blessed', 'uint248 pending'],
       },

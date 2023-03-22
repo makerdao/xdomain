@@ -4,55 +4,42 @@ exports.relayArbitrumMessage = exports.isArbitrumMessageInOutbox = void 0;
 const sdk_1 = require("@arbitrum/sdk");
 const utils_1 = require("ethers/lib/utils");
 const sdk_2 = require("./sdk");
-function getArbitrumOutbox(senderOrProvider, domain) {
-    const sdkProviders = {
-        'RINKEBY-MASTER-1': sdk_2.getRinkebySdk,
-        // 'ETHEREUM-MASTER-1': getMainnetSdk
-    };
-    const { Outbox, FakeOutbox } = sdkProviders[domain](senderOrProvider)[domain];
-    return { outbox: Outbox, fakeOutbox: FakeOutbox };
+function getFakeArbitrumOutbox(senderOrProvider) {
+    const { FakeOutbox } = (0, sdk_2.getGoerliSdk)(senderOrProvider)['ETH-GOER-A'];
+    return FakeOutbox;
 }
-async function isArbitrumMessageInOutbox(txHash, dstDomain, srcDomainProvider, dstDomainProvider) {
-    const { outbox } = getArbitrumOutbox(dstDomainProvider, dstDomain);
+async function isArbitrumMessageInOutbox(txHash, srcDomainProvider, dstDomainProvider) {
     const receipt = await srcDomainProvider.getTransactionReceipt(txHash);
-    const l2Network = await (0, sdk_1.getL2Network)(srcDomainProvider);
     const l2Receipt = new sdk_1.L2TransactionReceipt(receipt);
-    const messages = await l2Receipt.getL2ToL1Messages(dstDomainProvider, l2Network);
+    const messages = await l2Receipt.getL2ToL1Messages(dstDomainProvider, srcDomainProvider);
     const l2ToL1Msg = messages[0];
     if (!l2ToL1Msg)
         return false;
-    return await outbox.outboxEntryExists(l2ToL1Msg.batchNumber);
+    const status = await l2ToL1Msg.status(srcDomainProvider);
+    return status === sdk_1.L2ToL1MessageStatus.CONFIRMED;
 }
 exports.isArbitrumMessageInOutbox = isArbitrumMessageInOutbox;
-async function relayArbitrumMessage(txHash, sender, dstDomain, srcDomainProvider, useFakeOutbox, overrides) {
+async function relayArbitrumMessage(txHash, sender, srcDomainProvider, useFakeOutbox, overrides) {
     const receipt = await srcDomainProvider.getTransactionReceipt(txHash);
-    const l2Network = await (0, sdk_1.getL2Network)(srcDomainProvider);
-    const { outbox, fakeOutbox } = getArbitrumOutbox(sender, dstDomain);
     if (useFakeOutbox) {
-        if (l2Network.chainID !== 421611)
+        const l2Network = await (0, sdk_1.getL2Network)(srcDomainProvider);
+        if (l2Network.chainID !== 421613)
             throw new Error(`FakeOutbox not supported for chainId ${l2Network.chainID}`);
         const iface = new utils_1.Interface([
             `event TxToL1(address indexed from, address indexed to, uint256 indexed id, bytes data)`,
         ]);
         const txToL1Event = receipt.logs.find(({ topics }) => topics[0] === iface.getEventTopic('TxToL1'));
         const { to, data } = iface.parseLog(txToL1Event).args;
+        const fakeOutbox = getFakeArbitrumOutbox(sender);
         return await fakeOutbox.executeTransaction(0, [], 0, txToL1Event.address, to, 0, 0, 0, 0, data, {
             ...overrides,
         });
     }
     const l2Receipt = new sdk_1.L2TransactionReceipt(receipt);
-    const messages = await l2Receipt.getL2ToL1Messages(sender, l2Network);
+    const messages = await l2Receipt.getL2ToL1Messages(sender, srcDomainProvider);
     const l2ToL1Msg = messages[0];
-    await l2ToL1Msg.waitUntilOutboxEntryCreated(5000);
-    const proofInfo = await l2ToL1Msg.tryGetProof(srcDomainProvider);
-    if (!proofInfo)
-        throw new Error(`tryGetProof failed!`);
-    if (await l2ToL1Msg.hasExecuted(proofInfo)) {
-        throw new Error(`L2ToL1 message already executed!`);
-    }
-    // note that the following line is equivalent to calling l2ToL1Msg.execute(proofInfo),
-    // except it allows us to pass the `overrides` object
-    return await outbox.executeTransaction(l2ToL1Msg.batchNumber, proofInfo.proof, proofInfo.path, proofInfo.l2Sender, proofInfo.l1Dest, proofInfo.l2Block, proofInfo.l1Block, proofInfo.timestamp, proofInfo.amount, proofInfo.calldataForL1, { ...overrides });
+    await l2ToL1Msg.waitUntilReadyToExecute(srcDomainProvider, 5000);
+    return await l2ToL1Msg.execute(srcDomainProvider, overrides);
 }
 exports.relayArbitrumMessage = relayArbitrumMessage;
 //# sourceMappingURL=arbitrum.js.map

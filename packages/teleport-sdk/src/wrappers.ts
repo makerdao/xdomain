@@ -1,7 +1,15 @@
 import { Provider } from '@ethersproject/abstract-provider'
 import { BigNumberish, Overrides, Signer } from 'ethers'
 
-import { BridgeSettings, DomainDescription, DomainId, getLikelyDomainId, TeleportBridge, TeleportGUID } from '.'
+import {
+  BridgeSettings,
+  DomainDescription,
+  DomainId,
+  getLikelyDomainId,
+  RelayParams,
+  TeleportBridge,
+  TeleportGUID,
+} from '.'
 
 export interface DomainContext {
   srcDomain: DomainDescription
@@ -53,7 +61,7 @@ export function initRelayedTeleport(
 
 export interface GetAttestationsOpts {
   txHash: string
-  onNewSignatureReceived?: (numSignatures: number, threshold: number) => void
+  onNewSignatureReceived?: (numSignatures: number, threshold: number, guid?: TeleportGUID) => void
   timeoutMs?: number
   pollingIntervalMs?: number
   teleportGUID?: TeleportGUID
@@ -93,15 +101,7 @@ export function getAmountsForTeleportGUID(
   opts: {
     teleportGUID: TeleportGUID
     isHighPriority?: boolean
-    relayParams?: {
-      receiver: Signer
-      teleportGUID: TeleportGUID
-      signatures: string
-      maxFeePercentage?: BigNumberish
-      expiry?: BigNumberish
-      to?: string
-      data?: string
-    }
+    relayParams?: RelayParams
     relayAddress?: string
   } & DomainContext,
 ): ReturnType<TeleportBridge['getAmountsForTeleportGUID']> {
@@ -128,6 +128,12 @@ export interface MintWithOraclesOpts {
   overrides?: Overrides
 }
 
+export function getTeleportGuidFromTxHash(
+  opts: { txHash: string } & DomainContext,
+): ReturnType<TeleportBridge['getTeleportGuidFromTxHash']> {
+  return getTeleportBridge(opts).getTeleportGuidFromTxHash(opts.txHash)
+}
+
 export function requestFaucetDai(
   opts: { sender: Signer; overrides?: Overrides } & DomainContext,
 ): ReturnType<TeleportBridge['requestFaucetDai']> {
@@ -147,19 +153,67 @@ export function mintWithOracles(
   )
 }
 
-export interface RelayMintWithOraclesOpts {
+export interface WaitForMintOpts {
+  teleportGUIDorGUIDHash: TeleportGUID | string
+  pollingIntervalMs?: number
+  timeoutMs?: number
+}
+
+export function waitForMint(opts: WaitForMintOpts & DomainContext): ReturnType<TeleportBridge['waitForMint']> {
+  return getTeleportBridge(opts).waitForMint(opts.teleportGUIDorGUIDHash, opts.pollingIntervalMs, opts.timeoutMs)
+}
+
+export interface GetRelayFeeOpts {
+  isHighPriority?: boolean
+  relayParams?: RelayParams
+  relayAddress?: string
+}
+
+export function getRelayFee(opts: GetRelayFeeOpts & DomainContext): ReturnType<TeleportBridge['getRelayFee']> {
+  return getTeleportBridge(opts).getRelayFee(opts.isHighPriority, opts.relayParams, opts.relayAddress)
+}
+
+export interface SignRelayOpts {
   receiver: Signer
   teleportGUID: TeleportGUID
-  signatures: string
   relayFee: BigNumberish
   maxFeePercentage?: BigNumberish
   expiry?: BigNumberish
-  to?: string
-  data?: string
+}
+
+export function signRelay(opts: SignRelayOpts & DomainContext): ReturnType<TeleportBridge['signRelay']> {
+  return getTeleportBridge(opts).signRelay(
+    opts.receiver,
+    opts.teleportGUID,
+    opts.relayFee,
+    opts.maxFeePercentage,
+    opts.expiry,
+  )
+}
+
+export type RequestRelayOpts = SignRelayOpts & {
+  signatures: string
   relayAddress?: string
+  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void
+}
+
+export function requestRelay(opts: RequestRelayOpts & DomainContext): ReturnType<TeleportBridge['requestRelay']> {
+  return getTeleportBridge(opts).requestRelay(
+    opts.receiver,
+    opts.teleportGUID,
+    opts.signatures,
+    opts.relayFee,
+    opts.maxFeePercentage,
+    opts.expiry,
+    opts.relayAddress,
+    opts.onPayloadSigned,
+  )
+}
+
+export type RelayMintWithOraclesOpts = RequestRelayOpts & {
   pollingIntervalMs?: number
   timeoutMs?: number
-  onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void
+  onRelayTaskCreated?: (taskId: string) => void
 }
 
 export function relayMintWithOracles(
@@ -172,13 +226,18 @@ export function relayMintWithOracles(
     opts.relayFee,
     opts.maxFeePercentage,
     opts.expiry,
-    opts.to,
-    opts.data,
     opts.relayAddress,
     opts.pollingIntervalMs,
     opts.timeoutMs,
     opts.onPayloadSigned,
+    opts.onRelayTaskCreated,
   )
+}
+
+export function waitForRelayTask(
+  opts: { taskId: string; pollingIntervalMs?: number; timeoutMs?: number } & DomainContext,
+): ReturnType<TeleportBridge['waitForRelayTask']> {
+  return getTeleportBridge(opts).waitForRelayTask(opts.taskId, opts.pollingIntervalMs, opts.timeoutMs)
 }
 
 export function canMintWithoutOracle(

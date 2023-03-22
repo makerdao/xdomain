@@ -1,6 +1,6 @@
 import { Provider } from '@ethersproject/abstract-provider';
 import { BigNumberish, Overrides, Signer } from 'ethers';
-import { BridgeSettings, DomainDescription, DomainId, TeleportBridge, TeleportGUID } from '.';
+import { BridgeSettings, DomainDescription, DomainId, RelayParams, TeleportBridge, TeleportGUID } from '.';
 export interface DomainContext {
     srcDomain: DomainDescription;
     destDomain?: DomainId;
@@ -27,7 +27,7 @@ export declare function initRelayedTeleport(opts: Omit<InitTeleportOpts, 'operat
 } & DomainContext): ReturnType<TeleportBridge['initTeleport']>;
 export interface GetAttestationsOpts {
     txHash: string;
-    onNewSignatureReceived?: (numSignatures: number, threshold: number) => void;
+    onNewSignatureReceived?: (numSignatures: number, threshold: number, guid?: TeleportGUID) => void;
     timeoutMs?: number;
     pollingIntervalMs?: number;
     teleportGUID?: TeleportGUID;
@@ -45,15 +45,7 @@ export declare function getSrcGatewayAllowance(opts: {
 export declare function getAmountsForTeleportGUID(opts: {
     teleportGUID: TeleportGUID;
     isHighPriority?: boolean;
-    relayParams?: {
-        receiver: Signer;
-        teleportGUID: TeleportGUID;
-        signatures: string;
-        maxFeePercentage?: BigNumberish;
-        expiry?: BigNumberish;
-        to?: string;
-        data?: string;
-    };
+    relayParams?: RelayParams;
     relayAddress?: string;
 } & DomainContext): ReturnType<TeleportBridge['getAmountsForTeleportGUID']>;
 export declare function getAmounts(opts: {
@@ -69,26 +61,51 @@ export interface MintWithOraclesOpts {
     sender?: Signer;
     overrides?: Overrides;
 }
+export declare function getTeleportGuidFromTxHash(opts: {
+    txHash: string;
+} & DomainContext): ReturnType<TeleportBridge['getTeleportGuidFromTxHash']>;
 export declare function requestFaucetDai(opts: {
     sender: Signer;
     overrides?: Overrides;
 } & DomainContext): ReturnType<TeleportBridge['requestFaucetDai']>;
 export declare function mintWithOracles(opts: MintWithOraclesOpts & DomainContext): ReturnType<TeleportBridge['mintWithOracles']>;
-export interface RelayMintWithOraclesOpts {
+export interface WaitForMintOpts {
+    teleportGUIDorGUIDHash: TeleportGUID | string;
+    pollingIntervalMs?: number;
+    timeoutMs?: number;
+}
+export declare function waitForMint(opts: WaitForMintOpts & DomainContext): ReturnType<TeleportBridge['waitForMint']>;
+export interface GetRelayFeeOpts {
+    isHighPriority?: boolean;
+    relayParams?: RelayParams;
+    relayAddress?: string;
+}
+export declare function getRelayFee(opts: GetRelayFeeOpts & DomainContext): ReturnType<TeleportBridge['getRelayFee']>;
+export interface SignRelayOpts {
     receiver: Signer;
     teleportGUID: TeleportGUID;
-    signatures: string;
     relayFee: BigNumberish;
     maxFeePercentage?: BigNumberish;
     expiry?: BigNumberish;
-    to?: string;
-    data?: string;
+}
+export declare function signRelay(opts: SignRelayOpts & DomainContext): ReturnType<TeleportBridge['signRelay']>;
+export declare type RequestRelayOpts = SignRelayOpts & {
+    signatures: string;
     relayAddress?: string;
+    onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void;
+};
+export declare function requestRelay(opts: RequestRelayOpts & DomainContext): ReturnType<TeleportBridge['requestRelay']>;
+export declare type RelayMintWithOraclesOpts = RequestRelayOpts & {
     pollingIntervalMs?: number;
     timeoutMs?: number;
-    onPayloadSigned?: (payload: string, r: string, s: string, v: number) => void;
-}
+    onRelayTaskCreated?: (taskId: string) => void;
+};
 export declare function relayMintWithOracles(opts: RelayMintWithOraclesOpts & DomainContext): ReturnType<TeleportBridge['relayMintWithOracles']>;
+export declare function waitForRelayTask(opts: {
+    taskId: string;
+    pollingIntervalMs?: number;
+    timeoutMs?: number;
+} & DomainContext): ReturnType<TeleportBridge['waitForRelayTask']>;
 export declare function canMintWithoutOracle(opts: {
     txHash: string;
 } & DomainContext): ReturnType<TeleportBridge['canMintWithoutOracle']>;
@@ -98,3 +115,4 @@ export interface MintWithoutOracleOpts {
     overrides?: Overrides;
 }
 export declare function mintWithoutOracles(opts: MintWithoutOracleOpts & DomainContext): ReturnType<TeleportBridge['mintWithoutOracles']>;
+//# sourceMappingURL=wrappers.d.ts.map

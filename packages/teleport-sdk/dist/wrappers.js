@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mintWithoutOracles = exports.canMintWithoutOracle = exports.relayMintWithOracles = exports.mintWithOracles = exports.requestFaucetDai = exports.getAmounts = exports.getAmountsForTeleportGUID = exports.getSrcGatewayAllowance = exports.getDstBalance = exports.getSrcBalance = exports.getAttestations = exports.initRelayedTeleport = exports.initTeleport = exports.approveSrcGateway = exports.getTeleportBridge = void 0;
+exports.mintWithoutOracles = exports.canMintWithoutOracle = exports.waitForRelayTask = exports.relayMintWithOracles = exports.requestRelay = exports.signRelay = exports.getRelayFee = exports.waitForMint = exports.mintWithOracles = exports.requestFaucetDai = exports.getTeleportGuidFromTxHash = exports.getAmounts = exports.getAmountsForTeleportGUID = exports.getSrcGatewayAllowance = exports.getDstBalance = exports.getSrcBalance = exports.getAttestations = exports.initRelayedTeleport = exports.initTeleport = exports.approveSrcGateway = exports.getTeleportBridge = void 0;
 const _1 = require(".");
 function getTeleportBridge(opts) {
     return new _1.TeleportBridge({ ...opts, srcDomain: (0, _1.getLikelyDomainId)(opts.srcDomain) });
@@ -42,6 +42,10 @@ function getAmounts(opts) {
     return getTeleportBridge(opts).getAmounts(opts.withdrawn, opts.isHighPriority, opts.relayAddress);
 }
 exports.getAmounts = getAmounts;
+function getTeleportGuidFromTxHash(opts) {
+    return getTeleportBridge(opts).getTeleportGuidFromTxHash(opts.txHash);
+}
+exports.getTeleportGuidFromTxHash = getTeleportGuidFromTxHash;
 function requestFaucetDai(opts) {
     return getTeleportBridge(opts).requestFaucetDai(opts.sender, opts.overrides);
 }
@@ -50,10 +54,30 @@ function mintWithOracles(opts) {
     return getTeleportBridge(opts).mintWithOracles(opts.teleportGUID, opts.signatures, opts.maxFeePercentage, opts.operatorFee, opts.sender, opts.overrides);
 }
 exports.mintWithOracles = mintWithOracles;
+function waitForMint(opts) {
+    return getTeleportBridge(opts).waitForMint(opts.teleportGUIDorGUIDHash, opts.pollingIntervalMs, opts.timeoutMs);
+}
+exports.waitForMint = waitForMint;
+function getRelayFee(opts) {
+    return getTeleportBridge(opts).getRelayFee(opts.isHighPriority, opts.relayParams, opts.relayAddress);
+}
+exports.getRelayFee = getRelayFee;
+function signRelay(opts) {
+    return getTeleportBridge(opts).signRelay(opts.receiver, opts.teleportGUID, opts.relayFee, opts.maxFeePercentage, opts.expiry);
+}
+exports.signRelay = signRelay;
+function requestRelay(opts) {
+    return getTeleportBridge(opts).requestRelay(opts.receiver, opts.teleportGUID, opts.signatures, opts.relayFee, opts.maxFeePercentage, opts.expiry, opts.relayAddress, opts.onPayloadSigned);
+}
+exports.requestRelay = requestRelay;
 function relayMintWithOracles(opts) {
-    return getTeleportBridge(opts).relayMintWithOracles(opts.receiver, opts.teleportGUID, opts.signatures, opts.relayFee, opts.maxFeePercentage, opts.expiry, opts.to, opts.data, opts.relayAddress, opts.pollingIntervalMs, opts.timeoutMs, opts.onPayloadSigned);
+    return getTeleportBridge(opts).relayMintWithOracles(opts.receiver, opts.teleportGUID, opts.signatures, opts.relayFee, opts.maxFeePercentage, opts.expiry, opts.relayAddress, opts.pollingIntervalMs, opts.timeoutMs, opts.onPayloadSigned, opts.onRelayTaskCreated);
 }
 exports.relayMintWithOracles = relayMintWithOracles;
+function waitForRelayTask(opts) {
+    return getTeleportBridge(opts).waitForRelayTask(opts.taskId, opts.pollingIntervalMs, opts.timeoutMs);
+}
+exports.waitForRelayTask = waitForRelayTask;
 function canMintWithoutOracle(opts) {
     return getTeleportBridge(opts).canMintWithoutOracle(opts.txHash);
 }
