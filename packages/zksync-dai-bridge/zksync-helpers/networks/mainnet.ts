@@ -7,7 +7,7 @@ import * as zk from 'zksync-web3'
 
 import { NetworkConfig } from '..'
 
-export async function setupSigners(): Promise<{
+export async function setupMainnetSigners(): Promise<{
   l1Signer: Wallet
   l2Signer: zk.Wallet
 }> {
@@ -36,7 +36,7 @@ export async function getMainnetNetworkConfig(): Promise<NetworkConfig> {
       makerESM: '0x09e05fF6142F2f9de8B6B65855A1d56B6cfE4c58',
     },
     l2: {
-      dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
+      dai: '',
     },
   }
 }

@@ -1,7 +1,7 @@
 require('dotenv').config()
 
 import { compact, mapValues } from 'lodash'
-import { ethers, Contract } from 'ethers'
+import { ethers, Contract, Wallet } from 'ethers'
 
 import {
   deployBridges,
@@ -9,17 +9,20 @@ import {
   deployL1Contract,
   deployL2Contract,
   performSanityChecks,
-  setupSigners,
   BridgeDeployment,
   denyDeployer,
   NetworkConfig,
 } from '../zksync-helpers'
 import { getAddressOfNextDeployedContract } from '@makerdao/hardhat-utils'
 import { expect } from 'chai'
+import * as zk from 'zksync-web3'
 
-export async function deploy(cfg: NetworkConfig, shouldDenyDeployer: boolean = true) {
-  const { l1Signer, l2Signer } = await setupSigners()
-
+export async function deploy(
+  l1Signer: Wallet,
+  l2Signer: zk.Wallet,
+  cfg: NetworkConfig,
+  shouldDenyDeployer: boolean = true,
+) {
   const l1BlockOfBeginningOfDeployment = await l1Signer.provider.getBlockNumber()
   const l2BlockOfBeginningOfDeployment = await l2Signer.provider.getBlockNumber()
 

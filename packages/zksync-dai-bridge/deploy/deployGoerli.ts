@@ -1,12 +1,13 @@
-import { getGoerliNetworkConfig } from '../zksync-helpers'
+import { getGoerliNetworkConfig, setupGoerliSigners } from '../zksync-helpers'
 
 import { deploy } from '.'
 
 const DENY_DEPLOYER = true
 
 async function main() {
+  const { l1Signer, l2Signer } = await setupGoerliSigners()
   const cfg = await getGoerliNetworkConfig()
-  await deploy(cfg, DENY_DEPLOYER)
+  await deploy(l1Signer, l2Signer, cfg, DENY_DEPLOYER)
 }
 
 main()

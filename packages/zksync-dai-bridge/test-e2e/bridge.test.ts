@@ -33,8 +33,8 @@ const depositAmount = ethers.utils.parseEther('5')
 
 const defaultL1CallValue = 0
 const defaultRelayGasLimit = 10_000_000
-const defaultDepositGasLimit = zk.utils.RECOMMENDED_DEPOSIT_L2_GAS_LIMIT // 10_000_000
-const defaultGasPerPubdataByte = zk.utils.DEPOSIT_GAS_PER_PUBDATA_LIMIT // 800
+const defaultDepositGasLimit = 10_000_000
+const defaultGasPerPubdataByte = 800
 
 const verify: boolean = process.env.TEST_ENV === 'goerli'
 
@@ -48,8 +48,8 @@ async function setupSigners(): Promise<{
   const l1Provider = new ethers.providers.JsonRpcProvider(ethNetwork)
   const l2Provider = new zk.Provider(url)
 
-  const privKey = process.env.TEST_ENV === 'goerli' ? process.env.GOERLI_DEPLOYER_PRIV_KEY : RICH_WALLET_PK
-  if (!privKey) throw new Error(`Missing GOERLI_DEPLOYER_PRIV_KEY env var`)
+  const privKey = process.env.TEST_ENV === 'goerli' ? process.env.GOERLI_TEST_PRIV_KEY : RICH_WALLET_PK
+  if (!privKey) throw new Error(`Missing GOERLI_TEST_PRIV_KEY env var`)
 
   const l1Signer = new Wallet(privKey, l1Provider)
   const l2Signer = new zk.Wallet(privKey, l2Provider, l1Provider)

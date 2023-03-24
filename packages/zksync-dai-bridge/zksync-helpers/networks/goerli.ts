@@ -7,13 +7,13 @@ import * as zk from 'zksync-web3'
 
 import { NetworkConfig } from '..'
 
-export async function setupSigners(): Promise<{
+export async function setupGoerliSigners(): Promise<{
   l1Signer: Wallet
   l2Signer: zk.Wallet
 }> {
   const privKey = getRequiredEnv('GOERLI_DEPLOYER_PRIV_KEY')
 
-  const { url: zkSyncNetwork, ethNetwork } = hre.config.networks.zksync as any
+  const { url: zkSyncNetwork, ethNetwork } = hre.config.networks.zkTestnet as any
   expect(zkSyncNetwork).to.not.be.undefined
   expect(ethNetwork).to.not.be.undefined
 
@@ -37,7 +37,7 @@ export async function getGoerliNetworkConfig(): Promise<NetworkConfig> {
       makerESM: '0x023A960cb9BE7eDE35B433256f4AfE9013334b55',
     },
     l2: {
-      dai: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
+      dai: '',
     },
   }
 }
