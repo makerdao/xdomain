@@ -1,6 +1,6 @@
 // dai.spec
 
-// certoraRun contracts/l2/dai.sol:Dai certora/HashHelper.sol --verify Dai:certora/dai.spec --rule_sanity --solc_args "['--optimize','--optimize-runs','200']"
+// certoraRun --solc ~/.solc-select/artifacts/solc-0.8.15 .certora.conf
 
 using HashHelper as hashHelper
 
@@ -301,15 +301,14 @@ rule burn(address from, uint256 value) {
     uint256 supply = totalSupply();
     uint256 fromBalance = balanceOf(from);
     uint256 allowed = allowance(from, e.msg.sender);
-    uint256 ward = wards(e.msg.sender);
     bool senderSameAsFrom = e.msg.sender == from;
     bool wardsEqOne = wards(e.msg.sender) == 1;
     bool allowedEqMaxUint = allowed == max_uint256;
 
     burn(e, from, value);
 
-    assert(!senderSameAsFrom && !wardsEqOne && !allowedEqMaxUint => allowance(from, e.msg.sender) == allowed - value, "burn did not decrease the allowance as expected" );
-    assert(senderSameAsFrom || wardsEqOne || allowedEqMaxUint => allowance(from, e.msg.sender) == allowed, "burn did not keep the allowance as expected");
+    assert(!senderSameAsFrom && !allowedEqMaxUint => allowance(from, e.msg.sender) == allowed - value, "burn did not decrease the allowance as expected" );
+    assert(senderSameAsFrom || allowedEqMaxUint => allowance(from, e.msg.sender) == allowed, "burn did not keep the allowance as expected");
     assert(balanceOf(from) == fromBalance - value, "burn did not decrease the balance as expected");
     assert(totalSupply() == supply - value, "burn did not decrease the supply as expected");
 }
@@ -321,13 +320,12 @@ rule burn_revert(address from, uint256 value) {
     uint256 supply = totalSupply();
     uint256 fromBalance = balanceOf(from);
     uint256 allowed = allowance(from, e.msg.sender);
-    uint256 ward = wards(e.msg.sender);
 
     burn@withrevert(e, from, value);
 
     bool revert1 = e.msg.value > 0;
     bool revert2 = fromBalance < value;
-    bool revert3 = from != e.msg.sender && ward !=1 && allowed < value;
+    bool revert3 = from != e.msg.sender && allowed < value;
 
     assert(revert1 => lastReverted, "Sending ETH did not revert");
     assert(revert2 => lastReverted, "Underflow balance did not revert");
