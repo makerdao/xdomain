@@ -22,6 +22,7 @@
     "test-e2e": "yarn test-e2e:local",
     "test-e2e:local": "./scripts/wait-for-local-setup.sh && TEST_ENV=local mocha --config .mocharc-e2e.js",
     "test-e2e:goerli": "TEST_ENV=goerli mocha --config .mocharc-e2e.js",
+    "certora": "certoraRun --solc ~/.solc-select/artifacts/solc-0.8.15 .certora.conf",
     "typecheck": "tsc --noEmit",
     "verify:goerli": "yarn hardhat run scripts/verify.ts --network goerli",
     "verify:mainnet": "yarn hardhat run scripts/verify.ts --network mainnet"
