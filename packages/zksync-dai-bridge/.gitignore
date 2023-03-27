@@ -18,6 +18,6 @@ crytic-export/
 corpus/
 
 # certora
-.*certora*
+.certora_*
 .last_confs/
 *.zip
