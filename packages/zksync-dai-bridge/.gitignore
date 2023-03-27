@@ -20,4 +20,4 @@ corpus/
 # certora
 .certora_*
 .last_confs/
-*.zip
+*.zip*
