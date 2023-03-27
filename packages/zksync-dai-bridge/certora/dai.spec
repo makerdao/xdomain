@@ -1,8 +1,7 @@
 // dai.spec
 
-// certoraRun --solc ~/.solc-select/artifacts/solc-0.8.15 .certora.conf
-
-using HashHelper as hashHelper
+using Auxiliar as aux
+using SignerMock as signer
 
 methods {
     wards(address) returns (uint256) envfree
@@ -17,10 +16,12 @@ methods {
     deploymentChainId() returns (uint256) envfree
     DOMAIN_SEPARATOR() returns (bytes32) envfree
     PERMIT_TYPEHASH() returns (bytes32) envfree
-    hashHelper.call_ecrecover(bytes32, uint8, bytes32, bytes32) returns (address) envfree
-    hashHelper.computeDigestForDai(bytes32, bytes32, address, address, uint256, uint256, uint256) returns (bytes32) envfree
+    aux.call_ecrecover(bytes32, uint8, bytes32, bytes32) returns (address) envfree
+    aux.computeDigestForDai(bytes32, bytes32, address, address, uint256, uint256, uint256) returns (bytes32) envfree
+    aux.signatureToVRS(bytes) returns (uint8, bytes32, bytes32) envfree
+    aux.size(bytes) returns (uint256) envfree
+    isValidSignature(bytes32, bytes) returns (bytes4) => DISPATCHER(true)
 }
-
 ghost balanceSum() returns mathint {
     init_state axiom balanceSum() == 0;
 }
@@ -51,8 +52,8 @@ rule rely_revert(address usr) {
     bool revert1 = e.msg.value > 0;
     bool revert2 = ward != 1;
 
-    assert(revert1 => lastReverted, "Sending ETH did not revert");
-    assert(revert2 => lastReverted, "Lack of auth did not revert");
+    assert(revert1 => lastReverted, "revert1 failed");
+    assert(revert2 => lastReverted, "revert2 failed");
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
@@ -76,8 +77,8 @@ rule deny_revert(address usr) {
     bool revert1 = e.msg.value > 0;
     bool revert2 = ward != 1;
 
-    assert(revert1 => lastReverted, "Sending ETH did not revert");
-    assert(revert2 => lastReverted, "Lack of auth did not revert");
+    assert(revert1 => lastReverted, "revert1 failed");
+    assert(revert2 => lastReverted, "revert2 failed");
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
@@ -124,9 +125,9 @@ rule transfer_revert(address to, uint256 value) {
     bool revert2 = to == 0 || to == currentContract;
     bool revert3 = senderBalance < value;
 
-    assert(revert1 => lastReverted, "Sending ETH did not revert");
-    assert(revert2 => lastReverted, "Forbidden address didn't revert");
-    assert(revert3 => lastReverted, "Insufficient balance didn't revert");
+    assert(revert1 => lastReverted, "revert1 failed");
+    assert(revert2 => lastReverted, "revert2 failed");
+    assert(revert3 => lastReverted, "revert3 failed");
     assert(lastReverted => revert1 || revert2 || revert3, "Revert rules are not covering all the cases");
 }
 
@@ -172,10 +173,10 @@ rule transferFrom_revert(address from, address to, uint256 value) {
     bool revert3 = fromBalance < value;
     bool revert4 = allowed < value && e.msg.sender != from;
 
-    assert(revert1 => lastReverted, "Sending ETH did not revert");
-    assert(revert2 => lastReverted, "Incorrect address did not revert");
-    assert(revert3 => lastReverted, "Insufficient balance did not revert");
-    assert(revert4 => lastReverted, "Insufficient allowance did not revert");
+    assert(revert1 => lastReverted, "revert1 failed");
+    assert(revert2 => lastReverted, "revert2 failed");
+    assert(revert3 => lastReverted, "revert3 failed");
+    assert(revert4 => lastReverted, "revert4 failed");
     assert(lastReverted => revert1 || revert2 || revert3 || revert4, "Revert rules are not covering all the cases");
 }
 
@@ -196,7 +197,7 @@ rule approve_revert(address spender, uint256 value) {
 
     bool revert1 = e.msg.value > 0;
 
-    assert(revert1 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "revert1 failed");
     assert(lastReverted => revert1, "Revert rules are not covering all the cases");
 }
 
@@ -222,8 +223,8 @@ rule increaseAllowance_revert(address spender, uint256 value) {
     bool revert1 = e.msg.value > 0;
     bool revert2 = spenderAllowance + value > max_uint256;
 
-    assert(revert1 => lastReverted, "Sending ETH did not revert");
-    assert(revert2 => lastReverted, "Overflow allowance did not revert");
+    assert(revert1 => lastReverted, "revert1 failed");
+    assert(revert2 => lastReverted, "revert2 failed");
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
@@ -249,8 +250,8 @@ rule decreaseAllowance_revert(address spender, uint256 value) {
     bool revert1 = e.msg.value > 0;
     bool revert2 = spenderAllowance - value < 0;
 
-    assert(revert1 => lastReverted, "Sending ETH did not revert");
-    assert(revert2 => lastReverted, "Underflow allowance did not revert");
+    assert(revert1 => lastReverted, "revert1 failed");
+    assert(revert2 => lastReverted, "revert2 failed");
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
@@ -285,10 +286,10 @@ rule mint_revert(address to, uint256 value) {
     bool revert3 = supply + value > max_uint256;
     bool revert4 = to == 0 || to == currentContract;
 
-    assert(revert1 => lastReverted, "Sending ETH did not revert");
-    assert(revert2 => lastReverted, "Lack of auth did not revert");
-    assert(revert3 => lastReverted, "Overflow supply did not revert");
-    assert(revert4 => lastReverted, "Incorrect address did not revert");
+    assert(revert1 => lastReverted, "revert1 failed");
+    assert(revert2 => lastReverted, "revert2 failed");
+    assert(revert3 => lastReverted, "revert3 failed");
+    assert(revert4 => lastReverted, "revert4 failed");
     assert(lastReverted => revert1 || revert2 || revert3 || revert4, "Revert rules are not covering all the cases");
 }
 
@@ -302,7 +303,6 @@ rule burn(address from, uint256 value) {
     uint256 fromBalance = balanceOf(from);
     uint256 allowed = allowance(from, e.msg.sender);
     bool senderSameAsFrom = e.msg.sender == from;
-    bool wardsEqOne = wards(e.msg.sender) == 1;
     bool allowedEqMaxUint = allowed == max_uint256;
 
     burn(e, from, value);
@@ -327,14 +327,14 @@ rule burn_revert(address from, uint256 value) {
     bool revert2 = fromBalance < value;
     bool revert3 = from != e.msg.sender && allowed < value;
 
-    assert(revert1 => lastReverted, "Sending ETH did not revert");
-    assert(revert2 => lastReverted, "Underflow balance did not revert");
-    assert(revert3 => lastReverted, "Underflow allowance did not revert");
+    assert(revert1 => lastReverted, "revert1 failed");
+    assert(revert2 => lastReverted, "revert2 failed");
+    assert(revert3 => lastReverted, "revert3 failed");
     assert(lastReverted => revert1 || revert2 || revert3, "Revert rules are not covering all the cases");
 }
 
 // Verify that allowance behaves correctly on permit
-rule permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) {
+rule permitVRS(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) {
     env e;
 
     permit(e, owner, spender, value, deadline, v, r, s);
@@ -343,24 +343,76 @@ rule permit(address owner, address spender, uint256 value, uint256 deadline, uin
 }
 
 // Verify revert rules on permit
-rule permit_revert(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) {
+rule permitVRS_revert(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) {
     env e;
 
     uint256 ownerNonce = nonces(owner);
-    address ownerRecover = hashHelper.call_ecrecover(
-    hashHelper.computeDigestForDai(DOMAIN_SEPARATOR(), PERMIT_TYPEHASH(), owner, spender, value, ownerNonce, deadline),
-    v,
-    r,
-    s);
+    bytes32 digest = aux.computeDigestForDai(
+                        DOMAIN_SEPARATOR(),
+                        PERMIT_TYPEHASH(),
+                        owner,
+                        spender,
+                        value,
+                        ownerNonce,
+                        deadline
+                    );
+    address ownerRecover = aux.call_ecrecover(digest, v, r, s);
 
     permit@withrevert(e, owner, spender, value, deadline, v, r, s);
 
     bool revert1 = e.msg.value > 0;
     bool revert2 = e.block.timestamp > deadline;
-    bool revert3 = owner == 0 || owner != ownerRecover;
+    bool revert3 = owner == 0;
+    bool revert4 = owner != ownerRecover;
 
-    assert(revert1 => lastReverted, "Sending ETH did not revert");
-    assert(revert2 => lastReverted, "Deadline exceed did not revert");
-    assert(revert3 => lastReverted, "Invalid permit did not revert");
-    assert(lastReverted => revert1 || revert2 || revert3, "Revert rules are not covering all the cases");
+    assert(revert1 => lastReverted, "revert1 failed");
+    assert(revert2 => lastReverted, "revert2 failed");
+    assert(revert3 => lastReverted, "revert3 failed");
+    assert(revert4 => lastReverted, "revert4 failed");
+
+    assert(lastReverted => revert1 || revert2 || revert3 ||
+                           revert4, "Revert rules are not covering all the cases");
+}
+
+rule permitSignature(address owner, address spender, uint256 value, uint256 deadline, bytes signature) {
+    env e;
+
+    permit(e, owner, spender, value, deadline, signature);
+
+    assert(allowance(owner, spender) == value, "permit did not set the allowance as expected");
+}
+
+// Verify revert rules on permit
+rule permitSignature_revert(address owner, address spender, uint256 value, uint256 deadline, bytes signature) {
+    env e;
+
+    uint256 ownerNonce = nonces(owner);
+    bytes32 digest = aux.computeDigestForDai(
+                        DOMAIN_SEPARATOR(),
+                        PERMIT_TYPEHASH(),
+                        owner,
+                        spender,
+                        value,
+                        ownerNonce,
+                        deadline
+                    );
+    uint8 v; bytes32 r; bytes32 s;
+    v, r, s = aux.signatureToVRS(signature);
+    address ownerRecover = aux.size(signature) == 65 ? aux.call_ecrecover(digest, v, r, s) : 0;
+    bytes32 returnedSig = owner == signer ? signer.isValidSignature(e, digest, signature) : 0;
+
+    permit@withrevert(e, owner, spender, value, deadline, signature);
+
+    bool revert1 = e.msg.value > 0;
+    bool revert2 = e.block.timestamp > deadline;
+    bool revert3 = owner == 0;
+    bool revert4 = owner != ownerRecover && returnedSig != 0x1626ba7e00000000000000000000000000000000000000000000000000000000;
+
+    assert(revert1 => lastReverted, "revert1 failed");
+    assert(revert2 => lastReverted, "revert2 failed");
+    assert(revert3 => lastReverted, "revert3 failed");
+    assert(revert4 => lastReverted, "revert4 failed");
+
+    assert(lastReverted => revert1 || revert2 || revert3 ||
+                           revert4, "Revert rules are not covering all the cases");
 }

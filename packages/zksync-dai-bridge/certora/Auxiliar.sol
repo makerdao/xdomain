@@ -1,8 +1,13 @@
-pragma solidity ^0.8.15;
+pragma solidity 0.8.15;
 
-// HashHelper for permit spec
+interface IERC1271 {
+    function isValidSignature(
+        bytes32,
+        bytes memory
+    ) external view returns (bytes4);
+}
 
-contract HashHelper {    
+contract Auxiliar {    
     function computeDigestForDai(
         bytes32 domain_separator,
         bytes32 permit_typehash,
@@ -34,5 +39,19 @@ contract HashHelper {
         bytes32 s
     ) public pure returns (address signer) {
         signer = ecrecover(digest, v, r, s);
+    }
+
+    function signatureToVRS(bytes memory signature) public returns (uint8 v, bytes32 r, bytes32 s) {
+        if (signature.length == 65) {
+            assembly {
+                r := mload(add(signature, 0x20))
+                s := mload(add(signature, 0x40))
+                v := byte(0, mload(add(signature, 0x60)))
+            }
+        }
+    }
+
+    function size(bytes memory data) public returns (uint256 size_) {
+        size_ = data.length;
     }
 }
