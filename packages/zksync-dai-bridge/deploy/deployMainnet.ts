@@ -1,12 +1,13 @@
-import { getMainnetNetworkConfig } from '../zksync-helpers'
+import { getMainnetNetworkConfig, setupMainnetSigners } from '../zksync-helpers'
 
 import { deploy } from '.'
 
 const DENY_DEPLOYER = true
 
 async function main() {
+  const { l1Signer, l2Signer } = await setupMainnetSigners()
   const cfg = await getMainnetNetworkConfig()
-  await deploy(cfg, DENY_DEPLOYER)
+  await deploy(l1Signer, l2Signer, cfg, DENY_DEPLOYER)
 }
 
 main()

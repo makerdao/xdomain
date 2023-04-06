@@ -57,11 +57,17 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {},
-    zksync: {
+    zkTestnet: {
       zksync: true,
       url: zkSyncDeploy.zkSyncNetwork,
       ethNetwork: zkSyncDeploy.ethNetwork,
       verifyURL: 'https://zksync2-testnet-explorer.zksync.dev/contract_verification',
+    },
+    zkMainnet: {
+      zksync: true,
+      url: 'https://zksync2-mainnet.zksync.io',
+      ethNetwork: 'mainnet',
+      verifyURL: 'https://zksync2-mainnet-explorer.zksync.io/contract_verification',
     },
     goerli: {
       url: zkSyncDeploy.ethNetwork,
@@ -70,7 +76,7 @@ const config: HardhatUserConfig = {
       url: process.env.ETH_RPC_URL || '',
     },
   },
-  defaultNetwork: 'zksync',
+  defaultNetwork: 'zkTestnet',
   etherscan: {
     apiKey: {
       goerli: process.env.ETHERSCAN_KEY ?? '',

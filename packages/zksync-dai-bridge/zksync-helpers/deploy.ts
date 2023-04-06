@@ -15,6 +15,7 @@ export async function deployL2Contract<T extends zk.Contract>(
 ): Promise<T> {
   const deployer = new Deployer(hre, l2Signer)
   const artifact = await deployer.loadArtifact(contractName)
+  console.log(`Deploying ${contractName} on L2...`)
   const contract = await deployer.deploy(artifact, constructorArguments)
   console.log(`${contractName} was deployed on L2 to ${contract.address}`)
 
