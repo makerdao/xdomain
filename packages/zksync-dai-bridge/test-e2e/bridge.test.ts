@@ -42,7 +42,7 @@ async function setupSigners(): Promise<{
   l1Signer: Wallet
   l2Signer: zk.Wallet
 }> {
-  const { url, ethNetwork } = hre.config.networks.zksync as any
+  const { url, ethNetwork } = hre.config.networks.zkTestnet as any
   expect(url).to.not.be.undefined
   expect(ethNetwork).to.not.be.undefined
   const l1Provider = new ethers.providers.JsonRpcProvider(ethNetwork)
@@ -160,7 +160,7 @@ describe('bridge', function () {
         '0x',
       ]),
       { gasLimit: 300000 },
-      defaultDepositGasLimit,
+      undefined,
     )
 
     const l2DaiAfter = await l2Dai.balanceOf(l2Signer.address)
@@ -246,7 +246,7 @@ describe('bridge', function () {
       l2Signer.provider,
       l2Calldata,
       { gasLimit: 300000 },
-      defaultRelayGasLimit,
+      undefined,
     )
     console.log('L2 Bridge Closed')
     console.log('Approving l1DAITokenBridgeV2 to move l1Dai from L1Escrow...')

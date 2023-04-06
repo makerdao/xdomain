@@ -16,18 +16,34 @@ export async function waitToRelayTxToL2(
   const zkSyncAddress = await l2Provider.getMainContractAddress()
   const zkSync = new Contract(zkSyncAddress, zk.utils.ZKSYNC_MAIN_ABI, l1Contract.signer) as IZkSync
 
-  const l2ExecutionCost = await zkSync.l2TransactionBaseCost(
-    gasPrice,
-    l2GasLimit || BigNumber.from(10000000),
-    l2Calldata !== undefined ? utils.hexlify(l2Calldata).length : 1000,
-  )
-  const tx = await l1Contract.signer.sendTransaction({
+  async function getL2ExecutionCost(l2GasLimit?: BigNumberish): Promise<BigNumber> {
+    const l2ExecutionCost = await zkSync.l2TransactionBaseCost(
+      gasPrice,
+      l2GasLimit || BigNumber.from(10000000),
+      l2Calldata !== undefined ? utils.hexlify(l2Calldata).length : 1000,
+    )
+    return l2ExecutionCost
+  }
+
+  const txParams = {
     to: l1Contract.address,
     data: l1Calldata,
-    value: l2ExecutionCost,
+    value: await getL2ExecutionCost(l2GasLimit),
     gasPrice,
     ...l1Overrides,
-  })
+  }
+
+  if (!l2GasLimit) {
+    const estimatedL2GasLimit = await l2Provider.estimateGasL1({
+      from: await l1Contract.signer.getAddress(),
+      ...txParams,
+    })
+
+    const l2ExecutionCost = await getL2ExecutionCost(estimatedL2GasLimit)
+    txParams.value = l2ExecutionCost.mul(2)
+  }
+
+  const tx = await l1Contract.signer.sendTransaction(txParams)
   console.log(`L1>L2 message submitted in L1. L1 tx = ${tx.hash}. Waiting for L1 confirmation...`)
   await tx.wait()
   console.log(`L1>L2 message confirmed in L1. L1 tx = ${tx.hash}. Waiting for L2 relay...`)
