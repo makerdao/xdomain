@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Build keeper container
         run: docker build -t teleport-keeper .
       - name: Run keeper container
